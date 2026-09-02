@@ -1,0 +1,123 @@
+.accesorio-card {
+  background: #FFFFFF;
+  border: 1px solid #E1E8E7;
+  border-radius: 4px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: border-color 0.15s ease;
+}
+
+.accesorio-card:hover {
+  border-color: #0E6E6E;
+}
+
+.accesorio-card__imagen {
+  background: #0F2A3D;
+  height: 140px;
+  display: flex;
+  align-items: flex-end;
+  padding: 10px 14px;
+}
+
+.accesorio-card__sku {
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  color: #7FCDBB;
+}
+
+.accesorio-card__cuerpo {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+.accesorio-card__categoria {
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  color: #0E6E6E;
+  font-weight: 600;
+}
+
+.accesorio-card__nombre {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 17px;
+  font-weight: 700;
+  color: #1C2B2E;
+  margin: 0;
+}
+
+.accesorio-card__descripcion {
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  color: #5B6B6A;
+  line-height: 1.4;
+  margin: 0;
+  flex: 1;
+}
+
+.accesorio-card__detalle {
+  display: flex;
+  justify-content: space-between;
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  color: #5B6B6A;
+  margin-top: 4px;
+}
+
+.accesorio-card__estado {
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-weight: 500;
+}
+
+.accesorio-card__estado--disponible {
+  background: #E4F5F1;
+  color: #0E6E6E;
+}
+
+.accesorio-card__estado--agotado {
+  background: #FBEAEA;
+  color: #B3453D;
+}
+
+.accesorio-card__estado--descontinuado {
+  background: #F0F0F0;
+  color: #7A7A7A;
+}
+
+.accesorio-card__pie {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+  padding-top: 12px;
+  border-top: 1px solid #E1E8E7;
+}
+
+.accesorio-card__precio {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: #0F2A3D;
+}
+
+.accesorio-card__boton {
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: #FFFFFF;
+  background: #0E6E6E;
+  border: none;
+  border-radius: 4px;
+  padding: 7px 12px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.accesorio-card__boton:hover {
+  background: #0A5555;
+}

@@ -1,0 +1,38 @@
+require('dotenv').config();
+const express = require('express');
+const cors = require('cors');
+const authRoutes = require('./routes/authRoutes'); 
+const categoriaRoutes = require('./routes/categoriaRoutes');
+const rolRoutes = require('./routes/rolRoutes');
+const marcaRoutes = require('./routes/marcaRoutes');
+const modeloMotoRoutes = require('./routes/modeloMotoRoutes');
+const motoRoutes = require('./routes/motoRoutes');
+const tiendaRoutes = require('./routes/tiendaRoutes');
+const usuarioRoutes = require('./routes/usuarioRoutes');
+const modelo3dRoutes = require('./routes/modelo3dRoutes');
+const accesorioRoutes = require('./routes/accesorioRoutes');
+const inventarioRoutes = require('./routes/inventarioRoutes');
+const cotizacionRoutes = require('./routes/cotizacionRoutes');
+const app = express();
+app.use(cors());
+app.use(express.json());
+app.use('/api/modelos-moto', modeloMotoRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/motos', motoRoutes);
+app.use('/api/categorias', categoriaRoutes);
+app.use('/api/roles', rolRoutes);
+app.use('/api/tiendas', tiendaRoutes);
+app.use('/api/usuarios', usuarioRoutes);
+app.use('/api/modelos-3d', modelo3dRoutes);
+app.use('/api/marcas', marcaRoutes);
+app.use('/api/accesorios', accesorioRoutes);
+app.use('/api/inventario', inventarioRoutes);
+app.use('/api/cotizaciones', cotizacionRoutes);
+app.get('/', (req, res) => {
+  res.json({ mensaje: 'API de MotoPreview funcionando' });
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Servidor corriendo en http://localhost:${PORT}`);
+});

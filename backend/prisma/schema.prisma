@@ -1,0 +1,214 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model accesorio {
+  id_accesorio        String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id_categoria        String?               @db.Uuid
+  acc_nombre          String
+  acc_descripcion     String?
+  acc_precio          Decimal               @db.Decimal(10, 2)
+  acc_estado          accesorio_estado_enum @default(disponible)
+  imagen              String?
+  peso                Decimal?              @db.Decimal(6, 2)
+  codigo_sku          String?               @unique
+  categoria_accesorio categoria_accesorio?  @relation(fields: [id_categoria], references: [id_categoria], onDelete: NoAction, onUpdate: NoAction)
+  detalle_cotizacion  detalle_cotizacion[]
+  inventario          inventario[]
+  modelo_3d           modelo_3d[]
+}
+
+model categoria_accesorio {
+  id_categoria    String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  cat_nombre      String
+  cat_descripcion String?
+  accesorio       accesorio[]
+}
+
+model cotizacion {
+  id_cotizacion      String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id_tienda          String?                @db.Uuid
+  id_usuario         String?                @db.Uuid
+  id_moto            String?                @db.Uuid
+  fecha_solicitud    DateTime?              @default(dbgenerated("CURRENT_DATE")) @db.Date
+  coti_estado        cotizacion_estado_enum @default(pendiente)
+  total              Decimal?               @default(0) @db.Decimal(10, 2)
+  coti_observaciones String?
+  moto               moto?                  @relation(fields: [id_moto], references: [id_moto], onDelete: NoAction, onUpdate: NoAction)
+  tienda             tienda?                @relation(fields: [id_tienda], references: [id_tienda], onDelete: NoAction, onUpdate: NoAction)
+  usuario            usuario?               @relation(fields: [id_usuario], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction)
+  detalle_cotizacion detalle_cotizacion[]
+}
+
+model detalle_cotizacion {
+  id_detalle_cotizacion String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id_cotizacion         String?     @db.Uuid
+  id_accesorio          String?     @db.Uuid
+  cantidad              Int
+  precio_unitario       Decimal     @db.Decimal(10, 2)
+  subtotal              Decimal     @db.Decimal(10, 2)
+  accesorio             accesorio?  @relation(fields: [id_accesorio], references: [id_accesorio], onDelete: NoAction, onUpdate: NoAction)
+  cotizacion            cotizacion? @relation(fields: [id_cotizacion], references: [id_cotizacion], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model inventario {
+  id_inventario         String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id_tienda             String?                 @db.Uuid
+  id_accesorio          String?                 @db.Uuid
+  stock_actual          Int                     @default(0)
+  stock_minimo          Int                     @default(0)
+  estado_inventario     inventario_estado_enum  @default(normal)
+  fecha_actualizacion   DateTime?               @default(dbgenerated("CURRENT_DATE")) @db.Date
+  accesorio             accesorio?              @relation(fields: [id_accesorio], references: [id_accesorio], onDelete: NoAction, onUpdate: NoAction)
+  tienda                tienda?                 @relation(fields: [id_tienda], references: [id_tienda], onDelete: NoAction, onUpdate: NoAction)
+  movimiento_inventario movimiento_inventario[]
+}
+
+model marca_moto {
+  id_marca     String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  marca_nombre String
+  marca_pais   String?
+  modelo_moto  modelo_moto[]
+}
+
+model modelo_3d {
+  id_modelo3d            String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id_accesorio           String?    @db.Uuid
+  url_modelo3d           String
+  formato_archivo        String?
+  estado_visualizacion   String?
+  modelo3d_fecha         DateTime?  @default(dbgenerated("CURRENT_DATE")) @db.Date
+  modelo3d_observaciones String?
+  accesorio              accesorio? @relation(fields: [id_accesorio], references: [id_accesorio], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model modelo_moto {
+  id_modelo_moto     String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id_marca           String?     @db.Uuid
+  modelo_nombre      String
+  modelo_descripcion String?
+  cilindraje         String?
+  marca_moto         marca_moto? @relation(fields: [id_marca], references: [id_marca], onDelete: NoAction, onUpdate: NoAction)
+  moto               moto[]
+}
+
+model moto {
+  id_moto        String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id_modelo_moto String?      @db.Uuid
+  moto_anio      Int?
+  moto_version   String?
+  moto_imagen    String?
+  cotizacion     cotizacion[]
+  modelo_moto    modelo_moto? @relation(fields: [id_modelo_moto], references: [id_modelo_moto], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model movimiento_inventario {
+  id_movimiento    String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id_inventario    String?          @db.Uuid
+  id_tipomov       String?          @db.Uuid
+  id_usuario       String?          @db.Uuid
+  mov_cantidad     Int
+  fecha_movimiento DateTime?        @default(dbgenerated("CURRENT_DATE")) @db.Date
+  observaciones    String?
+  inventario       inventario?      @relation(fields: [id_inventario], references: [id_inventario], onDelete: NoAction, onUpdate: NoAction)
+  tipo_movimiento  tipo_movimiento? @relation(fields: [id_tipomov], references: [id_tipomov], onDelete: NoAction, onUpdate: NoAction)
+  usuario          usuario?         @relation(fields: [id_usuario], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model plan_subscripcion {
+  id_plan          String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  plan_nombre      String
+  plan_descripcion String?
+  precio_mensual   Decimal          @db.Decimal(10, 2)
+  limite_productos Int?
+  limite_usuarios  Int?
+  plan_estado      plan_estado_enum @default(activo)
+  tienda           tienda[]
+}
+
+model rol {
+  id_rol          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nombre_rol      String
+  descripcion_rol String?
+  usuario         usuario[]
+}
+
+model tienda {
+  id_tienda         String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id_plan           String?            @db.Uuid
+  nombre_tienda     String
+  nit               String?            @unique
+  direccion_tienda  String?
+  telefono_tienda   String?
+  email_tienda      String?
+  fecha_afiliacion  DateTime?          @default(dbgenerated("CURRENT_DATE")) @db.Date
+  estado_tienda     tienda_estado_enum @default(activa)
+  cotizacion        cotizacion[]
+  inventario        inventario[]
+  plan_subscripcion plan_subscripcion? @relation(fields: [id_plan], references: [id_plan], onDelete: NoAction, onUpdate: NoAction)
+  usuario           usuario[]
+}
+
+model tipo_movimiento {
+  id_tipomov            String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tipomov_nombre        String
+  descripcion_tipomov   String?
+  movimiento_inventario movimiento_inventario[]
+}
+
+model usuario {
+  id_usuario            String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id_rol                String?                 @db.Uuid
+  id_tienda             String?                 @db.Uuid
+  usu_nombre            String
+  usu_email             String                  @unique
+  password_hash         String
+  fecha_registro        DateTime?               @default(dbgenerated("CURRENT_DATE")) @db.Date
+  estado_usuario        usuario_estado_enum     @default(activo)
+  cotizacion            cotizacion[]
+  movimiento_inventario movimiento_inventario[]
+  rol                   rol?                    @relation(fields: [id_rol], references: [id_rol], onDelete: NoAction, onUpdate: NoAction)
+  tienda                tienda?                 @relation(fields: [id_tienda], references: [id_tienda], onDelete: NoAction, onUpdate: NoAction)
+}
+
+enum accesorio_estado_enum {
+  disponible
+  agotado
+  descontinuado
+}
+
+enum cotizacion_estado_enum {
+  pendiente
+  aprobada
+  rechazada
+  completada
+}
+
+enum inventario_estado_enum {
+  normal
+  bajo
+  agotado
+}
+
+enum plan_estado_enum {
+  activo
+  inactivo
+  suspendido
+}
+
+enum tienda_estado_enum {
+  activa
+  inactiva
+  suspendida
+}
+
+enum usuario_estado_enum {
+  activo
+  inactivo
+  bloqueado
+}
