@@ -8,19 +8,20 @@ datasource db {
 }
 
 model accesorio {
-  id_accesorio        String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  id_categoria        String?               @db.Uuid
-  acc_nombre          String
-  acc_descripcion     String?
-  acc_precio          Decimal               @db.Decimal(10, 2)
-  acc_estado          accesorio_estado_enum @default(disponible)
-  imagen              String?
-  peso                Decimal?              @db.Decimal(6, 2)
-  codigo_sku          String?               @unique
-  categoria_accesorio categoria_accesorio?  @relation(fields: [id_categoria], references: [id_categoria], onDelete: NoAction, onUpdate: NoAction)
-  detalle_cotizacion  detalle_cotizacion[]
-  inventario          inventario[]
-  modelo_3d           modelo_3d[]
+  id_accesorio          String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id_categoria          String?                 @db.Uuid
+  acc_nombre            String
+  acc_descripcion       String?
+  acc_precio            Decimal                 @db.Decimal(10, 2)
+  acc_estado            accesorio_estado_enum   @default(disponible)
+  imagen                String?
+  peso                  Decimal?                @db.Decimal(6, 2)
+  codigo_sku            String?                 @unique
+  categoria_accesorio   categoria_accesorio?    @relation(fields: [id_categoria], references: [id_categoria], onDelete: NoAction, onUpdate: NoAction)
+  accesorio_modelo_moto accesorio_modelo_moto[]
+  detalle_cotizacion    detalle_cotizacion[]
+  inventario            inventario[]
+  modelo_3d             modelo_3d[]
 }
 
 model categoria_accesorio {
@@ -88,13 +89,14 @@ model modelo_3d {
 }
 
 model modelo_moto {
-  id_modelo_moto     String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  id_marca           String?     @db.Uuid
-  modelo_nombre      String
-  modelo_descripcion String?
-  cilindraje         String?
-  marca_moto         marca_moto? @relation(fields: [id_marca], references: [id_marca], onDelete: NoAction, onUpdate: NoAction)
-  moto               moto[]
+  id_modelo_moto        String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id_marca              String?                 @db.Uuid
+  modelo_nombre         String
+  modelo_descripcion    String?
+  cilindraje            String?
+  accesorio_modelo_moto accesorio_modelo_moto[]
+  marca_moto            marca_moto?             @relation(fields: [id_marca], references: [id_marca], onDelete: NoAction, onUpdate: NoAction)
+  moto                  moto[]
 }
 
 model moto {
@@ -174,6 +176,16 @@ model usuario {
   movimiento_inventario movimiento_inventario[]
   rol                   rol?                    @relation(fields: [id_rol], references: [id_rol], onDelete: NoAction, onUpdate: NoAction)
   tienda                tienda?                 @relation(fields: [id_tienda], references: [id_tienda], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model accesorio_modelo_moto {
+  id_compatibilidad String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id_accesorio      String      @db.Uuid
+  id_modelo_moto    String      @db.Uuid
+  accesorio         accesorio   @relation(fields: [id_accesorio], references: [id_accesorio], onDelete: NoAction, onUpdate: NoAction)
+  modelo_moto       modelo_moto @relation(fields: [id_modelo_moto], references: [id_modelo_moto], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([id_accesorio, id_modelo_moto])
 }
 
 enum accesorio_estado_enum {

@@ -1,4 +1,10 @@
+import './AccesorioCard.css';
+import { Link } from 'react-router-dom';
+import { useCart } from '../context/CartContext';
+
 export default function AccesorioCard({ accesorio }) {
+  const { agregarItem } = useCart();
+
   const precioFormateado = new Intl.NumberFormat('es-CO', {
     style: 'currency',
     currency: 'COP',
@@ -7,9 +13,9 @@ export default function AccesorioCard({ accesorio }) {
 
   return (
     <article className="accesorio-card">
-      <div className="accesorio-card__imagen">
+      <Link to={`/visualizador/${accesorio.id_accesorio}`} className="accesorio-card__imagen">
         <span className="accesorio-card__sku">{accesorio.codigo_sku}</span>
-      </div>
+      </Link>
       <div className="accesorio-card__cuerpo">
         <span className="accesorio-card__categoria">
           {accesorio.categoria_accesorio?.cat_nombre}
@@ -24,7 +30,13 @@ export default function AccesorioCard({ accesorio }) {
         </div>
         <div className="accesorio-card__pie">
           <span className="accesorio-card__precio">{precioFormateado}</span>
-          <button className="accesorio-card__boton">Ver en 3D</button>
+          <button
+            className="accesorio-card__boton"
+            onClick={() => agregarItem(accesorio)}
+            disabled={accesorio.acc_estado !== 'disponible'}
+          >
+            Agregar
+          </button>
         </div>
       </div>
     </article>

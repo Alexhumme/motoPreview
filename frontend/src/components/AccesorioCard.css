@@ -121,3 +121,8 @@
 .accesorio-card__boton:hover {
   background: #0A5555;
 }
+
+.accesorio-card__imagen {
+  text-decoration: none;
+  cursor: pointer;
+}

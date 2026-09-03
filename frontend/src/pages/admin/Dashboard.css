@@ -1,0 +1,63 @@
+.dashboard__titulo {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 26px;
+  color: #0F2A3D;
+  margin-bottom: 24px;
+}
+
+.dashboard__tarjetas {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.dashboard__tarjeta {
+  background: #FFFFFF;
+  border: 1px solid #E1E8E7;
+  border-radius: 6px;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 180px;
+}
+
+.dashboard__tarjeta--alerta {
+  border-color: #E8B5AE;
+  background: #FDF4F2;
+}
+
+.dashboard__numero {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 32px;
+  font-weight: 700;
+  color: #0F2A3D;
+}
+
+.dashboard__etiqueta {
+  font-size: 13px;
+  color: #5B6B6A;
+}
+
+.dashboard__seccion {
+  background: #FFFFFF;
+  border: 1px solid #E1E8E7;
+  border-radius: 6px;
+  padding: 20px 24px;
+}
+
+.dashboard__seccion h2 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 16px;
+  color: #0F2A3D;
+  margin-bottom: 12px;
+}
+
+.dashboard__lista {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 14px;
+  color: #1C2B2E;
+}

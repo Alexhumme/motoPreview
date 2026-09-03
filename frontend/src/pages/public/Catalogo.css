@@ -72,3 +72,126 @@
 .catalogo__estado--error {
   color: #B3453D;
 }
+
+.catalogo__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #0F2A3D;
+  padding: 14px 32px;
+}
+
+.catalogo__marca {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  color: #FFFFFF;
+  font-size: 16px;
+}
+
+.catalogo__sesion {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 13px;
+  color: #B8C6CC;
+}
+
+.catalogo__enlace-admin,
+.catalogo__enlace-login {
+  color: #7FCDBB;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.catalogo__enlace-admin:hover,
+.catalogo__enlace-login:hover {
+  text-decoration: underline;
+}
+
+.catalogo__logout {
+  background: transparent;
+  border: 1px solid #3A5A6C;
+  color: #B8C6CC;
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.catalogo__carrito {
+  color: #B8C6CC;
+  text-decoration: none;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.catalogo__carrito:hover {
+  color: #FFFFFF;
+}
+
+.catalogo__carrito-contador {
+  background: #7FCDBB;
+  color: #0F2A3D;
+  border-radius: 10px;
+  padding: 1px 7px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.catalogo__boton-configurador {
+  background: #0E6E6E;
+  color: #FFFFFF;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 7px 16px;
+  border-radius: 4px;
+}
+
+.catalogo__boton-configurador:hover {
+  background: #0A5555;
+}
+
+.catalogo__banner {
+  background: linear-gradient(135deg, #0F2A3D 0%, #163B52 100%);
+  padding: 20px 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+}
+
+.catalogo__banner-texto {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.catalogo__banner-titulo {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: 16px;
+  color: #FFFFFF;
+}
+
+.catalogo__banner-subtitulo {
+  font-size: 13px;
+  color: #B8C6CC;
+}
+
+.catalogo__banner-boton {
+  background: #7FCDBB;
+  color: #0F2A3D;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 13px;
+  padding: 10px 18px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.catalogo__banner-boton:hover {
+  background: #6BB8A6;
+}

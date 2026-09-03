@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { ROL_ADMIN, ROL_VENDEDOR } from '../../constants/roles';
 
 export default function Login() {
   const [usu_email, setEmail] = useState('');
@@ -9,16 +10,20 @@ export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  async function manejarSubmit(e) {
-    e.preventDefault();
-    setError('');
-    try {
-      await login(usu_email, password);
+ async function manejarSubmit(e) {
+  e.preventDefault();
+  setError('');
+  try {
+    const usuarioLogueado = await login(usu_email, password);
+    if (usuarioLogueado.id_rol === ROL_ADMIN || usuarioLogueado.id_rol === ROL_VENDEDOR) {
+      navigate('/admin');
+    } else {
       navigate('/');
-    } catch (err) {
-      setError('Credenciales inválidas');
     }
+  } catch (err) {
+    setError('Credenciales inválidas');
   }
+}
 
   return (
     <div style={{ maxWidth: 400, margin: '50px auto' }}>

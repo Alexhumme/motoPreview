@@ -13,6 +13,7 @@ const modelo3dRoutes = require('./routes/modelo3dRoutes');
 const accesorioRoutes = require('./routes/accesorioRoutes');
 const inventarioRoutes = require('./routes/inventarioRoutes');
 const cotizacionRoutes = require('./routes/cotizacionRoutes');
+const compatibilidadRoutes = require('./routes/compatibilidadRoutes');
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -26,6 +27,7 @@ app.use('/api/usuarios', usuarioRoutes);
 app.use('/api/modelos-3d', modelo3dRoutes);
 app.use('/api/marcas', marcaRoutes);
 app.use('/api/accesorios', accesorioRoutes);
+app.use('/api/compatibilidad', compatibilidadRoutes);
 app.use('/api/inventario', inventarioRoutes);
 app.use('/api/cotizaciones', cotizacionRoutes);
 app.get('/', (req, res) => {

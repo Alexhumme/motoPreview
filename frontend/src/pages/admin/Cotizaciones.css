@@ -1,0 +1,138 @@
+.cotizaciones__titulo {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 26px;
+  color: #0F2A3D;
+  margin-bottom: 20px;
+}
+
+.cotizaciones__lista {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cotizaciones__tarjeta {
+  background: #FFFFFF;
+  border: 1px solid #E1E8E7;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.cotizaciones__resumen {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  cursor: pointer;
+}
+
+.cotizaciones__resumen:hover {
+  background: #F9FBFA;
+}
+
+.cotizaciones__moto {
+  display: block;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+  color: #0F2A3D;
+}
+
+.cotizaciones__fecha {
+  display: block;
+  font-size: 12px;
+  color: #5B6B6A;
+  margin-top: 2px;
+}
+
+.cotizaciones__derecha {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.cotizaciones__total {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+  color: #0F2A3D;
+}
+
+.cotizaciones__estado {
+  padding: 4px 10px;
+  border-radius: 3px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.cotizaciones__estado--pendiente {
+  background: #FDF3DC;
+  color: #A8730B;
+}
+
+.cotizaciones__estado--aprobada {
+  background: #E4F5F1;
+  color: #0E6E6E;
+}
+
+.cotizaciones__estado--rechazada {
+  background: #FBEAEA;
+  color: #B3453D;
+}
+
+.cotizaciones__estado--completada {
+  background: #E6E9F5;
+  color: #4A4FA8;
+}
+
+.cotizaciones__detalle {
+  padding: 0 20px 16px 20px;
+  border-top: 1px solid #F0F3F2;
+}
+
+.cotizaciones__items {
+  list-style: none;
+  padding: 12px 0 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  color: #1C2B2E;
+}
+
+.cotizaciones__observaciones {
+  font-size: 13px;
+  color: #5B6B6A;
+  font-style: italic;
+  margin-top: 10px;
+}
+
+.cotizaciones__acciones {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.cotizaciones__boton {
+  border: none;
+  border-radius: 4px;
+  padding: 7px 14px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.cotizaciones__boton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.cotizaciones__boton--aprobar {
+  background: #0E6E6E;
+  color: #FFFFFF;
+}
+
+.cotizaciones__boton--rechazar {
+  background: transparent;
+  border: 1px solid #E8B5AE;
+  color: #B3453D;
+}

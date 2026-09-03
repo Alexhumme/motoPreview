@@ -1,0 +1,188 @@
+.accesorios-admin__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.accesorios-admin__titulo {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 26px;
+  color: #0F2A3D;
+}
+
+.accesorios-admin__boton-nuevo {
+  background: #0E6E6E;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 4px;
+  padding: 9px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.accesorios-admin__tabla {
+  width: 100%;
+  border-collapse: collapse;
+  background: #FFFFFF;
+  border: 1px solid #E1E8E7;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.accesorios-admin__tabla th {
+  text-align: left;
+  font-size: 12px;
+  color: #5B6B6A;
+  padding: 12px 16px;
+  background: #F4F7F6;
+  border-bottom: 1px solid #E1E8E7;
+}
+
+.accesorios-admin__tabla td {
+  padding: 12px 16px;
+  font-size: 14px;
+  color: #1C2B2E;
+  border-bottom: 1px solid #F0F3F2;
+}
+
+.accesorios-admin__estado {
+  padding: 3px 10px;
+  border-radius: 3px;
+  font-size: 12px;
+}
+
+.accesorios-admin__estado--disponible { background: #E4F5F1; color: #0E6E6E; }
+.accesorios-admin__estado--agotado { background: #FBEAEA; color: #B3453D; }
+.accesorios-admin__estado--descontinuado { background: #F0F0F0; color: #7A7A7A; }
+
+.accesorios-admin__boton-editar {
+  background: transparent;
+  border: 1px solid #E1E8E7;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.accesorios-admin__overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 42, 61, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.accesorios-admin__modal {
+  background: #FFFFFF;
+  border-radius: 8px;
+  padding: 24px;
+  width: 480px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.accesorios-admin__modal h2 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 18px;
+  color: #0F2A3D;
+  margin-bottom: 12px;
+}
+
+.accesorios-admin__modal form {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.accesorios-admin__modal label {
+  font-size: 12px;
+  color: #5B6B6A;
+  margin-top: 10px;
+}
+
+.accesorios-admin__modal input,
+.accesorios-admin__modal select,
+.accesorios-admin__modal textarea {
+  padding: 8px 10px;
+  border: 1px solid #E1E8E7;
+  border-radius: 4px;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  width: 100%;
+}
+
+.accesorios-admin__fila {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.accesorios-admin__label-compat {
+  margin-top: 16px;
+  font-weight: 600;
+  color: #1C2B2E !important;
+}
+
+.accesorios-admin__checkboxes {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 6px;
+  max-height: 140px;
+  overflow-y: auto;
+  border: 1px solid #E1E8E7;
+  border-radius: 4px;
+  padding: 10px;
+}
+
+.accesorios-admin__checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #1C2B2E;
+  margin: 0 !important;
+}
+
+.accesorios-admin__checkbox input {
+  width: auto !important;
+}
+
+.accesorios-admin__error {
+  color: #B3453D;
+  font-size: 13px;
+  margin-top: 8px;
+}
+
+.accesorios-admin__modal-botones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.accesorios-admin__boton-cancelar {
+  background: transparent;
+  border: 1px solid #E1E8E7;
+  border-radius: 4px;
+  padding: 8px 14px;
+  cursor: pointer;
+}
+
+.accesorios-admin__boton-guardar {
+  background: #0E6E6E;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 14px;
+  cursor: pointer;
+}
+
+.accesorios-admin__boton-guardar:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
