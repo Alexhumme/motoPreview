@@ -1,12 +1,22 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
+const { enviarCorreoCambioEstado } = require('../services/email');
+
+const ROL_ADMIN = '11111111-0000-0000-0000-000000000001';
+const ROL_VENDEDOR = '11111111-0000-0000-0000-000000000002';
 
 async function listar(req, res) {
   try {
+    const esEmpleado = req.usuario.id_rol === ROL_ADMIN || req.usuario.id_rol === ROL_VENDEDOR;
+
     const cotizaciones = await prisma.cotizacion.findMany({
+      where: esEmpleado
+        ? { id_tienda: req.usuario.id_tienda }
+        : { id_usuario: req.usuario.id_usuario },
       include: {
         moto: { include: { modelo_moto: { include: { marca_moto: true } } } },
         detalle_cotizacion: { include: { accesorio: true } },
+        usuario: true,
       },
     });
     res.json(cotizaciones);
@@ -34,18 +44,16 @@ async function obtener(req, res) {
   }
 }
 
-// Crear cotización con su detalle, calculando subtotales y total automáticamente
 async function crear(req, res) {
   try {
-    const { id_tienda, id_moto, coti_observaciones, items } = req.body;
-    const id_usuario = req.usuario.id_usuario; // del token
+    const { id_moto, coti_observaciones, items } = req.body;
+    const id_usuario = req.usuario.id_usuario;
+    const id_tienda = req.usuario.id_tienda;
 
-    // items esperado: [{ id_accesorio, cantidad }, ...]
-    if (!id_tienda || !id_moto || !Array.isArray(items) || items.length === 0) {
-      return res.status(400).json({ error: 'id_tienda, id_moto e items (lista no vacía) son obligatorios' });
+    if (!id_moto || !Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ error: 'id_moto e items (lista no vacía) son obligatorios' });
     }
 
-    // Trae los precios reales de los accesorios (nunca confíes en un precio que venga del cliente)
     const idsAccesorios = items.map((i) => i.id_accesorio);
     const accesorios = await prisma.accesorio.findMany({
       where: { id_accesorio: { in: idsAccesorios } },
@@ -55,7 +63,6 @@ async function crear(req, res) {
       return res.status(400).json({ error: 'Uno o más id_accesorio no existen' });
     }
 
-    // Arma el detalle con precios reales y calcula subtotales
     const detalles = items.map((item) => {
       const accesorio = accesorios.find((a) => a.id_accesorio === item.id_accesorio);
       const precio_unitario = Number(accesorio.acc_precio);
@@ -70,7 +77,6 @@ async function crear(req, res) {
 
     const total = detalles.reduce((suma, d) => suma + d.subtotal, 0);
 
-    // Transacción: cabecera + detalles juntos
     const resultado = await prisma.$transaction(async (tx) => {
       const cotizacion = await tx.cotizacion.create({
         data: {
@@ -102,7 +108,6 @@ async function crear(req, res) {
   }
 }
 
-// Cambiar el estado de una cotización (aprobar/rechazar/completar)
 async function cambiarEstado(req, res) {
   try {
     const { id } = req.params;
@@ -113,10 +118,26 @@ async function cambiarEstado(req, res) {
       return res.status(400).json({ error: `coti_estado debe ser uno de: ${estadosValidos.join(', ')}` });
     }
 
+    const cotizacionExistente = await prisma.cotizacion.findUnique({ where: { id_cotizacion: id } });
+    if (!cotizacionExistente) {
+      return res.status(404).json({ error: 'Cotización no encontrada' });
+    }
+    if (cotizacionExistente.id_tienda !== req.usuario.id_tienda) {
+      return res.status(403).json({ error: 'No tienes acceso a esta cotización' });
+    }
+
     const actualizada = await prisma.cotizacion.update({
       where: { id_cotizacion: id },
       data: { coti_estado },
+      include: { usuario: true },
     });
+
+    enviarCorreoCambioEstado(
+      actualizada.usuario.usu_email,
+      actualizada.usuario.usu_nombre,
+      coti_estado,
+      actualizada.total
+    ).catch((err) => console.error('Error enviando correo de notificación:', err));
 
     res.json(actualizada);
   } catch (error) {

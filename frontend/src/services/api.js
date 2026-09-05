@@ -2,6 +2,7 @@ import axios from 'axios';
 
 const api = axios.create({
   baseURL: 'http://localhost:3000/api',
+  timeout: 8000,
 });
 
 api.interceptors.request.use((config) => {
@@ -13,7 +14,10 @@ api.interceptors.request.use((config) => {
 });
 
 api.interceptors.response.use(
-  (respuesta) => respuesta,
+  (respuesta) => {
+    window.dispatchEvent(new Event('backend:online'));
+    return respuesta;
+  },
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem('token');
@@ -21,6 +25,9 @@ api.interceptors.response.use(
       if (window.location.pathname !== '/login') {
         window.location.href = '/login';
       }
+    } else if (!error.response) {
+      // Sin respuesta del servidor: caído, sin red, o timeout
+      window.dispatchEvent(new Event('backend:offline'));
     }
     return Promise.reject(error);
   }

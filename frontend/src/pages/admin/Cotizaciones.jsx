@@ -57,14 +57,17 @@ async function cargar() {
         {cotizaciones.map((cot) => (
           <div key={cot.id_cotizacion} className="cotizaciones__tarjeta">
             <div className="cotizaciones__resumen" onClick={() => alternarExpandida(cot.id_cotizacion)}>
-              <div>
-                <span className="cotizaciones__moto">
-                  {cot.moto?.modelo_moto?.marca_moto?.marca_nombre} {cot.moto?.modelo_moto?.modelo_nombre}
-                </span>
-                <span className="cotizaciones__fecha">
-                  {new Date(cot.fecha_solicitud).toLocaleDateString('es-CO')}
-                </span>
-              </div>
+             <div>
+              <span className="cotizaciones__moto">
+                {cot.moto?.modelo_moto?.marca_moto?.marca_nombre} {cot.moto?.modelo_moto?.modelo_nombre}
+              </span>
+              <span className="cotizaciones__cliente">
+                {cot.usuario?.usu_nombre} · {cot.usuario?.usu_email}
+              </span>
+              <span className="cotizaciones__fecha">
+                {new Date(cot.fecha_solicitud).toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric' })}
+              </span>
+            </div>
               <div className="cotizaciones__derecha">
                 <span className="cotizaciones__total">{precioFormateado(cot.total)}</span>
                 <span className={`cotizaciones__estado cotizaciones__estado--${cot.coti_estado}`}>

@@ -172,6 +172,10 @@ model usuario {
   password_hash         String
   fecha_registro        DateTime?               @default(dbgenerated("CURRENT_DATE")) @db.Date
   estado_usuario        usuario_estado_enum     @default(activo)
+  reset_token           String?
+  reset_token_expira    DateTime?               @db.Timestamp(6)
+  email_verificado      Boolean?                @default(false)
+  verificacion_token    String?
   cotizacion            cotizacion[]
   movimiento_inventario movimiento_inventario[]
   rol                   rol?                    @relation(fields: [id_rol], references: [id_rol], onDelete: NoAction, onUpdate: NoAction)

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { obtenerMotos } from '../../services/motos';
@@ -58,6 +58,7 @@ export default function Carrito() {
   if (exito) {
     return (
       <div className="carrito__vacio">
+        <Link to="/" className="carrito__volver">← Volver al catálogo</Link>
         <h1>¡Cotización enviada!</h1>
         <p>La tienda va a revisar tu solicitud pronto.</p>
       </div>
@@ -67,6 +68,7 @@ export default function Carrito() {
   if (items.length === 0) {
     return (
       <div className="carrito__vacio">
+        <Link to="/" className="carrito__volver">← Volver al catálogo</Link>
         <h1>Tu carrito está vacío</h1>
         <p>Agrega accesorios desde el catálogo para armar tu cotización.</p>
       </div>
@@ -75,6 +77,7 @@ export default function Carrito() {
 
   return (
     <div className="carrito">
+      <Link to="/" className="carrito__volver">← Seguir explorando el catálogo</Link>
       <h1 className="carrito__titulo">Tu cotización</h1>
 
       <div className="carrito__items">

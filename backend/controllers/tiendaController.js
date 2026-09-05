@@ -1,5 +1,7 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
+const ROL_ADMIN = '11111111-0000-0000-0000-000000000001';
+const ROL_VENDEDOR = '11111111-0000-0000-0000-000000000002';
 
 async function listar(req, res) {
   try {
@@ -95,4 +97,36 @@ async function verificarLimiteProductos(id_tienda) {
   return { permitido: true };
 }
 
-module.exports = { listar, obtener, crear, actualizar, eliminar, verificarLimiteProductos };
+// Verifica si la tienda puede agregar un empleado más (Admin o Vendedor), según su plan.
+// Los bloqueados no cuentan para el límite, y los clientes tampoco.
+async function verificarLimiteUsuarios(id_tienda) {
+  const tienda = await prisma.tienda.findUnique({
+    where: { id_tienda },
+    include: { plan_subscripcion: true },
+  });
+
+  if (!tienda) {
+    return { permitido: false, motivo: 'Tienda no encontrada' };
+  }
+
+  const totalEmpleados = await prisma.usuario.count({
+    where: {
+      id_tienda,
+      id_rol: { in: [ROL_ADMIN, ROL_VENDEDOR] },
+      estado_usuario: { not: 'bloqueado' },
+    },
+  });
+
+  const limite = tienda.plan_subscripcion.limite_usuarios;
+
+  if (limite !== null && totalEmpleados >= limite) {
+    return {
+      permitido: false,
+      motivo: `Límite de ${limite} empleados alcanzado para el plan ${tienda.plan_subscripcion.plan_nombre}`,
+    };
+  }
+
+  return { permitido: true };
+}
+
+module.exports = { listar, obtener, crear, actualizar, eliminar, verificarLimiteProductos, verificarLimiteUsuarios };

@@ -146,3 +146,11 @@
 .carrito__vacio p {
   color: #5B6B6A;
 }
+
+.carrito__volver {
+  display: inline-block;
+  color: #0E6E6E;
+  text-decoration: none;
+  font-size: 13px;
+  margin-bottom: 12px;
+}

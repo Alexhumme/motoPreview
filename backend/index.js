@@ -15,7 +15,7 @@ const inventarioRoutes = require('./routes/inventarioRoutes');
 const cotizacionRoutes = require('./routes/cotizacionRoutes');
 const compatibilidadRoutes = require('./routes/compatibilidadRoutes');
 const app = express();
-app.use(cors());
+app.use(cors({ origin: process.env.FRONTEND_URL }));
 app.use(express.json());
 app.use('/api/modelos-moto', modeloMotoRoutes);
 app.use('/api/auth', authRoutes);
@@ -32,6 +32,9 @@ app.use('/api/inventario', inventarioRoutes);
 app.use('/api/cotizaciones', cotizacionRoutes);
 app.get('/', (req, res) => {
   res.json({ mensaje: 'API de MotoPreview funcionando' });
+});
+app.get('/api/health', (req, res) => {
+  res.json({ ok: true });
 });
 
 const PORT = process.env.PORT || 3000;

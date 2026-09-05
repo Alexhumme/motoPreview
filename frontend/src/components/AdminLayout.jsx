@@ -1,6 +1,7 @@
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import './AdminLayout.css';
+import { ROL_ADMIN } from '../constants/roles';
 
 export default function AdminLayout() {
   const { usuario, logout } = useAuth();
@@ -12,12 +13,22 @@ export default function AdminLayout() {
     navigate('/login');
   }
 
-const enlaces = [
+const enlacesBase = [
   { ruta: '/admin', etiqueta: 'Resumen' },
-  { ruta: '/admin/accesorios', etiqueta: 'Accesorios' },
   { ruta: '/admin/inventario', etiqueta: 'Inventario' },
   { ruta: '/admin/cotizaciones', etiqueta: 'Cotizaciones' },
+  { ruta: '/admin/reportes', etiqueta: 'Reportes' },
 ];
+
+const enlaces = usuario?.id_rol === ROL_ADMIN
+  ? [
+      enlacesBase[0],
+      { ruta: '/admin/accesorios', etiqueta: 'Accesorios' },
+      ...enlacesBase.slice(1),
+      { ruta: '/admin/usuarios', etiqueta: 'Usuarios' },
+      { ruta: '/admin/tienda', etiqueta: 'Mi tienda' },
+    ]
+  : enlacesBase;
 
   return (
     <div className="admin-layout">

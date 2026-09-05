@@ -136,3 +136,10 @@
   border: 1px solid #E8B5AE;
   color: #B3453D;
 }
+
+.cotizaciones__cliente {
+  display: block;
+  font-size: 12px;
+  color: #0E6E6E;
+  margin-top: 2px;
+}

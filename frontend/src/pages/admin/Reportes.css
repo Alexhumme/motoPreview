@@ -1,0 +1,149 @@
+.reportes__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.reportes__titulo {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 26px;
+  color: #0F2A3D;
+}
+
+.reportes__toggle {
+  display: flex;
+  border: 1px solid #E1E8E7;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.reportes__toggle button {
+  background: #FFFFFF;
+  border: none;
+  padding: 8px 16px;
+  font-size: 13px;
+  cursor: pointer;
+  color: #5B6B6A;
+}
+
+.reportes__toggle-boton--activo {
+  background: #0F2A3D !important;
+  color: #FFFFFF !important;
+}
+
+.reportes__tarjetas {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.reportes__tarjeta {
+  background: #FFFFFF;
+  border: 1px solid #E1E8E7;
+  border-radius: 6px;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.reportes__numero {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 26px;
+  font-weight: 700;
+  color: #0F2A3D;
+}
+
+.reportes__etiqueta {
+  font-size: 13px;
+  color: #5B6B6A;
+}
+
+.reportes__columnas {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 16px;
+}
+
+.reportes__panel {
+  background: #FFFFFF;
+  border: 1px solid #E1E8E7;
+  border-radius: 6px;
+  padding: 20px 24px;
+}
+
+.reportes__panel h2 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 16px;
+  color: #0F2A3D;
+  margin-bottom: 16px;
+}
+
+.reportes__vacio {
+  color: #5B6B6A;
+  font-size: 13px;
+}
+
+.reportes__ranking {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.reportes__fila-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: #1C2B2E;
+  margin-bottom: 4px;
+}
+
+.reportes__fila-cantidad {
+  font-weight: 700;
+  color: #0F2A3D;
+}
+
+.reportes__barra-fondo {
+  background: #F0F3F2;
+  border-radius: 3px;
+  height: 8px;
+  overflow: hidden;
+}
+
+.reportes__barra {
+  background: #0E6E6E;
+  height: 100%;
+  border-radius: 3px;
+}
+
+.reportes__estados {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.reportes__estado-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: #1C2B2E;
+}
+
+.reportes__estado-item strong {
+  margin-left: auto;
+  color: #0F2A3D;
+}
+
+.reportes__estado-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.reportes__estado-dot--pendiente { background: #A8730B; }
+.reportes__estado-dot--aprobada { background: #0E6E6E; }
+.reportes__estado-dot--rechazada { background: #B3453D; }
+.reportes__estado-dot--completada { background: #4A4FA8; }

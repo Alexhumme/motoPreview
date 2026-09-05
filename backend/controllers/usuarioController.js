@@ -1,13 +1,15 @@
 const bcrypt = require('bcrypt');
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
+const { verificarLimiteUsuarios } = require('./tiendaController');
+const ROL_ADMIN = '11111111-0000-0000-0000-000000000001';
+const ROL_VENDEDOR = '11111111-0000-0000-0000-000000000002';
 
 async function listar(req, res) {
   try {
-    // Filtra opcionalmente por tienda: /api/usuarios?id_tienda=xxx
-    const { id_tienda } = req.query;
+    // Ignora cualquier id_tienda que venga en la URL — siempre usa el del token
     const usuarios = await prisma.usuario.findMany({
-      where: id_tienda ? { id_tienda } : undefined,
+      where: { id_tienda: req.usuario.id_tienda },
       include: { rol: true, tienda: true },
     });
     const sinPassword = usuarios.map(({ password_hash, ...u }) => u);
@@ -37,9 +39,25 @@ async function obtener(req, res) {
 async function actualizar(req, res) {
   try {
     const { id } = req.params;
-    const { usu_nombre, id_rol, id_tienda, estado_usuario, password } = req.body;
+    const { usu_nombre, id_rol, estado_usuario, password } = req.body;
 
-    const data = { usu_nombre, id_rol, id_tienda, estado_usuario };
+    const objetivo = await prisma.usuario.findUnique({ where: { id_usuario: id } });
+    if (!objetivo || objetivo.id_tienda !== req.usuario.id_tienda) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+
+    if (estado_usuario && estado_usuario !== 'bloqueado') {
+      const esEmpleado = objetivo.id_rol === ROL_ADMIN || objetivo.id_rol === ROL_VENDEDOR;
+      const estabaBloqueado = objetivo.estado_usuario === 'bloqueado';
+      if (esEmpleado && estabaBloqueado) {
+        const limite = await verificarLimiteUsuarios(objetivo.id_tienda);
+        if (!limite.permitido) {
+          return res.status(403).json({ error: limite.motivo });
+        }
+      }
+    }
+
+    const data = { usu_nombre, id_rol, estado_usuario };
     if (password) {
       data.password_hash = await bcrypt.hash(password, 10);
     }
@@ -59,7 +77,10 @@ async function actualizar(req, res) {
 async function eliminar(req, res) {
   try {
     const { id } = req.params;
-    // Mejor "desactivar" que borrar de verdad, para no perder el historial de cotizaciones/movimientos
+    const objetivo = await prisma.usuario.findUnique({ where: { id_usuario: id } });
+    if (!objetivo || objetivo.id_tienda !== req.usuario.id_tienda) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
     const desactivado = await prisma.usuario.update({
       where: { id_usuario: id },
       data: { estado_usuario: 'bloqueado' },
@@ -70,5 +91,4 @@ async function eliminar(req, res) {
     res.status(500).json({ error: 'Error al desactivar usuario (¿existe ese id?)' });
   }
 }
-
 module.exports = { listar, obtener, actualizar, eliminar };

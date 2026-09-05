@@ -10,6 +10,9 @@ export default function Catalogo() {
   const [accesorios, setAccesorios] = useState([]);
   const [categorias, setCategorias] = useState([]);
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState('todas');
+  const [busqueda, setBusqueda] = useState('');
+  const [paginaActual, setPaginaActual] = useState(1);
+  const POR_PAGINA = 8;
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState('');
   const { usuario, logout } = useAuth();
@@ -33,14 +36,32 @@ export default function Catalogo() {
     cargarDatos();
   }, []);
 
-  const accesoriosFiltrados = categoriaSeleccionada === 'todas'
-    ? accesorios
-    : accesorios.filter((a) => a.id_categoria === categoriaSeleccionada);
+  useEffect(() => {
+    setPaginaActual(1);
+  }, [categoriaSeleccionada, busqueda]);
+
+  const accesoriosFiltrados = accesorios
+    .filter((a) => categoriaSeleccionada === 'todas' || a.id_categoria === categoriaSeleccionada)
+    .filter((a) => {
+      const texto = busqueda.trim().toLowerCase();
+      if (!texto) return true;
+      return (
+        a.acc_nombre.toLowerCase().includes(texto) ||
+        a.acc_descripcion?.toLowerCase().includes(texto) ||
+        a.codigo_sku?.toLowerCase().includes(texto)
+      );
+    });
+
+  const totalPaginas = Math.max(1, Math.ceil(accesoriosFiltrados.length / POR_PAGINA));
+  const accesoriosPagina = accesoriosFiltrados.slice(
+    (paginaActual - 1) * POR_PAGINA,
+    paginaActual * POR_PAGINA
+  );
 
   if (cargando) return <p className="catalogo__estado">Cargando catálogo...</p>;
   if (error) return <p className="catalogo__estado catalogo__estado--error">{error}</p>;
 
-    return (
+  return (
     <>
       <header className="catalogo__header">
         <span className="catalogo__marca">MotoPreview</span>
@@ -50,13 +71,17 @@ export default function Catalogo() {
         {usuario ? (
           <div className="catalogo__sesion">
             <span>{usuario.usu_nombre}</span>
+            <Link to="/mis-cotizaciones" className="catalogo__enlace-admin">Mis cotizaciones</Link>
             {(usuario.id_rol === '11111111-0000-0000-0000-000000000001' || usuario.id_rol === '11111111-0000-0000-0000-000000000002') && (
               <Link to="/admin" className="catalogo__enlace-admin">Panel admin</Link>
             )}
             <button onClick={logout} className="catalogo__logout">Salir</button>
           </div>
         ) : (
-          <Link to="/login" className="catalogo__enlace-login">Iniciar sesión</Link>
+          <div className="catalogo__sesion">
+            <Link to="/login" className="catalogo__enlace-login">Iniciar sesión</Link>
+            <Link to="/registro" className="catalogo__enlace-registro">Crear cuenta</Link>
+          </div>
         )}
       </header>
 
@@ -92,12 +117,46 @@ export default function Catalogo() {
         </aside>
 
         <main className="catalogo__contenido">
-          <h1 className="catalogo__titulo">Catálogo de accesorios</h1>
-          <div className="catalogo__grid">
-            {accesoriosFiltrados.map((accesorio) => (
-              <AccesorioCard key={accesorio.id_accesorio} accesorio={accesorio} />
-            ))}
+          <div className="catalogo__contenido-header">
+            <h1 className="catalogo__titulo">Catálogo de accesorios</h1>
+            <input
+              type="text"
+              className="catalogo__buscador"
+              placeholder="Buscar por nombre, SKU o descripción..."
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+            />
           </div>
+
+          {accesoriosFiltrados.length === 0 ? (
+            <p className="catalogo__sin-resultados">No encontramos accesorios que coincidan con tu búsqueda.</p>
+          ) : (
+            <>
+              <div className="catalogo__grid">
+                {accesoriosPagina.map((accesorio) => (
+                  <AccesorioCard key={accesorio.id_accesorio} accesorio={accesorio} />
+                ))}
+              </div>
+
+              {totalPaginas > 1 && (
+                <div className="catalogo__paginacion">
+                  <button
+                    disabled={paginaActual === 1}
+                    onClick={() => setPaginaActual((p) => p - 1)}
+                  >
+                    ← Anterior
+                  </button>
+                  <span>Página {paginaActual} de {totalPaginas}</span>
+                  <button
+                    disabled={paginaActual === totalPaginas}
+                    onClick={() => setPaginaActual((p) => p + 1)}
+                  >
+                    Siguiente →
+                  </button>
+                </div>
+              )}
+            </>
+          )}
         </main>
       </div>
     </>

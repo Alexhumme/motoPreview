@@ -1,0 +1,153 @@
+.tienda-admin__titulo {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 26px;
+  color: #0F2A3D;
+  margin-bottom: 20px;
+}
+
+.tienda-admin__plan {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  background: #0F2A3D;
+  border-radius: 8px;
+  padding: 20px 24px;
+  margin-bottom: 24px;
+}
+
+.tienda-admin__plan > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tienda-admin__plan-etiqueta {
+  font-size: 11px;
+  color: #B8C6CC;
+}
+
+.tienda-admin__plan-nombre {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: 18px;
+  color: #7FCDBB;
+}
+
+.tienda-admin__plan-valor {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: 16px;
+  color: #FFFFFF;
+}
+
+.tienda-admin__datos {
+  background: #FFFFFF;
+  border: 1px solid #E1E8E7;
+  border-radius: 8px;
+  padding: 20px 24px;
+}
+
+.tienda-admin__datos-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.tienda-admin__datos-header h2 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 16px;
+  color: #0F2A3D;
+}
+
+.tienda-admin__boton-editar {
+  background: transparent;
+  border: 1px solid #E1E8E7;
+  border-radius: 4px;
+  padding: 6px 14px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.tienda-admin__lista-datos {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tienda-admin__lista-datos > div {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  padding: 8px 0;
+  border-bottom: 1px solid #F0F3F2;
+}
+
+.tienda-admin__lista-datos span {
+  color: #5B6B6A;
+}
+
+.tienda-admin__lista-datos strong {
+  color: #1C2B2E;
+}
+
+.tienda-admin__form {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tienda-admin__form label {
+  font-size: 12px;
+  color: #5B6B6A;
+  margin-top: 10px;
+}
+
+.tienda-admin__form input {
+  padding: 8px 10px;
+  border: 1px solid #E1E8E7;
+  border-radius: 4px;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+}
+
+.tienda-admin__error {
+  color: #B3453D;
+  font-size: 13px;
+  margin-top: 8px;
+}
+
+.tienda-admin__exito {
+  color: #0E6E6E;
+  font-size: 13px;
+  margin-top: 12px;
+}
+
+.tienda-admin__form-botones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.tienda-admin__boton-cancelar {
+  background: transparent;
+  border: 1px solid #E1E8E7;
+  border-radius: 4px;
+  padding: 8px 14px;
+  cursor: pointer;
+}
+
+.tienda-admin__boton-guardar {
+  background: #0E6E6E;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 14px;
+  cursor: pointer;
+}
+
+.tienda-admin__boton-guardar:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

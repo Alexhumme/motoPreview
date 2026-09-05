@@ -1,0 +1,124 @@
+.mis-cotizaciones {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 24px 20px 60px 20px;
+  font-family: 'Inter', sans-serif;
+}
+
+.mis-cotizaciones__volver {
+  display: inline-block;
+  color: #0E6E6E;
+  text-decoration: none;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+
+.mis-cotizaciones__titulo {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 26px;
+  color: #0F2A3D;
+  margin-bottom: 20px;
+}
+
+.mis-cotizaciones__vacio {
+  color: #5B6B6A;
+  font-size: 14px;
+}
+
+.mis-cotizaciones__vacio a {
+  color: #0E6E6E;
+  font-weight: 600;
+}
+
+.mis-cotizaciones__lista {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mis-cotizaciones__tarjeta {
+  background: #FFFFFF;
+  border: 1px solid #E1E8E7;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.mis-cotizaciones__resumen {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  cursor: pointer;
+}
+
+.mis-cotizaciones__resumen:hover {
+  background: #F9FBFA;
+}
+
+.mis-cotizaciones__moto {
+  display: block;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+  color: #0F2A3D;
+}
+
+.mis-cotizaciones__fecha {
+  display: block;
+  font-size: 12px;
+  color: #5B6B6A;
+  margin-top: 2px;
+}
+
+.mis-cotizaciones__derecha {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.mis-cotizaciones__total {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+  color: #0F2A3D;
+}
+
+.mis-cotizaciones__estado-badge {
+  padding: 4px 10px;
+  border-radius: 3px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.mis-cotizaciones__estado-badge--pendiente { background: #FDF3DC; color: #A8730B; }
+.mis-cotizaciones__estado-badge--aprobada { background: #E4F5F1; color: #0E6E6E; }
+.mis-cotizaciones__estado-badge--rechazada { background: #FBEAEA; color: #B3453D; }
+.mis-cotizaciones__estado-badge--completada { background: #E6E9F5; color: #4A4FA8; }
+
+.mis-cotizaciones__detalle {
+  padding: 0 20px 16px 20px;
+  border-top: 1px solid #F0F3F2;
+}
+
+.mis-cotizaciones__items {
+  list-style: none;
+  padding: 12px 0 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  color: #1C2B2E;
+}
+
+.mis-cotizaciones__observaciones {
+  font-size: 13px;
+  color: #5B6B6A;
+  font-style: italic;
+  margin-top: 10px;
+}
+
+.mis-cotizaciones__estado {
+  text-align: center;
+  padding: 60px;
+  color: #5B6B6A;
+}

@@ -5,6 +5,7 @@ const { verificarLimiteProductos } = require('./tiendaController');
 async function listar(req, res) {
   try {
     const inventario = await prisma.inventario.findMany({
+      where: { id_tienda: req.usuario.id_tienda },
       include: { accesorio: true, tienda: true },
     });
     res.json(inventario);
@@ -22,6 +23,9 @@ async function obtener(req, res) {
       include: { accesorio: true, tienda: true },
     });
     if (!item) return res.status(404).json({ error: 'Registro de inventario no encontrado' });
+    if (item.id_tienda !== req.usuario.id_tienda) {
+      return res.status(403).json({ error: 'No tienes acceso a este registro' });
+    }
     res.json(item);
   } catch (error) {
     console.error(error);
@@ -29,12 +33,13 @@ async function obtener(req, res) {
   }
 }
 
-// Crear el registro de inventario inicial para un accesorio en una tienda
 async function crear(req, res) {
   try {
-    const { id_tienda, id_accesorio, stock_actual, stock_minimo } = req.body;
-    if (!id_tienda || !id_accesorio) {
-      return res.status(400).json({ error: 'id_tienda e id_accesorio son obligatorios' });
+    const { id_accesorio, stock_actual, stock_minimo } = req.body;
+    const id_tienda = req.usuario.id_tienda; // nunca confiar en id_tienda del body
+
+    if (!id_accesorio) {
+      return res.status(400).json({ error: 'id_accesorio es obligatorio' });
     }
 
     const limite = await verificarLimiteProductos(id_tienda);
@@ -71,6 +76,10 @@ async function registrarMovimiento(req, res) {
     const inventarioActual = await prisma.inventario.findUnique({ where: { id_inventario } });
     if (!inventarioActual) {
       return res.status(404).json({ error: 'Registro de inventario no encontrado' });
+    }
+
+    if (inventarioActual.id_tienda !== req.usuario.id_tienda) {
+       return res.status(403).json({ error: 'No tienes acceso a este registro de inventario' });
     }
 
     const tipoMov = await prisma.tipo_movimiento.findUnique({ where: { id_tipomov } });
