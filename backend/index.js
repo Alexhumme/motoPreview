@@ -19,6 +19,7 @@ const cotizacionRoutes = require('./routes/cotizacionRoutes');
 const compatibilidadRoutes = require('./routes/compatibilidadRoutes');
 
 const app = express();
+app.set('trust proxy', 1);
 
 app.use(cors({
   origin: [
