@@ -85,6 +85,25 @@ return (
     <div className="configurador__vista-placeholder">Foto pendiente</div>
   </div>
 </div>
+<div className="configurador__vista-moto">
+  {motoActual ? (
+    motoActual.moto_imagen ? (
+      <img src={motoActual.moto_imagen} alt={motoActual.modelo_moto?.modelo_nombre} className="configurador__moto-foto" />
+    ) : (
+      <>
+        <span className="configurador__moto-nombre">
+          {motoActual.modelo_moto?.marca_moto?.marca_nombre} {motoActual.modelo_moto?.modelo_nombre}
+        </span>
+        <span className="configurador__moto-detalle">
+          {motoActual.modelo_moto?.cilindraje} · {motoActual.moto_anio} · {motoActual.moto_version}
+        </span>
+        <span className="configurador__moto-aviso">Foto pendiente de cargar</span>
+      </>
+    )
+  ) : (
+    <span className="configurador__moto-aviso">Cargando...</span>
+  )}
+</div>
 <div className="configurador__vista-grande">
   <span className="configurador__vista-etiqueta">Vista previa</span>
   {motoActual ? (

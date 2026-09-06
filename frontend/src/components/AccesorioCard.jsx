@@ -13,9 +13,13 @@ export default function AccesorioCard({ accesorio }) {
 
   return (
     <article className="accesorio-card">
-      <Link to={`/visualizador/${accesorio.id_accesorio}`} className="accesorio-card__imagen">
-        <span className="accesorio-card__sku">{accesorio.codigo_sku}</span>
-      </Link>
+<Link to={`/visualizador/${accesorio.id_accesorio}`} className="accesorio-card__imagen">
+  {accesorio.imagen ? (
+    <img src={accesorio.imagen} alt={accesorio.acc_nombre} className="accesorio-card__foto" />
+  ) : (
+    <span className="accesorio-card__sku">{accesorio.codigo_sku}</span>
+  )}
+</Link>
       <div className="accesorio-card__cuerpo">
         <span className="accesorio-card__categoria">
           {accesorio.categoria_accesorio?.cat_nombre}
