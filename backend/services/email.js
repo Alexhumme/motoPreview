@@ -1,18 +1,13 @@
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
+const resend = new Resend(process.env.RESEND_API_KEY);
 
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
+const REMITENTE = 'MotoPreview <onboarding@resend.dev>'; // dominio de prueba gratis de Resend
 
 async function enviarCorreoRecuperacion(destinatario, nombre, token) {
   const enlace = `${process.env.FRONTEND_URL}/restablecer/${token}`;
 
-  await transporter.sendMail({
-    from: `"MotoPreview" <${process.env.EMAIL_USER}>`,
+  await resend.emails.send({
+    from: REMITENTE,
     to: destinatario,
     subject: 'Restablece tu contraseña — MotoPreview',
     html: `
@@ -28,22 +23,24 @@ async function enviarCorreoRecuperacion(destinatario, nombre, token) {
       </div>
     `,
   });
-}const MENSAJES_ESTADO = {
-  aprobada: { titulo: '¡Tu cotización fue aprobada! 🎉', color: '#0E6E6E', texto: 'La tienda aprobó tu cotización. Pueden contactarte pronto para coordinar la entrega o instalación.' },
+}
+
+const MENSAJES_ESTADO = {
+  aprobada: { titulo: '¡Tu cotización fue aprobada!', color: '#0E6E6E', texto: 'La tienda aprobó tu cotización. Pueden contactarte pronto para coordinar la entrega o instalación.' },
   rechazada: { titulo: 'Tu cotización fue rechazada', color: '#B3453D', texto: 'La tienda no pudo aprobar tu cotización esta vez. Puedes armar una nueva desde el catálogo si lo deseas.' },
-  completada: { titulo: 'Tu cotización fue completada ✅', color: '#4A4FA8', texto: 'Tu pedido quedó marcado como completado. ¡Gracias por tu compra!' },
+  completada: { titulo: 'Tu cotización fue completada', color: '#4A4FA8', texto: 'Tu pedido quedó marcado como completado. ¡Gracias por tu compra!' },
 };
 
 async function enviarCorreoCambioEstado(destinatario, nombre, coti_estado, total) {
   const info = MENSAJES_ESTADO[coti_estado];
-  if (!info) return; // no notificamos "pendiente", solo cambios relevantes
+  if (!info) return;
 
   const totalFormateado = new Intl.NumberFormat('es-CO', {
     style: 'currency', currency: 'COP', maximumFractionDigits: 0,
   }).format(total);
 
-  await transporter.sendMail({
-    from: `"MotoPreview" <${process.env.EMAIL_USER}>`,
+  await resend.emails.send({
+    from: REMITENTE,
     to: destinatario,
     subject: `${info.titulo} — MotoPreview`,
     html: `
@@ -65,8 +62,8 @@ async function enviarCorreoCambioEstado(destinatario, nombre, coti_estado, total
 async function enviarCorreoVerificacion(destinatario, nombre, token) {
   const enlace = `${process.env.FRONTEND_URL}/verificar/${token}`;
 
-  await transporter.sendMail({
-    from: `"MotoPreview" <${process.env.EMAIL_USER}>`,
+  await resend.emails.send({
+    from: REMITENTE,
     to: destinatario,
     subject: 'Confirma tu correo — MotoPreview',
     html: `
