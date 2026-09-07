@@ -1,7 +1,7 @@
 .cotizaciones__titulo {
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: var(--fuente-titulo);
   font-size: 26px;
-  color: #0F2A3D;
+  color: var(--color-carbon);
   margin-bottom: 20px;
 }
 
@@ -13,7 +13,7 @@
 
 .cotizaciones__tarjeta {
   background: #FFFFFF;
-  border: 1px solid #E1E8E7;
+  border: 1px solid var(--color-borde);
   border-radius: 6px;
   overflow: hidden;
 }
@@ -27,21 +27,28 @@
 }
 
 .cotizaciones__resumen:hover {
-  background: #F9FBFA;
+  background: var(--color-fondo);
 }
 
 .cotizaciones__moto {
   display: block;
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: var(--fuente-titulo);
   font-weight: 700;
   font-size: 15px;
-  color: #0F2A3D;
+  color: var(--color-carbon);
+}
+
+.cotizaciones__cliente {
+  display: block;
+  font-size: 12px;
+  color: var(--color-rojo);
+  margin-top: 2px;
 }
 
 .cotizaciones__fecha {
   display: block;
   font-size: 12px;
-  color: #5B6B6A;
+  color: var(--color-texto-suave);
   margin-top: 2px;
 }
 
@@ -52,42 +59,27 @@
 }
 
 .cotizaciones__total {
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: var(--fuente-titulo);
   font-weight: 700;
   font-size: 15px;
-  color: #0F2A3D;
+  color: var(--color-carbon);
 }
 
-.cotizaciones__estado {
+.cotizaciones__estado-badge {
   padding: 4px 10px;
   border-radius: 3px;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
 }
 
-.cotizaciones__estado--pendiente {
-  background: #FDF3DC;
-  color: #A8730B;
-}
-
-.cotizaciones__estado--aprobada {
-  background: #E4F5F1;
-  color: #0E6E6E;
-}
-
-.cotizaciones__estado--rechazada {
-  background: #FBEAEA;
-  color: #B3453D;
-}
-
-.cotizaciones__estado--completada {
-  background: #E6E9F5;
-  color: #4A4FA8;
-}
+.cotizaciones__estado-badge--pendiente { background: #FFF4E8; color: #B25900; }
+.cotizaciones__estado-badge--aprobada { background: #E8F5E9; color: #2E7D32; }
+.cotizaciones__estado-badge--rechazada { background: #FBEAEA; color: var(--color-rojo-oscuro); }
+.cotizaciones__estado-badge--completada { background: #E6E9F5; color: #4A4FA8; }
 
 .cotizaciones__detalle {
   padding: 0 20px 16px 20px;
-  border-top: 1px solid #F0F3F2;
+  border-top: 1px solid #F0F0F1;
 }
 
 .cotizaciones__items {
@@ -97,12 +89,12 @@
   flex-direction: column;
   gap: 6px;
   font-size: 13px;
-  color: #1C2B2E;
+  color: var(--color-texto);
 }
 
 .cotizaciones__observaciones {
   font-size: 13px;
-  color: #5B6B6A;
+  color: var(--color-texto-suave);
   font-style: italic;
   margin-top: 10px;
 }
@@ -127,19 +119,16 @@
 }
 
 .cotizaciones__boton--aprobar {
-  background: #0E6E6E;
+  background: var(--color-rojo);
   color: #FFFFFF;
+}
+
+.cotizaciones__boton--aprobar:hover {
+  background: var(--color-rojo-oscuro);
 }
 
 .cotizaciones__boton--rechazar {
   background: transparent;
-  border: 1px solid #E8B5AE;
-  color: #B3453D;
-}
-
-.cotizaciones__cliente {
-  display: block;
-  font-size: 12px;
-  color: #0E6E6E;
-  margin-top: 2px;
+  border: 1px solid var(--color-borde);
+  color: var(--color-texto-suave);
 }

@@ -2,9 +2,31 @@
   display: grid;
   grid-template-columns: 1fr 420px;
   min-height: 100vh;
-  font-family: 'Inter', sans-serif;
-  background: #F4F7F6;
-  padding-bottom: 90px; /* espacio para el panel inferior fijo */
+  font-family: var(--fuente-cuerpo);
+  background: var(--color-fondo);
+  padding-bottom: 90px;
+}
+
+.configurador__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--color-carbon);
+  padding: 14px 32px;
+  border-bottom: 3px solid var(--color-rojo);
+}
+
+.configurador__volver {
+  color: var(--color-naranja);
+  text-decoration: none;
+  font-size: 13px;
+}
+
+.configurador__marca {
+  font-family: var(--fuente-titulo);
+  font-weight: 700;
+  color: #FFFFFF;
+  font-size: 16px;
 }
 
 .configurador__izquierda {
@@ -12,16 +34,16 @@
 }
 
 .configurador__titulo {
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: var(--fuente-titulo);
   font-size: 26px;
-  color: #0F2A3D;
+  color: var(--color-carbon);
   margin-bottom: 20px;
 }
 
 .configurador__etiqueta-selector {
   display: block;
   font-size: 12px;
-  color: #5B6B6A;
+  color: var(--color-texto-suave);
   margin-bottom: 6px;
 }
 
@@ -29,15 +51,56 @@
   width: 100%;
   max-width: 320px;
   padding: 10px 12px;
-  border: 1px solid #E1E8E7;
+  border: 1px solid var(--color-borde);
   border-radius: 4px;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--fuente-cuerpo);
   font-size: 14px;
   margin-bottom: 24px;
 }
 
+.configurador__vistas {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.configurador__vista-chica,
+.configurador__vista-grande {
+  background: #FFFFFF;
+  border: 1px solid var(--color-borde);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.configurador__vista-etiqueta {
+  display: block;
+  font-size: 12px;
+  color: var(--color-texto-suave);
+  margin-bottom: 8px;
+}
+
+.configurador__vista-placeholder {
+  background: var(--color-carbon);
+  border-radius: 6px;
+  height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-naranja);
+  font-size: 12px;
+  overflow: hidden;
+}
+
+.configurador__vista-placeholder--grande {
+  height: 280px;
+  flex-direction: column;
+  gap: 4px;
+  color: #FFFFFF;
+}
+
 .configurador__vista-moto {
-  background: linear-gradient(180deg, #0F2A3D 0%, #163B52 100%);
+  background: var(--color-carbon);
   border-radius: 8px;
   min-height: 380px;
   display: flex;
@@ -46,37 +109,46 @@
   justify-content: center;
   gap: 6px;
   color: #FFFFFF;
+  overflow: hidden;
+  position: relative;
+}
+
+.configurador__moto-foto {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 8px;
 }
 
 .configurador__moto-nombre {
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: var(--fuente-titulo);
   font-size: 20px;
   font-weight: 700;
 }
 
 .configurador__moto-detalle {
   font-size: 13px;
-  color: #B8C6CC;
+  color: var(--color-titanio);
 }
 
 .configurador__moto-aviso {
   font-size: 12px;
-  color: #7FCDBB;
+  color: var(--color-naranja);
   margin-top: 12px;
 }
 
 .configurador__derecha {
   background: #FFFFFF;
-  border-left: 1px solid #E1E8E7;
+  border-left: 1px solid var(--color-borde);
   padding: 32px 24px;
   display: flex;
   flex-direction: column;
 }
 
 .configurador__titulo-accesorios {
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: var(--fuente-titulo);
   font-size: 18px;
-  color: #0F2A3D;
+  color: var(--color-carbon);
   margin-bottom: 14px;
 }
 
@@ -88,18 +160,18 @@
 }
 
 .configurador__categoria {
-  border: 1px solid #E1E8E7;
+  border: 1px solid var(--color-borde);
   background: #FFFFFF;
   border-radius: 20px;
   padding: 6px 14px;
   font-size: 12px;
   cursor: pointer;
-  color: #5B6B6A;
+  color: var(--color-texto-suave);
 }
 
 .configurador__categoria--activa {
-  background: #0F2A3D;
-  border-color: #0F2A3D;
+  background: var(--color-carbon);
+  border-color: var(--color-carbon);
   color: #FFFFFF;
 }
 
@@ -111,7 +183,7 @@
 }
 
 .configurador__vacio {
-  color: #5B6B6A;
+  color: var(--color-texto-suave);
   font-size: 13px;
 }
 
@@ -119,7 +191,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  border: 1px solid #E1E8E7;
+  border: 1px solid var(--color-borde);
   border-radius: 6px;
   padding: 10px;
 }
@@ -128,8 +200,8 @@
   width: 56px;
   height: 56px;
   flex-shrink: 0;
-  background: #0F2A3D;
-  color: #7FCDBB;
+  background: var(--color-carbon);
+  color: var(--color-naranja);
   border-radius: 4px;
   display: flex;
   align-items: center;
@@ -137,6 +209,7 @@
   font-size: 10px;
   text-align: center;
   padding: 4px;
+  overflow: hidden;
 }
 
 .configurador__item-info {
@@ -149,29 +222,30 @@
 .configurador__item-nombre {
   font-size: 13px;
   font-weight: 600;
-  color: #1C2B2E;
+  color: var(--color-texto);
 }
 
 .configurador__item-marca {
   font-size: 11px;
-  color: #5B6B6A;
+  color: var(--color-texto-suave);
 }
 
 .configurador__item-precio {
   font-size: 13px;
   font-weight: 700;
-  color: #0F2A3D;
+  color: var(--color-carbon);
   margin-top: 2px;
 }
 
 .configurador__item-compatible {
   font-size: 11px;
-  color: #0E6E6E;
+  color: #2E7D32;
+  font-weight: 600;
 }
 
 .configurador__item-boton {
   background: #FFFFFF;
-  border: 1px solid #E1E8E7;
+  border: 1px solid var(--color-borde);
   border-radius: 4px;
   padding: 6px 12px;
   font-size: 12px;
@@ -180,9 +254,9 @@
 }
 
 .configurador__item-boton--agregado {
-  background: #0E6E6E;
+  background: var(--color-rojo);
   color: #FFFFFF;
-  border-color: #0E6E6E;
+  border-color: var(--color-rojo);
 }
 
 .configurador__panel-inferior {
@@ -191,8 +265,8 @@
   left: 0;
   right: 0;
   background: #FFFFFF;
-  border-top: 1px solid #E1E8E7;
-  box-shadow: 0 -4px 12px rgba(0,0,0,0.05);
+  border-top: 1px solid var(--color-borde);
+  box-shadow: 0 -4px 12px rgba(0,0,0,0.08);
   padding: 14px 40px;
   display: flex;
   justify-content: space-between;
@@ -208,10 +282,10 @@
 }
 
 .configurador__panel-titulo {
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: var(--fuente-titulo);
   font-weight: 700;
   font-size: 13px;
-  color: #0F2A3D;
+  color: var(--color-carbon);
   flex-shrink: 0;
 }
 
@@ -220,14 +294,14 @@
   align-items: center;
   gap: 8px;
   font-size: 12px;
-  color: #5B6B6A;
+  color: var(--color-texto-suave);
   white-space: nowrap;
 }
 
 .configurador__panel-item button {
   background: none;
   border: none;
-  color: #B3453D;
+  color: var(--color-rojo);
   cursor: pointer;
 }
 
@@ -239,79 +313,22 @@
 }
 
 .configurador__panel-subtotal {
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: var(--fuente-titulo);
   font-weight: 700;
-  color: #0F2A3D;
+  color: var(--color-carbon);
 }
 
 .configurador__panel-boton {
-  background: #0E6E6E;
+  background: var(--color-rojo);
   color: #FFFFFF;
   border: none;
   border-radius: 4px;
   padding: 10px 20px;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
 }
 
-.configurador__header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: #0F2A3D;
-  padding: 14px 32px;
-}
-
-.configurador__volver {
-  color: #7FCDBB;
-  text-decoration: none;
-  font-size: 13px;
-}
-
-.configurador__marca {
-  font-family: 'Space Grotesk', sans-serif;
-  font-weight: 700;
-  color: #FFFFFF;
-  font-size: 16px;
-}
-
-.configurador__vistas {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.configurador__vista-chica,
-.configurador__vista-grande {
-  background: #FFFFFF;
-  border: 1px solid #E1E8E7;
-  border-radius: 8px;
-  padding: 12px;
-}
-
-.configurador__vista-etiqueta {
-  display: block;
-  font-size: 12px;
-  color: #5B6B6A;
-  margin-bottom: 8px;
-}
-
-.configurador__vista-placeholder {
-  background: linear-gradient(180deg, #0F2A3D 0%, #163B52 100%);
-  border-radius: 6px;
-  height: 140px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #7FCDBB;
-  font-size: 12px;
-}
-
-.configurador__vista-placeholder--grande {
-  height: 280px;
-  flex-direction: column;
-  gap: 4px;
-  color: #FFFFFF;
+.configurador__panel-boton:hover {
+  background: var(--color-rojo-oscuro);
 }

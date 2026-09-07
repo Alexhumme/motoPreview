@@ -1,7 +1,7 @@
 .tienda-admin__titulo {
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: var(--fuente-titulo);
   font-size: 26px;
-  color: #0F2A3D;
+  color: var(--color-carbon);
   margin-bottom: 20px;
 }
 
@@ -9,10 +9,11 @@
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 12px;
-  background: #0F2A3D;
+  background: var(--color-carbon);
   border-radius: 8px;
   padding: 20px 24px;
   margin-bottom: 24px;
+  border-left: 4px solid var(--color-rojo);
 }
 
 .tienda-admin__plan > div {
@@ -23,18 +24,18 @@
 
 .tienda-admin__plan-etiqueta {
   font-size: 11px;
-  color: #B8C6CC;
+  color: var(--color-titanio);
 }
 
 .tienda-admin__plan-nombre {
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: var(--fuente-titulo);
   font-weight: 700;
   font-size: 18px;
-  color: #7FCDBB;
+  color: var(--color-naranja);
 }
 
 .tienda-admin__plan-valor {
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: var(--fuente-titulo);
   font-weight: 700;
   font-size: 16px;
   color: #FFFFFF;
@@ -42,7 +43,7 @@
 
 .tienda-admin__datos {
   background: #FFFFFF;
-  border: 1px solid #E1E8E7;
+  border: 1px solid var(--color-borde);
   border-radius: 8px;
   padding: 20px 24px;
 }
@@ -55,14 +56,14 @@
 }
 
 .tienda-admin__datos-header h2 {
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: var(--fuente-titulo);
   font-size: 16px;
-  color: #0F2A3D;
+  color: var(--color-carbon);
 }
 
 .tienda-admin__boton-editar {
   background: transparent;
-  border: 1px solid #E1E8E7;
+  border: 1px solid var(--color-borde);
   border-radius: 4px;
   padding: 6px 14px;
   font-size: 12px;
@@ -80,15 +81,15 @@
   justify-content: space-between;
   font-size: 14px;
   padding: 8px 0;
-  border-bottom: 1px solid #F0F3F2;
+  border-bottom: 1px solid #F0F0F1;
 }
 
 .tienda-admin__lista-datos span {
-  color: #5B6B6A;
+  color: var(--color-texto-suave);
 }
 
 .tienda-admin__lista-datos strong {
-  color: #1C2B2E;
+  color: var(--color-texto);
 }
 
 .tienda-admin__form {
@@ -99,26 +100,26 @@
 
 .tienda-admin__form label {
   font-size: 12px;
-  color: #5B6B6A;
+  color: var(--color-texto-suave);
   margin-top: 10px;
 }
 
 .tienda-admin__form input {
   padding: 8px 10px;
-  border: 1px solid #E1E8E7;
+  border: 1px solid var(--color-borde);
   border-radius: 4px;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--fuente-cuerpo);
   font-size: 14px;
 }
 
 .tienda-admin__error {
-  color: #B3453D;
+  color: var(--color-rojo-oscuro);
   font-size: 13px;
   margin-top: 8px;
 }
 
 .tienda-admin__exito {
-  color: #0E6E6E;
+  color: #2E7D32;
   font-size: 13px;
   margin-top: 12px;
 }
@@ -132,19 +133,23 @@
 
 .tienda-admin__boton-cancelar {
   background: transparent;
-  border: 1px solid #E1E8E7;
+  border: 1px solid var(--color-borde);
   border-radius: 4px;
   padding: 8px 14px;
   cursor: pointer;
 }
 
 .tienda-admin__boton-guardar {
-  background: #0E6E6E;
+  background: var(--color-rojo);
   color: #FFFFFF;
   border: none;
   border-radius: 4px;
   padding: 8px 14px;
   cursor: pointer;
+}
+
+.tienda-admin__boton-guardar:hover {
+  background: var(--color-rojo-oscuro);
 }
 
 .tienda-admin__boton-guardar:disabled {

@@ -149,7 +149,13 @@ return (
           )}
           {accesoriosFiltrados.map((acc) => (
             <div key={acc.id_accesorio} className="configurador__item">
-              <div className="configurador__item-imagen">{acc.codigo_sku}</div>
+              <div className="configurador__item-imagen">
+               {acc.imagen ? (
+                   <img src={acc.imagen} alt={acc.acc_nombre} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    acc.codigo_sku
+                )}
+              </div>
               <div className="configurador__item-info">
                 <span className="configurador__item-nombre">{acc.acc_nombre}</span>
                 <span className="configurador__item-marca">{acc.categoria_accesorio?.cat_nombre}</span>

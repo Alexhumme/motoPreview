@@ -1,26 +1,27 @@
 .admin-layout {
   display: flex;
   min-height: 100vh;
-  background: #F4F7F6;
-  font-family: 'Inter', sans-serif;
+  background: var(--color-fondo);
+  font-family: var(--fuente-cuerpo);
 }
 
 .admin-layout__sidebar {
   width: 220px;
   flex-shrink: 0;
-  background: #0F2A3D;
+  background: var(--color-carbon);
   display: flex;
   flex-direction: column;
   padding: 20px 0;
+  border-right: 3px solid var(--color-rojo);
 }
 
 .admin-layout__marca {
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: var(--fuente-titulo);
   font-size: 18px;
   font-weight: 700;
   color: #FFFFFF;
   padding: 0 20px 20px 20px;
-  border-bottom: 1px solid #1E3E52;
+  border-bottom: 1px solid var(--color-carbon-light);
 }
 
 .admin-layout__nav {
@@ -34,36 +35,43 @@
   display: block;
   padding: 10px 12px;
   border-radius: 4px;
-  color: #B8C6CC;
+  color: var(--color-titanio);
   text-decoration: none;
   font-size: 14px;
   margin-bottom: 2px;
 }
 
 .admin-layout__enlace:hover {
-  background: #1E3E52;
+  background: var(--color-carbon-light);
   color: #FFFFFF;
 }
 
 .admin-layout__enlace--activo {
-  background: #0E6E6E;
+  background: var(--color-rojo);
   color: #FFFFFF;
+}
+
+.admin-layout__enlace--catalogo {
+  margin-top: auto;
+  border-top: 1px solid var(--color-carbon-light);
+  padding-top: 14px;
+  color: var(--color-naranja);
 }
 
 .admin-layout__usuario {
   padding: 16px 20px;
-  border-top: 1px solid #1E3E52;
+  border-top: 1px solid var(--color-carbon-light);
   display: flex;
   justify-content: space-between;
   align-items: center;
   font-size: 13px;
-  color: #B8C6CC;
+  color: var(--color-titanio);
 }
 
 .admin-layout__logout {
   background: transparent;
-  border: 1px solid #3A5A6C;
-  color: #B8C6CC;
+  border: 1px solid var(--color-carbon-light);
+  color: var(--color-titanio);
   border-radius: 4px;
   padding: 4px 10px;
   font-size: 12px;
@@ -71,18 +79,11 @@
 }
 
 .admin-layout__logout:hover {
-  border-color: #7FCDBB;
-  color: #7FCDBB;
+  border-color: var(--color-rojo);
+  color: var(--color-rojo);
 }
 
 .admin-layout__contenido {
   flex: 1;
   padding: 32px 40px;
-}
-
-.admin-layout__enlace--catalogo {
-  margin-top: auto;
-  border-top: 1px solid #1E3E52;
-  padding-top: 14px;
-  color: #7FCDBB;
 }
