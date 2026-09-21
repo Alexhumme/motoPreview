@@ -1,0 +1,46 @@
+.no-encontrado {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #F4F7F6;
+  font-family: 'Inter', sans-serif;
+  text-align: center;
+  padding: 20px;
+}
+
+.no-encontrado__codigo {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 96px;
+  font-weight: 700;
+  color: #0F2A3D;
+  line-height: 1;
+}
+
+.no-encontrado__titulo {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 22px;
+  color: #0F2A3D;
+  margin: 8px 0 6px 0;
+}
+
+.no-encontrado__texto {
+  color: #5B6B6A;
+  font-size: 14px;
+  margin-bottom: 28px;
+}
+
+.no-encontrado__boton {
+  background: #0E6E6E;
+  color: #FFFFFF;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+  padding: 11px 24px;
+  border-radius: 6px;
+}
+
+.no-encontrado__boton:hover {
+  background: #0A5555;
+}

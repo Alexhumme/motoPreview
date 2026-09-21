@@ -1,0 +1,89 @@
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  height: 76px;
+  border-bottom: 1px solid var(--line);
+  background: rgba(255,255,255,.92);
+  backdrop-filter: blur(14px);
+}
+.site-header__inner {
+  max-width: 1280px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  gap: 30px;
+  margin: auto;
+  padding: 0 36px;
+}
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--ink);
+  font: 700 18px var(--display);
+  letter-spacing: -.04em;
+}
+.brand > span:last-child > span { color: var(--orange); }
+.brand-mark {
+  width: 31px;
+  height: 31px;
+  display: grid;
+  place-items: center;
+  color: white;
+  background: var(--orange);
+  border-radius: 9px;
+  box-shadow: 0 7px 16px rgba(255,92,46,.24);
+  font: 700 19px var(--display);
+}
+.main-nav { display: flex; align-items: center; gap: 29px; margin-left: auto; }
+.nav-link { position: relative; color: #70777d; font-size: 13px; font-weight: 700; }
+.nav-link:hover, .nav-link--active { color: var(--ink); }
+.nav-link--active::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -29px;
+  width: 16px;
+  height: 3px;
+  border-radius: 4px;
+  background: var(--orange);
+}
+.header-actions { display: flex; align-items: center; gap: 16px; }
+.header-login { color: #626b72; font-size: 13px; font-weight: 700; }
+.header-account { display: flex; align-items: center; gap: 10px; color: #626b72; font-size: 11px; font-weight: 700; }
+.header-account a:first-child { color: var(--ink); }
+.header-account button { padding: 0; color: var(--orange); background: transparent; font-size: 11px; font-weight: 700; }
+.cart-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 800;
+}
+.cart-button:hover { border-color: var(--ink); transform: translateY(-1px); }
+.cart-button b {
+  min-width: 19px;
+  height: 19px;
+  display: grid;
+  place-items: center;
+  padding: 0 5px;
+  border-radius: 99px;
+  color: white;
+  background: var(--orange);
+  font-size: 10px;
+}
+@media (max-width: 720px) {
+  .site-header { height: 66px; }
+  .site-header__inner { padding: 0 18px; gap: 12px; }
+  .main-nav { display: none; }
+  .header-actions { margin-left: auto; gap: 9px; }
+  .header-login { display: none; }
+  .header-account { gap: 6px; }
+  .header-account a:not(:first-child) { display: none; }
+  .cart-button { padding: 9px 10px; }
+  .cart-button > span:nth-child(2) { display: none; }
+}
