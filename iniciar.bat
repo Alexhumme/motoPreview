@@ -69,7 +69,7 @@ if not exist "%FRONT%\.env.local" (
 
 rem --- Arranque (cada servicio en su propia ventana) ---
 echo [BACKEND] Iniciando Django en http://127.0.0.1:8000 ...
-start "MotoPreview - Backend" /d "%BACK%" cmd /k "venv\Scripts\python.exe manage.py runserver 127.0.0.1:8000"
+start "MotoPreview - Backend" /d "%BACK%" cmd /k "venv\Scripts\python.exe manage.py runserver 
 
 echo [FRONTEND] Iniciando Vite en http://localhost:5173 ...
 start "MotoPreview - Frontend" /d "%FRONT%" cmd /k npm run dev
