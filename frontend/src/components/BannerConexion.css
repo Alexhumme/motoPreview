@@ -1,0 +1,31 @@
+.banner-conexion {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: #B3453D;
+  color: #FFFFFF;
+  text-align: center;
+  padding: 10px 16px;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.banner-conexion__punto {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #FFFFFF;
+  animation: banner-conexion-pulso 1.4s infinite;
+}
+
+@keyframes banner-conexion-pulso {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}

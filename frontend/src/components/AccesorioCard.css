@@ -1,0 +1,146 @@
+.accesorio-card {
+  background: #FFFFFF;
+  border: 1px solid var(--color-borde);
+  border-radius: 6px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.accesorio-card:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+}
+
+.accesorio-card__imagen {
+  background: var(--color-carbon);
+  height: 160px;
+  display: block;
+  position: relative;
+  overflow: hidden;
+  text-decoration: none;
+}
+
+.accesorio-card__foto {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.accesorio-card__sku {
+  position: absolute;
+  bottom: 10px;
+  left: 14px;
+  font-family: var(--fuente-cuerpo);
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  color: var(--color-naranja);
+  font-weight: 700;
+}
+
+.accesorio-card__cuerpo {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+.accesorio-card__categoria {
+  font-family: var(--fuente-cuerpo);
+  font-size: 11px;
+  color: var(--color-rojo);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.accesorio-card__nombre {
+  font-family: var(--fuente-titulo);
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--color-carbon);
+  margin: 0;
+}
+
+.accesorio-card__descripcion {
+  font-family: var(--fuente-cuerpo);
+  font-size: 13px;
+  color: var(--color-texto-suave);
+  line-height: 1.4;
+  margin: 0;
+  flex: 1;
+}
+
+.accesorio-card__detalle {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--fuente-cuerpo);
+  font-size: 12px;
+  color: var(--color-texto-suave);
+  margin-top: 4px;
+}
+
+.accesorio-card__estado {
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.accesorio-card__estado--disponible {
+  background: #E8F5E9;
+  color: #2E7D32;
+}
+
+.accesorio-card__estado--agotado {
+  background: #FBEAEA;
+  color: var(--color-rojo-oscuro);
+}
+
+.accesorio-card__estado--descontinuado {
+  background: #F0F0F0;
+  color: #7A7A7A;
+}
+
+.accesorio-card__pie {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-borde);
+}
+
+.accesorio-card__precio {
+  font-family: var(--fuente-titulo);
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--color-carbon);
+}
+
+.accesorio-card__boton {
+  font-family: var(--fuente-cuerpo);
+  font-size: 12px;
+  font-weight: 700;
+  color: #FFFFFF;
+  background: var(--color-rojo);
+  border: none;
+  border-radius: 4px;
+  padding: 8px 14px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.accesorio-card__boton:hover {
+  background: var(--color-rojo-oscuro);
+}
+
+.accesorio-card__boton:disabled {
+  background: var(--color-titanio);
+  cursor: not-allowed;
+}

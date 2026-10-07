@@ -1,0 +1,67 @@
+.visualizador {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 24px 20px;
+  font-family: 'Inter', sans-serif;
+}
+
+.visualizador__volver {
+  display: inline-block;
+  color: #0E6E6E;
+  text-decoration: none;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+
+.visualizador__layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px;
+}
+
+.visualizador__info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.visualizador__categoria {
+  font-size: 13px;
+  color: #0E6E6E;
+  font-weight: 600;
+}
+
+.visualizador__nombre {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 24px;
+  color: #0F2A3D;
+  margin: 0;
+}
+
+.visualizador__descripcion {
+  color: #5B6B6A;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.visualizador__ficha {
+  display: flex;
+  gap: 16px;
+  font-size: 13px;
+  color: #5B6B6A;
+  margin-top: 8px;
+}
+
+.visualizador__precio {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: #0F2A3D;
+  margin-top: 12px;
+}
+
+.visualizador__estado {
+  text-align: center;
+  padding: 60px;
+  color: #5B6B6A;
+}

@@ -1,0 +1,176 @@
+.usuarios-admin__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.usuarios-admin__titulo {
+  font-family: var(--fuente-titulo);
+  font-size: 26px;
+  color: var(--color-carbon);
+}
+
+.usuarios-admin__boton-nuevo {
+  background: var(--color-rojo);
+  color: #FFFFFF;
+  border: none;
+  border-radius: 4px;
+  padding: 9px 16px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.usuarios-admin__boton-nuevo:hover {
+  background: var(--color-rojo-oscuro);
+}
+
+.usuarios-admin__tabla {
+  width: 100%;
+  border-collapse: collapse;
+  background: #FFFFFF;
+  border: 1px solid var(--color-borde);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.usuarios-admin__tabla th {
+  text-align: left;
+  font-size: 12px;
+  color: var(--color-texto-suave);
+  padding: 12px 16px;
+  background: var(--color-fondo);
+  border-bottom: 1px solid var(--color-borde);
+}
+
+.usuarios-admin__tabla td {
+  padding: 12px 16px;
+  font-size: 14px;
+  color: var(--color-texto);
+  border-bottom: 1px solid #F0F0F1;
+}
+
+.usuarios-admin__estado {
+  padding: 3px 10px;
+  border-radius: 3px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.usuarios-admin__estado--activo { background: #E8F5E9; color: #2E7D32; }
+.usuarios-admin__estado--inactivo { background: #F0F0F0; color: #7A7A7A; }
+.usuarios-admin__estado--bloqueado { background: #FBEAEA; color: var(--color-rojo-oscuro); }
+
+.usuarios-admin__acciones {
+  display: flex;
+  gap: 8px;
+}
+
+.usuarios-admin__boton-editar,
+.usuarios-admin__boton-desactivar {
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.usuarios-admin__boton-editar {
+  background: transparent;
+  border: 1px solid var(--color-borde);
+}
+
+.usuarios-admin__boton-desactivar {
+  background: transparent;
+  border: 1px solid #F0C4C0;
+  color: var(--color-rojo-oscuro);
+}
+
+.usuarios-admin__overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(22, 24, 28, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.usuarios-admin__modal {
+  background: #FFFFFF;
+  border-radius: 8px;
+  padding: 24px;
+  width: 380px;
+}
+
+.usuarios-admin__modal h2 {
+  font-family: var(--fuente-titulo);
+  font-size: 18px;
+  color: var(--color-carbon);
+  margin-bottom: 12px;
+}
+
+.usuarios-admin__modal form {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.usuarios-admin__modal label {
+  font-size: 12px;
+  color: var(--color-texto-suave);
+  margin-top: 10px;
+}
+
+.usuarios-admin__modal input,
+.usuarios-admin__modal select {
+  padding: 8px 10px;
+  border: 1px solid var(--color-borde);
+  border-radius: 4px;
+  font-family: var(--fuente-cuerpo);
+  font-size: 14px;
+  width: 100%;
+}
+
+.usuarios-admin__modal input:disabled {
+  background: var(--color-fondo);
+  color: var(--color-texto-suave);
+}
+
+.usuarios-admin__error {
+  color: var(--color-rojo-oscuro);
+  font-size: 13px;
+  margin-top: 8px;
+}
+
+.usuarios-admin__modal-botones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.usuarios-admin__boton-cancelar {
+  background: transparent;
+  border: 1px solid var(--color-borde);
+  border-radius: 4px;
+  padding: 8px 14px;
+  cursor: pointer;
+}
+
+.usuarios-admin__boton-guardar {
+  background: var(--color-rojo);
+  color: #FFFFFF;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 14px;
+  cursor: pointer;
+}
+
+.usuarios-admin__boton-guardar:hover {
+  background: var(--color-rojo-oscuro);
+}
+
+.usuarios-admin__boton-guardar:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

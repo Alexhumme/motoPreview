@@ -1,0 +1,134 @@
+.cotizaciones__titulo {
+  font-family: var(--fuente-titulo);
+  font-size: 26px;
+  color: var(--color-carbon);
+  margin-bottom: 20px;
+}
+
+.cotizaciones__lista {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cotizaciones__tarjeta {
+  background: #FFFFFF;
+  border: 1px solid var(--color-borde);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.cotizaciones__resumen {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  cursor: pointer;
+}
+
+.cotizaciones__resumen:hover {
+  background: var(--color-fondo);
+}
+
+.cotizaciones__moto {
+  display: block;
+  font-family: var(--fuente-titulo);
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--color-carbon);
+}
+
+.cotizaciones__cliente {
+  display: block;
+  font-size: 12px;
+  color: var(--color-rojo);
+  margin-top: 2px;
+}
+
+.cotizaciones__fecha {
+  display: block;
+  font-size: 12px;
+  color: var(--color-texto-suave);
+  margin-top: 2px;
+}
+
+.cotizaciones__derecha {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.cotizaciones__total {
+  font-family: var(--fuente-titulo);
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--color-carbon);
+}
+
+.cotizaciones__estado-badge {
+  padding: 4px 10px;
+  border-radius: 3px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.cotizaciones__estado-badge--pendiente { background: #FFF4E8; color: #B25900; }
+.cotizaciones__estado-badge--aprobada { background: #E8F5E9; color: #2E7D32; }
+.cotizaciones__estado-badge--rechazada { background: #FBEAEA; color: var(--color-rojo-oscuro); }
+.cotizaciones__estado-badge--completada { background: #E6E9F5; color: #4A4FA8; }
+
+.cotizaciones__detalle {
+  padding: 0 20px 16px 20px;
+  border-top: 1px solid #F0F0F1;
+}
+
+.cotizaciones__items {
+  list-style: none;
+  padding: 12px 0 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--color-texto);
+}
+
+.cotizaciones__observaciones {
+  font-size: 13px;
+  color: var(--color-texto-suave);
+  font-style: italic;
+  margin-top: 10px;
+}
+
+.cotizaciones__acciones {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.cotizaciones__boton {
+  border: none;
+  border-radius: 4px;
+  padding: 7px 14px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.cotizaciones__boton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.cotizaciones__boton--aprobar {
+  background: var(--color-rojo);
+  color: #FFFFFF;
+}
+
+.cotizaciones__boton--aprobar:hover {
+  background: var(--color-rojo-oscuro);
+}
+
+.cotizaciones__boton--rechazar {
+  background: transparent;
+  border: 1px solid var(--color-borde);
+  color: var(--color-texto-suave);
+}
