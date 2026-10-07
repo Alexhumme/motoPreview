@@ -48,9 +48,6 @@ def parse_accept_language(header):
     return sorted(candidates)[0][2] if candidates else None
 
 
-def wants_html(request):
-    return "text/html" in request.headers.get("Accept", "")
-
 
 def resolve_language(request):
     explicit = normalize(request.GET.get("lang"))
@@ -59,88 +56,8 @@ def resolve_language(request):
     return (
         normalize(request.headers.get("X-Language"))
         or normalize(request.COOKIES.get(COOKIE_NAME))
-        or (parse_accept_language(request.headers.get("Accept-Language")) if wants_html(request) else None)
         or DEFAULT_LANGUAGE
     )
-
-
-# --------------------------------------------------------------------------
-# Textos de las páginas del backend (portada y tablas)
-# --------------------------------------------------------------------------
-UI = {
-    "es": {
-        "status_ok": "API en funcionamiento",
-        "tagline": "Backend Django REST para el catálogo y la configuración de accesorios de motocicletas.",
-        "home": "Inicio",
-        "health": "Estado del servicio",
-        "accesorios": "Accesorios",
-        "categorias": "Categorías",
-        "marcas": "Marcas",
-        "modelos-moto": "Modelos de moto",
-        "motos": "Motos",
-        "compatibilidad": "Compatibilidad",
-        "inventario": "Inventario",
-        "cotizaciones": "Cotizaciones",
-        "tiendas": "Tiendas",
-        "modelos-3d": "Modelos 3D",
-        "roles": "Roles",
-        "usuarios": "Usuarios",
-        "search": "Buscar en la tabla…",
-        "view_json": "Ver JSON",
-        "records": "registros",
-        "of": "de",
-        "no_records": "No hay registros para mostrar.",
-        "error": "Error",
-        "yes": "Sí",
-        "no": "No",
-        "language": "Idioma",
-    },
-    "en": {
-        "status_ok": "API up and running",
-        "tagline": "Django REST backend for the motorcycle accessories catalog and configurator.",
-        "home": "Home",
-        "health": "Service status",
-        "accesorios": "Accessories",
-        "categorias": "Categories",
-        "marcas": "Brands",
-        "modelos-moto": "Motorcycle models",
-        "motos": "Motorcycles",
-        "compatibilidad": "Compatibility",
-        "inventario": "Inventory",
-        "cotizaciones": "Quotes",
-        "tiendas": "Stores",
-        "modelos-3d": "3D models",
-        "roles": "Roles",
-        "usuarios": "Users",
-        "search": "Search the table…",
-        "view_json": "View JSON",
-        "records": "records",
-        "of": "of",
-        "no_records": "There are no records to show.",
-        "error": "Error",
-        "yes": "Yes",
-        "no": "No",
-        "language": "Language",
-    },
-}
-
-# Rutas que aparecen en el menú superior y en la portada.
-NAV_KEYS = [
-    ("/api/accesorios", "accesorios"),
-    ("/api/categorias", "categorias"),
-    ("/api/marcas", "marcas"),
-    ("/api/modelos-moto", "modelos-moto"),
-    ("/api/motos", "motos"),
-    ("/api/compatibilidad", "compatibilidad"),
-    ("/api/inventario", "inventario"),
-    ("/api/cotizaciones", "cotizaciones"),
-    ("/api/tiendas", "tiendas"),
-    ("/api/modelos-3d", "modelos-3d"),
-]
-
-
-def ui(lang):
-    return UI.get(lang, UI[DEFAULT_LANGUAGE])
 
 
 # --------------------------------------------------------------------------

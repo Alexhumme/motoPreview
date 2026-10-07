@@ -20,7 +20,11 @@ from rest_framework.views import APIView
 from rest_framework.decorators import api_view, permission_classes
 
 from . import i18n
-from .pages import render_landing
+def root(request):
+    lang = getattr(request, "lang", i18n.DEFAULT_LANGUAGE)
+    return JsonResponse(
+        {"mensaje": i18n.translate_text("API de MotoPreview con Django funcionando.", lang)}
+    )
 from .models import (
     Accessory,
     AccessoryCategory,
@@ -163,8 +167,6 @@ def inventory_status(stock, minimum):
 
 
 def root(request):
-    if i18n.wants_html(request):
-        return render_landing(request)
     lang = getattr(request, "lang", i18n.DEFAULT_LANGUAGE)
     return JsonResponse(
         {"mensaje": i18n.translate_text("API de MotoPreview con Django funcionando.", lang)}

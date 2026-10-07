@@ -6,8 +6,6 @@ from django.test import SimpleTestCase, override_settings
 
 from . import i18n
 
-BROWSER = "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
-
 
 class TranslationTests(SimpleTestCase):
     def test_exact_message(self):
@@ -68,21 +66,25 @@ class LanguageSelectionTests(SimpleTestCase):
         )
         self.assertEqual(response["Content-Language"], "es")
 
-    def test_html_pages_follow_accept_language(self):
-        response = self.client.get("/", HTTP_ACCEPT=BROWSER, HTTP_ACCEPT_LANGUAGE="en-US,en;q=0.9")
-        self.assertContains(response, "API up and running")
+    def test_browser_request_returns_json(self):
+        # Sin diseño HTML: un navegador también recibe JSON.
+        response = self.client.get(
+            "/", HTTP_ACCEPT="text/html,application/xhtml+xml,*/*;q=0.8"
+        )
+        self.assertEqual(response["Content-Type"], "application/json")
+        self.assertIn("mensaje", response.json())
 
     def test_cookie_remembers_choice(self):
-        first = self.client.get("/?lang=en", HTTP_ACCEPT=BROWSER)
+        first = self.client.get("/?lang=en", HTTP_ACCEPT="*/*")
         self.assertEqual(first.cookies["mp_lang"].value, "en")
-        second = self.client.get("/", HTTP_ACCEPT=BROWSER)
-        self.assertContains(second, "API up and running")
-        back = self.client.get("/?lang=es", HTTP_ACCEPT=BROWSER)
-        self.assertContains(back, "API en funcionamiento")
+        second = self.client.get("/", HTTP_ACCEPT="*/*")
+        self.assertEqual(second.json()["mensaje"], "MotoPreview API running on Django.")
+        back = self.client.get("/?lang=es", HTTP_ACCEPT="*/*")
+        self.assertEqual(back.json()["mensaje"], "API de MotoPreview con Django funcionando.")
 
     def test_unsupported_language_falls_back(self):
-        response = self.client.get("/?lang=xx", HTTP_ACCEPT=BROWSER)
-        self.assertContains(response, "API en funcionamiento")
+        response = self.client.get("/?lang=xx", HTTP_ACCEPT="*/*")
+        self.assertEqual(response.json()["mensaje"], "API de MotoPreview con Django funcionando.")
 
     def test_root_json_is_translated(self):
         self.assertEqual(
@@ -90,38 +92,4 @@ class LanguageSelectionTests(SimpleTestCase):
             "MotoPreview API running on Django.",
         )
 
-    def test_table_page_in_both_languages(self):
-        es = self.client.get("/api/accesorios", HTTP_ACCEPT=BROWSER)
-        self.assertEqual(es.status_code, 503)
-        self.assertContains(es, "Falta configurar", status_code=503)
-        en = self.client.get("/api/accesorios?lang=en", HTTP_ACCEPT=BROWSER)
-        self.assertContains(en, "must be set", status_code=503)
-        self.assertContains(en, "Accessories", status_code=503)
 
-    def test_language_switch_links_keep_the_path(self):
-        response = self.client.get("/api/accesorios", HTTP_ACCEPT=BROWSER)
-        self.assertContains(response, 'href="/api/accesorios?lang=en"', status_code=503)
-
-
-
-class RendererTests(SimpleTestCase):
-    def render(self, data, lang="es", path="/api/accesorios"):
-        from django.test import RequestFactory
-
-        from api.renderers import HTMLTableRenderer
-
-        request = RequestFactory().get(path)
-        request.lang = lang
-        return HTMLTableRenderer().render(data, renderer_context={"request": request}).decode()
-
-    def test_html_is_escaped(self):
-        page = self.render([{"nombre": "<script>alert(1)</script>"}])
-        self.assertNotIn("<script>alert(1)</script>", page)
-        self.assertIn("&lt;script&gt;", page)
-
-    def test_table_labels_follow_language(self):
-        data = [{"activo": True, "x": None}]
-        self.assertIn("Sí", self.render(data, "es"))
-        self.assertIn("Yes", self.render(data, "en"))
-        self.assertIn("No hay registros", self.render([], "es"))
-        self.assertIn("no records", self.render([], "en"))

@@ -116,7 +116,6 @@ REST_FRAMEWORK = {
     "EXCEPTION_HANDLER": "api.errors.api_exception_handler",
     "DEFAULT_RENDERER_CLASSES": [
         "api.renderers.TranslatedJSONRenderer",
-        "api.renderers.HTMLTableRenderer",
     ],
 }
 
