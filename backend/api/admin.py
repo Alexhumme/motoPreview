@@ -1,58 +1,103 @@
-"""Admin de Django para inspeccionar y corregir las tablas existentes.
+"""Admin de Django para MotoPreview.
 
-Los modelos son `managed=False`: Django no crea ni migra estas tablas, solo las
-lee/escribe con el ORM. El admin es útil, por ejemplo, para revisar `usuario_rol`
-o corregir un dato puntual. Las altas de usuarios de la aplicación deben hacerse
-con `manage.py asignar_rol` (crea el hash bcrypt correcto).
+OJO: la app usa tablas existentes (managed=False) y login propio por JWT+bcrypt
+(api.models.User / tabla "usuario"). El admin de Django usa su propia tabla
+auth_user: crea un superusuario aparte con createsuperuser. No edites
+password_hash desde aquí (rompe el login JWT del negocio).
 """
-from django.apps import apps
 from django.contrib import admin
-from django.contrib.admin.sites import AlreadyRegistered
-from django.db.models import CompositePrimaryKey
 
-# Credenciales o tokens: nunca se muestran ni se editan desde el admin.
-CAMPOS_OCULTOS = {
-    "User": ["password_hash", "reset_token", "verificacion_token"],
-    "AccessoryToken": ["hash"],
-}
-
-# Tablas de detalle o unión: se consultan y se borran, pero no se dan de alta a mano.
-SIN_ALTA = {
-    "User",
-    "AccessoryCompatibility",
-    "InventoryMovement",
-    "QuoteDetail",
-    "QuoteStatusHistory",
-}
+from .models import (
+    Accessory,
+    AccessoryCategory,
+    AccessoryCompatibility,
+    AccessoryToken,
+    AccessoryType,
+    Configuration,
+    ConfigurationDetail,
+    Inventory,
+    InventoryMovement,
+    Model3D,
+    Motorcycle,
+    MotorcycleBrand,
+    MotorcycleModel,
+    MovementType,
+    Product,
+    ProductCategory,
+    Quote,
+    QuoteDetail,
+    QuoteStatusHistory,
+    Role,
+    Store,
+    SubscriptionPlan,
+    User,
+)
 
 
 class BaseAdmin(admin.ModelAdmin):
     list_per_page = 50
 
-    def get_exclude(self, request, obj=None):
-        return CAMPOS_OCULTOS.get(self.model.__name__)
 
-    def has_add_permission(self, request):
-        if self.model.__name__ in SIN_ALTA:
-            return False
-        return super().has_add_permission(request)
+@admin.register(Role)
+class RoleAdmin(BaseAdmin):
+    list_display = ("id_rol", "nombre_rol")
 
 
-def registrar_tablas():
-    for model in apps.get_models():
-        if model._meta.app_label != "api" or model._meta.abstract:
-            continue
-        if isinstance(model._meta.pk, CompositePrimaryKey):
-            # El admin no admite PK compuestas (usuario_rol). Se gestiona con
-            # `manage.py asignar_rol`.
-            continue
-        try:
-            admin.site.register(model, BaseAdmin)
-        except AlreadyRegistered:
-            continue
+@admin.register(Store)
+class StoreAdmin(BaseAdmin):
+    list_display = ("id_tienda", "nombre_tienda", "nit", "estado_tienda")
 
 
-registrar_tablas()
+class NegocioUser(User):
+    """Proxy solo para mostrar la tabla negocio 'usuario' con otro nombre.
 
-admin.site.site_header = "MotoPreview"
-admin.site.site_title = "MotoPreview"
+    Sin esto el admin muestra dos entradas idénticas "Users": la de
+    auth_user (Django) y la de usuario (negocio).
+    """
+
+    class Meta:
+        proxy = True
+        verbose_name = "usuario (negocio)"
+        verbose_name_plural = "usuarios (negocio)"
+
+
+@admin.register(NegocioUser)
+class NegocioUserAdmin(BaseAdmin):
+    list_display = ("id_usuario", "usu_email", "usu_nombre", "estado_usuario", "tienda")
+    search_fields = ("usu_email", "usu_nombre")
+    list_filter = ("estado_usuario",)
+    # Credenciales o tokens: nunca se muestran ni se editan desde el admin.
+    readonly_fields = ("password_hash", "reset_token", "verificacion_token")
+
+
+@admin.register(AccessoryToken)
+class AccessoryTokenAdmin(BaseAdmin):
+    list_display = ("id_token", "usuario", "tipo", "expira_en", "usado")
+    readonly_fields = ("hash",)
+
+
+for model in (
+    AccessoryCategory,
+    ProductCategory,
+    AccessoryType,
+    Product,
+    Accessory,
+    MotorcycleBrand,
+    MotorcycleModel,
+    Motorcycle,
+    AccessoryCompatibility,
+    Model3D,
+    SubscriptionPlan,
+    Inventory,
+    MovementType,
+    InventoryMovement,
+    Quote,
+    QuoteDetail,
+    QuoteStatusHistory,
+    Configuration,
+    ConfigurationDetail,
+):
+    try:
+        admin.site.register(model, BaseAdmin)
+    except admin.sites.AlreadyRegistered:
+        pass

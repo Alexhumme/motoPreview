@@ -84,6 +84,10 @@ ASGI_APPLICATION = "motopreview.asgi.application"
 WSGI_APPLICATION = "motopreview.wsgi.application"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+# Las rutas de la API se exponen con y sin barra final en urls.py; esto
+# desactiva los redirects 301 silenciosos de CommonMiddleware para que un 404
+# sea siempre una ruta inexistente.
+APPEND_SLASH = False
 USE_TZ = True
 TIME_ZONE = "America/Bogota"
 LANGUAGE_CODE = "es"
@@ -188,7 +192,7 @@ EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
 DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "")
 PASSWORD_RESET_URL = os.environ.get(
-    "PASSWORD_RESET_URL", "http://localhost:5173/recuperar-password"
+    "PASSWORD_RESET_URL", "http://localhost:5173/restablecer"
 )
 EMAIL_VERIFICATION_URL = os.environ.get(
     "EMAIL_VERIFICATION_URL", "http://localhost:5173/verificar"

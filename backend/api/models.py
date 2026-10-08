@@ -332,12 +332,20 @@ class User(DatabaseModel):
         return self.tienda_id
 
     @property
-    def id_rol(self):
-        return UserRole.objects.filter(id_usuario=self.id_usuario).values_list("id_rol", flat=True).first()
+    def role_ids(self):
+        # Cache por instancia: antes cada acceso (id_rol, role_ids, has_any_role)
+        # lanzaba su propia query a usuario_rol (3-4 por petición).
+        cached = getattr(self, "_cached_role_ids", None)
+        if cached is not None:
+            return cached
+        ids = list(UserRole.objects.filter(id_usuario=self.id_usuario).values_list("id_rol", flat=True))
+        self._cached_role_ids = ids
+        return ids
 
     @property
-    def role_ids(self):
-        return list(UserRole.objects.filter(id_usuario=self.id_usuario).values_list("id_rol", flat=True))
+    def id_rol(self):
+        ids = self.role_ids
+        return ids[0] if ids else None
 
 
 class UserRole(DatabaseModel):
