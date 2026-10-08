@@ -1,9 +1,9 @@
 # MotoPreview
 Aplicación de catálogo y configuración de accesorios para motocicletas. El frontend esta en React  y el backend esta en Django REST Framework para usar la base de datos PostgreSQL .
 
-> 📚 **Documentación de la corrección P0–P3 (backend):** ver la carpeta
-> [`documentacion/`](documentacion/README.md) — seguridad de la API, reglas
-> de negocio, pruebas automáticas y comandos de mantenimiento.
+> **Documentación de la corrección P0–P3 (backend):** está en la carpeta
+> `documentacion/` que acompaña a la entrega (fuera de este repositorio):
+> seguridad de la API, reglas de negocio, pruebas automáticas y comandos de mantenimiento.
 
 
 ## 1.Activar el iniciar.bat
@@ -179,9 +179,20 @@ Los modelos son `managed=False`, así que Django **no** crea ni migra tus tablas
 necesita el panel (`auth_user`, `django_session`, `django_admin_log`, ...).
 
 - **Acceso:** `http://127.0.0.1:8000/admin/` (en producción, `/admin/` del backend).
-- **Credenciales:** el superusuario vive en `auth_user`, es **independiente** de los
-  usuarios de la aplicación (`usuario`); sirve solo para el panel. Créalo con
-  `python manage.py createsuperuser`.
+- **Credenciales para la revisión:**
+
+  | Campo | Valor |
+  | --- | --- |
+  | URL (local) | `http://127.0.0.1:8000/admin/` |
+  | URL (producción) | `https://motopreview-backend.onrender.com/admin/` |
+  | Usuario | `admin` |
+  | Email | `admin@motopreview.com` |
+  | Contraseña | `Motopreview12345` |
+
+  El superusuario vive en `auth_user`, es **independiente** de los usuarios de la
+  aplicación (`usuario`); sirve solo para el panel. Se crea/repone con
+  `python manage.py createsuperuser`. ⚠️ Al terminar la revisión conviene rotarla:
+  `python manage.py changepassword admin` (este README es público).
 - **Qué se registra:** todos los modelos de `api` excepto `usuario_rol`, que tiene
   clave primaria compuesta y el admin de Django no admite. Para asignar roles usa
   `python manage.py asignar_rol`.
