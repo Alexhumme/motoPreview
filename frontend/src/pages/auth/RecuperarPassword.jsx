@@ -16,7 +16,7 @@ export default function RecuperarPassword() {
     try {
       await solicitarRecuperacion(email);
       setEnviado(true);
-    } catch (err) {
+    } catch {
       setError('No se pudo procesar la solicitud, intenta de nuevo');
     } finally {
       setEnviando(false);

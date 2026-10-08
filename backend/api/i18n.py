@@ -4,11 +4,11 @@ Cómo se elige el idioma de cada petición (de mayor a menor prioridad):
   1. Parámetro en la URL:      ?lang=en
   2. Encabezado HTTP:          X-Language: en
   3. Cookie "mp_lang" (la guarda el selector de idioma de las páginas)
-  4. Accept-Language del navegador, SOLO para las páginas HTML del backend
-  5. Español (idioma por defecto)
+  4. Español (idioma por defecto)
 
-La API JSON ignora Accept-Language a propósito: así el frontend actual, que está
-en español, no recibe errores en inglés solo porque el navegador esté en inglés.
+`Accept-Language` no se usa en ninguna parte (ni en la API ni en las páginas
+HTML), para que el frontend actual, en español, no reciba contenido en inglés
+solo porque el navegador esté en inglés.
 
 Para agregar otro idioma: añade su código en LANGUAGES, sus textos en UI y sus
 traducciones en CATALOG / PATTERNS.
@@ -27,26 +27,6 @@ def normalize(value):
         return None
     code = str(value).strip().lower().replace("_", "-").split("-")[0]
     return code if code in LANGUAGES else None
-
-
-def parse_accept_language(header):
-    """Elige el primer idioma soportado de un encabezado Accept-Language."""
-    candidates = []
-    for index, part in enumerate((header or "").split(",")):
-        pieces = part.strip().split(";")
-        code = normalize(pieces[0])
-        quality = 1.0
-        for extra in pieces[1:]:
-            extra = extra.strip()
-            if extra.startswith("q="):
-                try:
-                    quality = float(extra[2:])
-                except ValueError:
-                    quality = 0.0
-        if code and quality > 0:
-            candidates.append((-quality, index, code))
-    return sorted(candidates)[0][2] if candidates else None
-
 
 
 def resolve_language(request):
@@ -171,6 +151,14 @@ CATALOG = {
         "El nombre es obligatorio.": "The name is required.",
         "El nombre del accesorio es obligatorio.": "The accessory name is required.",
         "El precio del accesorio es obligatorio.": "The accessory price is required.",
+        # Verificación de correo y contraseñas (endurecimiento)
+        "Debes verificar tu correo antes de iniciar sesión.":
+            "You must verify your email before signing in.",
+        "La contraseña no puede superar los 72 bytes.":
+            "The password cannot exceed 72 bytes.",
+        "El enlace de verificación es inválido o ya fue usado.":
+            "The verification link is invalid or has already been used.",
+        "Correo ya verificado.": "Email already verified.",
     }
 }
 
@@ -191,6 +179,10 @@ PATTERNS = {
          "Hi {n}, confirm your email using this link: {link}"),
         (re.compile(r"^Hola (?P<n>.+), el estado de tu cotización cambió a (?P<s>.+)\. Total: (?P<t>.+)\.$"),
          "Hi {n}, the status of your quote changed to {s}. Total: {t}."),
+        (re.compile(r"^No se puede pasar de '(?P<actual>.+)' a '(?P<nuevo>.+)'\.$"),
+         "It is not allowed to change from '{actual}' to '{nuevo}'."),
+        (re.compile(r"^La cotización supera el límite de (?P<n>.+) accesorios\.$"),
+         "The quote exceeds the limit of {n} accessories."),
     ]
 }
 

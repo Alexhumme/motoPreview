@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  backend:
+    name: Backend — Django checks y pruebas
+    runs-on: ubuntu-latest
+    env:
+      # Secretos mínimos para que settings.py arranque en CI. Son valores de
+      # pacotilla (>=32 bytes para silenciar InsecureKeyLengthWarning de PyJWT);
+      # nunca usar valores de producción.
+      DJANGO_SECRET_KEY: ci-django-secret-key-de-prueba-32-o-mas-bytes-abcdef
+      JWT_SECRET: ci-jwt-secret-de-prueba-32-o-mas-bytes-abcdefgh
+      DEBUG: "false"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Instalar dependencias
+        run: pip install -r requirements.txt
+        working-directory: backend
+
+      - name: Django system check
+        run: python manage.py check
+        working-directory: backend
+
+      - name: Pruebas (i18n, permisos, endpoints, paginación)
+        run: python manage.py test api --verbosity 2
+        working-directory: backend
+
+  frontend:
+    name: Frontend — lint y build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Lint (ESLint)
+        run: npm run lint
+
+      - name: Build de producción
+        run: npm run build
+        env:
+          VITE_API_URL: https://motopreview-backend.onrender.com/api

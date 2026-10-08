@@ -5,4 +5,10 @@ __pycache__/
 *.sqlite3
 .pytest_cache/
 .coverage
+staticfiles/
+
+# Secrets — nunca versionar
+.env
+.env.*
+!.env.example
 

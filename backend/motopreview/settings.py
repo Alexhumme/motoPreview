@@ -20,29 +20,62 @@ JWT_LIFETIME_SECONDS = int(os.environ.get("JWT_LIFETIME_SECONDS", "28800"))
 ALLOWED_HOSTS = [
     host.strip()
     for host in os.environ.get(
-        "DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1,.replit.dev,.repl.co"
+        "DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1,.onrender.com,.replit.dev,.repl.co"
     ).split(",")
     if host.strip()
 ]
 
+# ---------------------------------------------------------------------------
+# Endurecimiento HTTPS (actívalo explícitamente en producción; seguro para
+# desarrollo local, donde no hay TLS).
+# ---------------------------------------------------------------------------
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+SECURE_SSL_REDIRECT = os.environ.get("DJANGO_SECURE_SSL_REDIRECT", "false").lower() == "true"
+SESSION_COOKIE_SECURE = os.environ.get("DJANGO_SESSION_COOKIE_SECURE", "false").lower() == "true"
+CSRF_COOKIE_SECURE = os.environ.get("DJANGO_CSRF_COOKIE_SECURE", "false").lower() == "true"
+SECURE_HSTS_SECONDS = int(os.environ.get("DJANGO_HSTS_SECONDS", "0"))
+SECURE_HSTS_INCLUDE_SUBDOMAINS = os.environ.get("DJANGO_HSTS_INCLUDE_SUBDOMAINS", "false").lower() == "true"
+SECURE_HSTS_PRELOAD = os.environ.get("DJANGO_HSTS_PRELOAD", "false").lower() == "true"
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_REFERRER_POLICY = "same-origin"
+
 INSTALLED_APPS = [
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
     "corsheaders",
     "rest_framework",
     "api.apps.ApiConfig",
 ]
 
 MIDDLEWARE = [
+    "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "corsheaders.middleware.CorsMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
     "api.middleware.LanguageMiddleware",
 ]
 
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [os.path.join(BASE_DIR, "templates")],
         "APP_DIRS": True,
-        "OPTIONS": {"context_processors": []},
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.request",
+                "django.template.context_processors.i18n",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
+            ]
+        },
     }
 ]
 
@@ -54,8 +87,16 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 USE_TZ = True
 TIME_ZONE = "America/Bogota"
 LANGUAGE_CODE = "es"
+# Los tests unitarios no usan BD; solo los de integración (RUN_DB_TESTS=1) la crean.
+TEST_RUNNER = "motopreview.test_runner.NoDbTestRunner"
 USE_I18N = True
 LANGUAGES = [("es", "Español"), ("en", "English")]
+
+# Estáticos del admin de Django. WhiteNoise los sirve tanto con runserver como
+# con gunicorn en Render (Django no los sirve solo, ni siquiera con DEBUG=false).
+STATIC_URL = "/static/"
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+WHITENOISE_USE_FINDERS = True
 
 
 def parse_database_url(value):
@@ -109,15 +150,35 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "api.authentication.JWTAuthentication",
     ],
+    # Por defecto se exige sesión; cada vista abre explícitamente lo público.
     "DEFAULT_PERMISSION_CLASSES": [
-        "rest_framework.permissions.AllowAny",
+        "rest_framework.permissions.IsAuthenticated",
     ],
+    # Límites de peticiones: uno general y usos específicos y estrictos en
+    # autenticación (fuerza bruta, spam de registros y de correos).
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.AnonRateThrottle",
+        "rest_framework.throttling.UserRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": "600/min",
+        "user": "1000/min",
+        # Login y restablecimiento de contraseña.
+        "auth": "30/min",
+        # Creación de cuentas públicas.
+        "register": "10/min",
+        # Verificación de correo y recuperación (usan el SMTP).
+        "email": "10/hour",
+    },
     "UNAUTHENTICATED_USER": "api.authentication.AnonymousPrincipal",
     "EXCEPTION_HANDLER": "api.errors.api_exception_handler",
     "DEFAULT_RENDERER_CLASSES": [
         "api.renderers.TranslatedJSONRenderer",
     ],
 }
+
+# Límite de líneas por cotización (defensa contra payloads gigantes).
+QUOTE_MAX_ITEMS = int(os.environ.get("QUOTE_MAX_ITEMS", "100"))
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = os.environ.get("EMAIL_HOST", "")

@@ -20,6 +20,10 @@ class AccessoryCategory(DatabaseModel):
 
     class Meta(DatabaseModel.Meta):
         db_table = "categoria_accesorio"
+        ordering = ["cat_nombre"]
+
+    def __str__(self):
+        return self.cat_nombre or str(self.id_categoria)
 
 
 class ProductCategory(DatabaseModel):
@@ -31,6 +35,10 @@ class ProductCategory(DatabaseModel):
 
     class Meta(DatabaseModel.Meta):
         db_table = "categoria_producto"
+        ordering = ["nombre"]
+
+    def __str__(self):
+        return self.nombre or str(self.id_categoria_producto)
 
 
 class AccessoryType(DatabaseModel):
@@ -40,6 +48,10 @@ class AccessoryType(DatabaseModel):
 
     class Meta(DatabaseModel.Meta):
         db_table = "tipo_accesorio"
+        ordering = ["nombre"]
+
+    def __str__(self):
+        return self.nombre or str(self.id_tipo)
 
 
 class Product(DatabaseModel):
@@ -61,6 +73,10 @@ class Product(DatabaseModel):
 
     class Meta(DatabaseModel.Meta):
         db_table = "producto"
+        ordering = ["nombre"]
+
+    def __str__(self):
+        return self.nombre or str(self.id_producto)
 
 
 class Accessory(DatabaseModel):
@@ -94,6 +110,10 @@ class Accessory(DatabaseModel):
 
     class Meta(DatabaseModel.Meta):
         db_table = "accesorio"
+        ordering = ["pk"]
+
+    def __str__(self):
+        return f"Accesorio {str(self.id_accesorio)[:8]}"
 
 
 class MotorcycleBrand(DatabaseModel):
@@ -103,6 +123,10 @@ class MotorcycleBrand(DatabaseModel):
 
     class Meta(DatabaseModel.Meta):
         db_table = "marca_moto"
+        ordering = ["marca_nombre"]
+
+    def __str__(self):
+        return self.marca_nombre or str(self.id_marca)
 
 
 class MotorcycleModel(DatabaseModel):
@@ -121,6 +145,10 @@ class MotorcycleModel(DatabaseModel):
 
     class Meta(DatabaseModel.Meta):
         db_table = "modelo_moto"
+        ordering = ["modelo_nombre"]
+
+    def __str__(self):
+        return self.modelo_nombre or str(self.id_modelo_moto)
 
 
 class Motorcycle(DatabaseModel):
@@ -139,6 +167,11 @@ class Motorcycle(DatabaseModel):
 
     class Meta(DatabaseModel.Meta):
         db_table = "moto"
+        ordering = ["moto_anio", "pk"]
+
+    def __str__(self):
+        texto = " ".join(part for part in (self.moto_version or "", str(self.moto_anio or "")) if part)
+        return texto or str(self.id_moto)
 
 
 class AccessoryCompatibility(DatabaseModel):
@@ -163,6 +196,10 @@ class AccessoryCompatibility(DatabaseModel):
     class Meta(DatabaseModel.Meta):
         db_table = "accesorio_modelo_moto"
         unique_together = (("accesorio", "modelo_moto"),)
+        ordering = ["pk"]
+
+    def __str__(self):
+        return f"Compatibilidad {str(self.id_compatibilidad)[:8]}"
 
 
 class Model3D(DatabaseModel):
@@ -183,6 +220,10 @@ class Model3D(DatabaseModel):
 
     class Meta(DatabaseModel.Meta):
         db_table = "modelo_3d"
+        ordering = ["modelo3d_fecha", "pk"]
+
+    def __str__(self):
+        return f"Modelo 3D {str(self.id_modelo3d)[:8]}"
 
 
 class SubscriptionPlan(DatabaseModel):
@@ -201,6 +242,10 @@ class SubscriptionPlan(DatabaseModel):
 
     class Meta(DatabaseModel.Meta):
         db_table = "plan_subscripcion"
+        ordering = ["plan_nombre"]
+
+    def __str__(self):
+        return self.plan_nombre or str(self.id_plan)
 
 
 class Store(DatabaseModel):
@@ -228,6 +273,10 @@ class Store(DatabaseModel):
 
     class Meta(DatabaseModel.Meta):
         db_table = "tienda"
+        ordering = ["nombre_tienda"]
+
+    def __str__(self):
+        return self.nombre_tienda or str(self.id_tienda)
 
 
 class Role(DatabaseModel):
@@ -236,6 +285,10 @@ class Role(DatabaseModel):
 
     class Meta(DatabaseModel.Meta):
         db_table = "rol"
+        ordering = ["nombre_rol"]
+
+    def __str__(self):
+        return self.nombre_rol or str(self.id_rol)
 
 
 class User(DatabaseModel):
@@ -265,6 +318,10 @@ class User(DatabaseModel):
 
     class Meta(DatabaseModel.Meta):
         db_table = "usuario"
+        ordering = ["usu_nombre"]
+
+    def __str__(self):
+        return self.usu_nombre or self.usu_email or str(self.id_usuario)
 
     @property
     def is_authenticated(self):
@@ -290,6 +347,9 @@ class UserRole(DatabaseModel):
 
     class Meta(DatabaseModel.Meta):
         db_table = "usuario_rol"
+
+    def __str__(self):
+        return f"{self.id_usuario} -> {self.id_rol}"
 
 
 class Inventory(DatabaseModel):
@@ -333,6 +393,10 @@ class Inventory(DatabaseModel):
     class Meta(DatabaseModel.Meta):
         db_table = "inventario"
         unique_together = (("tienda", "producto"),)
+        ordering = ["fecha_actualizacion", "pk"]
+
+    def __str__(self):
+        return f"Inventario {str(self.id_inventario)[:8]}"
 
 
 class MovementType(DatabaseModel):
@@ -342,6 +406,10 @@ class MovementType(DatabaseModel):
 
     class Meta(DatabaseModel.Meta):
         db_table = "tipo_movimiento"
+        ordering = ["tipomov_nombre"]
+
+    def __str__(self):
+        return self.tipomov_nombre or str(self.id_tipomov)
 
 
 class InventoryMovement(DatabaseModel):
@@ -376,6 +444,10 @@ class InventoryMovement(DatabaseModel):
 
     class Meta(DatabaseModel.Meta):
         db_table = "movimiento_inventario"
+        ordering = ["-fecha_movimiento", "pk"]
+
+    def __str__(self):
+        return f"Movimiento {str(self.id_movimiento)[:8]}"
 
 
 class Quote(DatabaseModel):
@@ -422,6 +494,10 @@ class Quote(DatabaseModel):
 
     class Meta(DatabaseModel.Meta):
         db_table = "cotizacion"
+        ordering = ["-fecha_solicitud", "pk"]
+
+    def __str__(self):
+        return f"Cotización {str(self.id_cotizacion)[:8]}"
 
 
 class QuoteDetail(DatabaseModel):
@@ -450,6 +526,10 @@ class QuoteDetail(DatabaseModel):
 
     class Meta(DatabaseModel.Meta):
         db_table = "detalle_cotizacion"
+        ordering = ["pk"]
+
+    def __str__(self):
+        return f"Detalle {str(self.id_detalle_cotizacion)[:8]}"
 
 
 class QuoteStatusHistory(DatabaseModel):
@@ -471,6 +551,10 @@ class QuoteStatusHistory(DatabaseModel):
 
     class Meta(DatabaseModel.Meta):
         db_table = "cotizacion_estado_hist"
+        ordering = ["-fecha", "pk"]
+
+    def __str__(self):
+        return f"Historial {str(self.id_hist)[:8]}"
 
 
 class Configuration(DatabaseModel):
@@ -493,6 +577,10 @@ class Configuration(DatabaseModel):
 
     class Meta(DatabaseModel.Meta):
         db_table = "configuracion"
+        ordering = ["pk"]
+
+    def __str__(self):
+        return self.nombre or str(self.id_configuracion)
 
 
 class ConfigurationDetail(DatabaseModel):
@@ -513,6 +601,10 @@ class ConfigurationDetail(DatabaseModel):
 
     class Meta(DatabaseModel.Meta):
         db_table = "configuracion_detalle"
+        ordering = ["pk"]
+
+    def __str__(self):
+        return f"Detalle {str(self.id_detalle)[:8]}"
 
 
 class AccessoryToken(DatabaseModel):
@@ -530,3 +622,7 @@ class AccessoryToken(DatabaseModel):
 
     class Meta(DatabaseModel.Meta):
         db_table = "token"
+        ordering = ["pk"]
+
+    def __str__(self):
+        return f"Token {str(self.id_token)[:8]}"

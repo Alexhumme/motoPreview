@@ -23,7 +23,7 @@ class LanguageMiddleware:
             response = self.get_response(request)
 
         response["Content-Language"] = lang
-        patch_vary_headers(response, ["Accept-Language", "Cookie", "X-Language"])
+        patch_vary_headers(response, ["Cookie", "X-Language"])
         if i18n.normalize(request.GET.get("lang")):
             response.set_cookie(
                 i18n.COOKIE_NAME, lang, max_age=i18n.COOKIE_MAX_AGE, samesite="Lax"

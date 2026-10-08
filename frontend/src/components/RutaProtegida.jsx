@@ -3,9 +3,7 @@ import { useAuth } from '../context/AuthContext';
 
 // rolesPermitidos: array de id_rol que pueden entrar. Si no se pasa, solo exige estar logueado.
 export default function RutaProtegida({ children, rolesPermitidos }) {
-  const { usuario, cargando } = useAuth();
-
-  if (cargando) return <p>Cargando...</p>;
+  const { usuario } = useAuth();
 
   if (!usuario) {
     return <Navigate to="/login" replace />;

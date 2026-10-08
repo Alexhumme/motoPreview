@@ -1,8 +1,8 @@
+import functools
 import hashlib
 import logging
 import secrets
 from datetime import timedelta
-from decimal import Decimal
 from uuid import UUID
 
 import bcrypt
@@ -13,18 +13,14 @@ from django.db import IntegrityError, connection, transaction
 from django.http import JsonResponse
 from django.utils import timezone, translation
 from rest_framework import status
+from rest_framework.decorators import api_view, permission_classes, throttle_classes, throttle_scope
 from rest_framework.exceptions import APIException
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.views import APIView
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.throttling import ScopedRateThrottle
+from rest_framework.views import APIView as DRFAPIView
 
-from . import i18n
-def root(request):
-    lang = getattr(request, "lang", i18n.DEFAULT_LANGUAGE)
-    return JsonResponse(
-        {"mensaje": i18n.translate_text("API de MotoPreview con Django funcionando.", lang)}
-    )
+from . import i18n, services, tokens
 from .models import (
     Accessory,
     AccessoryCategory,
@@ -67,7 +63,7 @@ from .serializers import (
 
 
 logger = logging.getLogger("motopreview.api")
-QUOTE_STATES = {"pendiente", "aprobada", "rechazada", "completada"}
+QUOTE_STATES = services.QUOTE_STATES
 
 
 def database_unavailable():
@@ -82,6 +78,46 @@ def database_unavailable():
         },
         status=status.HTTP_503_SERVICE_UNAVAILABLE,
     )
+
+
+class ServiceUnavailable(APIException):
+    """Base de datos no configurada: 503 con el mismo mensaje de siempre."""
+
+    status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+    default_detail = "Servicio no disponible."
+
+
+def require_database(view_func):
+    """Para vistas-función: responde 503 si la base no está configurada.
+
+    Se aplica por debajo de `@api_view`, de modo que la autenticación y los
+    permisos se evalúan antes que la disponibilidad de la base.
+    """
+
+    @functools.wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        unavailable = database_unavailable()
+        if unavailable:
+            return unavailable
+        return view_func(request, *args, **kwargs)
+
+    return wrapper
+
+
+class DatabaseGuardMixin(DRFAPIView):
+    """Para vistas-clase: comprueba la base tras autenticación y permisos.
+
+    Levanta la excepción en `initial`, después de `super().initial()`, para
+    conservar el orden de DRF (401/403 primero; 503 solo si la petición pasó
+    los permisos).
+    """
+
+    def initial(self, request, *args, **kwargs):
+        super().initial(request, *args, **kwargs)
+        unavailable = database_unavailable()
+        if unavailable:
+            detail = unavailable.data.get("error") or ServiceUnavailable.default_detail
+            raise ServiceUnavailable(detail)
 
 
 def can_send_email():
@@ -138,6 +174,7 @@ def issue_jwt(user):
             "id_tienda": str(user.id_tienda) if user.id_tienda else None,
             "iat": now,
             "exp": now + timedelta(seconds=settings.JWT_LIFETIME_SECONDS),
+            "iss": settings.JWT_ISSUER,
         },
         settings.JWT_SECRET,
         algorithm="HS256",
@@ -159,11 +196,60 @@ def update_user_role(user_id, role_id):
 
 
 def inventory_status(stock, minimum):
-    if stock <= 0:
-        return "agotado"
-    if stock <= minimum:
-        return "bajo"
-    return "normal"
+    return services.inventory_status(stock, minimum)
+
+
+DEFAULT_PAGE_SIZE = 20
+MAX_PAGE_SIZE = 100
+PAGE_PARAMS = "Parámetros de paginación: ?pagina=<n> y ?por_pagina=<1-100>."
+
+
+def paginate_response(request, queryset, serializer_class, *, context=None):
+    """Respuesta de listado con paginación opcional de servidor.
+
+    Sin `?pagina=` devuelve el array plano histórico (compatible con el
+    frontend actual). Con `?pagina=` devuelve:
+    ``{count, pagina, por_pagina, total_paginas, resultados: [...]}``.
+    """
+    serializer_kwargs = {"context": context if context is not None else {"request": request}}
+    page_value = request.query_params.get("pagina")
+    if page_value is None:
+        return Response(serializer_class(queryset, many=True, **serializer_kwargs).data)
+
+    try:
+        page = int(page_value)
+    except (TypeError, ValueError):
+        page = 0
+    if page < 1:
+        return Response(
+            {"error": f"pagina debe ser un número entero mayor que 0. {PAGE_PARAMS}"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    size_value = request.query_params.get("por_pagina", DEFAULT_PAGE_SIZE)
+    try:
+        page_size = int(size_value)
+    except (TypeError, ValueError):
+        page_size = 0
+    if page_size < 1 or page_size > MAX_PAGE_SIZE:
+        return Response(
+            {"error": f"por_pagina debe estar entre 1 y {MAX_PAGE_SIZE}. {PAGE_PARAMS}"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    total = queryset.count()
+    total_pages = max((total + page_size - 1) // page_size, 1)
+    offset = (page - 1) * page_size
+    rows = list(queryset[offset : offset + page_size])
+    return Response(
+        {
+            "count": total,
+            "pagina": page,
+            "por_pagina": page_size,
+            "total_paginas": total_pages,
+            "resultados": serializer_class(rows, many=True, **serializer_kwargs).data,
+        }
+    )
 
 
 def root(request):
@@ -176,38 +262,46 @@ def root(request):
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def health(request):
-    return JsonResponse({"ok": True, "database_configured": bool(settings.DATABASE_URL)})
+    if not settings.DATABASE_URL:
+        return JsonResponse(
+            {"ok": False, "database_configured": False, "database_connected": False},
+            status=status.HTTP_503_SERVICE_UNAVAILABLE,
+        )
+    connected = False
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT 1")
+        connected = True
+    except Exception:
+        connected = False
+    return JsonResponse(
+        {
+            "ok": connected,
+            "database_configured": True,
+            "database_connected": connected,
+        },
+        status=200 if connected else status.HTTP_503_SERVICE_UNAVAILABLE,
+    )
 
 
-class ResourceCollection(APIView):
+class ResourceCollection(DatabaseGuardMixin):
     model = None
     serializer_class = None
-    filter_fields = ()
 
     def get_permissions(self):
+        # Lectura pública; la escritura de catálogos es exclusiva de administradores.
         if self.request.method == "GET":
             return [AllowAny()]
-        return [IsAuthenticated()]
+        return [IsStoreAdmin()]
 
     def get_queryset(self):
         return self.model.objects.all()
 
     def get(self, request):
-        unavailable = database_unavailable()
-        if unavailable:
-            return unavailable
         queryset = self.get_queryset()
-        for field in self.filter_fields:
-            value = request.query_params.get(field)
-            if value:
-                queryset = queryset.filter(**{field: value})
-        serializer = self.serializer_class(queryset, many=True, context={"request": request})
-        return Response(serializer.data)
+        return paginate_response(request, queryset, self.serializer_class)
 
     def post(self, request):
-        unavailable = database_unavailable()
-        if unavailable:
-            return unavailable
         serializer = self.serializer_class(data=request.data, context={"request": request})
         if not serializer.is_valid():
             return Response({"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
@@ -225,23 +319,22 @@ class ResourceCollection(APIView):
         )
 
 
-class ResourceDetail(APIView):
+class ResourceDetail(DatabaseGuardMixin):
     model = None
     serializer_class = None
     not_found_message = "Registro no encontrado."
 
     def get_permissions(self):
+        # Lectura pública; la escritura de catálogos es exclusiva de administradores.
         if self.request.method == "GET":
             return [AllowAny()]
-        return [IsAuthenticated()]
+        return [IsStoreAdmin()]
 
     def get_object(self, pk):
         return self.model.objects.get(pk=pk)
 
     def get(self, request, pk):
-        unavailable = database_unavailable()
-        if unavailable:
-            return unavailable
+
         try:
             instance = self.get_object(pk)
         except self.model.DoesNotExist:
@@ -255,9 +348,7 @@ class ResourceDetail(APIView):
         return self.update(request, pk, partial=True)
 
     def update(self, request, pk, *, partial):
-        unavailable = database_unavailable()
-        if unavailable:
-            return unavailable
+
         try:
             instance = self.get_object(pk)
         except self.model.DoesNotExist:
@@ -278,9 +369,7 @@ class ResourceDetail(APIView):
         return Response(self.serializer_class(updated, context={"request": request}).data)
 
     def delete(self, request, pk):
-        unavailable = database_unavailable()
-        if unavailable:
-            return unavailable
+
         try:
             instance = self.get_object(pk)
         except self.model.DoesNotExist:
@@ -380,29 +469,25 @@ class StoreDetail(ResourceDetail):
         return Store.objects.select_related("plan").get(pk=pk)
 
 
-class UserCollection(APIView):
+class UserCollection(DatabaseGuardMixin):
     permission_classes = [IsStoreAdmin]
 
     def get(self, request):
-        unavailable = database_unavailable()
-        if unavailable:
-            return unavailable
+
         if not request.user.id_tienda:
             return Response({"error": "El usuario no tiene una tienda asignada."}, status=400)
-        users = User.objects.filter(tienda_id=request.user.id_tienda).order_by("usu_nombre")
-        return Response(UserSerializer(users, many=True).data)
+        users = User.objects.filter(tienda_id=request.user.id_tienda).order_by("usu_nombre", "pk")
+        return paginate_response(request, users, UserSerializer)
 
 
-class UserDetail(APIView):
+class UserDetail(DatabaseGuardMixin):
     permission_classes = [IsStoreAdmin]
 
     def get_target(self, request, pk):
         return User.objects.filter(pk=pk, tienda_id=request.user.id_tienda).first()
 
     def get(self, request, pk):
-        unavailable = database_unavailable()
-        if unavailable:
-            return unavailable
+
         user = self.get_target(request, pk)
         if not user:
             return Response({"error": "Usuario no encontrado."}, status=status.HTTP_404_NOT_FOUND)
@@ -415,9 +500,7 @@ class UserDetail(APIView):
         return self.update_user(request, pk)
 
     def update_user(self, request, pk):
-        unavailable = database_unavailable()
-        if unavailable:
-            return unavailable
+
         user = self.get_target(request, pk)
         if not user:
             return Response({"error": "Usuario no encontrado."}, status=status.HTTP_404_NOT_FOUND)
@@ -431,8 +514,10 @@ class UserDetail(APIView):
             return Response({"error": "estado_usuario no es válido."}, status=400)
         if role_id is not None and not Role.objects.filter(pk=role_id).exists():
             return Response({"error": "El rol indicado no existe."}, status=400)
-        if password is not None and len(password) < 8:
-            return Response({"error": "La contraseña debe tener al menos 8 caracteres."}, status=400)
+        if password is not None:
+            password_error = services.validar_password(password)
+            if password_error:
+                return Response({"error": password_error}, status=400)
 
         try:
             with transaction.atomic():
@@ -450,9 +535,7 @@ class UserDetail(APIView):
         return Response(UserSerializer(user).data)
 
     def delete(self, request, pk):
-        unavailable = database_unavailable()
-        if unavailable:
-            return unavailable
+
         user = self.get_target(request, pk)
         if not user:
             return Response({"error": "Usuario no encontrado."}, status=status.HTTP_404_NOT_FOUND)
@@ -484,13 +567,11 @@ class Model3DDetail(ResourceDetail):
         ).get(pk=pk)
 
 
-class Model3DByAccessory(APIView):
+class Model3DByAccessory(DatabaseGuardMixin):
     permission_classes = [AllowAny]
 
     def get(self, request, id_accesorio):
-        unavailable = database_unavailable()
-        if unavailable:
-            return unavailable
+
         model = Model3D.objects.filter(accesorio_id=id_accesorio).first()
         if not model:
             return Response(
@@ -517,14 +598,13 @@ class AccessoryDetail(ResourceDetail):
         return Accessory.objects.select_related("producto", "categoria", "tipo").get(pk=pk)
 
 
-class CompatibilityCollection(APIView):
+class CompatibilityCollection(DatabaseGuardMixin):
     def get_permissions(self):
-        return [AllowAny()] if self.request.method == "GET" else [IsAuthenticated()]
+        # La matriz de compatibilidad solo la administra el administrador de tienda.
+        return [AllowAny()] if self.request.method == "GET" else [IsStoreAdmin()]
 
     def post(self, request):
-        unavailable = database_unavailable()
-        if unavailable:
-            return unavailable
+
         serializer = CompatibilitySerializer(data=request.data)
         if not serializer.is_valid():
             return Response({"error": serializer.errors}, status=400)
@@ -544,13 +624,11 @@ class CompatibilityDetail(ResourceDetail):
     not_found_message = "Compatibilidad no encontrada."
 
 
-class AccessoriesByModel(APIView):
+class AccessoriesByModel(DatabaseGuardMixin):
     permission_classes = [AllowAny]
 
     def get(self, request, id_modelo_moto):
-        unavailable = database_unavailable()
-        if unavailable:
-            return unavailable
+
         links = AccessoryCompatibility.objects.filter(modelo_moto_id=id_modelo_moto).select_related(
             "accesorio__producto", "accesorio__categoria", "accesorio__tipo"
         )
@@ -558,20 +636,18 @@ class AccessoriesByModel(APIView):
         return Response(AccessorySerializer(accessories, many=True).data)
 
 
-class ModelsByAccessory(APIView):
+class ModelsByAccessory(DatabaseGuardMixin):
     permission_classes = [AllowAny]
 
     def get(self, request, id_accesorio):
-        unavailable = database_unavailable()
-        if unavailable:
-            return unavailable
+
         links = AccessoryCompatibility.objects.filter(accesorio_id=id_accesorio).select_related(
             "modelo_moto__marca"
         )
         return Response(CompatibilitySerializer(links, many=True).data)
 
 
-class InventoryCollection(APIView):
+class InventoryCollection(DatabaseGuardMixin):
     permission_classes = [IsStoreStaff]
 
     def get_queryset(self, request):
@@ -584,18 +660,14 @@ class InventoryCollection(APIView):
         ).filter(tienda_id=request.user.id_tienda)
 
     def get(self, request):
-        unavailable = database_unavailable()
-        if unavailable:
-            return unavailable
+
         if not request.user.id_tienda:
             return Response({"error": "El usuario no tiene una tienda asignada."}, status=400)
         rows = self.get_queryset(request)
-        return Response(InventorySerializer(rows, many=True).data)
+        return paginate_response(request, rows, InventorySerializer)
 
     def post(self, request):
-        unavailable = database_unavailable()
-        if unavailable:
-            return unavailable
+
         if not request.user.id_tienda:
             return Response({"error": "El usuario no tiene una tienda asignada."}, status=400)
 
@@ -654,13 +726,11 @@ class InventoryCollection(APIView):
         return Response(InventorySerializer(instance).data, status=status.HTTP_201_CREATED)
 
 
-class InventoryDetail(APIView):
+class InventoryDetail(DatabaseGuardMixin):
     permission_classes = [IsStoreStaff]
 
     def get(self, request, pk):
-        unavailable = database_unavailable()
-        if unavailable:
-            return unavailable
+
         instance = Inventory.objects.select_related(
             "tienda__plan",
             "producto",
@@ -678,13 +748,11 @@ class InventoryDetail(APIView):
         return Response(InventorySerializer(instance).data)
 
 
-class InventoryMovement(APIView):
+class InventoryMovementView(DatabaseGuardMixin):
     permission_classes = [IsStoreStaff]
 
     def post(self, request):
-        unavailable = database_unavailable()
-        if unavailable:
-            return unavailable
+
         required = ("id_inventario", "id_tipomov", "mov_cantidad")
         missing = [field for field in required if field not in request.data]
         if missing:
@@ -712,10 +780,7 @@ class InventoryMovement(APIView):
                     return Response({"error": "Tipo de movimiento no encontrado."}, status=404)
 
                 type_name = movement_type.tipomov_nombre.lower()
-                if type_name == "entrada":
-                    amount = abs(amount)
-                elif type_name == "salida":
-                    amount = -abs(amount)
+                amount = services.apply_movement(amount, type_name)
                 new_stock = inventory.stock_actual + amount
                 if new_stock < 0:
                     return Response(
@@ -748,13 +813,11 @@ class InventoryMovement(APIView):
         )
 
 
-class QuoteCollection(APIView):
+class QuoteCollection(DatabaseGuardMixin):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        unavailable = database_unavailable()
-        if unavailable:
-            return unavailable
+
         queryset = Quote.objects.select_related(
             "tienda", "usuario", "moto__modelo__marca"
         ).prefetch_related("detalle_cotizacion__accesorio__producto")
@@ -762,12 +825,12 @@ class QuoteCollection(APIView):
             queryset = queryset.filter(tienda_id=request.user.id_tienda)
         else:
             queryset = queryset.filter(usuario_id=request.user.id_usuario)
-        return Response(QuoteSerializer(queryset.order_by("-fecha_solicitud"), many=True).data)
+        return paginate_response(
+            request, queryset.order_by("-fecha_solicitud", "pk"), QuoteSerializer
+        )
 
     def post(self, request):
-        unavailable = database_unavailable()
-        if unavailable:
-            return unavailable
+
         serializer = QuoteCreateSerializer(data=request.data)
         if not serializer.is_valid():
             return Response({"error": serializer.errors}, status=400)
@@ -786,19 +849,12 @@ class QuoteCollection(APIView):
         if len(accessories) != len(accessory_ids):
             return Response({"error": "Uno o más accesorios no existen."}, status=400)
 
-        prepared = []
-        total = Decimal("0.00")
-        for item in values["items"]:
-            accessory = accessories[str(item["id_accesorio"])]
-            if not accessory.producto_id or accessory.producto.precio is None:
-                return Response(
-                    {"error": f"El accesorio {accessory.id_accesorio} no tiene un precio configurado."},
-                    status=400,
-                )
-            price = accessory.producto.precio
-            subtotal = price * item["cantidad"]
-            total += subtotal
-            prepared.append((accessory, item["cantidad"], price, subtotal))
+        try:
+            prepared, total = services.calc_quote(
+                values["items"], accessories, max_items=settings.QUOTE_MAX_ITEMS
+            )
+        except services.BusinessError as error:
+            return Response({"error": str(error)}, status=400)
 
         try:
             with transaction.atomic():
@@ -827,13 +883,11 @@ class QuoteCollection(APIView):
         return Response(QuoteSerializer(quote).data, status=status.HTTP_201_CREATED)
 
 
-class QuoteDetail(APIView):
+class QuoteDetailView(DatabaseGuardMixin):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, pk):
-        unavailable = database_unavailable()
-        if unavailable:
-            return unavailable
+
         queryset = Quote.objects.select_related("tienda", "usuario", "moto__modelo__marca").prefetch_related(
             "detalle_cotizacion__accesorio__producto"
         )
@@ -847,7 +901,7 @@ class QuoteDetail(APIView):
         return Response(QuoteSerializer(quote).data)
 
 
-class QuoteStatus(APIView):
+class QuoteStatus(DatabaseGuardMixin):
     permission_classes = [IsStoreStaff]
 
     def put(self, request, pk):
@@ -857,9 +911,7 @@ class QuoteStatus(APIView):
         return self.update_status(request, pk)
 
     def update_status(self, request, pk):
-        unavailable = database_unavailable()
-        if unavailable:
-            return unavailable
+
         new_state = request.data.get("coti_estado")
         if new_state not in QUOTE_STATES:
             return Response(
@@ -873,6 +925,13 @@ class QuoteStatus(APIView):
                 ).first()
                 if not quote:
                     return Response({"error": "Cotización no encontrada para esta tienda."}, status=404)
+                if not services.allow_state_transition(quote.coti_estado, new_state):
+                    return Response(
+                        {
+                            "error": f"No se puede pasar de '{quote.coti_estado}' a '{new_state}'."
+                        },
+                        status=400,
+                    )
                 quote.coti_estado = new_state
                 quote.save(update_fields=["coti_estado"])
                 QuoteStatusHistory.objects.create(
@@ -899,10 +958,10 @@ class QuoteStatus(APIView):
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
+@throttle_classes([ScopedRateThrottle])
+@throttle_scope("register")
+@require_database
 def register(request):
-    unavailable = database_unavailable()
-    if unavailable:
-        return unavailable
     name = str(request.data.get("usu_nombre", "")).strip()
     email = str(request.data.get("usu_email", "")).strip()
     password = request.data.get("password", "")
@@ -912,8 +971,9 @@ def register(request):
             {"error": "Faltan campos obligatorios: usu_nombre, usu_email, password, id_rol."},
             status=400,
         )
-    if len(password) < 8:
-        return Response({"error": "La contraseña debe tener al menos 8 caracteres."}, status=400)
+    password_error = services.validar_password(password)
+    if password_error:
+        return Response({"error": password_error}, status=400)
     if User.objects.filter(usu_email__iexact=email).exists():
         return Response({"error": "Ya existe un usuario con ese email."}, status=409)
     role = Role.objects.filter(pk=role_id).first()
@@ -957,7 +1017,6 @@ def register(request):
                 status=status.HTTP_403_FORBIDDEN,
             )
 
-    verification_token = secrets.token_urlsafe(32) if is_customer else None
     try:
         with transaction.atomic():
             user = User.objects.create(
@@ -967,7 +1026,6 @@ def register(request):
                 password_hash=hash_password(password),
                 estado_usuario="activo",
                 email_verificado=not is_customer,
-                verificacion_token=verification_token,
             )
             update_user_role(user.id_usuario, role.id_rol)
     except IntegrityError:
@@ -979,7 +1037,8 @@ def register(request):
     message = "Usuario creado con éxito."
     if is_customer:
         if can_send_email():
-            link = link_with_token(settings.EMAIL_VERIFICATION_URL, verification_token)
+            raw_token = tokens.verification_token_for(user)
+            link = link_with_token(settings.EMAIL_VERIFICATION_URL, raw_token)
             sent = send_user_email(
                 to=email,
                 subject="Verifica tu correo de MotoPreview",
@@ -997,10 +1056,10 @@ def register(request):
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
+@throttle_classes([ScopedRateThrottle])
+@throttle_scope("auth")
+@require_database
 def login(request):
-    unavailable = database_unavailable()
-    if unavailable:
-        return unavailable
     email = str(request.data.get("usu_email", "")).strip()
     password = request.data.get("password", "")
     if not email or not password:
@@ -1010,6 +1069,11 @@ def login(request):
         return Response({"error": "Credenciales inválidas."}, status=401)
     if user.estado_usuario != "activo":
         return Response({"error": "Usuario inactivo o bloqueado."}, status=403)
+    if not user.email_verificado:
+        return Response(
+            {"error": "Debes verificar tu correo antes de iniciar sesión."},
+            status=status.HTTP_403_FORBIDDEN,
+        )
     try:
         token = issue_jwt(user)
     except APIException as error:
@@ -1034,13 +1098,23 @@ def profile(request):
 
 @api_view(["GET"])
 @permission_classes([AllowAny])
+@throttle_classes([ScopedRateThrottle])
+@throttle_scope("email")
+@require_database
 def verify_email(request, token):
-    unavailable = database_unavailable()
-    if unavailable:
-        return unavailable
-    user = User.objects.filter(verificacion_token=token).first()
+    user = None
+    try:
+        payload = tokens.parse_verification_token(token)
+        user = User.objects.filter(pk=payload.get("id_usuario")).first()
+    except jwt.PyJWTError:
+        # Compatibilidad: enlaces generados antes de los tokens firmados.
+        user = User.objects.filter(verificacion_token=token).first()
     if not user:
-        return Response({"error": "Enlace de verificación inválido."}, status=400)
+        return Response(
+            {"error": "El enlace de verificación es inválido o ya fue usado."}, status=400
+        )
+    if user.email_verificado:
+        return Response({"mensaje": "Correo ya verificado."})
     user.email_verificado = True
     user.verificacion_token = None
     user.save(update_fields=["email_verificado", "verificacion_token"])
@@ -1049,10 +1123,10 @@ def verify_email(request, token):
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
+@throttle_classes([ScopedRateThrottle])
+@throttle_scope("email")
+@require_database
 def forgot_password(request):
-    unavailable = database_unavailable()
-    if unavailable:
-        return unavailable
     email = str(request.data.get("usu_email", "")).strip()
     if not email:
         return Response({"error": "El correo es obligatorio."}, status=400)
@@ -1084,16 +1158,17 @@ def forgot_password(request):
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
+@throttle_classes([ScopedRateThrottle])
+@throttle_scope("auth")
+@require_database
 def reset_password(request):
-    unavailable = database_unavailable()
-    if unavailable:
-        return unavailable
     token = request.data.get("token")
     password = request.data.get("password")
     if not token or not password:
         return Response({"error": "Token y nueva contraseña son obligatorios."}, status=400)
-    if len(password) < 8:
-        return Response({"error": "La contraseña debe tener al menos 8 caracteres."}, status=400)
+    password_error = services.validar_password(password)
+    if password_error:
+        return Response({"error": password_error}, status=400)
 
     token_hash = hashlib.sha256(str(token).encode("utf-8")).hexdigest()
     user = User.objects.filter(

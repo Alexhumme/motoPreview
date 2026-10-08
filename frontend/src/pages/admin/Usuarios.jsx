@@ -19,7 +19,6 @@ export default function Usuarios() {
   const [error, setError] = useState('');
 
   async function cargar() {
-    setCargando(true);
     try {
       const datos = await obtenerUsuarios(usuario.id_tienda);
       setUsuarios(datos);
@@ -31,7 +30,10 @@ export default function Usuarios() {
   }
 
   useEffect(() => {
-    cargar();
+    async function refrescar() {
+      await cargar();
+    }
+    refrescar();
   }, [usuario]);
 
   function abrirNuevo() {

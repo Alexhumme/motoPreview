@@ -23,6 +23,33 @@ class TranslationTests(SimpleTestCase):
             "The limit of 5 products for this plan has been reached.",
         )
 
+    def test_mensajes_de_verificacion_y_passwords(self):
+        self.assertEqual(
+            i18n.translate_text("Debes verificar tu correo antes de iniciar sesión.", "en"),
+            "You must verify your email before signing in.",
+        )
+        self.assertEqual(
+            i18n.translate_text("La contraseña no puede superar los 72 bytes.", "en"),
+            "The password cannot exceed 72 bytes.",
+        )
+        self.assertEqual(
+            i18n.translate_text("El enlace de verificación es inválido o ya fue usado.", "en"),
+            "The verification link is invalid or has already been used.",
+        )
+        self.assertEqual(i18n.translate_text("Correo ya verificado.", "en"), "Email already verified.")
+
+    def test_transicion_de_estado_de_cotizacion_se_traduce(self):
+        self.assertEqual(
+            i18n.translate_text("No se puede pasar de 'pendiente' a 'completada'.", "en"),
+            "It is not allowed to change from 'pendiente' to 'completada'.",
+        )
+
+    def test_limite_de_accesorios_se_traduce(self):
+        self.assertEqual(
+            i18n.translate_text("La cotización supera el límite de 100 accesorios.", "en"),
+            "The quote exceeds the limit of 100 accessories.",
+        )
+
     def test_nested_serializer_errors(self):
         data = {"error": {"acc_nombre": ["El nombre es obligatorio."]}}
         self.assertEqual(
@@ -33,10 +60,6 @@ class TranslationTests(SimpleTestCase):
     def test_listings_are_not_translated(self):
         data = [{"nombre": "Credenciales inválidas."}]
         self.assertEqual(i18n.translate_payload(data, "en"), data)
-
-    def test_accept_language_parsing(self):
-        self.assertEqual(i18n.parse_accept_language("fr;q=0.9, en-US;q=0.8, es;q=0.1"), "en")
-        self.assertIsNone(i18n.parse_accept_language("fr, de"))
 
     def test_every_pattern_message_formats(self):
         for _, template in i18n.PATTERNS["en"]:

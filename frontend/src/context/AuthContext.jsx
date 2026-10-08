@@ -1,20 +1,23 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState } from 'react';
 import api from '../services/api';
 
 const AuthContext = createContext();
 
-export function AuthProvider({ children }) {
-  const [usuario, setUsuario] = useState(null);
-  const [cargando, setCargando] = useState(true);
+function leerUsuarioGuardado() {
+  const token = localStorage.getItem('token');
+  const usuarioGuardado = localStorage.getItem('usuario');
+  if (!token || !usuarioGuardado) return null;
+  try {
+    return JSON.parse(usuarioGuardado);
+  } catch {
+    return null;
+  }
+}
 
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    const usuarioGuardado = localStorage.getItem('usuario');
-    if (token && usuarioGuardado) {
-      setUsuario(JSON.parse(usuarioGuardado));
-    }
-    setCargando(false);
-  }, []);
+export function AuthProvider({ children }) {
+  // La sesión se hidrata de localStorage con estado perezoso (lazy initializer):
+  // el usuario ya está disponible en el primer render y no hace falta un efecto.
+  const [usuario, setUsuario] = useState(leerUsuarioGuardado);
 
   async function login(usu_email, password) {
     const respuesta = await api.post('/auth/login', { usu_email, password });
@@ -31,11 +34,7 @@ export function AuthProvider({ children }) {
     setUsuario(null);
   }
 
-  return (
-    <AuthContext.Provider value={{ usuario, login, logout, cargando }}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={{ usuario, login, logout }}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {

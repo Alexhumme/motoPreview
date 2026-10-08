@@ -17,5 +17,12 @@ export default defineConfig([
       globals: globals.browser,
       parserOptions: { ecmaFeatures: { jsx: true } },
     },
+    rules: {
+      // Los archivos de contexto exportan el Provider (componente) y su hook (useX).
+      'react-refresh/only-export-components': [
+        'error',
+        { allowExportNames: ['useAuth', 'useCart', 'useConnection'] },
+      ],
+    },
   },
 ])

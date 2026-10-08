@@ -14,7 +14,6 @@ export default function Tienda() {
   const [exito, setExito] = useState(false);
 
   async function cargar() {
-    setCargando(true);
     try {
       const datos = await obtenerTienda(usuario.id_tienda);
       setTienda(datos);
@@ -33,7 +32,10 @@ export default function Tienda() {
   }
 
   useEffect(() => {
-    cargar();
+    async function refrescar() {
+      await cargar();
+    }
+    refrescar();
   }, [usuario]);
 
   async function manejarSubmit(e) {

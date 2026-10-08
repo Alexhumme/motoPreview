@@ -33,7 +33,8 @@ class JWTAuthentication(authentication.BaseAuthentication):
                 parts[1],
                 settings.JWT_SECRET,
                 algorithms=["HS256"],
-                options={"require": ["exp"]},
+                options={"require": ["exp", "iss"]},
+                issuer=settings.JWT_ISSUER,
             )
         except jwt.ExpiredSignatureError as exc:
             raise exceptions.AuthenticationFailed("El token expiró.") from exc

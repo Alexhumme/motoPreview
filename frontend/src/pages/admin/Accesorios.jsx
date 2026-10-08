@@ -24,7 +24,6 @@ export default function Accesorios() {
   const [error, setError] = useState('');
 
   async function cargarTodo() {
-    setCargando(true);
     const [datosAccesorios, datosCategorias, datosMotos] = await Promise.all([
       obtenerAccesorios(), obtenerCategorias(), obtenerMotos(),
     ]);
@@ -44,7 +43,10 @@ export default function Accesorios() {
   }
 
   useEffect(() => {
-    cargarTodo();
+    async function refrescar() {
+      await cargarTodo();
+    }
+    refrescar();
   }, []);
 
   async function abrirNuevo() {

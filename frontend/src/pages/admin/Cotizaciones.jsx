@@ -11,7 +11,6 @@ export default function Cotizaciones() {
   const [actualizando, setActualizando] = useState(null);
 
 async function cargar() {
-  setCargando(true);
   try {
     const datos = await obtenerCotizaciones();
     setCotizaciones(datos.filter((c) => c.id_tienda === usuario.id_tienda));
@@ -23,7 +22,10 @@ async function cargar() {
 }
 
   useEffect(() => {
-    cargar();
+    async function refrescar() {
+      await cargar();
+    }
+    refrescar();
   }, [usuario]);
 
   function alternarExpandida(id) {
@@ -35,7 +37,7 @@ async function cargar() {
     try {
       await cambiarEstadoCotizacion(id, nuevoEstado);
       await cargar();
-    } catch (err) {
+    } catch {
       alert('No se pudo actualizar el estado');
     } finally {
       setActualizando(null);

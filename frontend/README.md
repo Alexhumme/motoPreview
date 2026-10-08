@@ -1,16 +1,29 @@
-# React + Vite
+# MotoPreview — Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Aplicación **React 19 + Vite** (SPA) del catálogo, configurador 3D y gestión de
+cotizaciones de accesorios para motocicletas.
 
-Currently, two official plugins are available:
+## Scripts
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+| Comando | Descripción |
+|---|---|
+| `npm install` | Instala las dependencias |
+| `npm run dev` | Servidor de desarrollo en <http://localhost:5173> |
+| `npm run build` | Build de producción en `dist/` |
+| `npm run preview` | Sirve el build de producción |
+| `npm run lint` | ESLint (0 errores obligatorios) |
 
-## React Compiler
+## Configuración
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Copia `.env.example` a `.env.local` y define la URL del backend:
 
-## Expanding the ESLint configuration
+```
+VITE_API_URL=http://127.0.0.1:8000/api
+```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Si no se define, `src/config.js` usa el backend de Render por defecto.
+
+## Documentación
+
+- [README raíz](../README.md) — puesta en marcha de todo el proyecto (backend + frontend).
+- [`documentacion/`](../../documentacion/README.md) — documentación técnica (arquitectura, API, vistas, etc.).

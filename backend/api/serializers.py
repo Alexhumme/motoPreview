@@ -21,6 +21,7 @@ from .models import (
     SubscriptionPlan,
     User,
 )
+from . import services
 
 
 class AccessoryCategorySerializer(serializers.ModelSerializer):
@@ -300,6 +301,14 @@ class StoreSerializer(serializers.ModelSerializer):
             "plan_subscripcion",
         )
         read_only_fields = ("id_tienda", "fecha_afiliacion")
+
+    def to_representation(self, instance):
+        """Oculta el NIT, teléfono y email de la tienda a quien no sea personal."""
+        data = super().to_representation(instance)
+        if not services.permite_datos_contacto(self.context.get("request")):
+            for campo in ("nit", "telefono_tienda", "email_tienda"):
+                data.pop(campo, None)
+        return data
 
 
 class UserSerializer(serializers.ModelSerializer):

@@ -14,7 +14,6 @@ export default function Inventario() {
   const [mensaje, setMensaje] = useState('');
 
 async function cargarInventario() {
-  setCargando(true);
   try {
     const datos = await obtenerInventario();
     setInventario(datos.filter((i) => i.id_tienda === usuario.id_tienda));
@@ -26,7 +25,10 @@ async function cargarInventario() {
 }
 
   useEffect(() => {
-    cargarInventario();
+    async function refrescar() {
+      await cargarInventario();
+    }
+    refrescar();
   }, [usuario]);
 
   function abrirFormulario(item) {
