@@ -4,6 +4,10 @@ Catálogo y configurador de accesorios para motocicletas. Frontend en **React** 
 
 ## Cómo correrlo
 
+**En la carepta click izquierdo en iniciar.bat**
+
+**O tambien**
+
 **Backend** (terminal 1):
 
 ```bash
@@ -37,6 +41,4 @@ Abre http://localhost:5173 (el backend queda en http://127.0.0.1:8000).
 | Modelos (tablas) | `backend/api/models.py` (esquema real en PostgreSQL: `managed=False`) |
 | Serializers | `backend/api/serializers.py` |
 | Seguridad (JWT, permisos) | `backend/api/authentication.py`, `backend/api/security.py` |
-| Pruebas | `cd backend && python manage.py test api` (110 pruebas, sin base de datos) |
-
-> Cambia la contraseña del admin tras la revisión: `python manage.py changepassword admin`
+| Pruebas | `cd backend && python manage.py test api` |
