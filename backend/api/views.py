@@ -101,6 +101,22 @@ def user_role_ids(user):
     return [str(role_id) for role_id in user.role_ids]
 
 
+def prime_user_roles(users):
+    """Precarga roles de una lista de usuarios en 2 queries (evita N+1 del serializer)."""
+    users = list(users)
+    if not users:
+        return
+    ids = [u.id_usuario for u in users]
+    by_user = {}
+    for row in UserRole.objects.filter(id_usuario__in=ids).values("id_usuario", "id_rol"):
+        by_user.setdefault(row["id_usuario"], []).append(row["id_rol"])
+    roles = {r.id_rol: r for r in Role.objects.filter(pk__in={rid for v in by_user.values() for rid in v})}
+    for u in users:
+        u._cached_role_ids = by_user.get(u.id_usuario, [])
+        first = u._cached_role_ids[0] if u._cached_role_ids else None
+        u._cached_role = roles.get(first) if first else None
+
+
 def store_staff(user):
     roles = {role.lower() for role in user_role_ids(user)}
     return ROLE_ADMIN.lower() in roles or ROLE_SELLER.lower() in roles
@@ -140,17 +156,17 @@ def issue_jwt(user):
 
 
 def link_with_token(base_url, token):
-    separator = "&" if "?" in base_url else "?"
-    return f"{base_url}{separator}token={token}"
+    # Enlaces estilo path (/verificar/<token>, /restablecer/<token>) para
+    # coincidir con las rutas del frontend (App.jsx: /verificar/:token y
+    # /restablecer/:token). La versión anterior usaba ?token= y caía en 404.
+    return f"{base_url.rstrip('/')}/{token}"
 
 
 def update_user_role(user_id, role_id):
-    with connection.cursor() as cursor:
-        cursor.execute('DELETE FROM "usuario_rol" WHERE "id_usuario" = %s', [user_id])
-        cursor.execute(
-            'INSERT INTO "usuario_rol" ("id_usuario", "id_rol") VALUES (%s, %s)',
-            [user_id, role_id],
-        )
+    # ORM en vez del SQL crudo anterior (mismo efecto, sin identificadores
+    # entrecomillados a mano y participando en transaction.atomic).
+    UserRole.objects.filter(id_usuario=user_id).delete()
+    UserRole.objects.create(id_usuario=user_id, id_rol=role_id)
 
 
 def inventory_status(stock, minimum):
@@ -178,11 +194,14 @@ class ResourceCollection(APIView):
     model = None
     serializer_class = None
     filter_fields = ()
+    # Lectura pública, escritura solo tienda (admin/vendedor). Antes era
+    # IsAuthenticated: cualquier cliente logueado podía crear/editar catálogo.
+    write_permission = IsStoreStaff
 
     def get_permissions(self):
         if self.request.method == "GET":
             return [AllowAny()]
-        return [IsAuthenticated()]
+        return [self.write_permission()]
 
     def get_queryset(self):
         return self.model.objects.all()
@@ -224,11 +243,12 @@ class ResourceDetail(APIView):
     model = None
     serializer_class = None
     not_found_message = "Registro no encontrado."
+    write_permission = IsStoreStaff
 
     def get_permissions(self):
         if self.request.method == "GET":
             return [AllowAny()]
-        return [IsAuthenticated()]
+        return [self.write_permission()]
 
     def get_object(self, pk):
         return self.model.objects.get(pk=pk)
@@ -350,17 +370,20 @@ class MotorcycleDetail(ResourceDetail):
 class RoleCollection(ResourceCollection):
     model = Role
     serializer_class = RoleSerializer
+    write_permission = IsStoreAdmin
 
 
 class RoleDetail(ResourceDetail):
     model = Role
     serializer_class = RoleSerializer
     not_found_message = "Rol no encontrado."
+    write_permission = IsStoreAdmin
 
 
 class StoreCollection(ResourceCollection):
     model = Store
     serializer_class = StoreSerializer
+    write_permission = IsStoreAdmin
 
     def get_queryset(self):
         return Store.objects.select_related("plan").all()
@@ -370,6 +393,7 @@ class StoreDetail(ResourceDetail):
     model = Store
     serializer_class = StoreSerializer
     not_found_message = "Tienda no encontrada."
+    write_permission = IsStoreAdmin
 
     def get_object(self, pk):
         return Store.objects.select_related("plan").get(pk=pk)
@@ -384,7 +408,8 @@ class UserCollection(APIView):
             return unavailable
         if not request.user.id_tienda:
             return Response({"error": "El usuario no tiene una tienda asignada."}, status=400)
-        users = User.objects.filter(tienda_id=request.user.id_tienda).order_by("usu_nombre")
+        users = list(User.objects.filter(tienda_id=request.user.id_tienda).order_by("usu_nombre"))
+        prime_user_roles(users)
         return Response(UserSerializer(users, many=True).data)
 
 
@@ -514,7 +539,7 @@ class AccessoryDetail(ResourceDetail):
 
 class CompatibilityCollection(APIView):
     def get_permissions(self):
-        return [AllowAny()] if self.request.method == "GET" else [IsAuthenticated()]
+        return [AllowAny()] if self.request.method == "GET" else [IsStoreStaff()]
 
     def get(self, request):
         unavailable = database_unavailable()
@@ -939,7 +964,10 @@ def register(request):
             status=status.HTTP_403_FORBIDDEN,
         )
 
-    store_id = request.user.id_tienda if not is_customer else request.data.get("id_tienda")
+    # getattr porque el usuario anónimo (AnonymousPrincipal) no tiene id_tienda;
+    # el acceso directo lanzaba AttributeError -> 500 en vez del 403 esperado.
+    user_store = getattr(request.user, "id_tienda", None)
+    store_id = user_store if not is_customer else request.data.get("id_tienda")
     if store_id:
         try:
             store_id = UUID(str(store_id))
@@ -1108,12 +1136,6 @@ def reset_password(request):
         reset_token=token_hash,
         reset_token_expira__gt=timezone.now(),
     ).first()
-    if not user:
-        # Accept an unexpired legacy token created by the previous Node backend.
-        user = User.objects.filter(
-            reset_token=token,
-            reset_token_expira__gt=timezone.now(),
-        ).first()
     if not user:
         return Response({"error": "El enlace es inválido o ya expiró."}, status=400)
 

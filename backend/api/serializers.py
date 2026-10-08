@@ -327,6 +327,9 @@ class UserSerializer(serializers.ModelSerializer):
         return str(role_id) if role_id else None
 
     def get_rol(self, instance):
+        cached = getattr(instance, "_cached_role", "missing")
+        if cached != "missing":
+            return RoleSerializer(cached).data if cached else None
         role_id = instance.id_rol
         if not role_id:
             return None
