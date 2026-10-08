@@ -20,11 +20,6 @@ from rest_framework.views import APIView
 from rest_framework.decorators import api_view, permission_classes
 
 from . import i18n
-def root(request):
-    lang = getattr(request, "lang", i18n.DEFAULT_LANGUAGE)
-    return JsonResponse(
-        {"mensaje": i18n.translate_text("API de MotoPreview con Django funcionando.", lang)}
-    )
 from .models import (
     Accessory,
     AccessoryCategory,
@@ -520,6 +515,19 @@ class AccessoryDetail(ResourceDetail):
 class CompatibilityCollection(APIView):
     def get_permissions(self):
         return [AllowAny()] if self.request.method == "GET" else [IsAuthenticated()]
+
+    def get(self, request):
+        unavailable = database_unavailable()
+        if unavailable:
+            return unavailable
+        links = AccessoryCompatibility.objects.select_related("modelo_moto__marca").all()
+        accesorio = request.query_params.get("id_accesorio")
+        modelo = request.query_params.get("id_modelo_moto")
+        if accesorio:
+            links = links.filter(accesorio_id=accesorio)
+        if modelo:
+            links = links.filter(modelo_moto_id=modelo)
+        return Response(CompatibilitySerializer(links, many=True).data)
 
     def post(self, request):
         unavailable = database_unavailable()
