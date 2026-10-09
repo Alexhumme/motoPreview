@@ -89,13 +89,18 @@ class LanguageSelectionTests(SimpleTestCase):
         )
         self.assertEqual(response["Content-Language"], "es")
 
-    def test_browser_request_returns_json(self):
-        # Sin diseño HTML: un navegador también recibe JSON.
+    def test_browser_request_gets_browsable_html(self):
+        # Un navegador (Accept: text/html) recibe la interfaz navegable de DRF;
+        # el cliente JSON sigue recibiendo application/json.
         response = self.client.get(
             "/", HTTP_ACCEPT="text/html,application/xhtml+xml,*/*;q=0.8"
         )
-        self.assertEqual(response["Content-Type"], "application/json")
-        self.assertIn("mensaje", response.json())
+        self.assertTrue(response["Content-Type"].startswith("text/html"))
+        self.assertIn(b"rest_framework", response.content)
+
+        json_response = self.client.get("/", HTTP_ACCEPT="application/json")
+        self.assertEqual(json_response["Content-Type"], "application/json")
+        self.assertIn("mensaje", json_response.json())
 
     def test_cookie_remembers_choice(self):
         first = self.client.get("/?lang=en", HTTP_ACCEPT="*/*")

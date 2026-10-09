@@ -10,7 +10,6 @@ import jwt
 from django.conf import settings
 from django.core.mail import send_mail
 from django.db import IntegrityError, connection, transaction
-from django.http import JsonResponse
 from django.utils import timezone, translation
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes, throttle_classes, throttle_scope
@@ -270,9 +269,11 @@ def paginate_response(request, queryset, serializer_class, *, context=None):
     )
 
 
+@api_view(["GET"])
+@permission_classes([AllowAny])
 def root(request):
     lang = getattr(request, "lang", i18n.DEFAULT_LANGUAGE)
-    return JsonResponse(
+    return Response(
         {"mensaje": i18n.translate_text("API de MotoPreview con Django funcionando.", lang)}
     )
 
@@ -281,7 +282,7 @@ def root(request):
 @permission_classes([AllowAny])
 def health(request):
     if not settings.DATABASE_URL:
-        return JsonResponse(
+        return Response(
             {"ok": False, "database_configured": False, "database_connected": False},
             status=status.HTTP_503_SERVICE_UNAVAILABLE,
         )
@@ -292,7 +293,7 @@ def health(request):
         connected = True
     except Exception:
         connected = False
-    return JsonResponse(
+    return Response(
         {
             "ok": connected,
             "database_configured": True,
