@@ -1,0 +1,29 @@
+flowchart TD
+    A([Inicio: /admin/inventario]) --> B["GET /api/inventario<br/>(lista de la tienda del usuario)"]
+    B --> C{HTTP?}
+    C -- "400" --> D[/Error: el usuario no tiene tienda/]
+    C -- "503" --> E[/Banner: base de datos no disponible/]
+    C -- "200" --> F[[Tabla: accesorio, SKU,<br/>stock_actual, stock_minimo, badge estado]]
+    F --> G[/Usuario pulsa<br/>'Registrar movimiento'/]
+    G --> H[/Modal: tipo de movimiento,<br/>cantidad, observaciones/]
+    H --> I{"Campos válidos?<br/>cantidad > 0"}
+    I -- No --> H
+    I -- Sí --> J["POST /api/inventario/movimiento<br/>{id_inventario, id_tipomov,<br/>mov_cantidad, observaciones}"]
+    J --> K{HTTP?}
+    K -- "404" --> L[/Inventario o tipo<br/>no encontrado/]
+    L --> H
+    K -- "400" --> M[/Error: el stock<br/>quedaría negativo/]
+    M --> H
+    K -- "201" --> N["Backend (transacción):<br/>SELECT ... FOR UPDATE<br/>entrada → cantidad = abs()<br/>salida  → cantidad = -abs()<br/>UPDATE stock_actual + estado_inventario<br/>INSERT movimiento_inventario (usuario)"]
+    N --> O[[Respuesta 201:<br/>movimiento + inventarioActualizado]]
+    O --> P[[Tabla recargada]]
+    P --> Q([Fin])
+
+    subgraph Alta["Alta de producto en inventario (POST /api/inventario)"]
+        R[/id_producto XOR id_accesorio,<br/>stock_actual, stock_minimo, precio/] --> S{limite_productos<br/>del plan alcanzado?}
+        S -- Sí --> T[[403 Forbidden]]
+        S -- No --> U{Registro ya existe<br/>para la tienda?}
+        U -- Sí --> V[[409 Conflict]]
+        U -- No --> W["INSERT inventario<br/>estado = inventory_status stock"]
+        W --> X[[201 Created]]
+    end

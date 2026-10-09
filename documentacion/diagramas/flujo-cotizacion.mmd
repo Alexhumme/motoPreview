@@ -1,0 +1,28 @@
+flowchart TD
+    A([Inicio: usuario pulsa '+']) --> B["CartContext.agregarItem(accesorio)<br/>persiste en localStorage['carrito']"]
+    B --> C[[SiteHeader actualiza badge totalItems]]
+    C --> D[/usuario abre la página del carrito/]
+    D --> E{"¿Hay sesión?<br/>(AuthContext.usuario)"}
+    E -- No --> F[[navigate('/login')]]
+    F --> D
+    E -- Sí --> G["Carga motos:<br/>GET /api/motos"]
+    G --> H[/Selecciona una moto<br/>+ observaciones opcionales/]
+    H --> I{Moto seleccionada?}
+    I -- No --> J[/Error: 'Selecciona una moto'/]
+    J --> H
+    I -- Sí --> K["POST /api/cotizaciones<br/>{id_moto, coti_observaciones,<br/>items:[{id_accesorio, cantidad}]}<br/>Authorization: Bearer"]
+    K --> L{HTTP?}
+    L -- "400" --> M[/Accesorio sin precio<br/>o datos inválidos/]
+    M --> H
+    L -- "409" --> M
+    L -- "201" --> N["Backend en transacción:<br/>· INSERT cotizacion (estado 'pendiente')<br/>· INSERT detalle_cotizacion (subtotal/total)"]
+    N --> O["vaciarCarrito()"]
+    O --> P[[Pantalla '¡Cotización enviada!']]
+    P --> Q([Fin])
+
+    subgraph ClienteAdmin["Gestión de la cotización (panel admin)"]
+        R[[Cliente: /admin/cotizaciones]] --> S[/Pulsa Aprobar, Rechazar<br/>o Completar/]
+        S --> T["PUT /api/cotizaciones/id/estado<br/>{coti_estado}"]
+        T --> U["Backend:<br/>· select_for_update<br/>· UPDATE cotizacion<br/>· INSERT cotizacion_estado_hist<br/>· correo al cliente"]
+        U --> V[[Lista recargada]]
+    end

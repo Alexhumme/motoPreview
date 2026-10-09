@@ -1,0 +1,20 @@
+flowchart TD
+    A([Inicio: usuario en /login]) --> B[/Solicita email y password/]
+    B --> C{Campos válidos?}
+    C -- No --> B
+    C -- Sí --> D["POST /api/auth/login<br/>Content-Type: application/json"]
+    D --> E{HTTP?}
+    E -- "200 OK" --> F["Guarda token + usuario<br/>en localStorage"]
+    F --> G{"id_rol es<br/>ADMIN o VENDEDOR?"}
+    G -- Sí --> H[[Redirige a /admin]]
+    G -- No --> I[[Redirige a /]]
+    E -- "401" --> J[/Muestra 'Credenciales inválidas'/]
+    J --> B
+    E -- "403" --> K[/Muestra 'Usuario inactivo<br/>o bloqueado'/]
+    K --> B
+    E -- "503" --> L[/Banner: backend no disponible/]
+    L --> M{Reintentar?}
+    M -- Sí --> D
+    M -- No --> N([Fin])
+    H --> O([Panel admin])
+    I --> P([Catálogo])

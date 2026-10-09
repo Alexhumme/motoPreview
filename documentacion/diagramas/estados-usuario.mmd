@@ -1,0 +1,28 @@
+stateDiagram-v2
+    [*] --> activo : POST /api/auth/register
+
+    activo --> activo : PUT /api/usuarios/:id<br/>sin cambio de estado
+    activo --> inactivo : PUT /api/usuarios/:id<br/>estado_usuario=inactivo
+    activo --> bloqueado : DELETE /api/usuarios/:id<br/>(soft delete)
+    inactivo --> activo : PUT /api/usuarios/:id
+    inactivo --> bloqueado : DELETE /api/usuarios/:id
+    bloqueado --> activo : PUT /api/usuarios/:id
+
+    note right of activo
+        Único estado que permite:
+        · POST /api/auth/login (200)
+        · Autenticarse con JWT
+    end note
+
+    note right of bloqueado
+        Usuario "eliminado" nunca
+        se borra físicamente de la tabla.
+    end note
+
+    state "Estados del inventario" as inv {
+        [*] --> normal : stock > stock_minimo
+        normal --> bajo : stock <= stock_minimo
+        bajo --> agotado : stock <= 0
+        agotado --> bajo : entrada de stock
+        bajo --> normal : stock > stock_minimo
+    }

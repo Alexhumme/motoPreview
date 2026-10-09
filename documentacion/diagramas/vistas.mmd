@@ -1,0 +1,41 @@
+flowchart TB
+    classDef pub fill:#ecfdf5,stroke:#059669,color:#111
+    classDef auth fill:#eff6ff,stroke:#2563eb,color:#111
+    classDef admin fill:#fef2f2,stroke:#dc2626,color:#111
+    classDef guard fill:#fffbeb,stroke:#d97706,color:#111
+
+    ROOT(["/  ·  Catálogo (Catálogo.jsx)<br/>hero + filtros + grid + paginación<br/>sección #como-funciona"]):::pub
+
+    ROOT --> H1["SiteHeader / Footer"]:::pub
+    ROOT --> VIS["/visualizador/:id<br/>Visualizador.jsx + Visor3D"]:::pub
+    ROOT --> CONF["/configurador<br/>Configurador.jsx"]:::pub
+    ROOT --> CART["/carrito<br/>Carrito.jsx"]:::pub
+    ROOT --> NOT["* → NoEncontrado.jsx (404)"]:::pub
+
+    LOGIN["/login<br/>Login.jsx"]:::auth
+    REG["/registro<br/>Registro.jsx"]:::auth
+    REC["/recuperar<br/>RecuperarPassword.jsx"]:::auth
+    REST["/restablecer/:token<br/>RestablecerPassword.jsx"]:::auth
+    VER["/verificar/:token<br/>VerificarCorreo.jsx"]:::auth
+
+    MIS(["/mis-cotizaciones<br/>MisCotizaciones.jsx"]):::guard
+    GUARD1{"RutaProtegida<br/>sesión requerida"}:::guard
+    MIS --- GUARD1
+
+    ADMIN(["/admin · AdminLayout<br/>sidebar por rol"]):::admin
+    GUARD2{"RutaProtegida<br/>roles: ADMIN | VENDEDOR"}:::admin
+    ADMIN --- GUARD2
+
+    ADMIN --> DASH["/admin<br/>Dashboard.jsx"]:::admin
+    ADMIN --> INV["/admin/inventario<br/>Inventario.jsx"]:::admin
+    ADMIN --> COT["/admin/cotizaciones<br/>Cotizaciones.jsx"]:::admin
+    ADMIN --> REP["/admin/reportes<br/>Reportes.jsx"]:::admin
+
+    ADMIN --> GUARD3{"RutaProtegida<br/>rol: solo ADMIN"}:::guard
+    GUARD3 --> ACC["/admin/accesorios<br/>Accesorios.jsx"]:::admin
+    GUARD3 --> USU["/admin/usuarios<br/>Usuarios.jsx"]:::admin
+    GUARD3 --> TIE["/admin/tienda<br/>Tienda.jsx"]:::admin
+
+    LOGIN --> DASH
+    LOGIN --> ROOT
+    REG --> ROOT

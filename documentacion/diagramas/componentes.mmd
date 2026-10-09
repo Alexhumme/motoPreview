@@ -1,0 +1,60 @@
+flowchart TB
+    subgraph FE["Frontend (React SPA)"]
+        direction TB
+        RTR["React Router v7<br/>App.jsx — rutas"]
+        PUBL["Páginas públicas<br/>Catálogo · Carrito · Configurador<br/>Visualizador · MisCotizaciones"]
+        AUTHW["Páginas de auth<br/>Login · Registro · Recuperar<br/>Restablecer · VerificarCorreo"]
+        ADMW["Panel admin<br/>Dashboard · Inventario · Cotizaciones<br/>Reportes · Accesorios · Usuarios · Tienda"]
+
+        subgraph CTX["Contextos"]
+            AC["AuthContext<br/>sesión + JWT"]
+            CC["CartContext<br/>carrito local"]
+            CN["ConnectionContext<br/>salud del backend"]
+        end
+
+        subgraph SVC["Services (axios)"]
+            API["api.js<br/>interceptores"]
+            S1["auth · motos · accesorios<br/>cotizaciones · inventario"]
+            S2["usuarios · tiendas · compatibilidad<br/>modelos3d"]
+        end
+
+        subgraph COMP["Componentes compartidos"]
+            SH["SiteHeader"]
+            FT["Footer"]
+            AL["AdminLayout"]
+            RP["RutaProtegida"]
+            V3["Visor3D (three.js)"]
+            BC["BannerConexion"]
+            MC["ModalConfirmacion"]
+            AC2["AccesorioCard"]
+        end
+
+        RTR --> PUBL & AUTHW & ADMW
+        PUBL & AUTHW & ADMW --> CTX
+        CTX --> SVC
+        SVC --> COMP
+    end
+
+    subgraph BE["Backend (Django REST)"]
+        direction TB
+        URLS["motopreview/urls.py<br/>~45 rutas"]
+        MW["LanguageMiddleware<br/>i18n es/en"]
+        AUTH["JWTAuthentication<br/>Bearer HS256"]
+        SEC["security.py<br/>IsStoreStaff · IsStoreAdmin"]
+        VW["api/views.py<br/>FBV + ResourceCollection/Detail"]
+        SER["api/serializers.py<br/>24 serializers"]
+        ERR["errors.py → error<br/>renderers.py → traducción"]
+        INFRA["fields.py · i18n.py · security.py"]
+    end
+
+    subgraph DB
+        direction TB
+        MODELS["api/models.py<br/>21 modelos · managed=False"]
+    end
+
+    API -->|"HTTPS JSON"| URLS
+    URLS --> MW --> AUTH --> SEC --> VW
+    VW --> SER
+    SER --> ERR
+    VW --> MODELS
+    MODELS --> DB

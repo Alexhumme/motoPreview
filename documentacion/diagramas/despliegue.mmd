@@ -1,0 +1,39 @@
+flowchart TB
+    subgraph Usuario["Navegador del usuario"]
+        B["Navegador<br/>Chrome / Edge / Firefox"]
+    end
+
+    subgraph Vercel["Vercel — Frontend estático"]
+        F["SPA React (Vite build → dist/)<br/>https://motopreview.vercel.app<br/>rewrites: /* → /index.html"]
+    end
+
+    subgraph Render["Render — Backend WSGI"]
+        direction TB
+        G["gunicorn<br/>motopreview.wsgi:application"]
+        D["Django 5.2 + DRF<br/>https://motopreview-backend.onrender.com/api"]
+        ENV[("Variables de entorno<br/>DJANGO_SECRET_KEY · JWT_SECRET<br/>MOTOPREVIEW_DATABASE_URL<br/>DJANGO_ALLOWED_HOSTS · FRONTEND_ORIGINS")]
+        G --> D
+        ENV -.-> D
+    end
+
+    subgraph Neon["Neon — PostgreSQL serverless (AWS us-east-2)"]
+        P[("PostgreSQL 15+<br/>pooler transaction mode<br/>sslmode=require")]
+    end
+
+    SMTP["Servidor SMTP<br/>EMAIL_HOST (opcional)"]
+    GIT["Repositorio Git<br/>github.com/Alexhumme/motoPreview"]
+
+    B -->|"1. HTTPS"| F
+    B -->|"2. fetch / XHR JSON<br/>Authorization: Bearer<br/>VITE_API_URL"| D
+    D -->|"3. psycopg3<br/>CONN_MAX_AGE=60"| P
+    D -.->|"4. send_mail<br/>(recuperación / notificación)"| SMTP
+    GIT -->|"deploy manual"| F
+    GIT -->|"deploy manual"| Render
+
+    subgraph Local["Desarrollo local (iniciar.bat)"]
+        L1["Django → http://127.0.0.1:8000<br/>manage.py runserver"]
+        L2["Vite → http://localhost:5173<br/>npm run dev"]
+        L3[("Misma BD Neon o local")]
+        L1 --> L3
+        L2 -->|"VITE_API_URL=http://127.0.0.1:8000/api"| L1
+    end

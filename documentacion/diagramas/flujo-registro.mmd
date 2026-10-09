@@ -1,0 +1,17 @@
+flowchart TD
+    A([Inicio: /registro]) --> B[/Nombre, email y password/]
+    B --> C{"password >= 8<br/>y campos completos?"}
+    C -- No --> B
+    C -- Sí --> D["POST /api/auth/register<br/>{usu_nombre, usu_email, password,<br/>id_rol: ROL_CLIENTE, id_tienda: TIENDA_PRINCIPAL}"]
+    D --> E{HTTP?}
+    E -- "201" --> F["Servidor crea usuario<br/>email_verificado=false<br/>+ verificacion_token<br/>+ correo de verificación"]
+    F --> G["login() automático:<br/>POST /api/auth/login"]
+    G --> H[[Redirige a /]]
+    E -- "409" --> I[/Email ya registrado/]
+    I --> B
+    E -- "400" --> J[/Datos inválidos/]
+    J --> B
+    E -- "403" --> K[/Solo un admin<br/>registra staff/]
+    K --> B
+    H --> L([Fin])
+    F --> M(["Al abrir el enlace del correo:<br/>GET /auth/verificar/&lt;token&gt;<br/>→ email_verificado = true"])

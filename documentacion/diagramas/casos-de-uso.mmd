@@ -1,0 +1,55 @@
+flowchart LR
+    classDef actor fill:#dbeafe,stroke:#1d4ed8,stroke-width:2px,color:#111
+    classDef uc fill:#ecfdf5,stroke:#059669,stroke-width:1.5px,color:#111
+    classDef sys fill:#f5f3ff,stroke:#7c3aed,stroke-width:1.5px,color:#111
+
+    subgraph Sistema["Sistema MotoPreview"]
+        UC1(["UC-01 Explorar catálogo<br/>de accesorios"])
+        UC2(["UC-02 Buscar y filtrar<br/>accesorios"])
+        UC3(["UC-03 Visualizar accesorio<br/>en 3D"])
+        UC4(["UC-04 Configurar moto y ver<br/>accesorios compatibles"])
+        UC5(["UC-05 Gestionar carrito<br/>local"])
+        UC6(["UC-06 Registrarse"])
+        UC7(["UC-07 Iniciar sesión"])
+        UC8(["UC-08 Recuperar contraseña"])
+        UC9(["UC-09 Verificar correo"])
+        UC10(["UC-10 Enviar cotización"])
+        UC11(["UC-11 Consultar mis cotizaciones"])
+        UC12(["UC-12 Consultar dashboard"])
+        UC13(["UC-13 Consultar inventario"])
+        UC14(["UC-14 Registrar movimiento<br/>de inventario"])
+        UC15(["UC-15 Gestionar cotizaciones<br/>aprobar/rechazar/completar"])
+        UC16(["UC-16 Gestionar accesorios<br/>(CRUD + compatibilidad)"])
+        UC17(["UC-17 Gestionar usuarios<br/>de la tienda"])
+        UC18(["UC-18 Gestionar datos<br/>de la tienda y plan"])
+        UC19(["UC-19 Consultar reportes"])
+        UC20(["UC-20 Autenticarse con JWT"])
+    end
+
+    Cliente(["👤 Cliente anónimo"]):::actor
+    ClienteReg(["👤 Cliente<br/>(registrado)"]):::actor
+    Admin(["👤 Administrador<br/>de tienda"]):::actor
+    Vendedor(["👤 Vendedor"]):::actor
+    SistemaExt(["⚙️ Sistema externo<br/>SMTP / Vercel / Render"]):::actor
+
+    Cliente --> UC1 & UC2 & UC3 & UC4 & UC5
+    Cliente --> UC6 & UC7 & UC8
+    ClienteReg --> UC10 & UC11 & UC7
+    Cliente -->|"incluye"| UC10
+    ClienteReg -->|"hereda"| UC20
+
+    Vendedor --> UC12 & UC13 & UC14 & UC15 & UC19
+    Vendedor --> UC11
+
+    Admin --> UC12 & UC13 & UC14 & UC15 & UC19
+    Admin --> UC16 & UC17 & UC18
+
+    UC6 -.->|"correo de verificación"| SistemaExt
+    UC8 -.->|"token por correo"| SistemaExt
+    UC15 -.->|"notificación al cliente"| SistemaExt
+    UC10 -.->|"persiste en BD"| SistemaExt
+
+    UC4 -.->|"incluye"| UC3
+    UC10 -.->|"usa"| UC5
+    UC7 -.->|"genera"| UC20
+    UC11 -.->|"consulta"| UC15

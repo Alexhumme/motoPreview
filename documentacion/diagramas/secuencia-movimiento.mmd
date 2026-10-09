@@ -1,0 +1,36 @@
+sequenceDiagram
+    autonumber
+    actor S as Staff (Vendedor/Admin)
+    participant SPA as SPA React (Inventario.jsx)
+    participant API as Django API
+    participant DB as PostgreSQL
+
+    S->>SPA: Abre modal "Registrar movimiento"
+    S->>SPA: Elige tipo, cantidad y observaciones
+    SPA->>API: POST /api/inventario/movimiento<br/>Bearer JWT
+    API->>API: JWTAuthentication ✓
+    API->>API: IsStoreStaff (admin o vendedor) ✓
+    alt Sin JWT o rol incorrecto
+        API-->>SPA: 401 / 403
+    else Autorizado
+        API->>DB: SELECT id_tienda del inventario
+        API->>API: ¿El inventario pertenece a la tienda del usuario?
+        alt No pertenece
+            API-->>SPA: 404 Not Found
+        else Sí
+            API->>DB: BEGIN
+            API->>DB: SELECT ... FOR UPDATE (inventario)
+            API->>API: entrada → cantidad = abs()<br/>salida → cantidad = -abs()
+            alt Stock resultante < 0
+                API->>DB: ROLLBACK
+                API-->>SPA: 400 "stock negativo"
+            else Stock válido
+                API->>DB: UPDATE inventario SET stock_actual, estado_inventario, fecha_actualizacion
+                API->>DB: INSERT movimiento_inventario (usuario = request.user)
+                API->>DB: COMMIT
+                DB-->>API: OK
+                API-->>SPA: 201 {movimiento, inventarioActualizado}
+                SPA-->>S: Tabla recargada con nuevo badge de estado
+            end
+        end
+    end

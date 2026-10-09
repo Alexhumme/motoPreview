@@ -1,0 +1,219 @@
+erDiagram
+    ROLE ||--o{ USER_ROLE : "tiene"
+    USER ||--o{ USER_ROLE : "asigna"
+    STORE ||--o{ USER : "emplea"
+    SUBSCRIPTION_PLAN ||--o{ STORE : "define"
+
+    PRODUCT_CATEGORY ||--o{ PRODUCT : "agrupa"
+    PRODUCT ||--o{ ACCESSORY : "materializa"
+    ACCESSORY_CATEGORY ||--o{ ACCESSORY : "clasifica"
+    ACCESSORY_TYPE ||--o{ ACCESSORY : "tipifica"
+    ACCESSORY ||--o{ MODEL_3D : "posee"
+    ACCESSORY ||--o{ INVENTORY : "se stockea"
+    PRODUCT ||--o{ INVENTORY : "se stockea"
+    STORE ||--o{ INVENTORY : "posee"
+
+    MOTORCYCLE_BRAND ||--o{ MOTORCYCLE_MODEL : "tiene"
+    MOTORCYCLE_MODEL ||--o{ MOTORCYCLE : "genera"
+    MOTORCYCLE_MODEL ||--o{ ACCESSORY_COMPATIBILITY : "acepta"
+    ACCESSORY ||--o{ ACCESSORY_COMPATIBILITY : "encaja en"
+
+    MOVEMENT_TYPE ||--o{ INVENTORY_MOVEMENT : "clasifica"
+    INVENTORY ||--o{ INVENTORY_MOVEMENT : "registra"
+    USER ||--o{ INVENTORY_MOVEMENT : "ejecuta"
+
+    STORE ||--o{ QUOTE : "recibe"
+    USER ||--o{ QUOTE : "solicita"
+    MOTORCYCLE ||--o{ QUOTE : "refiere"
+    QUOTE ||--o{ QUOTE_DETAIL : "detalla"
+    ACCESSORY ||--o{ QUOTE_DETAIL : "incluye"
+    QUOTE ||--o{ QUOTE_STATUS_HISTORY : "historial"
+    USER ||--o{ QUOTE_STATUS_HISTORY : "audita"
+
+    USER ||--o{ CONFIGURATION : "guarda"
+    MOTORCYCLE ||--o{ CONFIGURATION : "configura"
+    CONFIGURATION ||--o{ CONFIGURATION_DETAIL : "detalla"
+    ACCESSORY ||--o{ CONFIGURATION_DETAIL : "añade"
+
+    USER ||--o{ TOKEN : "recibe"
+
+    ROLE {
+        uuid id_rol PK
+        text nombre_rol "Administrador | Vendedor | Cliente"
+    }
+    USER_ROLE {
+        uuid id_usuario PK_FK
+        uuid id_rol PK_FK
+    }
+    SUBSCRIPTION_PLAN {
+        uuid id_plan PK
+        text plan_nombre
+        text plan_descripcion
+        decimal precio_mensual
+        int limite_productos
+        int limite_usuarios
+        enum plan_estado "activo | inactivo | suspendido"
+    }
+    STORE {
+        uuid id_tienda PK
+        uuid id_plan FK
+        text nombre_tienda
+        text nit UK
+        text direccion_tienda
+        text telefono_tienda
+        text email_tienda
+        date fecha_afiliacion
+        enum estado_tienda "activa | inactiva | suspendida"
+    }
+    USER {
+        uuid id_usuario PK
+        uuid tienda_FK FK "id_tienda"
+        text usu_nombre
+        text usu_email UK
+        text password_hash "bcrypt"
+        date fecha_registro
+        enum estado_usuario "activo | inactivo | bloqueado"
+        text reset_token
+        datetime reset_token_expira
+        bool email_verificado
+        text verificacion_token
+    }
+    PRODUCT_CATEGORY {
+        uuid id_categoria_producto PK
+        text nombre
+        text descripcion
+    }
+    PRODUCT {
+        uuid id_producto PK
+        text nombre
+        text descripcion
+        text estado "default disponible"
+        uuid id_categoria_producto FK
+        text imagen
+        text codigo_sku UK
+        decimal precio
+    }
+    ACCESSORY_CATEGORY {
+        uuid id_categoria PK
+        text cat_nombre
+        text cat_descripcion
+    }
+    ACCESSORY_TYPE {
+        uuid id_tipo PK
+        text nombre
+        text descripcion
+    }
+    ACCESSORY {
+        uuid id_accesorio PK
+        uuid id_categoria FK
+        uuid id_producto FK
+        uuid id_tipo FK
+        decimal peso
+        text color
+    }
+    MODEL_3D {
+        uuid id_modelo3d PK
+        uuid id_accesorio FK
+        text url_modelo3d
+        text formato_archivo
+        text estado_visualizacion
+        date modelo3d_fecha
+        text modelo3d_observaciones
+    }
+    MOTORCYCLE_BRAND {
+        uuid id_marca PK
+        text marca_nombre
+        text marca_pais
+    }
+    MOTORCYCLE_MODEL {
+        uuid id_modelo_moto PK
+        uuid id_marca FK
+        text modelo_nombre
+        text modelo_descripcion
+        text cilindraje
+    }
+    MOTORCYCLE {
+        uuid id_moto PK
+        uuid id_modelo_moto FK
+        int moto_anio
+        text moto_version
+        text moto_imagen
+    }
+    ACCESSORY_COMPATIBILITY {
+        uuid id_compatibilidad PK
+        uuid id_accesorio FK "unique"
+        uuid id_modelo_moto FK "unique"
+        int anio_desde
+        int anio_hasta
+    }
+    INVENTORY {
+        uuid id_inventario PK
+        uuid id_tienda FK "unique+producto"
+        uuid id_producto FK
+        uuid id_accesorio FK
+        int stock_actual
+        int stock_minimo
+        enum estado_inventario "normal | bajo | agotado"
+        date fecha_actualizacion
+        decimal precio
+    }
+    MOVEMENT_TYPE {
+        uuid id_tipomov PK
+        text tipomov_nombre "Entrada | Salida | Ajuste"
+        text descripcion_tipomov
+    }
+    INVENTORY_MOVEMENT {
+        uuid id_movimiento PK
+        uuid id_inventario FK
+        uuid id_tipomov FK
+        uuid id_usuario FK
+        int mov_cantidad "+ entrada / - salida"
+        datetime fecha_movimiento
+        text observaciones
+    }
+    QUOTE {
+        uuid id_cotizacion PK
+        uuid id_tienda FK
+        uuid id_usuario FK
+        uuid id_moto FK
+        datetime fecha_solicitud
+        enum coti_estado "pendiente | aprobada | rechazada | completada"
+        decimal total
+        text coti_observaciones
+        text nombre_configuracion
+    }
+    QUOTE_DETAIL {
+        uuid id_detalle_cotizacion PK
+        uuid id_cotizacion FK
+        uuid id_accesorio FK
+        int cantidad
+        decimal precio_unitario
+        decimal subtotal
+    }
+    QUOTE_STATUS_HISTORY {
+        uuid id_hist PK
+        uuid id_cotizacion FK
+        text estado
+        datetime fecha
+        uuid id_usuario FK
+    }
+    CONFIGURATION {
+        uuid id_configuracion PK
+        uuid id_usuario FK
+        uuid id_moto FK
+        text nombre
+    }
+    CONFIGURATION_DETAIL {
+        uuid id_detalle PK
+        uuid id_configuracion FK
+        uuid id_accesorio FK
+        int cantidad
+    }
+    TOKEN {
+        uuid id_token PK
+        uuid id_usuario FK
+        text tipo
+        text hash
+        datetime expira_en
+        bool usado
+    }
