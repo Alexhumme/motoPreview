@@ -39,6 +39,18 @@ _RUTAS_API = [
     ("api/modelos-3d", views.Model3DCollection.as_view()),
     ("api/modelos-3d/accesorio/<uuid:id_accesorio>", views.Model3DByAccessory.as_view()),
     ("api/modelos-3d/<uuid:pk>", views.Model3DDetail.as_view()),
+    ("api/productos", views.ProductCollection.as_view()),
+    ("api/productos/<uuid:pk>", views.ProductDetail.as_view()),
+    ("api/categorias-producto", views.ProductCategoryCollection.as_view()),
+    ("api/categorias-producto/<uuid:pk>", views.ProductCategoryDetail.as_view()),
+    ("api/tipos-accesorio", views.AccessoryTypeCollection.as_view()),
+    ("api/tipos-accesorio/<uuid:pk>", views.AccessoryTypeDetail.as_view()),
+    ("api/tipos-movimiento", views.MovementTypeCollection.as_view()),
+    ("api/tipos-movimiento/<uuid:pk>", views.MovementTypeDetail.as_view()),
+    ("api/planes-suscripcion", views.SubscriptionPlanCollection.as_view()),
+    ("api/planes-suscripcion/<uuid:pk>", views.SubscriptionPlanDetail.as_view()),
+    ("api/configuraciones", views.ConfigurationCollection.as_view()),
+    ("api/configuraciones/<uuid:pk>", views.ConfigurationDetail.as_view()),
     ("api/accesorios", views.AccessoryCollection.as_view()),
     ("api/accesorios/<uuid:pk>", views.AccessoryDetail.as_view()),
     ("api/compatibilidad/modelo/<uuid:id_modelo_moto>", views.AccessoriesByModel.as_view()),
@@ -51,6 +63,7 @@ _RUTAS_API = [
     ("api/cotizaciones", views.QuoteCollection.as_view()),
     ("api/cotizaciones/<uuid:pk>", views.QuoteDetailView.as_view()),
     ("api/cotizaciones/<uuid:pk>/estado", views.QuoteStatus.as_view()),
+    ("api/cotizaciones/<uuid:pk>/historial", views.QuoteHistoryView.as_view()),
 ]
 
 

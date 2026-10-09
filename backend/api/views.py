@@ -24,6 +24,9 @@ from .models import (
     Accessory,
     AccessoryCategory,
     AccessoryCompatibility,
+    AccessoryType,
+    Configuration,
+    ConfigurationDetail,
     Inventory,
     InventoryMovement,
     Model3D,
@@ -32,11 +35,13 @@ from .models import (
     MotorcycleModel,
     MovementType,
     Product,
+    ProductCategory,
     Quote,
     QuoteDetail,
     QuoteStatusHistory,
     Role,
     Store,
+    SubscriptionPlan,
     User,
     UserRole,
 )
@@ -44,7 +49,9 @@ from .security import IsStoreAdmin, IsStoreStaff, ROLE_ADMIN, ROLE_CUSTOMER, ROL
 from .serializers import (
     AccessoryCategorySerializer,
     AccessorySerializer,
+    AccessoryTypeSerializer,
     CompatibilitySerializer,
+    ConfigurationSerializer,
     InventoryInputSerializer,
     InventoryMovementSerializer,
     InventorySerializer,
@@ -52,11 +59,15 @@ from .serializers import (
     MotorcycleBrandSerializer,
     MotorcycleModelSerializer,
     MotorcycleSerializer,
+    MovementTypeSerializer,
+    ProductCategorySerializer,
     ProductSerializer,
     QuoteCreateSerializer,
     QuoteSerializer,
+    QuoteStatusHistorySerializer,
     RoleSerializer,
     StoreSerializer,
+    SubscriptionPlanSerializer,
     UserSerializer,
 )
 
@@ -144,6 +155,21 @@ def user_role_ids(user):
 def store_staff(user):
     roles = {role.lower() for role in user_role_ids(user)}
     return ROLE_ADMIN.lower() in roles or ROLE_SELLER.lower() in roles
+
+
+def scope_configurations(request, *, pk=None):
+    """Configuraciones visibles para el usuario (propias) o el personal (de su tienda)."""
+    queryset = Configuration.objects.select_related("usuario", "moto__modelo__marca").prefetch_related(
+        "detalles__accesorio__producto"
+    )
+    if store_staff(request.user):
+        user_ids = User.objects.filter(tienda_id=request.user.id_tienda).values_list(
+            "id_usuario", flat=True
+        )
+        queryset = queryset.filter(usuario_id__in=user_ids)
+    else:
+        queryset = queryset.filter(usuario_id=request.user.id_usuario)
+    return queryset.filter(pk=pk) if pk else queryset
 
 
 def prime_user_roles(users):
@@ -1224,3 +1250,101 @@ def reset_password(request):
     user.reset_token_expira = None
     user.save(update_fields=["password_hash", "reset_token", "reset_token_expira"])
     return Response({"mensaje": "Contraseña actualizada con éxito."})
+
+
+# ---------------------------------------------------------------------------
+# Recursos de catálogo adicionales (lectura pública, escritura de store-admin)
+# ---------------------------------------------------------------------------
+class ProductCollection(ResourceCollection):
+    model = Product
+    serializer_class = ProductSerializer
+
+    def get_queryset(self):
+        return Product.objects.select_related("categoria_producto").all()
+
+
+class ProductDetail(ResourceDetail):
+    model = Product
+    serializer_class = ProductSerializer
+    not_found_message = "Producto no encontrado."
+
+    def get_object(self, pk):
+        return Product.objects.select_related("categoria_producto").get(pk=pk)
+
+
+class ProductCategoryCollection(ResourceCollection):
+    model = ProductCategory
+    serializer_class = ProductCategorySerializer
+
+
+class ProductCategoryDetail(ResourceDetail):
+    model = ProductCategory
+    serializer_class = ProductCategorySerializer
+    not_found_message = "Categoría de producto no encontrada."
+
+
+class AccessoryTypeCollection(ResourceCollection):
+    model = AccessoryType
+    serializer_class = AccessoryTypeSerializer
+
+
+class AccessoryTypeDetail(ResourceDetail):
+    model = AccessoryType
+    serializer_class = AccessoryTypeSerializer
+    not_found_message = "Tipo de accesorio no encontrado."
+
+
+class MovementTypeCollection(ResourceCollection):
+    model = MovementType
+    serializer_class = MovementTypeSerializer
+
+
+class MovementTypeDetail(ResourceDetail):
+    model = MovementType
+    serializer_class = MovementTypeSerializer
+    not_found_message = "Tipo de movimiento no encontrado."
+
+
+class SubscriptionPlanCollection(ResourceCollection):
+    model = SubscriptionPlan
+    serializer_class = SubscriptionPlanSerializer
+
+
+class SubscriptionPlanDetail(ResourceDetail):
+    model = SubscriptionPlan
+    serializer_class = SubscriptionPlanSerializer
+    not_found_message = "Plan de suscripción no encontrado."
+
+
+class ConfigurationCollection(DatabaseGuardMixin):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        return paginate_response(request, scope_configurations(request), ConfigurationSerializer)
+
+
+class ConfigurationDetail(DatabaseGuardMixin):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk):
+        instance = scope_configurations(request, pk=pk).first()
+        if not instance:
+            return Response({"error": "Configuración no encontrada."}, status=status.HTTP_404_NOT_FOUND)
+        return Response(ConfigurationSerializer(instance).data)
+
+
+class QuoteHistoryView(DatabaseGuardMixin):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk):
+        quote_qs = Quote.objects.all()
+        if store_staff(request.user):
+            quote_qs = quote_qs.filter(tienda_id=request.user.id_tienda)
+        else:
+            quote_qs = quote_qs.filter(usuario_id=request.user.id_usuario)
+        if not quote_qs.filter(pk=pk).exists():
+            return Response({"error": "Cotización no encontrada."}, status=status.HTTP_404_NOT_FOUND)
+        history = QuoteStatusHistory.objects.filter(cotizacion_id=pk).select_related("usuario").order_by(
+            "-fecha", "pk"
+        )
+        return Response(QuoteStatusHistorySerializer(history, many=True).data)

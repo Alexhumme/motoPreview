@@ -5,6 +5,8 @@ from .models import (
     AccessoryCategory,
     AccessoryCompatibility,
     AccessoryType,
+    Configuration,
+    ConfigurationDetail,
     Inventory,
     InventoryMovement,
     Model3D,
@@ -16,6 +18,7 @@ from .models import (
     ProductCategory,
     Quote,
     QuoteDetail,
+    QuoteStatusHistory,
     Role,
     Store,
     SubscriptionPlan,
@@ -448,6 +451,13 @@ class InventoryMovementSerializer(serializers.ModelSerializer):
         read_only_fields = ("id_movimiento", "id_usuario", "fecha_movimiento")
 
 
+class MovementTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MovementType
+        fields = ("id_tipomov", "tipomov_nombre", "descripcion_tipomov")
+        read_only_fields = ("id_tipomov",)
+
+
 class QuoteDetailSerializer(serializers.ModelSerializer):
     id_cotizacion = serializers.UUIDField(source="cotizacion_id", read_only=True, allow_null=True)
     id_accesorio = serializers.UUIDField(source="accesorio_id", read_only=True, allow_null=True)
@@ -493,6 +503,37 @@ class QuoteSerializer(serializers.ModelSerializer):
             "detalle_cotizacion",
         )
         read_only_fields = fields
+
+
+class QuoteStatusHistorySerializer(serializers.ModelSerializer):
+    id_cotizacion = serializers.UUIDField(source="cotizacion_id", read_only=True, allow_null=True)
+    id_usuario = serializers.UUIDField(source="usuario_id", read_only=True, allow_null=True)
+
+    class Meta:
+        model = QuoteStatusHistory
+        fields = ("id_hist", "id_cotizacion", "estado", "fecha", "id_usuario")
+        read_only_fields = ("id_hist",)
+
+
+class ConfigurationDetailSerializer(serializers.ModelSerializer):
+    id_configuracion = serializers.UUIDField(source="configuracion_id", read_only=True, allow_null=True)
+    id_accesorio = serializers.UUIDField(source="accesorio_id", read_only=True, allow_null=True)
+
+    class Meta:
+        model = ConfigurationDetail
+        fields = ("id_detalle", "id_configuracion", "id_accesorio", "cantidad")
+        read_only_fields = ("id_detalle",)
+
+
+class ConfigurationSerializer(serializers.ModelSerializer):
+    id_usuario = serializers.UUIDField(source="usuario_id", read_only=True, allow_null=True)
+    id_moto = serializers.UUIDField(source="moto_id", read_only=True, allow_null=True)
+    detalles = ConfigurationDetailSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Configuration
+        fields = ("id_configuracion", "id_usuario", "id_moto", "nombre", "detalles")
+        read_only_fields = ("id_configuracion",)
 
 
 class InventoryInputSerializer(serializers.Serializer):
