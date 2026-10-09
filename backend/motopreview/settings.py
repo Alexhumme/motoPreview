@@ -176,8 +176,12 @@ REST_FRAMEWORK = {
     },
     "UNAUTHENTICATED_USER": "api.authentication.AnonymousPrincipal",
     "EXCEPTION_HANDLER": "api.errors.api_exception_handler",
+    # JSON para el frontend (cabecera Accept: application/json) y, cuando se
+    # entra desde un navegador, la interfaz navegable de DRF (HTML + formularios).
+    # El orden importa: */* recibe JSON; text/html recibe la vista de DRF.
     "DEFAULT_RENDERER_CLASSES": [
         "api.renderers.TranslatedJSONRenderer",
+        "rest_framework.renderers.BrowsableAPIRenderer",
     ],
 }
 

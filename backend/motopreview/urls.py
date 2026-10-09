@@ -1,7 +1,7 @@
-from django.contrib import admin
 from django.urls import path
 
 from api import views
+from api.admin import admin_site
 
 
 def _api(ruta, vista):
@@ -55,7 +55,7 @@ _RUTAS_API = [
 
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
+    path("admin/", admin_site.urls),
     path("", views.root),
     path("api", views.root),
     path("api/", views.root),

@@ -35,7 +35,7 @@ Abre http://localhost:5173 (el backend queda en http://127.0.0.1:8000).
 | Qué | Dónde |
 | --- | --- |
 | **Panel de administración** | http://127.0.0.1:8000/admin/ → usuario `admin`, contraseña `Motopreview12345` |
-| API (JSON) | http://127.0.0.1:8000/api/... → `/api/health`, `/api/accesorios`, `/api/cotizaciones` |
+| API | http://127.0.0.1:8000/api/... → JSON para el frontend; **abierto en un navegador muestra la interfaz navegable de DRF** (`/api/motos`, `/api/accesorios`, `/api/health`…) |
 | Rutas de la API | `backend/motopreview/urls.py` |
 | Vistas / endpoints | `backend/api/views.py` |
 | Modelos (tablas) | `backend/api/models.py` (esquema real en PostgreSQL: `managed=False`) |
