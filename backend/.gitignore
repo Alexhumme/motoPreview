@@ -11,4 +11,7 @@ staticfiles/
 .env
 .env.*
 !.env.example
+# Decisión explícita del autor: backend/.env se versiona (clon funcional al
+# descargar). Riesgo: expone URL de base y claves si el repo es público.
+!.env
 

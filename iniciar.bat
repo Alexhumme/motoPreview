@@ -26,7 +26,24 @@ if errorlevel 1 (
     exit /b 1
 )
 if not exist "%BACK%\.env" (
-    echo [ERROR] Falta backend\.env. Copia backend\.env.example a backend\.env y completalo.
+    if exist "%BACK%\.env.example" (
+        echo [BACKEND] Creando backend\.env desde .env.example...
+        copy /y "%BACK%\.env.example" "%BACK%\.env" >nul
+        echo [AVISO] backend\.env recien creado: completa MOTOPREVIEW_DATABASE_URL
+        echo         con una conexion PostgreSQL real antes de continuar.
+    ) else (
+        echo [ERROR] Falta backend\.env.example. No se puede armar backend\.env.
+        pause
+        exit /b 1
+    )
+)
+
+rem --- La API no arranca con la conexion de ejemplo (USUARIO:CONTRASENA@HOST) ---
+findstr /i "postgresql://USUARIO" "%BACK%\.env" >nul 2>&1
+if not errorlevel 1 (
+    echo [ERROR] backend\.env todavia tiene la conexion de ejemplo.
+    echo         Completa MOTOPREVIEW_DATABASE_URL con una conexion real y
+    echo         vuelve a ejecutar iniciar.bat.
     pause
     exit /b 1
 )
