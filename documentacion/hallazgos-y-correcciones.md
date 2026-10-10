@@ -58,3 +58,13 @@ nombres de los modelos intactos. Lo detectó `test_integracion.py`
 
 **El endpoint de salud** ahora hace un probe real `SELECT 1` y responde `503`
 si la base no está configurada o no conecta.
+
+## Sesión del DRF navegable, docs OpenAPI y redirects (sesión actual)
+
+| Hallazgo | Corrección |
+| --- | --- |
+| El DRF navegable no podía reutilizar el JWT: cada petición iba sin `Authorization` → 401 aunque el login fuera 200. | Puente sesión-JWT: el login guarda token+rol en la sesión de Django, `JWTAuthentication` lo usa como respaldo del header (exigiendo CSRF en escrituras) y el navbar muestra `nombre · rol` con salida por `POST /api/auth/logout` (ver §1-bis de [08-seguridad.md](08-seguridad.md)). |
+| No había documentación interactiva de la API. | `drf-spectacular`: `/api/schema/`, `/api/docs/` (Authorize con Bearer) y `/api/redoc/`; `@extend_schema` en auth y `serializer_class` en las vistas-clase que faltaban; extensión OpenAPI del autenticador JWT. |
+| Cada ruta salía dos veces en el schema (con y sin `/`). | Helper `_api()` con una sola `re_path` de slash opcional en `motopreview/urls.py` (53 paths en vez de 103). |
+| Entrar directo a `/admin/login/` redirigía a `/accounts/profile/` → 404; `/admin` sin barra también era 404. | `LOGIN_URL`/`LOGIN_REDIRECT_URL = "/admin/"` y redirect explícito `/admin` → `/admin/` (con `APPEND_SLASH=False`). |
+| El enlace de recuperación usaba `?token=` pero el frontend espera path params. | Enlaces estilo `PASSWORD_RESET_URL/<token>` (igual que `/verificar/:token` y `/restablecer/:token`). |

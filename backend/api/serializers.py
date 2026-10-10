@@ -92,14 +92,14 @@ class AccessorySerializer(serializers.Serializer):
     categoria_accesorio = serializers.SerializerMethodField()
     producto = serializers.SerializerMethodField()
 
-    def get_categoria_accesorio(self, instance):
+    def get_categoria_accesorio(self, instance) -> dict | None:
         return (
             AccessoryCategorySerializer(instance.categoria).data
             if instance.categoria_id
             else None
         )
 
-    def get_producto(self, instance):
+    def get_producto(self, instance) -> dict | None:
         return ProductSerializer(instance.producto).data if instance.producto_id else None
 
     def to_representation(self, instance):
@@ -334,11 +334,11 @@ class UserSerializer(serializers.ModelSerializer):
         )
         read_only_fields = fields
 
-    def get_id_rol(self, instance):
+    def get_id_rol(self, instance) -> str | None:
         role_id = instance.id_rol
         return str(role_id) if role_id else None
 
-    def get_rol(self, instance):
+    def get_rol(self, instance) -> dict | None:
         cached = getattr(instance, "_cached_role", "missing")
         if cached != "missing":
             return RoleSerializer(cached).data if cached else None
@@ -423,7 +423,7 @@ class InventorySerializer(serializers.ModelSerializer):
         )
         read_only_fields = ("id_inventario", "id_tienda", "id_producto", "estado_inventario")
 
-    def get_accesorio(self, instance):
+    def get_accesorio(self, instance) -> dict | None:
         accessory = (
             instance.accesorio
             if instance.accesorio_id
@@ -565,3 +565,77 @@ class QuoteCreateSerializer(serializers.Serializer):
     coti_observaciones = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     nombre_configuracion = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     items = QuoteItemSerializer(many=True, allow_empty=False)
+
+
+# ---------------------------------------------------------------------------
+# Serializers solo para documentar el schema OpenAPI (los formularios de
+# login/registro de Swagger). No validan nada en las vistas.
+# ---------------------------------------------------------------------------
+
+
+class ErrorSerializer(serializers.Serializer):
+    error = serializers.JSONField()
+
+
+class MessageSerializer(serializers.Serializer):
+    mensaje = serializers.CharField()
+
+
+class RootSerializer(serializers.Serializer):
+    mensaje = serializers.CharField()
+
+
+class HealthSerializer(serializers.Serializer):
+    ok = serializers.BooleanField()
+    database_configured = serializers.BooleanField()
+    database_connected = serializers.BooleanField(required=False)
+
+
+class LoginRequestSerializer(serializers.Serializer):
+    usu_email = serializers.EmailField()
+    password = serializers.CharField(write_only=True)
+
+
+class LoginResponseSerializer(serializers.Serializer):
+    mensaje = serializers.CharField()
+    token = serializers.CharField()
+    usuario = UserSerializer(read_only=True)
+
+
+class RegisterRequestSerializer(serializers.Serializer):
+    usu_nombre = serializers.CharField()
+    usu_email = serializers.EmailField()
+    password = serializers.CharField(write_only=True, min_length=8)
+    id_rol = serializers.UUIDField()
+    id_tienda = serializers.UUIDField(required=False, allow_null=True)
+
+
+class RegisterResponseSerializer(serializers.Serializer):
+    mensaje = serializers.CharField()
+    usuario = UserSerializer(read_only=True)
+
+
+class ForgotRequestSerializer(serializers.Serializer):
+    usu_email = serializers.EmailField()
+
+
+class ResetRequestSerializer(serializers.Serializer):
+    token = serializers.CharField()
+    password = serializers.CharField(write_only=True, min_length=8)
+
+
+class QuoteStatusUpdateSerializer(serializers.Serializer):
+    coti_estado = serializers.ChoiceField(
+        choices=["pendiente", "aprobada", "rechazada", "completada"]
+    )
+
+
+class TokenDataSerializer(serializers.Serializer):
+    id_usuario = serializers.CharField()
+    id_rol = serializers.CharField(allow_null=True)
+    id_tienda = serializers.CharField(allow_null=True)
+
+
+class ProfileResponseSerializer(serializers.Serializer):
+    mensaje = serializers.CharField()
+    datos_del_token = TokenDataSerializer()

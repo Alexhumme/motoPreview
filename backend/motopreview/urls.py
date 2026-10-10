@@ -1,16 +1,36 @@
-from django.urls import path
+import re
+
+from django.urls import path, re_path
+from drf_spectacular.views import (
+    SpectacularAPIView,
+    SpectacularRedocView,
+    SpectacularSwaggerView,
+)
 
 from api import views
 from api.admin import admin_site
 
 
+_CONVERTER_RE = re.compile(r"<(uuid|str):(\w+)>")
+
+
+def _converter_to_regex(match):
+    kind, name = match.group(1), match.group(2)
+    if kind == "uuid":
+        return rf"(?P<{name}>[0-9a-fA-F-]{{36}})"
+    return rf"(?P<{name}>[^/]+)"
+
+
 def _api(ruta, vista):
-    """Registra la ruta con y sin '/' final.
+    """Registra la ruta con `/` final opcional en UN solo patrón.
 
     La API se publica sin barra final (así la consume el frontend), pero se
     acepta también con barra para no fallar al probarla desde el navegador.
+    Un solo patrón evita duplicados en el schema OpenAPI (antes cada ruta
+    salía dos veces con sufijos numéricos).
     """
-    return [path(ruta, vista), path(f"{ruta}/", vista)]
+    patron = _CONVERTER_RE.sub(_converter_to_regex, ruta)
+    return [re_path(rf"^{patron}/?$", vista)]
 
 
 _RUTAS_API = [
@@ -18,6 +38,7 @@ _RUTAS_API = [
     ("api/healthz", views.health),
     ("api/auth/register", views.register),
     ("api/auth/login", views.login),
+    ("api/auth/logout", views.logout),
     ("api/auth/perfil", views.profile),
     ("api/auth/verificar/<str:token>", views.verify_email),
     ("api/auth/forgot-password", views.forgot_password),
@@ -67,8 +88,24 @@ _RUTAS_API = [
 ]
 
 
+from django.views.generic import RedirectView
+
 urlpatterns = [
     path("admin/", admin_site.urls),
+    # Sin barra final: redirect explícito (sin CommonMiddleware por
+    # APPEND_SLASH=False). Va aparte para no duplicar el namespace del admin.
+    path("admin", RedirectView.as_view(url="/admin/", permanent=False)),
+    re_path(r"^api/schema/?$", SpectacularAPIView.as_view(), name="schema"),
+    re_path(
+        r"^api/docs/?$",
+        SpectacularSwaggerView.as_view(url_name="schema"),
+        name="swagger-ui",
+    ),
+    re_path(
+        r"^api/redoc/?$",
+        SpectacularRedocView.as_view(url_name="schema"),
+        name="redoc",
+    ),
     path("", views.root),
     path("api", views.root),
     path("api/", views.root),

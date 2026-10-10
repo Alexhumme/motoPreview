@@ -2,7 +2,7 @@
 
 ## 1. Modelo de autenticación
 
-La API es **stateless**: no hay sesiones de Django ni CSRF (no existen `SessionMiddleware` ni `CsrfViewMiddleware`). El cliente porta un **JWT firmado (HS256)** en cada petición.
+La API es **stateless por defecto**: el cliente porta un **JWT firmado (HS256)** en cada petición (`Authorization: Bearer <token>`). Las sesiones de Django **sí existen**, pero solo para dos usos puntuales: el panel `/admin/` y el puente del DRF navegable (§1-bis). No hay `SessionAuthentication` de DRF: la API nunca acepta la cookie de sesión del admin como credencial.
 
 ```mermaid
 sequenceDiagram
@@ -45,6 +45,14 @@ sequenceDiagram
 | Header de rechazo | `WWW-Authenticate: Bearer` |
 
 > `id_rol` y `id_tienda` se **refrescan desde la BD** en cada request (no se confía en el token para autorizar).
+
+### Puente sesión-JWT del DRF navegable
+
+El DRF navegable no sabe enviar `Bearer`, así que `POST /api/auth/login` guarda además el token y el rol en la **sesión de Django** (`api/views.py:login`). `JWTAuthentication` (`api/authentication.py`) lo reutiliza cuando no hay cabecera `Authorization`, y el navbar (`backend/templates/rest_framework/api.html`) muestra `nombre · rol: X` con botón Salir (`POST /api/auth/logout`, limpia la sesión).
+
+- La vía Bearer **no** exige CSRF (un formulario cross-site no puede fijar esa cabecera); la vía sesión **sí** (`403 CSRF Failed` sin token, igual que `SessionAuthentication`).
+- El token nunca se pinta en el HTML: vive en la sesión del servidor.
+- `GET /api/auth/login` existe solo para mostrar el formulario en el navegador.
 
 ## 2. Protección de contraseñas
 
@@ -168,6 +176,7 @@ CORS_EXPOSE_HEADERS  = ["Content-Language"]
 - `usuario_rol` no se registra porque el admin no admite claves primarias compuestas; los roles se asignan con `manage.py asignar_rol`.
 - **Idioma:** el panel se ve en **español** e **inglés**. Cambia con el selector *Idioma / Language* o añade `?lang=en` a la URL; la preferencia se guarda en la cookie `mp_lang`.
 - **Sesiones del panel:** usan la tabla `django_session` y exigen CSRF; los estáticos los sirve WhiteNoise (funciona con `DEBUG=false` y gunicorn).
+- **Redirects:** `/admin` → `/admin/` explícito (`APPEND_SLASH=False` desactiva el redirect de Django); entrar directo a `/admin/login/` vuelve a `/admin/` (`LOGIN_URL`/`LOGIN_REDIRECT_URL` en `settings.py`, antes caía en `/accounts/profile/` → 404).
 
 ---
 

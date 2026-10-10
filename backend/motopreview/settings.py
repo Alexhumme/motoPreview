@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "corsheaders",
     "rest_framework",
+    "drf_spectacular",
     "api.apps.ApiConfig",
 ]
 
@@ -101,6 +102,11 @@ LANGUAGES = [("es", "Español"), ("en", "English")]
 STATIC_URL = "/static/"
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 WHITENOISE_USE_FINDERS = True
+
+# Sin esto, entrar directo a /admin/login/ (sin ?next=) redirige tras el
+# éxito a /accounts/profile/ (default de Django) que no existe -> 404.
+LOGIN_URL = "/admin/login/"
+LOGIN_REDIRECT_URL = "/admin/"
 
 
 def parse_database_url(value):
@@ -183,6 +189,23 @@ REST_FRAMEWORK = {
         "api.renderers.TranslatedJSONRenderer",
         "rest_framework.renderers.BrowsableAPIRenderer",
     ],
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+}
+
+# Swagger/OpenAPI: el botón "Authorize" guarda el Bearer y lo reenvía en
+# cada "Try it out" (era lo que faltaba en el DRF navegable).
+SPECTACULAR_SETTINGS = {
+    "TITLE": "MotoPreview API",
+    "DESCRIPTION": "Catálogo y configuración de accesorios para motocicletas.",
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+    # El candado Bearer lo aporta JWTAuthenticationScheme
+    # (api/authentication.py); no duplicar con SECURITY global.
+    "APPEND_COMPONENTS": {
+        "securitySchemes": {
+            "BearerAuth": {"type": "http", "scheme": "bearer", "bearerFormat": "JWT"}
+        }
+    },
 }
 
 # Límite de líneas por cotización (defensa contra payloads gigantes).

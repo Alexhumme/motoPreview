@@ -1,0 +1,20 @@
+{% extends "rest_framework/base.html" %}
+
+{# Navbar del DRF navegable: muestra quién inició sesión y su rol (sale de
+   la sesión que guarda POST /api/auth/login), con salida por POST. #}
+{% block userlinks %}
+  {% if user.is_authenticated %}
+    <li class="navbar-text" style="color: #9d9d9d; margin-left: 15px;">
+      {{ request.session.usu_nombre|default:user }} ·
+      rol: {{ request.session.rol_nombre|default:"?" }}
+    </li>
+    <li>
+      <form action="/api/auth/logout/" method="post" style="margin: 8px 0 8px 10px;">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-default btn-sm">Salir</button>
+      </form>
+    </li>
+  {% else %}
+    <li><a href="/api/auth/login/">Iniciar sesión</a></li>
+  {% endif %}
+{% endblock %}

@@ -11,6 +11,7 @@ from django.conf import settings
 from django.core.mail import send_mail
 from django.db import IntegrityError, connection, transaction
 from django.utils import timezone, translation
+from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes, throttle_classes, throttle_scope
 from rest_framework.exceptions import APIException
@@ -52,9 +53,15 @@ from .serializers import (
     AccessoryTypeSerializer,
     CompatibilitySerializer,
     ConfigurationSerializer,
+    ErrorSerializer,
+    ForgotRequestSerializer,
+    HealthSerializer,
     InventoryInputSerializer,
     InventoryMovementSerializer,
     InventorySerializer,
+    LoginRequestSerializer,
+    LoginResponseSerializer,
+    MessageSerializer,
     Model3DSerializer,
     MotorcycleBrandSerializer,
     MotorcycleModelSerializer,
@@ -62,10 +69,16 @@ from .serializers import (
     MovementTypeSerializer,
     ProductCategorySerializer,
     ProductSerializer,
+    ProfileResponseSerializer,
     QuoteCreateSerializer,
     QuoteSerializer,
     QuoteStatusHistorySerializer,
+    QuoteStatusUpdateSerializer,
+    RegisterRequestSerializer,
+    RegisterResponseSerializer,
+    ResetRequestSerializer,
     RoleSerializer,
+    RootSerializer,
     StoreSerializer,
     SubscriptionPlanSerializer,
     UserSerializer,
@@ -295,6 +308,7 @@ def paginate_response(request, queryset, serializer_class, *, context=None):
     )
 
 
+@extend_schema(responses={200: RootSerializer})
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def root(request):
@@ -304,6 +318,7 @@ def root(request):
     )
 
 
+@extend_schema(responses={200: HealthSerializer, 503: HealthSerializer})
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def health(request):
@@ -516,6 +531,7 @@ class StoreDetail(ResourceDetail):
 
 class UserCollection(DatabaseGuardMixin):
     permission_classes = [IsStoreAdmin]
+    serializer_class = UserSerializer
 
     def get(self, request):
 
@@ -532,6 +548,7 @@ class UserCollection(DatabaseGuardMixin):
 
 class UserDetail(DatabaseGuardMixin):
     permission_classes = [IsStoreAdmin]
+    serializer_class = UserSerializer
 
     def get_target(self, request, pk):
         return User.objects.filter(pk=pk, tienda_id=request.user.id_tienda).first()
@@ -619,6 +636,7 @@ class Model3DDetail(ResourceDetail):
 
 class Model3DByAccessory(DatabaseGuardMixin):
     permission_classes = [AllowAny]
+    serializer_class = Model3DSerializer
 
     def get(self, request, id_accesorio):
 
@@ -649,6 +667,8 @@ class AccessoryDetail(ResourceDetail):
 
 
 class CompatibilityCollection(DatabaseGuardMixin):
+    serializer_class = CompatibilitySerializer
+
     def get_permissions(self):
         # La matriz de compatibilidad solo la administra el administrador de tienda.
         return [AllowAny()] if self.request.method == "GET" else [IsStoreAdmin()]
@@ -686,6 +706,7 @@ class CompatibilityDetail(ResourceDetail):
 
 class AccessoriesByModel(DatabaseGuardMixin):
     permission_classes = [AllowAny]
+    serializer_class = AccessorySerializer
 
     def get(self, request, id_modelo_moto):
 
@@ -698,6 +719,7 @@ class AccessoriesByModel(DatabaseGuardMixin):
 
 class ModelsByAccessory(DatabaseGuardMixin):
     permission_classes = [AllowAny]
+    serializer_class = CompatibilitySerializer
 
     def get(self, request, id_accesorio):
 
@@ -709,6 +731,7 @@ class ModelsByAccessory(DatabaseGuardMixin):
 
 class InventoryCollection(DatabaseGuardMixin):
     permission_classes = [IsStoreStaff]
+    serializer_class = InventorySerializer
 
     def get_queryset(self, request):
         return Inventory.objects.select_related(
@@ -726,6 +749,10 @@ class InventoryCollection(DatabaseGuardMixin):
         rows = self.get_queryset(request)
         return paginate_response(request, rows, InventorySerializer)
 
+    @extend_schema(
+        request=InventoryInputSerializer,
+        responses={201: InventorySerializer, 400: ErrorSerializer, 403: ErrorSerializer, 409: ErrorSerializer},
+    )
     def post(self, request):
 
         if not request.user.id_tienda:
@@ -788,6 +815,7 @@ class InventoryCollection(DatabaseGuardMixin):
 
 class InventoryDetail(DatabaseGuardMixin):
     permission_classes = [IsStoreStaff]
+    serializer_class = InventorySerializer
 
     def get(self, request, pk):
 
@@ -810,6 +838,7 @@ class InventoryDetail(DatabaseGuardMixin):
 
 class InventoryMovementView(DatabaseGuardMixin):
     permission_classes = [IsStoreStaff]
+    serializer_class = InventoryMovementSerializer
 
     def post(self, request):
 
@@ -875,6 +904,7 @@ class InventoryMovementView(DatabaseGuardMixin):
 
 class QuoteCollection(DatabaseGuardMixin):
     permission_classes = [IsAuthenticated]
+    serializer_class = QuoteSerializer
 
     def get(self, request):
 
@@ -889,6 +919,10 @@ class QuoteCollection(DatabaseGuardMixin):
             request, queryset.order_by("-fecha_solicitud", "pk"), QuoteSerializer
         )
 
+    @extend_schema(
+        request=QuoteCreateSerializer,
+        responses={201: QuoteSerializer, 400: ErrorSerializer, 409: ErrorSerializer},
+    )
     def post(self, request):
 
         serializer = QuoteCreateSerializer(data=request.data)
@@ -945,6 +979,7 @@ class QuoteCollection(DatabaseGuardMixin):
 
 class QuoteDetailView(DatabaseGuardMixin):
     permission_classes = [IsAuthenticated]
+    serializer_class = QuoteSerializer
 
     def get(self, request, pk):
 
@@ -963,10 +998,19 @@ class QuoteDetailView(DatabaseGuardMixin):
 
 class QuoteStatus(DatabaseGuardMixin):
     permission_classes = [IsStoreStaff]
+    serializer_class = QuoteSerializer
 
+    @extend_schema(
+        request=QuoteStatusUpdateSerializer,
+        responses={200: QuoteSerializer, 400: ErrorSerializer, 404: ErrorSerializer},
+    )
     def put(self, request, pk):
         return self.update_status(request, pk)
 
+    @extend_schema(
+        request=QuoteStatusUpdateSerializer,
+        responses={200: QuoteSerializer, 400: ErrorSerializer, 404: ErrorSerializer},
+    )
     def patch(self, request, pk):
         return self.update_status(request, pk)
 
@@ -1016,6 +1060,10 @@ class QuoteStatus(DatabaseGuardMixin):
         return Response(QuoteSerializer(quote).data)
 
 
+@extend_schema(
+    request=RegisterRequestSerializer,
+    responses={201: RegisterResponseSerializer, 400: ErrorSerializer, 403: ErrorSerializer, 409: ErrorSerializer},
+)
 @api_view(["POST"])
 @permission_classes([AllowAny])
 @throttle_classes([ScopedRateThrottle])
@@ -1115,12 +1163,23 @@ def register(request):
     )
 
 
-@api_view(["POST"])
+@extend_schema(
+    methods=["POST"],
+    request=LoginRequestSerializer,
+    responses={200: LoginResponseSerializer, 400: ErrorSerializer, 401: ErrorSerializer, 403: ErrorSerializer},
+)
+@extend_schema(methods=["GET"], responses={200: MessageSerializer})
+@api_view(["GET", "POST"])
 @permission_classes([AllowAny])
 @throttle_classes([ScopedRateThrottle])
 @throttle_scope("auth")
 @require_database
 def login(request):
+    if request.method == "GET":
+        # Solo para mostrar el formulario en el DRF navegable.
+        return Response(
+            {"mensaje": "Usa POST con usu_email y password para iniciar sesión."}
+        )
     email = str(request.data.get("usu_email", "")).strip()
     password = request.data.get("password", "")
     if not email or not password:
@@ -1139,9 +1198,16 @@ def login(request):
         token = issue_jwt(user)
     except APIException as error:
         return Response({"error": str(error.detail)}, status=503)
-    return Response({"mensaje": "Login exitoso.", "token": token, "usuario": user_payload(user)})
+    # Puente para el navegador: guarda el token y el rol en la sesión para
+    # que el DRF navegable los use solos en las siguientes peticiones.
+    payload = user_payload(user)
+    request.session["jwt"] = token
+    request.session["usu_nombre"] = user.usu_nombre
+    request.session["rol_nombre"] = (payload.get("rol") or {}).get("nombre_rol")
+    return Response({"mensaje": "Login exitoso.", "token": token, "usuario": payload})
 
 
+@extend_schema(responses={200: ProfileResponseSerializer})
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def profile(request):
@@ -1157,6 +1223,15 @@ def profile(request):
     )
 
 
+@extend_schema(responses={200: MessageSerializer})
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def logout(request):
+    request.session.flush()
+    return Response({"mensaje": "Sesión cerrada."})
+
+
+@extend_schema(responses={200: MessageSerializer, 400: ErrorSerializer})
 @api_view(["GET"])
 @permission_classes([AllowAny])
 @throttle_classes([ScopedRateThrottle])
@@ -1182,6 +1257,10 @@ def verify_email(request, token):
     return Response({"mensaje": "Correo verificado con éxito."})
 
 
+@extend_schema(
+    request=ForgotRequestSerializer,
+    responses={200: MessageSerializer, 400: ErrorSerializer, 503: ErrorSerializer},
+)
 @api_view(["POST"])
 @permission_classes([AllowAny])
 @throttle_classes([ScopedRateThrottle])
@@ -1217,6 +1296,10 @@ def forgot_password(request):
     return Response({"mensaje": generic_message})
 
 
+@extend_schema(
+    request=ResetRequestSerializer,
+    responses={200: MessageSerializer, 400: ErrorSerializer},
+)
 @api_view(["POST"])
 @permission_classes([AllowAny])
 @throttle_classes([ScopedRateThrottle])
@@ -1318,6 +1401,7 @@ class SubscriptionPlanDetail(ResourceDetail):
 
 class ConfigurationCollection(DatabaseGuardMixin):
     permission_classes = [IsAuthenticated]
+    serializer_class = ConfigurationSerializer
 
     def get(self, request):
         return paginate_response(request, scope_configurations(request), ConfigurationSerializer)
@@ -1325,6 +1409,7 @@ class ConfigurationCollection(DatabaseGuardMixin):
 
 class ConfigurationDetail(DatabaseGuardMixin):
     permission_classes = [IsAuthenticated]
+    serializer_class = ConfigurationSerializer
 
     def get(self, request, pk):
         instance = scope_configurations(request, pk=pk).first()
@@ -1335,6 +1420,7 @@ class ConfigurationDetail(DatabaseGuardMixin):
 
 class QuoteHistoryView(DatabaseGuardMixin):
     permission_classes = [IsAuthenticated]
+    serializer_class = QuoteStatusHistorySerializer
 
     def get(self, request, pk):
         quote_qs = Quote.objects.all()

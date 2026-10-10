@@ -9,6 +9,7 @@
 - Idioma de respuesta: `?lang=en` o cabecera `X-Language: en` (por defecto `es`); la cabecera `Content-Language` indica el idioma usado.
 - Los errores se devuelven siempre como `{"error": "<mensaje>"}` (ver `api/errors.py`).
 - **503** si no hay `MOTOPREVIEW_DATABASE_URL` configurado; **503** en login si falta `JWT_SECRET`.
+- **Documentación interactiva:** `/api/docs/` (Swagger, botón **Authorize** con `Bearer <token>`), `/api/redoc/` y schema en `/api/schema/` (ver §1-bis).
 
 ## Matriz de permisos
 
@@ -30,12 +31,27 @@
 
 ---
 
+## 1-bis. Documentación OpenAPI
+
+| Recurso | Ruta |
+|---|---|
+| Schema (YAML/JSON según `Accept`) | `/api/schema/` |
+| Swagger UI | `/api/docs/` |
+| ReDoc | `/api/redoc/` |
+
+- El esquema `BearerAuth` sale del autenticador JWT (`api/authentication.py: JWTAuthenticationScheme`); el botón **Authorize** guarda el token y lo reenvía en cada *Try it out*.
+- Los formularios de login/registro/recuperación están anotados con `@extend_schema`; cada ruta del API acepta la forma con y sin `/` final en una sola expresión (`motopreview/urls.py: _api`), sin duplicados en el schema.
+
+---
+
 ## 2. Autenticación
 
 | Método | Ruta | Permiso | Códigos |
 |---|---|---|---|
 | POST | `/api/auth/register` | 🌐 | 201, 400, 403, 409, 503 |
+| GET | `/api/auth/login` | 🌐 | Solo muestra el formulario en el DRF navegable (el login real es POST) |
 | POST | `/api/auth/login` | 🌐 | 200, 400, 401, 403, 503 |
+| POST | `/api/auth/logout` | 🌐 | Limpia la sesión del navegador (puente del DRF navegable) |
 | GET | `/api/auth/perfil` | 🔑 | 200 |
 | GET | `/api/auth/verificar/<token>` | 🌐 | 200, 400 |
 | POST | `/api/auth/forgot-password` | 🌐 | 200, 400, 503 |
@@ -63,14 +79,15 @@
 { "mensaje": "...", "token": "<JWT>", "usuario": { "id_usuario": "...", "usu_nombre": "...",
   "usu_email": "...", "id_tienda": "...", "id_rol": "...", "estado_usuario": "activo" } }
 ```
-- Credenciales inválidas → **401**; usuario `inactivo`/`bloqueado` → **403**.
+- Credenciales inválidas → **401**; usuario `inactivo`/`bloqueado` o correo sin verificar → **403**.
+- En el navegador, el login exitoso guarda el token en la **sesión** y el navbar del DRF muestra el rol; las siguientes peticiones van autenticadas sin reenviar el header (puente sesión-JWT, ver [08 — Seguridad](08-seguridad.md)). `POST /api/auth/logout` cierra esa sesión.
 
 ### `POST /api/auth/forgot-password`
 ```json
 { "usu_email": "ana@x.com" }
 ```
 - Siempre responde **200** con mensaje genérico (anti-enumeración).
-- Genera un token aleatorio, guarda su **SHA-256** en `reset_token` con expiración de **1 hora** y envía el enlace a `PASSWORD_RESET_URL?token=...`.
+- Genera un token aleatorio, guarda su **SHA-256** en `reset_token` con expiración de **1 hora** y envía el enlace `PASSWORD_RESET_URL/<token>` (estilo path, igual que las rutas `/verificar/:token` y `/restablecer/:token` del frontend).
 - Sin SMTP configurado → **503**.
 
 ### `POST /api/auth/reset-password`

@@ -84,6 +84,9 @@ CATALOG = {
         "Credenciales inválidas.": "Invalid credentials.",
         "Login exitoso.": "Login successful.",
         "Acceso concedido.": "Access granted.",
+        "Usa POST con usu_email y password para iniciar sesión.":
+            "Use POST with usu_email and password to log in.",
+        "Sesión cerrada.": "Logged out.",
         # Usuarios
         "Faltan campos obligatorios: usu_nombre, usu_email, password, id_rol.":
             "Missing required fields: usu_nombre, usu_email, password, id_rol.",
