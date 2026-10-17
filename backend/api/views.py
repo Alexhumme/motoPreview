@@ -22,7 +22,6 @@ from rest_framework.views import APIView as DRFAPIView
 
 from . import i18n, services, tokens
 from .models import (
-    Accessory,
     AccessoryCategory,
     AccessoryCompatibility,
     AccessoryType,
@@ -49,7 +48,6 @@ from .models import (
 from .security import IsStoreAdmin, IsStoreStaff, ROLE_ADMIN, ROLE_CUSTOMER, ROLE_SELLER
 from .serializers import (
     AccessoryCategorySerializer,
-    AccessorySerializer,
     AccessoryTypeSerializer,
     CompatibilitySerializer,
     ConfigurationSerializer,
@@ -649,23 +647,6 @@ class Model3DByAccessory(DatabaseGuardMixin):
         return Response(Model3DSerializer(model).data)
 
 
-class AccessoryCollection(ResourceCollection):
-    model = Accessory
-    serializer_class = AccessorySerializer
-
-    def get_queryset(self):
-        return Accessory.objects.select_related("producto", "categoria", "tipo").all()
-
-
-class AccessoryDetail(ResourceDetail):
-    model = Accessory
-    serializer_class = AccessorySerializer
-    not_found_message = "Accesorio no encontrado."
-
-    def get_object(self, pk):
-        return Accessory.objects.select_related("producto", "categoria", "tipo").get(pk=pk)
-
-
 class CompatibilityCollection(DatabaseGuardMixin):
     serializer_class = CompatibilitySerializer
 
@@ -702,31 +683,6 @@ class CompatibilityDetail(ResourceDetail):
     model = AccessoryCompatibility
     serializer_class = CompatibilitySerializer
     not_found_message = "Compatibilidad no encontrada."
-
-
-class AccessoriesByModel(DatabaseGuardMixin):
-    permission_classes = [AllowAny]
-    serializer_class = AccessorySerializer
-
-    def get(self, request, id_modelo_moto):
-
-        links = AccessoryCompatibility.objects.filter(modelo_moto_id=id_modelo_moto).select_related(
-            "accesorio__producto", "accesorio__categoria", "accesorio__tipo"
-        )
-        accessories = [item.accesorio for item in links]
-        return Response(AccessorySerializer(accessories, many=True).data)
-
-
-class ModelsByAccessory(DatabaseGuardMixin):
-    permission_classes = [AllowAny]
-    serializer_class = CompatibilitySerializer
-
-    def get(self, request, id_accesorio):
-
-        links = AccessoryCompatibility.objects.filter(accesorio_id=id_accesorio).select_related(
-            "modelo_moto__marca"
-        )
-        return Response(CompatibilitySerializer(links, many=True).data)
 
 
 class InventoryCollection(DatabaseGuardMixin):

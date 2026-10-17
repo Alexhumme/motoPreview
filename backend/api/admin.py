@@ -16,7 +16,6 @@ from django.contrib.auth.models import User as AuthUser
 from django.utils.text import slugify
 
 from .models import (
-    Accessory,
     AccessoryCategory,
     AccessoryCompatibility,
     AccessoryToken,
@@ -26,6 +25,7 @@ from .models import (
     Inventory,
     InventoryMovement,
     Model3D,
+    Product,
     Motorcycle,
     MotorcycleBrand,
     MotorcycleModel,
@@ -71,7 +71,6 @@ class MotopreviewAdminSite(admin.AdminSite):
         MotorcycleModel: "Modelos de moto",
         MotorcycleBrand: "Marcas de moto",
         AccessoryCompatibility: "Compatibilidades de accesorio",
-        Accessory: "Accesorios",
         AccessoryType: "Tipos de accesorio",
         AccessoryCategory: "Categorías de accesorio",
         Product: "Productos",
@@ -102,7 +101,7 @@ class MotopreviewAdminSite(admin.AdminSite):
         ),
         (
             "CATÁLOGO Y ACCESORIOS",
-            (Accessory, AccessoryType, AccessoryCategory, Product, ProductCategory, Model3D),
+            (AccessoryType, AccessoryCategory, Product, ProductCategory, Model3D),
         ),
         ("TIENDAS Y USUARIOS", (Store, SubscriptionPlan, NegocioUserProxy)),
         ("INVENTARIO", (Inventory, InventoryMovement, MovementType)),
@@ -186,29 +185,71 @@ class AccessoryTokenAdmin(BaseAdmin):
 admin_site.register(AccessoryToken, AccessoryTokenAdmin)
 
 
-for model in (
-    AccessoryCategory,
-    ProductCategory,
-    AccessoryType,
-    Product,
-    Accessory,
-    MotorcycleBrand,
-    MotorcycleModel,
-    Motorcycle,
-    AccessoryCompatibility,
-    Model3D,
-    SubscriptionPlan,
-    Inventory,
-    MovementType,
-    InventoryMovement,
-    Quote,
-    QuoteDetail,
-    QuoteStatusHistory,
-    Configuration,
-    ConfigurationDetail,
-):
+
+
+class ProductAdmin(BaseAdmin):
+    list_display = ("id_producto", "nombre", "es_accesorio", "categoria_producto", "precio")
+    list_filter = ("es_accesorio", "categoria_producto")
+    search_fields = ("nombre", "codigo_sku")
+    readonly_fields = ("id_producto",)
+    
+    fieldsets = (
+        ("Información básica", {
+            "fields": ("nombre", "descripcion", "estado", "categoria_producto", "imagen", "codigo_sku", "precio")
+        }),
+        ("Configuración de accesorio", {
+            "fields": ("es_accesorio", "categoria_accesorio", "tipo_accesorio"),
+            "description": "Solo aplicar si el producto es un accesorio",
+            "classes": ("collapse",),
+        }),
+    )
+
+    def get_fieldsets(self, request, obj=None):
+        """Mostrar/ocultar campos de accesorio según es_accesorio"""
+        fieldsets = super().get_fieldsets(request, obj)
+        if obj and not obj.es_accesorio:
+            # Si NO es accesorio, ocultar la sección de configuración de accesorio
+            return [fs for fs in fieldsets if fs[0] != "Configuración de accesorio"]
+        return fieldsets
+
+    def get_form(self, request, obj=None, **kwargs):
+        """Hacer campos de accesorio no requeridos y añadir ayuda"""
+        form = super().get_form(request, obj, **kwargs)
+        if "categoria_accesorio" in form.base_fields:
+            form.base_fields["categoria_accesorio"].required = False
+            form.base_fields["categoria_accesorio"].help_text = "Solo requerido si es_accesorio=True"
+        if "tipo_accesorio" in form.base_fields:
+            form.base_fields["tipo_accesorio"].required = False
+            form.base_fields["tipo_accesorio"].help_text = "Solo requerido si es_accesorio=True"
+        return form
+
+
+
+# Registro de modelos con admin personalizado
+admin_models = [
+    (AccessoryCategory, BaseAdmin),
+    (ProductCategory, BaseAdmin),
+    (AccessoryType, BaseAdmin),
+    (Product, ProductAdmin),  # Admin personalizado para l�gica condicional
+    (MotorcycleBrand, BaseAdmin),
+    (MotorcycleModel, BaseAdmin),
+    (Motorcycle, BaseAdmin),
+    (AccessoryCompatibility, BaseAdmin),
+    (Model3D, BaseAdmin),
+    (SubscriptionPlan, BaseAdmin),
+    (Inventory, BaseAdmin),
+    (MovementType, BaseAdmin),
+    (InventoryMovement, BaseAdmin),
+    (Quote, BaseAdmin),
+    (QuoteDetail, BaseAdmin),
+    (QuoteStatusHistory, BaseAdmin),
+    (Configuration, BaseAdmin),
+    (ConfigurationDetail, BaseAdmin),
+]
+
+for model, admin_class in admin_models:
     try:
-        admin_site.register(model, BaseAdmin)
+        admin_site.register(model, admin_class)
     except admin.sites.AlreadyRegistered:
         pass
 

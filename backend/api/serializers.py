@@ -1,7 +1,6 @@
 from rest_framework import serializers
 
 from .models import (
-    Accessory,
     AccessoryCategory,
     AccessoryCompatibility,
     AccessoryType,
@@ -68,7 +67,7 @@ class ProductSerializer(serializers.ModelSerializer):
         read_only_fields = ("id_producto",)
 
 
-class AccessorySerializer(serializers.Serializer):
+class AccessoryCategorySerializer(serializers.Serializer):
     id_accesorio = serializers.UUIDField(read_only=True)
     id_categoria = serializers.PrimaryKeyRelatedField(
         queryset=AccessoryCategory.objects.all(), source="categoria", required=False, allow_null=True
@@ -352,11 +351,11 @@ class UserSerializer(serializers.ModelSerializer):
 class Model3DSerializer(serializers.ModelSerializer):
     id_accesorio = serializers.PrimaryKeyRelatedField(
         source="accesorio",
-        queryset=Accessory.objects.all(),
+        queryset=AccessoryCategory.objects.all(),
         required=False,
         allow_null=True,
     )
-    accesorio = AccessorySerializer(read_only=True)
+    accesorio = AccessoryCategorySerializer(read_only=True)
 
     class Meta:
         model = Model3D
@@ -376,7 +375,7 @@ class Model3DSerializer(serializers.ModelSerializer):
 class CompatibilitySerializer(serializers.ModelSerializer):
     id_accesorio = serializers.PrimaryKeyRelatedField(
         source="accesorio",
-        queryset=Accessory.objects.all(),
+        queryset=AccessoryCategory.objects.all(),
     )
     id_modelo_moto = serializers.PrimaryKeyRelatedField(
         source="modelo_moto",
@@ -429,7 +428,7 @@ class InventorySerializer(serializers.ModelSerializer):
             if instance.accesorio_id
             else Accessory.objects.filter(producto_id=instance.producto_id).first()
         )
-        return AccessorySerializer(accessory).data if accessory else None
+        return AccessoryCategorySerializer(accessory).data if accessory else None
 
 
 class InventoryMovementSerializer(serializers.ModelSerializer):
@@ -461,7 +460,7 @@ class MovementTypeSerializer(serializers.ModelSerializer):
 class QuoteDetailSerializer(serializers.ModelSerializer):
     id_cotizacion = serializers.UUIDField(source="cotizacion_id", read_only=True, allow_null=True)
     id_accesorio = serializers.UUIDField(source="accesorio_id", read_only=True, allow_null=True)
-    accesorio = AccessorySerializer(read_only=True)
+    accesorio = AccessoryCategorySerializer(read_only=True)
 
     class Meta:
         model = QuoteDetail

@@ -15,7 +15,7 @@ class DatabaseModel(models.Model):
 
 class AccessoryCategory(DatabaseModel):
     id_categoria = models.UUIDField(primary_key=True, default=uuid.uuid4, db_column="id_categoria")
-    cat_nombre = models.TextField()
+    cat_nombre = models.CharField(max_length=100)
     cat_descripcion = models.TextField(null=True, blank=True)
 
     class Meta(DatabaseModel.Meta):
@@ -30,7 +30,7 @@ class ProductCategory(DatabaseModel):
     id_categoria_producto = models.UUIDField(
         primary_key=True, default=uuid.uuid4, db_column="id_categoria_producto"
     )
-    nombre = models.TextField()
+    nombre = models.CharField(max_length=100)
     descripcion = models.TextField(null=True, blank=True)
 
     class Meta(DatabaseModel.Meta):
@@ -43,7 +43,7 @@ class ProductCategory(DatabaseModel):
 
 class AccessoryType(DatabaseModel):
     id_tipo = models.UUIDField(primary_key=True, default=uuid.uuid4, db_column="id_tipo")
-    nombre = models.TextField()
+    nombre = models.CharField(max_length=100)
     descripcion = models.TextField(null=True, blank=True)
 
     class Meta(DatabaseModel.Meta):
@@ -56,7 +56,7 @@ class AccessoryType(DatabaseModel):
 
 class Product(DatabaseModel):
     id_producto = models.UUIDField(primary_key=True, default=uuid.uuid4, db_column="id_producto")
-    nombre = models.TextField()
+    nombre = models.CharField(max_length=100)
     descripcion = models.TextField(null=True, blank=True)
     estado = models.CharField(max_length=50, default="disponible")
     categoria_producto = models.ForeignKey(
@@ -67,9 +67,26 @@ class Product(DatabaseModel):
         on_delete=models.DO_NOTHING,
         related_name="productos",
     )
-    imagen = models.TextField(null=True, blank=True)
-    codigo_sku = models.TextField(null=True, blank=True, unique=True)
+    imagen = models.URLField(null=True, blank=True)
+    codigo_sku = models.CharField(max_length=100, null=True, blank=True, unique=True)
     precio = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    es_accesorio = models.BooleanField(default=False, db_column="accesorio")
+    peso = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
+    tipo_accesorio = models.ForeignKey(
+        AccessoryType,
+        db_column="id_tipo_accesorio",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+    )
+    categoria_accesorio = models.ForeignKey(
+        AccessoryCategory,
+        db_column="id_categoria_accesorio",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        related_name="productos_accesorio",
+    )
 
     class Meta(DatabaseModel.Meta):
         db_table = "producto"
@@ -79,47 +96,16 @@ class Product(DatabaseModel):
         return self.nombre or str(self.id_producto)
 
 
-class Accessory(DatabaseModel):
-    id_accesorio = models.UUIDField(primary_key=True, default=uuid.uuid4, db_column="id_accesorio")
-    categoria = models.ForeignKey(
-        AccessoryCategory,
-        db_column="id_categoria",
-        null=True,
-        blank=True,
-        on_delete=models.DO_NOTHING,
-        related_name="accesorios",
-    )
-    peso = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
-    producto = models.ForeignKey(
-        Product,
-        db_column="id_producto",
-        null=True,
-        blank=True,
-        on_delete=models.DO_NOTHING,
-        related_name="accesorios",
-    )
-    tipo = models.ForeignKey(
-        AccessoryType,
-        db_column="id_tipo",
-        null=True,
-        blank=True,
-        on_delete=models.DO_NOTHING,
-        related_name="accesorios",
-    )
-    color = models.TextField(null=True, blank=True)
-
-    class Meta(DatabaseModel.Meta):
-        db_table = "accesorio"
-        ordering = ["pk"]
-
-    def __str__(self):
-        return f"Accesorio {str(self.id_accesorio)[:8]}"
+# Tabla de accesorios eliminada.
+# Los campos clave (peso, tipo) ahora están en el modelo Product.
+# Las categorías de compatibilidad se manejan mediante AccessoryCategory
+# y la relación N:N con motos se ha simplificado usando categorías.
 
 
 class MotorcycleBrand(DatabaseModel):
     id_marca = models.UUIDField(primary_key=True, default=uuid.uuid4, db_column="id_marca")
-    marca_nombre = models.TextField()
-    marca_pais = models.TextField(null=True, blank=True)
+    marca_nombre = models.CharField(max_length=100)
+    marca_pais = models.CharField(max_length=100, null=True, blank=True)
 
     class Meta(DatabaseModel.Meta):
         db_table = "marca_moto"
@@ -139,9 +125,9 @@ class MotorcycleModel(DatabaseModel):
         on_delete=models.DO_NOTHING,
         related_name="modelos",
     )
-    modelo_nombre = models.TextField()
+    modelo_nombre = models.CharField(max_length=100)
     modelo_descripcion = models.TextField(null=True, blank=True)
-    cilindraje = models.TextField(null=True, blank=True)
+    cilindraje = models.CharField(max_length=50, null=True, blank=True)
 
     class Meta(DatabaseModel.Meta):
         db_table = "modelo_moto"
@@ -162,8 +148,8 @@ class Motorcycle(DatabaseModel):
         related_name="motos",
     )
     moto_anio = models.IntegerField(null=True, blank=True)
-    moto_version = models.TextField(null=True, blank=True)
-    moto_imagen = models.TextField(null=True, blank=True)
+    moto_version = models.CharField(max_length=100, null=True, blank=True)
+    moto_imagen = models.URLField(null=True, blank=True)
 
     class Meta(DatabaseModel.Meta):
         db_table = "moto"
@@ -178,9 +164,12 @@ class AccessoryCompatibility(DatabaseModel):
     id_compatibilidad = models.UUIDField(
         primary_key=True, default=uuid.uuid4, db_column="id_compatibilidad"
     )
-    accesorio = models.ForeignKey(
-        Accessory,
-        db_column="id_accesorio",
+    # Relación a través de categoría en lugar de acceso individual
+    categoria_accesorio = models.ForeignKey(
+        AccessoryCategory,
+        db_column="id_categoria_accesorio",
+        null=True,
+        blank=True,
         on_delete=models.DO_NOTHING,
         related_name="compatibilidades",
     )
@@ -195,7 +184,7 @@ class AccessoryCompatibility(DatabaseModel):
 
     class Meta(DatabaseModel.Meta):
         db_table = "accesorio_modelo_moto"
-        unique_together = (("accesorio", "modelo_moto"),)
+        unique_together = (("categoria_accesorio", "modelo_moto"),)
         ordering = ["pk"]
 
     def __str__(self):
@@ -205,16 +194,16 @@ class AccessoryCompatibility(DatabaseModel):
 class Model3D(DatabaseModel):
     id_modelo3d = models.UUIDField(primary_key=True, default=uuid.uuid4, db_column="id_modelo3d")
     accesorio = models.ForeignKey(
-        Accessory,
+        AccessoryCategory,
         db_column="id_accesorio",
         null=True,
         blank=True,
         on_delete=models.DO_NOTHING,
         related_name="modelos_3d",
     )
-    url_modelo3d = models.TextField()
-    formato_archivo = models.TextField(null=True, blank=True)
-    estado_visualizacion = models.TextField(null=True, blank=True)
+    url_modelo3d = models.URLField()
+    formato_archivo = models.CharField(max_length=50, null=True, blank=True)
+    estado_visualizacion = models.CharField(max_length=50, null=True, blank=True)
     modelo3d_fecha = models.DateField(null=True, blank=True, default=date.today)
     modelo3d_observaciones = models.TextField(null=True, blank=True)
 
@@ -228,7 +217,7 @@ class Model3D(DatabaseModel):
 
 class SubscriptionPlan(DatabaseModel):
     id_plan = models.UUIDField(primary_key=True, default=uuid.uuid4, db_column="id_plan")
-    plan_nombre = models.TextField()
+    plan_nombre = models.CharField(max_length=100)
     plan_descripcion = models.TextField(null=True, blank=True)
     precio_mensual = models.DecimalField(max_digits=10, decimal_places=2)
     limite_productos = models.IntegerField(null=True, blank=True)
@@ -258,11 +247,11 @@ class Store(DatabaseModel):
         on_delete=models.DO_NOTHING,
         related_name="tiendas",
     )
-    nombre_tienda = models.TextField()
-    nit = models.TextField(null=True, blank=True, unique=True)
+    nombre_tienda = models.CharField(max_length=150)
+    nit = models.CharField(max_length=50, null=True, blank=True, unique=True)
     direccion_tienda = models.TextField(null=True, blank=True)
-    telefono_tienda = models.TextField(null=True, blank=True)
-    email_tienda = models.TextField(null=True, blank=True)
+    telefono_tienda = models.CharField(max_length=30, null=True, blank=True)
+    email_tienda = models.EmailField(max_length=254, null=True, blank=True)
     fecha_afiliacion = models.DateField(null=True, blank=True, default=date.today)
     estado_tienda = PostgreSQLEnumField(
         enum_type="tienda_estado_enum",
@@ -281,7 +270,7 @@ class Store(DatabaseModel):
 
 class Role(DatabaseModel):
     id_rol = models.UUIDField(primary_key=True, default=uuid.uuid4, db_column="id_rol")
-    nombre_rol = models.TextField()
+    nombre_rol = models.CharField(max_length=100)
 
     class Meta(DatabaseModel.Meta):
         db_table = "rol"
@@ -301,8 +290,8 @@ class User(DatabaseModel):
         on_delete=models.DO_NOTHING,
         related_name="usuarios",
     )
-    usu_nombre = models.TextField()
-    usu_email = models.TextField(unique=True)
+    usu_nombre = models.CharField(max_length=100)
+    usu_email = models.EmailField(unique=True)
     password_hash = models.TextField()
     fecha_registro = models.DateField(null=True, blank=True, default=date.today)
     estado_usuario = PostgreSQLEnumField(
@@ -362,12 +351,11 @@ class UserRole(DatabaseModel):
 
 class Inventory(DatabaseModel):
     id_inventario = models.UUIDField(primary_key=True, default=uuid.uuid4, db_column="id_inventario")
-    accesorio = models.ForeignKey(
-        Accessory,
-        db_column="id_accesorio",
+    producto = models.ForeignKey(
+        Product,
+        db_column="id_producto",
         null=True,
         blank=True,
-        db_constraint=False,
         on_delete=models.DO_NOTHING,
         related_name="inventarios",
     )
@@ -389,14 +377,8 @@ class Inventory(DatabaseModel):
     )
     fecha_actualizacion = models.DateField(null=True, blank=True, default=date.today)
     precio = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    producto = models.ForeignKey(
-        Product,
-        db_column="id_producto",
-        null=True,
-        blank=True,
-        on_delete=models.DO_NOTHING,
-        related_name="inventarios",
-    )
+    # El campo es_accesorio viene del producto (Producto.es_accesorio)
+    # No es necesario un FK directo a Accessory ya que ese dato está en Producto
 
     class Meta(DatabaseModel.Meta):
         db_table = "inventario"
@@ -409,7 +391,7 @@ class Inventory(DatabaseModel):
 
 class MovementType(DatabaseModel):
     id_tipomov = models.UUIDField(primary_key=True, default=uuid.uuid4, db_column="id_tipomov")
-    tipomov_nombre = models.TextField()
+    tipomov_nombre = models.CharField(max_length=100)
     descripcion_tipomov = models.TextField(null=True, blank=True)
 
     class Meta(DatabaseModel.Meta):
@@ -498,7 +480,7 @@ class Quote(DatabaseModel):
     )
     total = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, default=0)
     coti_observaciones = models.TextField(null=True, blank=True)
-    nombre_configuracion = models.TextField(null=True, blank=True)
+    nombre_configuracion = models.CharField(max_length=100, null=True, blank=True)
 
     class Meta(DatabaseModel.Meta):
         db_table = "cotizacion"
@@ -520,13 +502,16 @@ class QuoteDetail(DatabaseModel):
         on_delete=models.DO_NOTHING,
         related_name="detalle_cotizacion",
     )
-    accesorio = models.ForeignKey(
-        Accessory,
-        db_column="id_accesorio",
+    # El accesorio se selecciona por categoría o directamente del producto
+    # Se elimina el campo foreign key a Accessory para evitar dependencias
+    # tras la unificación en la tabla Product
+    categoria_accesorio = models.ForeignKey(
+        AccessoryCategory,
+        db_column="id_categoria_accesorio",
         null=True,
         blank=True,
         on_delete=models.DO_NOTHING,
-        related_name="detalles_cotizacion",
+        related_name="cotizaciones",
     )
     cantidad = models.IntegerField()
     precio_unitario = models.DecimalField(max_digits=10, decimal_places=2)
@@ -599,9 +584,12 @@ class ConfigurationDetail(DatabaseModel):
         on_delete=models.DO_NOTHING,
         related_name="detalles",
     )
-    accesorio = models.ForeignKey(
-        Accessory,
-        db_column="id_accesorio",
+    # El accesorio se selecciona por categoría
+    categoria_accesorio = models.ForeignKey(
+        AccessoryCategory,
+        db_column="id_categoria_accesorio",
+        null=True,
+        blank=True,
         on_delete=models.DO_NOTHING,
         related_name="configuraciones",
     )
