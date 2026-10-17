@@ -69,23 +69,23 @@ class TranslationTests(SimpleTestCase):
 @override_settings(DATABASE_URL="")
 class LanguageSelectionTests(SimpleTestCase):
     def test_default_is_spanish(self):
-        response = self.client.get("/api/accesorios", HTTP_ACCEPT="*/*")
+        response = self.client.get("/api/productos", HTTP_ACCEPT="*/*")
         self.assertEqual(response.status_code, 503)
         self.assertEqual(response["Content-Language"], "es")
         self.assertIn("Falta configurar", response.json()["error"])
 
     def test_query_param_switches_to_english(self):
-        response = self.client.get("/api/accesorios?lang=en", HTTP_ACCEPT="*/*")
+        response = self.client.get("/api/productos?lang=en", HTTP_ACCEPT="*/*")
         self.assertEqual(response["Content-Language"], "en")
         self.assertIn("must be set", response.json()["error"])
 
     def test_header_switches_to_english(self):
-        response = self.client.get("/api/accesorios", HTTP_ACCEPT="*/*", HTTP_X_LANGUAGE="en")
+        response = self.client.get("/api/productos", HTTP_ACCEPT="*/*", HTTP_X_LANGUAGE="en")
         self.assertIn("must be set", response.json()["error"])
 
     def test_json_api_ignores_accept_language(self):
         response = self.client.get(
-            "/api/accesorios", HTTP_ACCEPT="application/json", HTTP_ACCEPT_LANGUAGE="en-US"
+            "/api/productos", HTTP_ACCEPT="application/json", HTTP_ACCEPT_LANGUAGE="en-US"
         )
         self.assertEqual(response["Content-Language"], "es")
 

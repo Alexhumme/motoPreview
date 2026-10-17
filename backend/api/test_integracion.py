@@ -31,7 +31,6 @@ from rest_framework.test import APIClient
 
 from api import tokens
 from api.models import (
-    Accessory,
     AccessoryCategory,
     AccessoryCompatibility,
     AccessoryToken,
@@ -73,7 +72,7 @@ _ORDEN_TABLAS = [
     ProductCategory,
     AccessoryType,
     Product,
-    Accessory,
+    Product,  # was Accessory
     MotorcycleBrand,
     MotorcycleModel,
     Motorcycle,
@@ -321,7 +320,7 @@ class QuoteFlowTests(EsquemaTestCase):
                 categoria_producto=self.categoria,
                 precio=precio,
             )
-            accesorio = Accessory.objects.create(
+            accesorio = Product.objects.create(es_accesorio=True,
                 categoria=self.cat_acc,
                 producto=producto,
                 tipo=self.tipo,
@@ -472,7 +471,7 @@ class InventoryFlowTests(EsquemaTestCase):
             categoria_producto=self.categoria,
             precio=Decimal("80.00"),
         )
-        self.accesorio = Accessory.objects.create(
+        self.accesorio = Product.objects.create(es_accesorio=True,
             categoria=self.cat_acc, producto=producto, tipo=self.tipo, color="Rojo"
         )
 
