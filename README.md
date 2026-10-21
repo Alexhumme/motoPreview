@@ -4,7 +4,6 @@ Catálogo y configurador de accesorios para motocicletas. Frontend en **React** 
 
 ## Cómo correrlo
 
-
 **En la carepta click izquierdo en iniciar.bat**
 
 **O tambien**
