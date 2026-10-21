@@ -1,5 +1,6 @@
 # 02 — Arquitectura
 
+
 ## 1. Arquitectura general
 
 MotoPreview sigue una arquitectura **cliente-servidor desacoplada** en tres capas:
