@@ -49,7 +49,7 @@ from .models import (
     User,
     UserRole,
 )
-from .security import IsStoreAdmin, IsStoreStaff, ROLE_ADMIN, ROLE_CUSTOMER, ROLE_SELLER
+from .security import HasPermiso, IsStoreAdmin, IsStoreStaff, IsSuperAdmin, ROLE_ADMIN, ROLE_CUSTOMER, ROLE_SELLER, ROLE_SUPERADMIN
 from .serializers import (
     AccionSerializer,
     AccionSerializer as AccionSerializer,
@@ -357,11 +357,14 @@ class ResourceCollection(DatabaseGuardMixin):
     model = None
     serializer_class = None
 
+    # Permitir override en la vista
+    permiso_recurso = None
+    permiso_accion = None
+
     def get_permissions(self):
-        # Lectura pública; la escritura de catálogos es exclusiva de administradores.
         if self.request.method == "GET":
             return [AllowAny()]
-        return [IsStoreAdmin()]
+        return [HasPermiso()]
 
     def get_queryset(self):
         return self.model.objects.all()
@@ -393,11 +396,14 @@ class ResourceDetail(DatabaseGuardMixin):
     serializer_class = None
     not_found_message = "Registro no encontrado."
 
+    # Permitir override en la vista
+    permiso_recurso = None
+    permiso_accion = None
+
     def get_permissions(self):
-        # Lectura pública; la escritura de catálogos es exclusiva de administradores.
         if self.request.method == "GET":
             return [AllowAny()]
-        return [IsStoreAdmin()]
+        return [HasPermiso()]
 
     def get_object(self, pk):
         return self.model.objects.get(pk=pk)
@@ -539,7 +545,7 @@ class StoreDetail(ResourceDetail):
 
 
 class UserCollection(DatabaseGuardMixin):
-    permission_classes = [IsStoreAdmin]
+    permission_classes = [IsSuperAdmin]
     serializer_class = UserSerializer
 
     def get(self, request):
@@ -556,7 +562,7 @@ class UserCollection(DatabaseGuardMixin):
 
 
 class UserDetail(DatabaseGuardMixin):
-    permission_classes = [IsStoreAdmin]
+    permission_classes = [IsSuperAdmin]
     serializer_class = UserSerializer
 
     def get_target(self, request, pk):
@@ -1410,58 +1416,58 @@ class QuoteHistoryView(DatabaseGuardMixin):
 class RecursoCollection(ResourceCollection):
     model = Recurso
     serializer_class = RecursoSerializer
-    permission_classes = [IsStoreAdmin]
+    permission_classes = [IsSuperAdmin]
 
 
 class RecursoDetail(ResourceDetail):
     model = Recurso
     serializer_class = RecursoSerializer
-    permission_classes = [IsStoreAdmin]
+    permission_classes = [IsSuperAdmin]
     not_found_message = "Recurso no encontrado."
 
 
 class AccionCollection(ResourceCollection):
     model = Accion
     serializer_class = AccionSerializer
-    permission_classes = [IsStoreAdmin]
+    permission_classes = [IsSuperAdmin]
 
 
 class AccionDetail(ResourceDetail):
     model = Accion
     serializer_class = AccionSerializer
-    permission_classes = [IsStoreAdmin]
+    permission_classes = [IsSuperAdmin]
     not_found_message = "Acción no encontrada."
 
 
 class RecursoAccionCollection(ResourceCollection):
     model = RecursoAccion
     serializer_class = RecursoAccionSerializer
-    permission_classes = [IsStoreAdmin]
+    permission_classes = [IsSuperAdmin]
 
 
 class RecursoAccionDetail(ResourceDetail):
     model = RecursoAccion
     serializer_class = RecursoAccionSerializer
-    permission_classes = [IsStoreAdmin]
+    permission_classes = [IsSuperAdmin]
     not_found_message = "Recurso-Acción no encontrado."
 
 
 class RolRecursoCollection(ResourceCollection):
     model = RolRecurso
     serializer_class = RolRecursoSerializer
-    permission_classes = [IsStoreAdmin]
+    permission_classes = [IsSuperAdmin]
 
 
 class RolRecursoDetail(ResourceDetail):
     model = RolRecurso
     serializer_class = RolRecursoSerializer
-    permission_classes = [IsStoreAdmin]
+    permission_classes = [IsSuperAdmin]
     not_found_message = "Permiso de rol no encontrado."
 
 
 class RecursoConPermisosCollection(DatabaseGuardMixin):
     """Obtiene recursos con sus permisos para un rol específico"""
-    permission_classes = [IsStoreAdmin]
+    permission_classes = [IsSuperAdmin]
     serializer_class = RecursoConPermisosSerializer
 
     def get(self, request):

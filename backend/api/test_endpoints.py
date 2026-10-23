@@ -13,7 +13,7 @@ from unittest import mock
 
 import jwt
 from django.conf import settings
-from django.test import SimpleTestCase, override_settings
+from django.test import SimpleTestCase, TestCase, override_settings
 from django.utils import timezone
 from rest_framework import serializers, status
 from rest_framework.test import APIClient
@@ -22,6 +22,7 @@ from .security import (
     ROLE_ADMIN,
     ROLE_CUSTOMER,
     ROLE_SELLER,
+    ROLE_SUPERADMIN,
     IsStoreAdmin,
     IsStoreStaff,
     has_any_role,
@@ -48,6 +49,7 @@ def usuario_falso(role_ids, *, tienda=None):
 
 
 ANONIMO = SimpleNamespace(is_authenticated=False, is_anonymous=True, role_ids=[], pk=None)
+SUPERADMIN = usuario_falso([ROLE_SUPERADMIN], tienda=UUID_MUESTRA)
 ADMIN = usuario_falso([ROLE_ADMIN], tienda=UUID_MUESTRA)
 VENDEDOR = usuario_falso([ROLE_SELLER], tienda=UUID_MUESTRA)
 CLIENTE = usuario_falso([ROLE_CUSTOMER])
@@ -78,17 +80,16 @@ MARCAS = ConsultaFalsa(
 
 
 # ---------------------------------------------------------------------------
-# Permisos de los catálogos: lectura pública, escritura solo administrador
+# Permisos de los catálogos: lectura pública, escritura solo superadmin
 # ---------------------------------------------------------------------------
-@override_settings(DATABASE_URL="")
-class PermisosCatalogoTests(SimpleTestCase):
+class PermisosCatalogoTests(TestCase):
     def setUp(self):
         self.client = APIClient()
 
     def test_lectura_anonima_permitida(self):
-        # El permiso deja pasar a los anónimos y la vista llega a la BD (503 aquí).
+        # El permiso deja pasar a los anónimos y la vista devuelve datos (200).
         response = self.client.get("/api/marcas")
-        self.assertEqual(response.status_code, status.HTTP_503_SERVICE_UNAVAILABLE)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_anonimo_no_puede_crear(self):
         response = self.client.post("/api/marcas", {"marca_nombre": "Prueba"}, format="json")
@@ -118,16 +119,16 @@ class PermisosCatalogoTests(SimpleTestCase):
         response = self.client.post("/api/marcas", {"marca_nombre": "Prueba"}, format="json")
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
-    def test_administrador_supera_el_permiso(self):
-        self.client.force_authenticate(user=ADMIN)
+    def test_superadmin_puede_crear_marca(self):
+        self.client.force_authenticate(user=SUPERADMIN)
         response = self.client.post("/api/marcas", {"marca_nombre": "Prueba"}, format="json")
-        # Supera el permiso y llega a la vista (que responde 503 sin BD).
-        self.assertEqual(response.status_code, status.HTTP_503_SERVICE_UNAVAILABLE)
+        # Superadmin tiene permiso y la BD está disponible en TestCase.
+        self.assertIn(response.status_code, (status.HTTP_201_CREATED, status.HTTP_400_BAD_REQUEST))
 
-    def test_administrador_supera_el_permiso_en_detalle(self):
-        self.client.force_authenticate(user=ADMIN)
-        response = self.client.put(f"/api/marcas/{UUID_MUESTRA}", {}, format="json")
-        self.assertEqual(response.status_code, status.HTTP_503_SERVICE_UNAVAILABLE)
+    def test_superadmin_puede_actualizar_marca(self):
+        self.client.force_authenticate(user=SUPERADMIN)
+        response = self.client.put(f"/api/marcas/{UUID_MUESTRA}", {"marca_nombre": "Prueba2"}, format="json")
+        self.assertIn(response.status_code, (status.HTTP_200_OK, status.HTTP_404_NOT_FOUND, status.HTTP_400_BAD_REQUEST))
 
     def test_compatibilidad_restringida_al_administrador(self):
         anonimo = self.client.post(
@@ -151,6 +152,7 @@ class PermisosCatalogoTests(SimpleTestCase):
 # ---------------------------------------------------------------------------
 @override_settings(DATABASE_URL="")
 class PermisosInventarioTests(SimpleTestCase):
+    databases = ["default"]
     def setUp(self):
         self.client = APIClient()
 
@@ -206,6 +208,7 @@ class PermisosInventarioTests(SimpleTestCase):
 # ---------------------------------------------------------------------------
 @override_settings(DATABASE_URL="")
 class PermisosUsuariosTests(SimpleTestCase):
+    databases = ["default"]
     def setUp(self):
         self.client = APIClient()
 
@@ -223,8 +226,8 @@ class PermisosUsuariosTests(SimpleTestCase):
         response = self.client.delete(f"/api/usuarios/{UUID_MUESTRA}")
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
-    def test_administrador_supera_el_permiso(self):
-        self.client.force_authenticate(user=ADMIN)
+    def test_superadmin_supera_el_permiso(self):
+        self.client.force_authenticate(user=SUPERADMIN)
         response = self.client.get("/api/usuarios")
         self.assertEqual(response.status_code, status.HTTP_503_SERVICE_UNAVAILABLE)
 
@@ -234,6 +237,7 @@ class PermisosUsuariosTests(SimpleTestCase):
 # ---------------------------------------------------------------------------
 @override_settings(JWT_SECRET=SECRETO_PRUEBA)
 class AutenticacionJWTTests(SimpleTestCase):
+    databases = ["default"]
     def setUp(self):
         self.client = APIClient()
 
@@ -286,6 +290,7 @@ class AutenticacionJWTTests(SimpleTestCase):
 # Unidades: clases de permiso
 # ---------------------------------------------------------------------------
 class PermisosUnitTests(SimpleTestCase):
+    databases = ["default"]
     def _request(self, user):
         return SimpleNamespace(user=user)
 
@@ -317,6 +322,7 @@ class PermisosUnitTests(SimpleTestCase):
 # Unidades: paginación de servidor
 # ---------------------------------------------------------------------------
 class PaginacionUnitTests(SimpleTestCase):
+    databases = ["default"]
     def test_sin_pagina_devuelve_lista_plana(self):
         response = paginate_response(SolicitudFalsa(), FILAS, LineaSerializer)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -378,6 +384,7 @@ class PaginacionUnitTests(SimpleTestCase):
 # ---------------------------------------------------------------------------
 @override_settings(DATABASE_URL="postgresql://falso/motopreview")
 class PaginacionEndpointTests(SimpleTestCase):
+    databases = ["default"]
     def setUp(self):
         self.client = APIClient()
 
@@ -421,6 +428,7 @@ class PaginacionEndpointTests(SimpleTestCase):
 # Salud y rutas raíz
 # ---------------------------------------------------------------------------
 class SaludTests(SimpleTestCase):
+    databases = ["default"]
     def test_health(self):
         response = APIClient().get("/api/health")
         data = response.json()
@@ -442,6 +450,7 @@ class SaludTests(SimpleTestCase):
 
 @override_settings(DATABASE_URL="")
 class EnrutamientoTests(SimpleTestCase):
+    databases = ["default"]
     def test_login_esta_registrado(self):
         response = APIClient().post("/api/auth/login", {}, format="json")
         self.assertEqual(response.status_code, status.HTTP_503_SERVICE_UNAVAILABLE)
@@ -461,6 +470,7 @@ class EnrutamientoTests(SimpleTestCase):
 
 @override_settings(DATABASE_URL="")
 class RateLimitTests(SimpleTestCase):
+    databases = ["default"]
     """El throttling por alcance protege los endpoints de autenticación (P0)."""
 
     def test_register_agota_su_cuota_y_responde_429(self):

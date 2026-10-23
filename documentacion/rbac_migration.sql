@@ -51,7 +51,7 @@ CREATE TABLE IF NOT EXISTS rol_recurso (
     id_rol UUID NOT NULL REFERENCES rol(id_rol) ON DELETE CASCADE,
     id_recurso_accion UUID NOT NULL REFERENCES recurso_accion(id_recurso_accion) ON DELETE CASCADE,
     scope VARCHAR(20) NOT NULL DEFAULT 'global' CHECK (scope IN ('global', 'tienda', 'propio')),
-    concedido_por UUID REFERENCES usuario(id_usuario) ON DELETE SET NULL,
+    id_concedido_por UUID REFERENCES usuario(id_usuario) ON DELETE SET NULL,
     concedido_en TIMESTAMP WITH TIME ZONE DEFAULT now(),
     activo BOOLEAN DEFAULT TRUE,
     UNIQUE (id_rol, id_recurso_accion, scope)

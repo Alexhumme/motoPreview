@@ -272,6 +272,7 @@ class Role(DatabaseModel):
     id_rol = models.UUIDField(primary_key=True, default=uuid.uuid4, db_column="id_rol")
     nombre_rol = models.CharField(max_length=100)
     activo = models.BooleanField(default=True)
+    es_superadmin = models.BooleanField(default=False)  # True = Superadmin global, False = Admin de tienda
 
     class Meta(DatabaseModel.Meta):
         db_table = "rol"
@@ -297,6 +298,7 @@ class Recurso(DatabaseModel):
     class Meta(DatabaseModel.Meta):
         db_table = "recurso"
         ordering = ["orden", "nombre"]
+        managed = True  # Gestionado por Django en tests; en producción se usa SQL externo
 
     def __str__(self):
         return self.nombre or self.codigo
@@ -315,6 +317,7 @@ class Accion(DatabaseModel):
     class Meta(DatabaseModel.Meta):
         db_table = "accion"
         ordering = ["orden", "nombre"]
+        managed = True  # Gestionado por Django en tests; en producción se usa SQL externo
 
     def __str__(self):
         return self.nombre or self.codigo
@@ -343,6 +346,7 @@ class RecursoAccion(DatabaseModel):
         db_table = "recurso_accion"
         unique_together = (("recurso", "accion"),)
         ordering = ["recurso__orden", "accion__orden"]
+        managed = True  # Gestionado por Django en tests; en producción se usa SQL externo
 
     def __str__(self):
         return f"{self.recurso.codigo}:{self.accion.codigo}"
@@ -383,6 +387,7 @@ class RolRecurso(DatabaseModel):
         db_table = "rol_recurso"
         unique_together = (("rol", "recurso_accion", "scope"),)
         ordering = ["rol__nombre_rol", "recurso_accion__recurso__orden"]
+        managed = True  # Gestionado por Django en tests; en producción se usa SQL externo
 
     def __str__(self):
         return f"{self.rol.nombre_rol} -> {self.recurso_accion.recurso.codigo}:{self.recurso_accion.accion.codigo} [{self.scope}]"
