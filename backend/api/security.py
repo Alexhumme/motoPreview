@@ -2,7 +2,8 @@ from rest_framework.permissions import BasePermission
 from django.utils.module_loading import import_string
 
 
-ROLE_ADMIN = "11111111-0000-0000-0000-000000000001"
+ROLE_SUPERADMIN = "00000000-0000-0000-0000-000000000000"
+ROLE_ADMIN = "11111111-0000-0000-0000-000000000001"      # Admin de tienda
 ROLE_SELLER = "11111111-0000-0000-0000-000000000002"
 ROLE_CUSTOMER = "11111111-0000-0000-0000-000000000003"
 
@@ -77,9 +78,14 @@ def usuario_tiene_permiso(user, recurso_codigo, accion_codigo, tienda_id=None, u
     """
     Verifica si un usuario tiene permiso para una acción sobre un recurso.
     Comprueba la tabla rol_recurso con el scope correspondiente.
+    Superadmin tiene acceso total sin necesidad de permisos explícitos.
     """
     if not user or not getattr(user, "is_authenticated", False):
         return False
+    
+    # Superadmin tiene acceso total sin verificar permisos específicos
+    if str(ROLE_SUPERADMIN) in {str(r).lower() for r in user.role_ids}:
+        return True
     
     if not user.role_ids:
         return False
@@ -150,8 +156,15 @@ class IsStoreStaff(BasePermission):
         return has_any_role(request.user, (ROLE_ADMIN, ROLE_SELLER))
 
 
+class IsSuperAdmin(BasePermission):
+    message = "Se requiere el rol de superadministrador."
+
+    def has_permission(self, request, view):
+        return has_any_role(request.user, (ROLE_SUPERADMIN,))
+
+
 class IsStoreAdmin(BasePermission):
-    message = "Se requiere el rol de administrador."
+    message = "Se requiere el rol de administrador de tienda."
 
     def has_permission(self, request, view):
         return has_any_role(request.user, (ROLE_ADMIN,))
