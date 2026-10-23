@@ -1,0 +1,25 @@
+stateDiagram-v2
+    [*] --> pendiente : POST /api/cotizaciones
+
+    pendiente --> aprobada : PUT /:id/estado<br/>{coti_estado: aprobada}<br/>[solo staff de la tienda]
+    pendiente --> rechazada : PUT /:id/estado<br/>{coti_estado: rechazada}
+    aprobada --> completada : PUT /:id/estado<br/>{coti_estado: completada}
+    aprobada --> pendiente : PUT /:id/estado<br/>{coti_estado: pendiente}
+    aprobada --> rechazada : PUT /:id/estado<br/>{coti_estado: rechazada}
+
+    rechazada --> [*]
+    completada --> [*]
+
+    note right of pendiente
+        Estado inicial (default del enum
+        cotizacion_estado_enum).
+        Se registra en cotizacion_estado_hist
+        cada transición y se envía correo
+        al cliente (si SMTP está configurado).
+    end note
+
+    note right of completada
+        En el panel, las acciones visibles son:
+        · pendiente → Rechazar / Aprobar
+        · aprobada  → Completar
+    end note

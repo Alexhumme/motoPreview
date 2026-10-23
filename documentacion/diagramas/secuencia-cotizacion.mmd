@@ -1,0 +1,37 @@
+sequenceDiagram
+    autonumber
+    actor U as Cliente
+    participant SPA as SPA React (Carrito.jsx)
+    participant AX as services/api.js (axios)
+    participant API as Django API
+    participant DB as PostgreSQL
+
+    U->>SPA: Pulsa "Enviar cotización"
+    alt Sin sesión
+        SPA-->>U: navigate('/login')
+    else Con sesión
+        SPA->>API: GET /api/motos
+        API-->>SPA: 200 lista de motos
+        U->>SPA: Selecciona moto y observaciones
+        SPA->>AX: crearCotizacion(payload)
+        AX->>API: POST /api/cotizaciones<br/>Authorization: Bearer
+        API->>API: JWTAuthentication: decodifica y valida estado=activo
+        API->>API: IsAuthenticated ✓
+        API->>API: QuoteCreateSerializer valida moto y items
+        API->>API: Verifica producto.precio de cada accesorio
+        alt Algún accesorio sin precio
+            API-->>AX: 400 {"error": ...}
+            AX-->>SPA: error
+            SPA-->>U: Mensaje de error
+        else OK
+            API->>DB: BEGIN
+            API->>DB: INSERT cotizacion (estado='pendiente', total)
+            API->>DB: INSERT detalle_cotizacion (n líneas)
+            API->>DB: COMMIT
+            DB-->>API: OK
+            API-->>AX: 201 Created (QuoteSerializer)
+            AX-->>SPA: cotización creada
+            SPA->>SPA: vaciarCarrito()
+            SPA-->>U: "¡Cotización enviada!"
+        end
+    end

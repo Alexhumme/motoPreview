@@ -1,0 +1,35 @@
+# Dependencias
+node_modules/
+
+# Entornos virtuales Python
+.venv/
+venv/
+backend/venv/
+__pycache__/
+*.py[cod]
+
+# Artefactos de build
+dist/
+frontend/dist/
+
+# Secrets — nunca versionar
+.env
+.env.*
+!.env.example
+!.env.*.example
+# OJO: por decisión explícita del autor, backend/.env SÍ se versiona para que
+# un clon descargado arranque sin pasos manuales. Contiene la URL de la base y
+# las claves JWT/Django: si el repo es público quedan expuestas.
+!backend/.env
+
+# Base de datos local y cobertura
+*.sqlite3
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Editores y sistema
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

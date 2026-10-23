@@ -1,0 +1,26 @@
+flowchart LR
+    subgraph Cliente
+        B[/"Navegador<br/>React 19 SPA"/]
+    end
+
+    subgraph Frontend["Frontend — Vercel (CDN)"]
+        F[/"Archivos estáticos<br/>dist/ + rewrite SPA"/]
+    end
+
+    subgraph Backend["Backend — Render (WSGI)"]
+        M[LanguageMiddleware]
+        A[JWTAuthentication]
+        V[Vistas / Serializers DRF]
+    end
+
+    subgraph Datos["Datos — Neon (AWS us-east-2)"]
+        P[("PostgreSQL<br/>21 tablas")]
+    end
+
+    SMTP[(Servidor SMTP)]
+
+    B -->|Sirve| F
+    B -->|"HTTPS + JSON<br/>Authorization: Bearer"| M
+    M --> A --> V
+    V --> P
+    V -.->|Correos opcionales| SMTP

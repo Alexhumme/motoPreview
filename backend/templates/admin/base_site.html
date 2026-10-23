@@ -1,0 +1,23 @@
+{% extends "admin/base.html" %}
+{% load i18n %}
+
+{% block title %}{{ title }} | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block branding %}
+<div id="site-name"><a href="{% url 'admin:index' %}">{{ site_header|default:_('Django administration') }}</a></div>
+{% endblock %}
+
+{% block nav-global %}
+  {# Selector de idioma del backend: guarda la cookie "mp_lang" (ver api/i18n.py). #}
+  <div id="mp-lang" style="margin: .5rem 0; font-size: .85rem;">
+    <span style="opacity: .7;">Idioma / Language:</span>
+    {% for codigo, nombre in LANGUAGES %}
+      {% if codigo == LANGUAGE_CODE %}
+        <strong>{{ nombre }}</strong>
+      {% else %}
+        <a href="?lang={{ codigo }}">{{ nombre }}</a>
+      {% endif %}
+      {% if not forloop.last %}·{% endif %}
+    {% endfor %}
+  </div>
+{% endblock %}

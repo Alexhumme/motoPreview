@@ -1,0 +1,732 @@
+import uuid
+from datetime import date
+
+from django.db import models
+from django.utils import timezone
+
+from .fields import PostgreSQLEnumField
+
+
+class DatabaseModel(models.Model):
+    class Meta:
+        abstract = True
+        managed = False
+
+
+class AccessoryCategory(DatabaseModel):
+    id_categoria = models.UUIDField(primary_key=True, default=uuid.uuid4, db_column="id_categoria")
+    cat_nombre = models.CharField(max_length=100)
+    cat_descripcion = models.TextField(null=True, blank=True)
+
+    class Meta(DatabaseModel.Meta):
+        db_table = "categoria_accesorio"
+        ordering = ["cat_nombre"]
+
+    def __str__(self):
+        return self.cat_nombre or str(self.id_categoria)
+
+
+class ProductCategory(DatabaseModel):
+    id_categoria_producto = models.UUIDField(
+        primary_key=True, default=uuid.uuid4, db_column="id_categoria_producto"
+    )
+    nombre = models.CharField(max_length=100)
+    descripcion = models.TextField(null=True, blank=True)
+
+    class Meta(DatabaseModel.Meta):
+        db_table = "categoria_producto"
+        ordering = ["nombre"]
+
+    def __str__(self):
+        return self.nombre or str(self.id_categoria_producto)
+
+
+class AccessoryType(DatabaseModel):
+    id_tipo = models.UUIDField(primary_key=True, default=uuid.uuid4, db_column="id_tipo")
+    nombre = models.CharField(max_length=100)
+    descripcion = models.TextField(null=True, blank=True)
+
+    class Meta(DatabaseModel.Meta):
+        db_table = "tipo_accesorio"
+        ordering = ["nombre"]
+
+    def __str__(self):
+        return self.nombre or str(self.id_tipo)
+
+
+class Product(DatabaseModel):
+    id_producto = models.UUIDField(primary_key=True, default=uuid.uuid4, db_column="id_producto")
+    nombre = models.CharField(max_length=100)
+    descripcion = models.TextField(null=True, blank=True)
+    estado = models.CharField(max_length=50, default="disponible")
+    categoria_producto = models.ForeignKey(
+        ProductCategory,
+        db_column="id_categoria_producto",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        related_name="productos",
+    )
+    imagen = models.URLField(null=True, blank=True)
+    codigo_sku = models.CharField(max_length=100, null=True, blank=True, unique=True)
+    precio = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    es_accesorio = models.BooleanField(default=False, db_column="accesorio")
+    peso = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
+    tipo_accesorio = models.ForeignKey(
+        AccessoryType,
+        db_column="id_tipo_accesorio",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+    )
+    categoria_accesorio = models.ForeignKey(
+        AccessoryCategory,
+        db_column="id_categoria_accesorio",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        related_name="productos_accesorio",
+    )
+
+    class Meta(DatabaseModel.Meta):
+        db_table = "producto"
+        ordering = ["nombre"]
+
+    def __str__(self):
+        return self.nombre or str(self.id_producto)
+
+
+# Tabla de accesorios eliminada.
+# Los campos clave (peso, tipo) ahora están en el modelo Product.
+# Las categorías de compatibilidad se manejan mediante AccessoryCategory
+# y la relación N:N con motos se ha simplificado usando categorías.
+
+
+class MotorcycleBrand(DatabaseModel):
+    id_marca = models.UUIDField(primary_key=True, default=uuid.uuid4, db_column="id_marca")
+    marca_nombre = models.CharField(max_length=100)
+    marca_pais = models.CharField(max_length=100, null=True, blank=True)
+
+    class Meta(DatabaseModel.Meta):
+        db_table = "marca_moto"
+        ordering = ["marca_nombre"]
+
+    def __str__(self):
+        return self.marca_nombre or str(self.id_marca)
+
+
+class MotorcycleModel(DatabaseModel):
+    id_modelo_moto = models.UUIDField(primary_key=True, default=uuid.uuid4, db_column="id_modelo_moto")
+    marca = models.ForeignKey(
+        MotorcycleBrand,
+        db_column="id_marca",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        related_name="modelos",
+    )
+    modelo_nombre = models.CharField(max_length=100)
+    modelo_descripcion = models.TextField(null=True, blank=True)
+    cilindraje = models.CharField(max_length=50, null=True, blank=True)
+
+    class Meta(DatabaseModel.Meta):
+        db_table = "modelo_moto"
+        ordering = ["modelo_nombre"]
+
+    def __str__(self):
+        return self.modelo_nombre or str(self.id_modelo_moto)
+
+
+class Motorcycle(DatabaseModel):
+    id_moto = models.UUIDField(primary_key=True, default=uuid.uuid4, db_column="id_moto")
+    modelo = models.ForeignKey(
+        MotorcycleModel,
+        db_column="id_modelo_moto",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        related_name="motos",
+    )
+    moto_anio = models.IntegerField(null=True, blank=True)
+    moto_version = models.CharField(max_length=100, null=True, blank=True)
+    moto_imagen = models.URLField(null=True, blank=True)
+
+    class Meta(DatabaseModel.Meta):
+        db_table = "moto"
+        ordering = ["moto_anio", "pk"]
+
+    def __str__(self):
+        texto = " ".join(part for part in (self.moto_version or "", str(self.moto_anio or "")) if part)
+        return texto or str(self.id_moto)
+
+
+class AccessoryCompatibility(DatabaseModel):
+    id_compatibilidad = models.UUIDField(
+        primary_key=True, default=uuid.uuid4, db_column="id_compatibilidad"
+    )
+    # Relación a través de categoría en lugar de acceso individual
+    categoria_accesorio = models.ForeignKey(
+        AccessoryCategory,
+        db_column="id_categoria_accesorio",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        related_name="compatibilidades",
+    )
+    modelo_moto = models.ForeignKey(
+        MotorcycleModel,
+        db_column="id_modelo_moto",
+        on_delete=models.DO_NOTHING,
+        related_name="compatibilidades",
+    )
+    anio_desde = models.IntegerField(null=True, blank=True)
+    anio_hasta = models.IntegerField(null=True, blank=True)
+
+    class Meta(DatabaseModel.Meta):
+        db_table = "accesorio_modelo_moto"
+        unique_together = (("categoria_accesorio", "modelo_moto"),)
+        ordering = ["pk"]
+
+    def __str__(self):
+        return f"Compatibilidad {str(self.id_compatibilidad)[:8]}"
+
+
+class Model3D(DatabaseModel):
+    id_modelo3d = models.UUIDField(primary_key=True, default=uuid.uuid4, db_column="id_modelo3d")
+    accesorio = models.ForeignKey(
+        AccessoryCategory,
+        db_column="id_accesorio",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        related_name="modelos_3d",
+    )
+    url_modelo3d = models.URLField()
+    formato_archivo = models.CharField(max_length=50, null=True, blank=True)
+    estado_visualizacion = models.CharField(max_length=50, null=True, blank=True)
+    modelo3d_fecha = models.DateField(null=True, blank=True, default=date.today)
+    modelo3d_observaciones = models.TextField(null=True, blank=True)
+
+    class Meta(DatabaseModel.Meta):
+        db_table = "modelo_3d"
+        ordering = ["modelo3d_fecha", "pk"]
+
+    def __str__(self):
+        return f"Modelo 3D {str(self.id_modelo3d)[:8]}"
+
+
+class SubscriptionPlan(DatabaseModel):
+    id_plan = models.UUIDField(primary_key=True, default=uuid.uuid4, db_column="id_plan")
+    plan_nombre = models.CharField(max_length=100)
+    plan_descripcion = models.TextField(null=True, blank=True)
+    precio_mensual = models.DecimalField(max_digits=10, decimal_places=2)
+    limite_productos = models.IntegerField(null=True, blank=True)
+    limite_usuarios = models.IntegerField(null=True, blank=True)
+    plan_estado = PostgreSQLEnumField(
+        enum_type="plan_estado_enum",
+        max_length=30,
+        choices=[("activo", "activo"), ("inactivo", "inactivo"), ("suspendido", "suspendido")],
+        default="activo",
+    )
+
+    class Meta(DatabaseModel.Meta):
+        db_table = "plan_subscripcion"
+        ordering = ["plan_nombre"]
+
+    def __str__(self):
+        return self.plan_nombre or str(self.id_plan)
+
+
+class Store(DatabaseModel):
+    id_tienda = models.UUIDField(primary_key=True, default=uuid.uuid4, db_column="id_tienda")
+    plan = models.ForeignKey(
+        SubscriptionPlan,
+        db_column="id_plan",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        related_name="tiendas",
+    )
+    nombre_tienda = models.CharField(max_length=150)
+    nit = models.CharField(max_length=50, null=True, blank=True, unique=True)
+    direccion_tienda = models.TextField(null=True, blank=True)
+    telefono_tienda = models.CharField(max_length=30, null=True, blank=True)
+    email_tienda = models.EmailField(max_length=254, null=True, blank=True)
+    fecha_afiliacion = models.DateField(null=True, blank=True, default=date.today)
+    estado_tienda = PostgreSQLEnumField(
+        enum_type="tienda_estado_enum",
+        max_length=30,
+        choices=[("activa", "activa"), ("inactiva", "inactiva"), ("suspendida", "suspendida")],
+        default="activa",
+    )
+
+    class Meta(DatabaseModel.Meta):
+        db_table = "tienda"
+        ordering = ["nombre_tienda"]
+
+    def __str__(self):
+        return self.nombre_tienda or str(self.id_tienda)
+
+
+class Role(DatabaseModel):
+    id_rol = models.UUIDField(primary_key=True, default=uuid.uuid4, db_column="id_rol")
+    nombre_rol = models.CharField(max_length=100)
+    activo = models.BooleanField(default=True)
+
+    class Meta(DatabaseModel.Meta):
+        db_table = "rol"
+        ordering = ["nombre_rol"]
+
+    def __str__(self):
+        return self.nombre_rol or str(self.id_rol)
+
+
+class Recurso(DatabaseModel):
+    """Catálogo de recursos protegidos por RBAC"""
+    id_recurso = models.UUIDField(primary_key=True, default=uuid.uuid4, db_column="id_recurso")
+    codigo = models.CharField(max_length=50, unique=True)          # ej: 'productos', 'usuarios', 'ventas'
+    nombre = models.CharField(max_length=100)
+    descripcion = models.TextField(null=True, blank=True)
+    endpoint_base = models.CharField(max_length=100, null=True, blank=True)
+    icono = models.CharField(max_length=50, null=True, blank=True)
+    orden = models.IntegerField(default=0)
+    activo = models.BooleanField(default=True)
+    creado_en = models.DateTimeField(null=True, blank=True, default=timezone.now)
+    actualizado_en = models.DateTimeField(null=True, blank=True, default=timezone.now)
+
+    class Meta(DatabaseModel.Meta):
+        db_table = "recurso"
+        ordering = ["orden", "nombre"]
+
+    def __str__(self):
+        return self.nombre or self.codigo
+
+
+class Accion(DatabaseModel):
+    """Catálogo de acciones posibles"""
+    id_accion = models.UUIDField(primary_key=True, default=uuid.uuid4, db_column="id_accion")
+    codigo = models.CharField(max_length=30, unique=True)          # ej: 'crear', 'leer', 'actualizar'
+    nombre = models.CharField(max_length=50)
+    descripcion = models.TextField(null=True, blank=True)
+    metodo_http = models.CharField(max_length=10, null=True, blank=True)  # GET, POST, PUT, DELETE
+    orden = models.IntegerField(default=0)
+    activo = models.BooleanField(default=True)
+
+    class Meta(DatabaseModel.Meta):
+        db_table = "accion"
+        ordering = ["orden", "nombre"]
+
+    def __str__(self):
+        return self.nombre or self.codigo
+
+
+class RecursoAccion(DatabaseModel):
+    """Matriz de combinaciones válidas recurso-acción"""
+    id_recurso_accion = models.UUIDField(primary_key=True, default=uuid.uuid4, db_column="id_recurso_accion")
+    recurso = models.ForeignKey(
+        Recurso,
+        db_column="id_recurso",
+        on_delete=models.DO_NOTHING,
+        related_name="recurso_acciones",
+    )
+    accion = models.ForeignKey(
+        Accion,
+        db_column="id_accion",
+        on_delete=models.DO_NOTHING,
+        related_name="recurso_acciones",
+    )
+    descripcion = models.TextField(null=True, blank=True)
+    requiere_scope = models.BooleanField(default=True)   # si FALSE, solo scope 'global'
+    activo = models.BooleanField(default=True)
+
+    class Meta(DatabaseModel.Meta):
+        db_table = "recurso_accion"
+        unique_together = (("recurso", "accion"),)
+        ordering = ["recurso__orden", "accion__orden"]
+
+    def __str__(self):
+        return f"{self.recurso.codigo}:{self.accion.codigo}"
+
+
+class RolRecurso(DatabaseModel):
+    """Asignación de permisos (recurso-acción-scope) a roles"""
+    id_rol_recurso = models.UUIDField(primary_key=True, default=uuid.uuid4, db_column="id_rol_recurso")
+    rol = models.ForeignKey(
+        Role,
+        db_column="id_rol",
+        on_delete=models.DO_NOTHING,
+        related_name="rol_recursos",
+    )
+    recurso_accion = models.ForeignKey(
+        RecursoAccion,
+        db_column="id_recurso_accion",
+        on_delete=models.DO_NOTHING,
+        related_name="rol_recursos",
+    )
+    scope = models.CharField(
+        max_length=20,
+        choices=[("global", "global"), ("tienda", "tienda"), ("propio", "propio")],
+        default="global",
+    )
+    concedido_por = models.ForeignKey(
+        "User",
+        db_column="id_concedido_por",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        related_name="permisos_concedidos",
+    )
+    concedido_en = models.DateTimeField(null=True, blank=True, default=timezone.now)
+    activo = models.BooleanField(default=True)
+
+    class Meta(DatabaseModel.Meta):
+        db_table = "rol_recurso"
+        unique_together = (("rol", "recurso_accion", "scope"),)
+        ordering = ["rol__nombre_rol", "recurso_accion__recurso__orden"]
+
+    def __str__(self):
+        return f"{self.rol.nombre_rol} -> {self.recurso_accion.recurso.codigo}:{self.recurso_accion.accion.codigo} [{self.scope}]"
+
+
+class User(DatabaseModel):
+    id_usuario = models.UUIDField(primary_key=True, default=uuid.uuid4, db_column="id_usuario")
+    tienda = models.ForeignKey(
+        Store,
+        db_column="id_tienda",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        related_name="usuarios",
+    )
+    usu_nombre = models.CharField(max_length=100)
+    usu_email = models.EmailField(unique=True)
+    password_hash = models.TextField()
+    fecha_registro = models.DateField(null=True, blank=True, default=date.today)
+    estado_usuario = PostgreSQLEnumField(
+        enum_type="usuario_estado_enum",
+        max_length=30,
+        choices=[("activo", "activo"), ("inactivo", "inactivo"), ("bloqueado", "bloqueado")],
+        default="activo",
+    )
+    reset_token = models.TextField(null=True, blank=True)
+    reset_token_expira = models.DateTimeField(null=True, blank=True)
+    email_verificado = models.BooleanField(null=True, blank=True, default=False)
+    verificacion_token = models.TextField(null=True, blank=True)
+
+    class Meta(DatabaseModel.Meta):
+        db_table = "usuario"
+        ordering = ["usu_nombre"]
+
+    def __str__(self):
+        return self.usu_nombre or self.usu_email or str(self.id_usuario)
+
+    @property
+    def is_authenticated(self):
+        return True
+
+    @property
+    def id_tienda(self):
+        return self.tienda_id
+
+    @property
+    def role_ids(self):
+        # Cache por instancia: antes cada acceso (id_rol, role_ids, has_any_role)
+        # lanzaba su propia query a usuario_rol (3-4 por petición).
+        cached = getattr(self, "_cached_role_ids", None)
+        if cached is not None:
+            return cached
+        ids = list(UserRole.objects.filter(id_usuario=self.id_usuario).values_list("id_rol", flat=True))
+        self._cached_role_ids = ids
+        return ids
+
+    @property
+    def id_rol(self):
+        ids = self.role_ids
+        return ids[0] if ids else None
+
+
+class UserRole(DatabaseModel):
+    id_usuario = models.UUIDField(db_column="id_usuario")
+    id_rol = models.UUIDField(db_column="id_rol")
+    pk = models.CompositePrimaryKey("id_usuario", "id_rol")
+
+    class Meta(DatabaseModel.Meta):
+        db_table = "usuario_rol"
+
+    def __str__(self):
+        return f"{self.id_usuario} -> {self.id_rol}"
+
+
+class Inventory(DatabaseModel):
+    id_inventario = models.UUIDField(primary_key=True, default=uuid.uuid4, db_column="id_inventario")
+    producto = models.ForeignKey(
+        Product,
+        db_column="id_producto",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        related_name="inventarios",
+    )
+    tienda = models.ForeignKey(
+        Store,
+        db_column="id_tienda",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        related_name="inventarios",
+    )
+    stock_actual = models.IntegerField(default=0)
+    stock_minimo = models.IntegerField(default=0)
+    estado_inventario = PostgreSQLEnumField(
+        enum_type="inventario_estado_enum",
+        max_length=30,
+        choices=[("normal", "normal"), ("bajo", "bajo"), ("agotado", "agotado")],
+        default="normal",
+    )
+    fecha_actualizacion = models.DateField(null=True, blank=True, default=date.today)
+    precio = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    # El campo es_accesorio viene del producto (Producto.es_accesorio)
+    # No es necesario un FK directo a Accessory ya que ese dato está en Producto
+
+    class Meta(DatabaseModel.Meta):
+        db_table = "inventario"
+        unique_together = (("tienda", "producto"),)
+        ordering = ["fecha_actualizacion", "pk"]
+
+    def __str__(self):
+        return f"Inventario {str(self.id_inventario)[:8]}"
+
+
+class MovementType(DatabaseModel):
+    id_tipomov = models.UUIDField(primary_key=True, default=uuid.uuid4, db_column="id_tipomov")
+    tipomov_nombre = models.CharField(max_length=100)
+    descripcion_tipomov = models.TextField(null=True, blank=True)
+
+    class Meta(DatabaseModel.Meta):
+        db_table = "tipo_movimiento"
+        ordering = ["tipomov_nombre"]
+
+    def __str__(self):
+        return self.tipomov_nombre or str(self.id_tipomov)
+
+
+class InventoryMovement(DatabaseModel):
+    id_movimiento = models.UUIDField(primary_key=True, default=uuid.uuid4, db_column="id_movimiento")
+    inventario = models.ForeignKey(
+        Inventory,
+        db_column="id_inventario",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        related_name="movimientos",
+    )
+    tipo = models.ForeignKey(
+        MovementType,
+        db_column="id_tipomov",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        related_name="movimientos",
+    )
+    usuario = models.ForeignKey(
+        User,
+        db_column="id_usuario",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        related_name="movimientos",
+    )
+    mov_cantidad = models.IntegerField()
+    fecha_movimiento = models.DateTimeField(null=True, blank=True, default=timezone.now)
+    observaciones = models.TextField(null=True, blank=True)
+
+    class Meta(DatabaseModel.Meta):
+        db_table = "movimiento_inventario"
+        ordering = ["-fecha_movimiento", "pk"]
+
+    def __str__(self):
+        return f"Movimiento {str(self.id_movimiento)[:8]}"
+
+
+class Quote(DatabaseModel):
+    id_cotizacion = models.UUIDField(primary_key=True, default=uuid.uuid4, db_column="id_cotizacion")
+    tienda = models.ForeignKey(
+        Store,
+        db_column="id_tienda",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        related_name="cotizaciones",
+    )
+    usuario = models.ForeignKey(
+        User,
+        db_column="id_usuario",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        related_name="cotizaciones",
+    )
+    moto = models.ForeignKey(
+        Motorcycle,
+        db_column="id_moto",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        related_name="cotizaciones",
+    )
+    fecha_solicitud = models.DateTimeField(null=True, blank=True, default=timezone.now)
+    coti_estado = PostgreSQLEnumField(
+        enum_type="cotizacion_estado_enum",
+        max_length=30,
+        choices=[
+            ("pendiente", "pendiente"),
+            ("aprobada", "aprobada"),
+            ("rechazada", "rechazada"),
+            ("completada", "completada"),
+        ],
+        default="pendiente",
+    )
+    total = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, default=0)
+    coti_observaciones = models.TextField(null=True, blank=True)
+    nombre_configuracion = models.CharField(max_length=100, null=True, blank=True)
+
+    class Meta(DatabaseModel.Meta):
+        db_table = "cotizacion"
+        ordering = ["-fecha_solicitud", "pk"]
+
+    def __str__(self):
+        return f"Cotización {str(self.id_cotizacion)[:8]}"
+
+
+class QuoteDetail(DatabaseModel):
+    id_detalle_cotizacion = models.UUIDField(
+        primary_key=True, default=uuid.uuid4, db_column="id_detalle_cotizacion"
+    )
+    cotizacion = models.ForeignKey(
+        Quote,
+        db_column="id_cotizacion",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        related_name="detalle_cotizacion",
+    )
+    # El accesorio se selecciona por categoría o directamente del producto
+    # Se elimina el campo foreign key a Accessory para evitar dependencias
+    # tras la unificación en la tabla Product
+    categoria_accesorio = models.ForeignKey(
+        AccessoryCategory,
+        db_column="id_categoria_accesorio",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        related_name="cotizaciones",
+    )
+    cantidad = models.IntegerField()
+    precio_unitario = models.DecimalField(max_digits=10, decimal_places=2)
+    subtotal = models.DecimalField(max_digits=10, decimal_places=2)
+
+    class Meta(DatabaseModel.Meta):
+        db_table = "detalle_cotizacion"
+        ordering = ["pk"]
+
+    def __str__(self):
+        return f"Detalle {str(self.id_detalle_cotizacion)[:8]}"
+
+
+class QuoteStatusHistory(DatabaseModel):
+    id_hist = models.UUIDField(primary_key=True, default=uuid.uuid4, db_column="id_hist")
+    cotizacion = models.ForeignKey(
+        Quote,
+        db_column="id_cotizacion",
+        on_delete=models.DO_NOTHING,
+        related_name="historial_estados",
+    )
+    estado = models.CharField(max_length=50)
+    fecha = models.DateTimeField(default=timezone.now)
+    usuario = models.ForeignKey(
+        User,
+        db_column="id_usuario",
+        on_delete=models.DO_NOTHING,
+        related_name="historial_cotizaciones",
+    )
+
+    class Meta(DatabaseModel.Meta):
+        db_table = "cotizacion_estado_hist"
+        ordering = ["-fecha", "pk"]
+
+    def __str__(self):
+        return f"Historial {str(self.id_hist)[:8]}"
+
+
+class Configuration(DatabaseModel):
+    id_configuracion = models.UUIDField(
+        primary_key=True, default=uuid.uuid4, db_column="id_configuracion"
+    )
+    usuario = models.ForeignKey(
+        User,
+        db_column="id_usuario",
+        on_delete=models.DO_NOTHING,
+        related_name="configuraciones",
+    )
+    moto = models.ForeignKey(
+        Motorcycle,
+        db_column="id_moto",
+        on_delete=models.DO_NOTHING,
+        related_name="configuraciones",
+    )
+    nombre = models.CharField(max_length=100)
+
+    class Meta(DatabaseModel.Meta):
+        db_table = "configuracion"
+        ordering = ["pk"]
+
+    def __str__(self):
+        return self.nombre or str(self.id_configuracion)
+
+
+class ConfigurationDetail(DatabaseModel):
+    id_detalle = models.UUIDField(primary_key=True, default=uuid.uuid4, db_column="id_detalle")
+    configuracion = models.ForeignKey(
+        Configuration,
+        db_column="id_configuracion",
+        on_delete=models.DO_NOTHING,
+        related_name="detalles",
+    )
+    # El accesorio se selecciona por categoría
+    categoria_accesorio = models.ForeignKey(
+        AccessoryCategory,
+        db_column="id_categoria_accesorio",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        related_name="configuraciones",
+    )
+    cantidad = models.IntegerField(default=1)
+
+    class Meta(DatabaseModel.Meta):
+        db_table = "configuracion_detalle"
+        ordering = ["pk"]
+
+    def __str__(self):
+        return f"Detalle {str(self.id_detalle)[:8]}"
+
+
+class AccessoryToken(DatabaseModel):
+    id_token = models.UUIDField(primary_key=True, default=uuid.uuid4, db_column="id_token")
+    usuario = models.ForeignKey(
+        User,
+        db_column="id_usuario",
+        on_delete=models.DO_NOTHING,
+        related_name="tokens",
+    )
+    tipo = models.CharField(max_length=50)
+    hash = models.TextField()
+    expira_en = models.DateTimeField()
+    usado = models.BooleanField(null=True, blank=True, default=False)
+
+    class Meta(DatabaseModel.Meta):
+        db_table = "token"
+        ordering = ["pk"]
+
+    def __str__(self):
+        return f"Token {str(self.id_token)[:8]}"

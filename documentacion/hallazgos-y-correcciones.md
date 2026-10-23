@@ -1,0 +1,85 @@
+# Hallazgos y correcciones (P0–P3)
+
+Resumen de la revisión y de los cambios aplicados al backend. Los nombres de
+prioridad **P0–P3** son los del encargo académico original.
+
+## P0 — Vulnerabilidades críticas
+
+| Hallazgo | Corrección |
+| --- | --- |
+| No había límite de peticiones en autenticación. | Rate limiting por alcance: registro `10/min`, login/recuperación `30/min`, verificación/recuperación `10/hour`; además `anon 600/min` y `user 1000/min` globales. Ver [seguridad-api.md](seguridad-api.md). |
+| La fuerza bruta podía probar credenciales sin control. | El alcance `auth` limita a 30 intentos por minuto por IP/usuario. |
+| Spam de registro de cuentas. | Alcance `register` limitado a 10/min. |
+| Envío masivo de correos transaccionales. | Alcance `email` limitado a 10/hora. |
+
+## P1 — Secretos y configuración
+
+| Hallazgo | Corrección |
+| --- | --- |
+| `JWT_SECRET` y `DJANGO_SECRET_KEY` eran predecibles o estaban versionados. | Se rotaron en `backend/.env` con el comando `rotar_secretos` (ver [comandos-mantenimiento.md](comandos-mantenimiento.md)); `.env` ya no está bajo control de versiones. |
+| Las claves de pruebas no alcanzaban 32 bytes y emitían `InsecureKeyLengthWarning`. | Claves de test de 32+ bytes en suites sin base de datos. |
+| No había HTTPS en producción. | Variables de entorno `DJANGO_SECURE_SSL_REDIRECT`, `DJANGO_SESSION_COOKIE_SECURE`, `DJANGO_CSRF_COOKIE_SECURE`, `DJANGO_HSTS_*` (ver [seguridad-api.md](seguridad-api.md)). |
+
+## P2 — Pruebas y reglas de negocio
+
+| Hallazgo | Corrección |
+| --- | --- |
+| No había pruebas reales de servicios ni de integración. | `test_services.py` (23 pruebas puras) y `test_integracion.py` (12 flujos contra PostgreSQL real). Ver [pruebas-automaticas.md](pruebas-automaticas.md). |
+| Verificación de correo: se probaba con mocks; además el hash se guardaba en la base. | Token firmado autocontenido (`tokens.py`), expira en 72 h y exige `iss`/`tipo`. El flujo completo se prueba en la BD real. |
+| El login no exigía correo verificado. | El login devuelve `403` si la cuenta no está verificada; endpoint de verificación con soporte *legacy*. |
+| Listados sin orden determinista. | `order_by` incluye siempre la clave primaria (ver [reglas-de-negocio.md](reglas-de-negocio.md)). |
+| Transiciones de cotización sin validación. | Máquina de estados en `services.QUOTE_TRANSITIONS` y `allow_state_transition`. |
+| Contraseñas de más de 72 bytes truncadas por bcrypt sin aviso. | `validar_password` rechaza todo lo que supere 72 bytes en registro, reset y detalle de usuario. |
+
+## P3 — Código muerto y mantenimiento
+
+| Hallazgo | Corrección |
+| --- | --- |
+| `parse_accept_language` duplicaba a `i18n.normalize`. | Eliminado (y su prueba asociada). |
+| Guardas de base de datos colgantes (`return None` silencioso). | Sustituidas por `@require_database`, que responde `503` de forma consistente. |
+| Mecanismo `filter_fields` sin uso real. | Eliminado. |
+| `Decimal` importado en `views.py` sin uso tras refactor. | Importación eliminada. |
+| Copia de `validar_password` en varias vistas. | Centralizada en `services.validar_password`. |
+
+### Scripts de mantenimiento históricos (archivados)
+
+Los siguientes scripts fueron aplicados durante el desarrollo inicial para corregir
+problemáticas específicas. Actualmente, las correcciones correspondientes ya forman
+parte del código base y los scripts ya no son necesarios para el funcionamiento:
+
+| Script | Problema que abordaba | Estado actual |
+| --- | --- | --- |
+| `fix_admin_loop.py` | Problema de registro de modelos en el admin de Django con tuples (model, admin_class). | Solucionado: el registro ahora usa la lista `admin_models` con tuplas explícitas. |
+| `fix_product_entry.py` | Entrada desordenada de `Product` en `admin_models`. | Solucionado: `Product` ahora está correctamente registrado como `(Product, ProductAdmin)`. |
+| `fix_product2.py` / `fix_product3.py` | Ajustes adicionales en el registro de `Product` en admin. | Solucionado: formateo consistente en la lista de admin. |
+| `fix_textfields.py` | Campos definidos como `TextField` en lugar de `CharField` con longitud adecuada. | Solucionado: tipos de campo correctos en `models.py` (ej. `CharField(max_length=100)` para nombres, `EmailField` para emails). |
+| `fix_textfields2.py` | Campos de texto/URL que deberían ser `URLField` en lugar de `TextField`. | Solucionado: `imagen` y `moto_imagen` ahora son `URLField`; `codigo_sku` es `CharField`. |
+| `add_product_admin.py` | Añadía de clase `ProductAdmin` con campos condicionales para accesorios. | Solucionado: `ProductAdmin` ahora incluye `get_fieldsets()` y `get_form()` para lógica de accesorio. |
+
+## Bug adicional detectado por los tests de integración
+
+**Sombreado de modelos por vistas.** En `views.py` existían clases de vista
+llamadas `InventoryMovement` y `QuoteDetail`, con el mismo nombre que los
+modelos importados al inicio del módulo. Como las clases de vista se definen
+después del `import`, cualquier referencia posterior a `InventoryMovement.objects`
+o `QuoteDetail.objects` resolvía a la *vista* y reventaba con
+`AttributeError: type object '...' has no attribute 'objects'`. Eso rompía la
+creación de movimientos de inventario y de cotizaciones.
+
+**Corrección:** las vistas se renombraron a `InventoryMovementView` y
+`QuoteDetailView` (y su referencia en `motopreview/urls.py`), dejando los
+nombres de los modelos intactos. Lo detectó `test_integracion.py`
+(`QuoteFlowTests` y `InventoryFlowTests`).
+
+**El endpoint de salud** ahora hace un probe real `SELECT 1` y responde `503`
+si la base no está configurada o no conecta.
+
+## Sesión del DRF navegable, docs OpenAPI y redirects (sesión actual)
+
+| Hallazgo | Corrección |
+| --- | --- |
+| El DRF navegable no podía reutilizar el JWT: cada petición iba sin `Authorization` → 401 aunque el login fuera 200. | Puente sesión-JWT: el login guarda token+rol en la sesión de Django, `JWTAuthentication` lo usa como respaldo del header (exigiendo CSRF en escrituras) y el navbar muestra `nombre · rol` con salida por `POST /api/auth/logout` (ver §1-bis de [08-seguridad.md](08-seguridad.md)). |
+| No había documentación interactiva de la API. | `drf-spectacular`: `/api/schema/`, `/api/docs/` (Authorize con Bearer) y `/api/redoc/`; `@extend_schema` en auth y `serializer_class` en las vistas-clase que faltaban; extensión OpenAPI del autenticador JWT. |
+| Cada ruta salía dos veces en el schema (con y sin `/`). | Helper `_api()` con una sola `re_path` de slash opcional en `motopreview/urls.py` (53 paths en vez de 103). |
+| Entrar directo a `/admin/login/` redirigía a `/accounts/profile/` → 404; `/admin` sin barra también era 404. | `LOGIN_URL`/`LOGIN_REDIRECT_URL = "/admin/"` y redirect explícito `/admin` → `/admin/` (con `APPEND_SLASH=False`). |
+| El enlace de recuperación usaba `?token=` pero el frontend espera path params. | Enlaces estilo `PASSWORD_RESET_URL/<token>` (igual que `/verificar/:token` y `/restablecer/:token`). |
