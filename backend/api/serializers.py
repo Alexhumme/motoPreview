@@ -4,6 +4,7 @@ from .models import (
     AccessoryCategory,
     AccessoryCompatibility,
     AccessoryType,
+    Accion,
     Configuration,
     ConfigurationDetail,
     Inventory,
@@ -18,7 +19,10 @@ from .models import (
     Quote,
     QuoteDetail,
     QuoteStatusHistory,
+    Recurso,
+    RecursoAccion,
     Role,
+    RolRecurso,
     Store,
     SubscriptionPlan,
     User,
@@ -589,6 +593,107 @@ class HealthSerializer(serializers.Serializer):
     database_configured = serializers.BooleanField()
     database_connected = serializers.BooleanField(required=False)
 
+
+# ============================================================================
+# RBAC Serializers
+# ============================================================================
+
+class AccionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Accion
+        fields = ("id_accion", "codigo", "nombre", "descripcion", "metodo_http", "orden", "activo")
+        read_only_fields = ("id_accion",)
+
+
+class RecursoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Recurso
+        fields = ("id_recurso", "codigo", "nombre", "descripcion", "endpoint_base", "icono", "orden", "activo", "creado_en", "actualizado_en")
+        read_only_fields = ("id_recurso", "creado_en", "actualizado_en")
+
+
+class RecursoAccionSerializer(serializers.ModelSerializer):
+    recurso = RecursoSerializer(read_only=True)
+    accion = AccionSerializer(read_only=True)
+    id_recurso = serializers.PrimaryKeyRelatedField(
+        source="recurso",
+        queryset=Recurso.objects.all(),
+        write_only=True,
+    )
+    id_accion = serializers.PrimaryKeyRelatedField(
+        source="accion",
+        queryset=Accion.objects.all(),
+        write_only=True,
+    )
+
+    class Meta:
+        model = RecursoAccion
+        fields = ("id_recurso_accion", "id_recurso", "id_accion", "recurso", "accion", "descripcion", "requiere_scope", "activo")
+        read_only_fields = ("id_recurso_accion",)
+
+
+class RolRecursoSerializer(serializers.ModelSerializer):
+    recurso_accion = RecursoAccionSerializer(read_only=True)
+    id_rol = serializers.PrimaryKeyRelatedField(
+        source="rol",
+        queryset=Role.objects.all(),
+        write_only=True,
+    )
+    id_recurso_accion = serializers.PrimaryKeyRelatedField(
+        source="recurso_accion",
+        queryset=RecursoAccion.objects.all(),
+        write_only=True,
+    )
+    concedido_por = serializers.PrimaryKeyRelatedField(
+        source="concedido_por",
+        queryset=User.objects.all(),
+        allow_null=True,
+        required=False,
+        write_only=True,
+    )
+
+    class Meta:
+        model = RolRecurso
+        fields = ("id_rol_recurso", "id_rol", "id_recurso_accion", "rol_recurso", "recurso_accion", "scope", "concedido_por", "concedido_en", "activo")
+        read_only_fields = ("id_rol_recurso", "concedido_en")
+
+
+class RecursoConPermisosSerializer(serializers.ModelSerializer):
+    """Recurso con sus acciones y estado de permiso para un rol específico"""
+    acciones = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Recurso
+        fields = ("id_recurso", "codigo", "nombre", "descripcion", "endpoint_base", "icono", "orden", "activo", "acciones")
+    
+    def get_acciones(self, obj):
+        rol_id = self.context.get("rol_id")
+        if not rol_id:
+            return []
+        
+        from api.models import RolRecurso, RecursoAccion
+        permisos = RolRecurso.objects.filter(
+            rol_id=rol_id,
+            recurso_accion__recurso=obj,
+            activo=True,
+            recurso_accion__activo=True,
+        ).select_related("recurso_accion__accion").order_by("recurso_accion__accion__orden")
+        
+        return [
+            {
+                "id_recurso_accion": str(p.recurso_accion.id_recurso_accion),
+                "accion_codigo": p.recurso_accion.accion.codigo,
+                "accion_nombre": p.recurso_accion.accion.nombre,
+                "scope": p.scope,
+                "activo": p.activo,
+            }
+            for p in permisos
+        ]
+
+
+# ============================================================================
+# Existing Serializers (existing code continues below)
+# ============================================================================
 
 class LoginRequestSerializer(serializers.Serializer):
     usu_email = serializers.EmailField()

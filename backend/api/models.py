@@ -271,6 +271,7 @@ class Store(DatabaseModel):
 class Role(DatabaseModel):
     id_rol = models.UUIDField(primary_key=True, default=uuid.uuid4, db_column="id_rol")
     nombre_rol = models.CharField(max_length=100)
+    activo = models.BooleanField(default=True)
 
     class Meta(DatabaseModel.Meta):
         db_table = "rol"
@@ -278,6 +279,113 @@ class Role(DatabaseModel):
 
     def __str__(self):
         return self.nombre_rol or str(self.id_rol)
+
+
+class Recurso(DatabaseModel):
+    """Catálogo de recursos protegidos por RBAC"""
+    id_recurso = models.UUIDField(primary_key=True, default=uuid.uuid4, db_column="id_recurso")
+    codigo = models.CharField(max_length=50, unique=True)          # ej: 'productos', 'usuarios', 'ventas'
+    nombre = models.CharField(max_length=100)
+    descripcion = models.TextField(null=True, blank=True)
+    endpoint_base = models.CharField(max_length=100, null=True, blank=True)
+    icono = models.CharField(max_length=50, null=True, blank=True)
+    orden = models.IntegerField(default=0)
+    activo = models.BooleanField(default=True)
+    creado_en = models.DateTimeField(null=True, blank=True, default=timezone.now)
+    actualizado_en = models.DateTimeField(null=True, blank=True, default=timezone.now)
+
+    class Meta(DatabaseModel.Meta):
+        db_table = "recurso"
+        ordering = ["orden", "nombre"]
+
+    def __str__(self):
+        return self.nombre or self.codigo
+
+
+class Accion(DatabaseModel):
+    """Catálogo de acciones posibles"""
+    id_accion = models.UUIDField(primary_key=True, default=uuid.uuid4, db_column="id_accion")
+    codigo = models.CharField(max_length=30, unique=True)          # ej: 'crear', 'leer', 'actualizar'
+    nombre = models.CharField(max_length=50)
+    descripcion = models.TextField(null=True, blank=True)
+    metodo_http = models.CharField(max_length=10, null=True, blank=True)  # GET, POST, PUT, DELETE
+    orden = models.IntegerField(default=0)
+    activo = models.BooleanField(default=True)
+
+    class Meta(DatabaseModel.Meta):
+        db_table = "accion"
+        ordering = ["orden", "nombre"]
+
+    def __str__(self):
+        return self.nombre or self.codigo
+
+
+class RecursoAccion(DatabaseModel):
+    """Matriz de combinaciones válidas recurso-acción"""
+    id_recurso_accion = models.UUIDField(primary_key=True, default=uuid.uuid4, db_column="id_recurso_accion")
+    recurso = models.ForeignKey(
+        Recurso,
+        db_column="id_recurso",
+        on_delete=models.DO_NOTHING,
+        related_name="recurso_acciones",
+    )
+    accion = models.ForeignKey(
+        Accion,
+        db_column="id_accion",
+        on_delete=models.DO_NOTHING,
+        related_name="recurso_acciones",
+    )
+    descripcion = models.TextField(null=True, blank=True)
+    requiere_scope = models.BooleanField(default=True)   # si FALSE, solo scope 'global'
+    activo = models.BooleanField(default=True)
+
+    class Meta(DatabaseModel.Meta):
+        db_table = "recurso_accion"
+        unique_together = (("recurso", "accion"),)
+        ordering = ["recurso__orden", "accion__orden"]
+
+    def __str__(self):
+        return f"{self.recurso.codigo}:{self.accion.codigo}"
+
+
+class RolRecurso(DatabaseModel):
+    """Asignación de permisos (recurso-acción-scope) a roles"""
+    id_rol_recurso = models.UUIDField(primary_key=True, default=uuid.uuid4, db_column="id_rol_recurso")
+    rol = models.ForeignKey(
+        Role,
+        db_column="id_rol",
+        on_delete=models.DO_NOTHING,
+        related_name="rol_recursos",
+    )
+    recurso_accion = models.ForeignKey(
+        RecursoAccion,
+        db_column="id_recurso_accion",
+        on_delete=models.DO_NOTHING,
+        related_name="rol_recursos",
+    )
+    scope = models.CharField(
+        max_length=20,
+        choices=[("global", "global"), ("tienda", "tienda"), ("propio", "propio")],
+        default="global",
+    )
+    concedido_por = models.ForeignKey(
+        "User",
+        db_column="id_concedido_por",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        related_name="permisos_concedidos",
+    )
+    concedido_en = models.DateTimeField(null=True, blank=True, default=timezone.now)
+    activo = models.BooleanField(default=True)
+
+    class Meta(DatabaseModel.Meta):
+        db_table = "rol_recurso"
+        unique_together = (("rol", "recurso_accion", "scope"),)
+        ordering = ["rol__nombre_rol", "recurso_accion__recurso__orden"]
+
+    def __str__(self):
+        return f"{self.rol.nombre_rol} -> {self.recurso_accion.recurso.codigo}:{self.recurso_accion.accion.codigo} [{self.scope}]"
 
 
 class User(DatabaseModel):

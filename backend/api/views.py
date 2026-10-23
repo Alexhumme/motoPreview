@@ -25,6 +25,7 @@ from .models import (
     AccessoryCategory,
     AccessoryCompatibility,
     AccessoryType,
+    Accion,
     Configuration,
     ConfigurationDetail,
     Inventory,
@@ -39,7 +40,10 @@ from .models import (
     Quote,
     QuoteDetail,
     QuoteStatusHistory,
+    Recurso,
+    RecursoAccion,
     Role,
+    RolRecurso,
     Store,
     SubscriptionPlan,
     User,
@@ -47,6 +51,9 @@ from .models import (
 )
 from .security import IsStoreAdmin, IsStoreStaff, ROLE_ADMIN, ROLE_CUSTOMER, ROLE_SELLER
 from .serializers import (
+    AccionSerializer,
+    AccionSerializer as AccionSerializer,
+    AccionSerializer,
     AccessoryCategorySerializer,
     AccessoryTypeSerializer,
     CompatibilitySerializer,
@@ -72,10 +79,14 @@ from .serializers import (
     QuoteSerializer,
     QuoteStatusHistorySerializer,
     QuoteStatusUpdateSerializer,
+    RecursoAccionSerializer,
+    RecursoConPermisosSerializer,
+    RecursoSerializer,
     RegisterRequestSerializer,
     RegisterResponseSerializer,
     ResetRequestSerializer,
     RoleSerializer,
+    RolRecursoSerializer,
     RootSerializer,
     StoreSerializer,
     SubscriptionPlanSerializer,
@@ -1390,3 +1401,75 @@ class QuoteHistoryView(DatabaseGuardMixin):
             "-fecha", "pk"
         )
         return Response(QuoteStatusHistorySerializer(history, many=True).data)
+
+
+# ============================================================================
+# RBAC Views
+# ============================================================================
+
+class RecursoCollection(ResourceCollection):
+    model = Recurso
+    serializer_class = RecursoSerializer
+    permission_classes = [IsStoreAdmin]
+
+
+class RecursoDetail(ResourceDetail):
+    model = Recurso
+    serializer_class = RecursoSerializer
+    permission_classes = [IsStoreAdmin]
+    not_found_message = "Recurso no encontrado."
+
+
+class AccionCollection(ResourceCollection):
+    model = Accion
+    serializer_class = AccionSerializer
+    permission_classes = [IsStoreAdmin]
+
+
+class AccionDetail(ResourceDetail):
+    model = Accion
+    serializer_class = AccionSerializer
+    permission_classes = [IsStoreAdmin]
+    not_found_message = "Acción no encontrada."
+
+
+class RecursoAccionCollection(ResourceCollection):
+    model = RecursoAccion
+    serializer_class = RecursoAccionSerializer
+    permission_classes = [IsStoreAdmin]
+
+
+class RecursoAccionDetail(ResourceDetail):
+    model = RecursoAccion
+    serializer_class = RecursoAccionSerializer
+    permission_classes = [IsStoreAdmin]
+    not_found_message = "Recurso-Acción no encontrado."
+
+
+class RolRecursoCollection(ResourceCollection):
+    model = RolRecurso
+    serializer_class = RolRecursoSerializer
+    permission_classes = [IsStoreAdmin]
+
+
+class RolRecursoDetail(ResourceDetail):
+    model = RolRecurso
+    serializer_class = RolRecursoSerializer
+    permission_classes = [IsStoreAdmin]
+    not_found_message = "Permiso de rol no encontrado."
+
+
+class RecursoConPermisosCollection(DatabaseGuardMixin):
+    """Obtiene recursos con sus permisos para un rol específico"""
+    permission_classes = [IsStoreAdmin]
+    serializer_class = RecursoConPermisosSerializer
+
+    def get(self, request):
+        rol_id = request.query_params.get("rol_id")
+        if not rol_id:
+            return Response({"error": "Se requiere rol_id"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        from api.models import Recurso, RolRecurso
+        recursos = Recurso.objects.filter(activo=True).order_by("orden")
+        serializer = self.serializer_class(recursos, many=True, context={"rol_id": rol_id})
+        return Response(serializer.data)

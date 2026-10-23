@@ -180,4 +180,84 @@ CORS_EXPOSE_HEADERS  = ["Content-Language"]
 
 ---
 
+## 10. Modelo RBAC (Role-Based Access Control)
+
+### 10.1. Diseño conceptual
+
+El nuevo modelo RBAC extiende el sistema actual de roles fijos (Admin, Vendedor, Cliente) con un modelo **recurso-acción** granular que permite asignar permisos específicos a cada rol a través del panel de administración.
+
+#### Entidades principales
+
+| Entidad | Descripción |
+|---------|-------------|
+| `recurso` | Catálogo de recursos protegidos (ej: `productos`, `usuarios`, `ventas`, `inventario`, `cotizaciones`, `tiendas`, `roles`) |
+| `accion` | Acciones posibles sobre un recurso (ej: `crear`, `leer`, `actualizar`, `eliminar`, `listar`, `exportar`) |
+| `recurso_accion` | Combinaciones válidas recurso-acción (ej: `productos:crear`, `productos:leer`, `usuarios:eliminar`) |
+| `rol_recurso` | Asignación de permisos a un rol: qué recurso, qué acciones, y scope (global/tienda) |
+
+#### Flujo de autorización
+
+```
+1. Cliente hace request con JWT
+2. JWTAuthentication valida token y carga usuario + rol + tienda
+3. Permission class (HasPermiso) extrae:
+   - recurso del endpoint (ej: "productos")
+   - acción inferida del método HTTP (GET→leer, POST→crear, PUT/PATCH→actualizar, DELETE→eliminar)
+4. Consulta BD: ¿El rol del usuario tiene (recurso, acción) en rol_recurso?
+5. Si scope = 'tienda', verifica que request.user.id_tienda coincida
+6. Permite (200) o deniega (403)
+```
+
+### 10.2. Mapeo HTTP → Acción
+
+| Método HTTP | Acción inferida |
+|-------------|-----------------|
+| GET (list) | `listar` |
+| GET (detail) | `leer` |
+| POST | `crear` |
+| PUT / PATCH | `actualizar` |
+| DELETE | `eliminar` |
+| POST custom (ej: `/estado`) | `actualizar` |
+
+### 10.3. Scope de permisos
+
+| Scope | Descripción | Filtrado aplicado |
+|-------|-------------|-------------------|
+| `global` | Acceso a todos los registros | Sin filtrado adicional |
+| `tienda` | Solo registros de su tienda | `WHERE tienda_id = request.user.id_tienda` |
+| `propio` | Solo registros creados por él | `WHERE creado_por = request.user.id_usuario` |
+
+### 10.4. Permisos por defecto (seeds)
+
+#### Admin (global)
+| Recurso | Acciones |
+|---------|----------|
+| `*` (todos) | `crear`, `leer`, `actualizar`, `eliminar`, `listar`, `exportar` |
+
+#### Vendedor (tienda)
+| Recurso | Acciones | Scope |
+|---------|----------|-------|
+| `productos` | `crear`, `leer`, `actualizar`, `listar` | `tienda` |
+| `inventario` | `crear`, `leer`, `actualizar`, `listar` | `tienda` |
+| `movimientos` | `crear`, `leer`, `listar` | `tienda` |
+| `cotizaciones` | `crear`, `leer`, `actualizar`, `listar` | `tienda` |
+| `usuarios` | `leer`, `listar` | `tienda` |
+| `ventas` | `leer`, `listar`, `exportar` | `tienda` |
+
+#### Cliente (propio)
+| Recurso | Acciones | Scope |
+|---------|----------|-------|
+| `productos` | `leer`, `listar` | `global` |
+| `cotizaciones` | `crear`, `leer`, `listar` | `propio` |
+| `configuraciones` | `crear`, `leer`, `actualizar`, `listar` | `propio` |
+
+### 10.5. Admin de Django - Gestión de permisos
+
+En `/admin/` → **Roles** → Editar rol:
+- Sección **"Permisos por recurso"**: tabla con filas por recurso
+- Cada fila: recurso (selector), checkboxes por acción (crear/leer/actualizar/eliminar/listar/exportar), scope (selector global/tienda/propio)
+- Botón **"Agregar recurso"** para añadir filas dinámicamente
+
+---
+
 **Anterior:** [07 — Vistas del frontend](07-vistas-frontend.md) · **Siguiente:** [09 — Despliegue](09-despliegue.md)

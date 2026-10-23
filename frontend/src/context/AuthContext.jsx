@@ -1,5 +1,6 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import api from '../services/api';
+import { obtenerPermisosUsuario } from '../services/auth';
 
 const AuthContext = createContext();
 
@@ -25,6 +26,17 @@ export function AuthProvider({ children }) {
     localStorage.setItem('token', token);
     localStorage.setItem('usuario', JSON.stringify(usuario));
     setUsuario(usuario);
+    
+    // Cargar permisos RBAC después de login exitoso
+    try {
+      const respuestaPermisos = await obtenerPermisosUsuario();
+      if (respuestaPermisos.permisos) {
+        setUsuario(prev => prev ? { ...prev, permisos: respuestaPermisos.permisos } : null);
+      }
+    } catch (error) {
+      console.warn('No se pudieron cargar permisos:', error);
+    }
+    
     return usuario;
   }
 
@@ -34,9 +46,33 @@ export function AuthProvider({ children }) {
     setUsuario(null);
   }
 
-  return <AuthContext.Provider value={{ usuario, login, logout }}>{children}</AuthContext.Provider>;
+  // Función para actualizar permisos del usuario (para RBAC)
+  const actualizarPermisos = useCallback((permisos) => {
+    setUsuario(prev => prev ? { ...prev, permisos } : null);
+  }, []);
+
+  // Cargar permisos al iniciar si hay usuario guardado
+  useEffect(() => {
+    if (usuario && !usuario.permisos) {
+      obtenerPermisosUsuario()
+        .then(res => {
+          if (res.permisos) {
+            setUsuario(prev => prev ? { ...prev, permisos: res.permisos } : null);
+          }
+        })
+        .catch(err => console.warn('No se pudieron cargar permisos:', err));
+    }
+  }, [usuario]);
+
+  return (
+    <AuthContext.Provider value={{ usuario, login, logout, actualizarPermisos }}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
 export function useAuth() {
   return useContext(AuthContext);
 }
+
+export { AuthContext };

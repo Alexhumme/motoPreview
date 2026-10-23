@@ -9,6 +9,8 @@ El panel usa un AdminSite propio (MotopreviewAdminSite) que ordena los modelos
 en sectores temáticos (Motos, Catálogo, Tiendas, Inventario, Cotizaciones,
 Seguridad, Autenticación) en lugar de agruparlos por aplicación.
 """
+from uuid import UUID
+from django import forms
 from django.contrib import admin
 from django.contrib.auth.admin import GroupAdmin, UserAdmin as AuthUserAdmin
 from django.contrib.auth.models import Group
@@ -16,10 +18,12 @@ from django.contrib.auth.models import User as AuthUser
 from django.utils.text import slugify
 
 from .models import (
+    Accion,
     AccessoryCategory,
     AccessoryCompatibility,
     AccessoryToken,
     AccessoryType,
+    Accion,
     Configuration,
     ConfigurationDetail,
     Inventory,
@@ -35,7 +39,10 @@ from .models import (
     Quote,
     QuoteDetail,
     QuoteStatusHistory,
+    Recurso,
+    RecursoAccion,
     Role,
+    RolRecurso,
     Store,
     SubscriptionPlan,
     User,
@@ -91,6 +98,11 @@ class MotopreviewAdminSite(admin.AdminSite):
         AccessoryToken: "Tokens de accesorio",
         AuthUser: "Usuarios",
         Group: "Grupos",
+        # RBAC
+        Recurso: "Recursos",
+        Accion: "Acciones",
+        RecursoAccion: "Recursos-Acciones",
+        RolRecurso: "Permisos de rol",
     }
 
     # Cada sector temático agrupa sus modelos, en el orden en que se muestran.
@@ -110,6 +122,7 @@ class MotopreviewAdminSite(admin.AdminSite):
             (Quote, QuoteDetail, QuoteStatusHistory, Configuration, ConfigurationDetail),
         ),
         ("SEGURIDAD Y ACCESOS", (Role, AccessoryToken)),
+        ("RBAC - PERMISOS", (Recurso, Accion, RecursoAccion, RolRecurso)),
         ("AUTENTICACIÓN Y AUTORIZACIÓN", (AuthUser, Group)),
     ]
 
@@ -154,6 +167,83 @@ admin_site = MotopreviewAdminSite(name="motopreview_admin")
 
 class RoleAdmin(BaseAdmin):
     list_display = ("id_rol", "nombre_rol")
+    change_form_template = "admin/role_change_form.html"
+    
+    def get_form(self, request, obj=None, **kwargs):
+        form = super().get_form(request, obj, **kwargs)
+        # Añadir campo de permisos como campo personalizado
+        from django import forms
+        from api.models import Recurso, Accion, RecursoAccion, RolRecurso
+        
+        if obj:
+            # Obtener permisos actuales del rol
+            permisos_actuales = RolRecurso.objects.filter(rol=obj, activo=True).select_related(
+                "recurso_accion__recurso", "recurso_accion__accion"
+            ).values_list("recurso_accion_id", "scope")
+            permisos_dict = {str(ra_id): scope for ra_id, scope in permisos_actuales}
+            
+            # Añadir campo dinámico para permisos
+            class PermisosField(forms.Field):
+                widget = forms.CheckboxSelectMultiple
+                required = False
+                
+                def __init__(self, *args, **kwargs):
+                    # Generar choices dinámicamente
+                    recursos = Recurso.objects.filter(activo=True).prefetch_related(
+                        "recurso_acciones__accion"
+                    ).order_by("orden")
+                    
+                    choices = []
+                    for recurso in recursos:
+                        for ra in recurso.recurso_acciones.filter(activo=True).select_related("accion").order_by("accion__orden"):
+                            if ra.activo:
+                                label = f"{recurso.nombre} → {ra.accion.nombre}"
+                                if ra.requiere_scope:
+                                    choices.append((f"{ra.id_recurso_accion}:global", f"{label} (Global)"))
+                                    choices.append((f"{ra.id_recurso_accion}:tienda", f"{label} (Tienda)"))
+                                    choices.append((f"{ra.id_recurso_accion}:propio", f"{label} (Propio)"))
+                                else:
+                                    choices.append((f"{ra.id_recurso_accion}:global", f"{label} (Global)"))
+                    
+                    kwargs["choices"] = choices
+                    kwargs["initial"] = [
+                        f"{ra_id}:{scope}" for ra_id, scope in permisos_dict.items()
+                    ]
+                    super().__init__(*args, **kwargs)
+            
+            form.base_fields["permisos_rbac"] = PermisosField(
+                label="Permisos RBAC",
+                required=False,
+                help_text="Seleccione los permisos para este rol. Cada permiso tiene un scope: Global (todo), Tienda (su tienda), Propio (sus registros)."
+            )
+        
+        return form
+    
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        
+        # Guardar permisos RBAC
+        from api.models import RolRecurso, RecursoAccion
+        if "permisos_rbac" in form.cleaned_data:
+            permisos_seleccionados = form.cleaned_data.get("permisos_rbac", [])
+            
+            # Eliminar permisos antiguos
+            RolRecurso.objects.filter(rol=obj).delete()
+            
+            # Crear nuevos permisos
+            for permiso_str in permisos_seleccionados:
+                try:
+                    ra_id_str, scope = permiso_str.rsplit(":", 1)
+                    ra_id = UUID(ra_id_str)
+                    RolRecurso.objects.create(
+                        rol=obj,
+                        recurso_accion_id=ra_id,
+                        scope=scope,
+                        concedido_por=request.user if hasattr(request, 'user') else None,
+                        activo=True,
+                    )
+                except (ValueError, IndexError):
+                    continue
 
 
 admin_site.register(Role, RoleAdmin)
