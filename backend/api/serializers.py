@@ -264,7 +264,7 @@ class MotorcycleSerializer(serializers.ModelSerializer):
 class RoleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Role
-        fields = ("id_rol", "nombre_rol")
+        fields = ("id_rol", "nombre_rol", "activo")
         read_only_fields = ("id_rol",)
 
 

@@ -22,6 +22,7 @@ import RecuperarPassword from './pages/auth/RecuperarPassword';
 import RestablecerPassword from './pages/auth/RestablecerPassword';
 import Registro from './pages/auth/Registro';
 import PermisosRBAC from './pages/admin/PermisosRBAC';
+import Roles from './pages/admin/Roles';
 
 function App() {
 return (
@@ -86,6 +87,14 @@ return (
           element={
             <RutaProtegida rolesPermitidos={[ROL_ADMIN]}>
               <PermisosRBAC />
+            </RutaProtegida>
+          }
+        />
+        <Route
+          path="roles"
+          element={
+            <RutaProtegida rolesPermitidos={[ROL_ADMIN]}>
+              <Roles />
             </RutaProtegida>
           }
         />
