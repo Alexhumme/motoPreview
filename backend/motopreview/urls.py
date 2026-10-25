@@ -61,6 +61,7 @@ _RUTAS_API = [
     ("api/modelos-3d/accesorio/<uuid:id_accesorio>", views.Model3DByAccessory.as_view()),
     ("api/modelos-3d/<uuid:pk>", views.Model3DDetail.as_view()),
     ("api/productos", views.ProductCollection.as_view()),
+    ("api/accesorios", views.AccesoriosCollection.as_view()),
     ("api/productos/<uuid:pk>", views.ProductDetail.as_view()),
     ("api/categorias-producto", views.ProductCategoryCollection.as_view()),
     ("api/categorias-producto/<uuid:pk>", views.ProductCategoryDetail.as_view()),

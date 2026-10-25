@@ -1350,6 +1350,15 @@ class AccessoryTypeDetail(ResourceDetail):
     not_found_message = "Tipo de accesorio no encontrado."
 
 
+class AccesoriosCollection(ResourceCollection):
+    model = Product
+    serializer_class = ProductSerializer
+    permission_classes = [AllowAny]
+
+    def get_queryset(self):
+        return Product.objects.select_related("categoria_producto").filter(es_accesorio=True)
+
+
 class MovementTypeCollection(ResourceCollection):
     model = MovementType
     serializer_class = MovementTypeSerializer
