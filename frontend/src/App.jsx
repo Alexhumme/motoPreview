@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/auth/Login';
 import Catalogo from './pages/public/Catalogo';
 import Carrito from './pages/public/Carrito';
@@ -31,7 +31,7 @@ return (
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/registro" element={<Registro />} />
-      <Route path="/" element={<Catalogo />} />
+      <Route path="/" element={<Navigate to="/login" replace />} />
       <Route path="/carrito" element={<Carrito />} />
       <Route path="/verificar/:token" element={<VerificarCorreo />} />
       <Route path="/recuperar" element={<RecuperarPassword />} />
