@@ -24,13 +24,21 @@ export default function Carrito() {
   const [error, setError] = useState('');
   const [exito, setExito] = useState(false);
 
-  useEffect(() => { obtenerMotos().then(setMotos).catch(() => setMotos([])); }, []);
+  useEffect(() => {
+    obtenerMotos().then(setMotos).catch(() => setMotos([]));
+  }, []);
 
   async function manejarEnvio(event) {
     event.preventDefault();
     setError('');
-    if (!usuario) { navigate('/login'); return; }
-    if (!idMoto) { setError('Selecciona tu moto para continuar.'); return; }
+    if (!usuario) {
+      navigate('/login');
+      return;
+    }
+    if (!idMoto) {
+      setError('Selecciona tu moto para continuar.');
+      return;
+    }
     setEnviando(true);
     try {
       await crearCotizacion({
@@ -49,40 +57,146 @@ export default function Carrito() {
   }
 
   return (
-    <div className="app-shell">
+    <div className="cart-page">
       <SiteHeader />
-      <main className="cart-page">
-        <Link to="/" className="back-link">← Volver al catálogo</Link>
+      <main className="cart-main">
+        <Link to="/" className="btn btn--ghost btn--sm cart-back">
+          ← Volver al catálogo
+        </Link>
+
         {exito ? (
-          <div className="empty-cart"><div className="empty-cart__icon">✓</div><h1>¡Cotización enviada!</h1><p>La tienda va a revisar tu solicitud pronto.</p><Link to="/" className="button button--accent">Volver al catálogo →</Link></div>
+          <div className="cart-empty">
+            <div className="empty-icon" aria-hidden="true">✓</div>
+            <h1 className="cart-empty-title">¡Cotización enviada!</h1>
+            <p className="cart-empty-subtitle">La tienda va a revisar tu solicitud pronto.</p>
+            <Link to="/" className="btn btn--primary">Volver al catálogo →</Link>
+          </div>
         ) : (
           <>
-            <div className="page-heading"><div><div className="eyebrow"><span className="eyebrow-dot" /> Tu selección</div><h1>Carrito de accesorios.</h1></div><span className="cart-large-count">{totalItems} {totalItems === 1 ? 'pieza' : 'piezas'}</span></div>
+            <header className="page-heading">
+              <div>
+                <div className="eyebrow"><span className="eyebrow-dot" aria-hidden="true"></span>Tu selección</div>
+                <h1 className="cart-title">Carrito de accesorios.</h1>
+              </div>
+              <span className="cart-count-badge">{totalItems} {totalItems === 1 ? 'pieza' : 'piezas'}</span>
+            </header>
+
             {items.length === 0 ? (
-              <div className="empty-cart"><div className="empty-cart__icon">▣</div><h2>Tu carrito está esperando una buena idea.</h2><p>Explora las piezas disponibles y empieza a construir una configuración a tu medida.</p><Link to="/configurador" className="button button--accent">Abrir configurador →</Link></div>
+              <div className="cart-empty">
+                <div className="empty-icon" aria-hidden="true">▣</div>
+                <h1 className="cart-empty-title">Tu carrito está esperando una buena idea.</h1>
+                <p className="cart-empty-subtitle">Explora las piezas disponibles y empieza a construir una configuración a tu medida.</p>
+                <Link to="/configurador" className="btn btn--primary">Abrir configurador →</Link>
+              </div>
             ) : (
               <div className="cart-layout">
                 <section className="cart-lines">
                   {items.map((item) => (
-                    <article className="cart-line" key={item.accesorio.id_accesorio}>
-                      <div className="mini-art">{item.accesorio.imagen ? <img src={item.accesorio.imagen} alt="" /> : <span>MP</span>}</div>
-                      <div className="cart-line__info"><span>{item.accesorio.categoria_accesorio?.cat_nombre || 'Accesorio'}</span><h3>{item.accesorio.acc_nombre}</h3><small>{item.accesorio.codigo_sku}</small></div>
-                      <div className="quantity-control"><button onClick={() => actualizarCantidad(item.accesorio.id_accesorio, item.cantidad - 1)}>−</button><b>{item.cantidad}</b><button onClick={() => actualizarCantidad(item.accesorio.id_accesorio, item.cantidad + 1)}>+</button></div>
-                      <strong className="cart-line__price">{money(item.accesorio.acc_precio * item.cantidad)}</strong>
-                      <button className="remove-button" onClick={() => eliminarItem(item.accesorio.id_accesorio)}>×</button>
+                    <article key={item.accesorio.id_accesorio} className="cart-line">
+                      <div className="mini-art">
+                        {item.accesorio.imagen ? (
+                          <img src={item.accesorio.imagen} alt="" />
+                        ) : (
+                          <span className="mini-fallback">MP</span>
+                        )}
+                      </div>
+                      <div className="cart-line-info">
+                        <span>{item.accesorio.categoria_accesorio?.cat_nombre || 'Accesorio'}</span>
+                        <h3 className="cart-line-name">{item.accesorio.acc_nombre}</h3>
+                        <small className="cart-line-sku">{item.accesorio.codigo_sku}</small>
+                      </div>
+                      <div className="quantity-control">
+                        <button
+                          className="btn btn--ghost btn--sm"
+                          onClick={() => actualizarCantidad(item.accesorio.id_accesorio, item.cantidad - 1)}
+                          disabled={item.cantidad <= 1}
+                          aria-label="Disminuir cantidad"
+                        >
+                          −
+                        </button>
+                        <b>{item.cantidad}</b>
+                        <button
+                          className="btn btn--ghost btn--sm"
+                          onClick={() => actualizarCantidad(item.accesorio.id_accesorio, item.cantidad + 1)}
+                          aria-label="Aumentar cantidad"
+                        >
+                          +
+                        </button>
+                      </div>
+                      <strong className="cart-line-price">{money(item.accesorio.acc_precio * item.cantidad)}</strong>
+                      <button
+                        className="btn btn--danger btn--sm remove-button"
+                        onClick={() => eliminarItem(item.accesorio.id_accesorio)}
+                        aria-label={`Eliminar ${item.accesorio.acc_nombre}`}
+                      >
+                        ×
+                      </button>
                     </article>
                   ))}
                 </section>
-                <aside className="summary-card">
-                  <span className="summary-kicker">Resumen de cotización</span><h2>Lista para rodar.</h2>
-                  <div className="summary-row"><span>Subtotal</span><strong>{money(totalPrecio)}</strong></div><div className="summary-row"><span>Envío</span><strong>Por confirmar</strong></div><div className="summary-total"><span>Total estimado</span><strong>{money(totalPrecio)}</strong></div>
+
+                <aside className="summary-card card">
+                  <span className="summary-kicker">Resumen de cotización</span>
+                  <h2 className="summary-title">Lista para rodar.</h2>
+
+                  <div className="summary-row">
+                    <span>Subtotal</span>
+                    <strong>{money(totalPrecio)}</strong>
+                  </div>
+                  <div className="summary-row">
+                    <span>Envío</span>
+                    <strong>Por confirmar</strong>
+                  </div>
+                  <div className="summary-total">
+                    <span>Total estimado</span>
+                    <strong>{money(totalPrecio)}</strong>
+                  </div>
+
                   <form onSubmit={manejarEnvio} className="quote-form">
-                    <label>¿Para qué moto es esta cotización?<select value={idMoto} onChange={(e) => setIdMoto(e.target.value)} required><option value="">Selecciona tu moto...</option>{motos.map((moto) => <option key={moto.id_moto} value={moto.id_moto}>{moto.modelo_moto?.marca_moto?.marca_nombre} {moto.modelo_moto?.modelo_nombre} {moto.moto_anio}</option>)}</select></label>
-                    <label>Observaciones (opcional)<textarea value={observaciones} onChange={(e) => setObservaciones(e.target.value)} rows={3} /></label>
-                    {!usuario && <p className="summary-note">Necesitas iniciar sesión para enviar la cotización.</p>}
-                    {error && <p className="cart-error">{error}</p>}
-                    <button className="button button--accent button--full" disabled={enviando} type="submit">{enviando ? 'Enviando...' : usuario ? 'Solicitar cotización →' : 'Iniciar sesión para continuar'}</button>
+                    <div className="form-field">
+                      <label htmlFor="moto-select" className="form-label">¿Para qué moto es esta cotización?</label>
+                      <select
+                        id="moto-select"
+                        className="form-input form-select"
+                        value={idMoto}
+                        onChange={(e) => setIdMoto(e.target.value)}
+                        required
+                      >
+                        <option value="">Selecciona tu moto...</option>
+                        {motos.map((moto) => (
+                          <option key={moto.id_moto} value={moto.id_moto}>
+                            {moto.modelo_moto?.marca_moto?.marca_nombre} {moto.modelo_moto?.modelo_nombre} {moto.moto_anio}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="form-field">
+                      <label htmlFor="observaciones" className="form-label">Observaciones (opcional)</label>
+                      <textarea
+                        id="observaciones"
+                        className="form-input"
+                        value={observaciones}
+                        onChange={(e) => setObservaciones(e.target.value)}
+                        rows={3}
+                      />
+                    </div>
+
+                    {!usuario && (
+                      <p className="summary-note">Necesitas iniciar sesión para enviar la cotización.</p>
+                    )}
+
+                    {error && <p className="form-error" role="alert">{error}</p>}
+
+                    <button
+                      className="btn btn--primary btn--full"
+                      disabled={enviando || !usuario || !idMoto}
+                      type="submit"
+                    >
+                      {enviando ? 'Enviando...' : usuario ? 'Solicitar cotización →' : 'Iniciar sesión para continuar'}
+                    </button>
                   </form>
+
                   <p className="summary-note">✓ Sin pagos en línea. La tienda confirmará disponibilidad.</p>
                 </aside>
               </div>

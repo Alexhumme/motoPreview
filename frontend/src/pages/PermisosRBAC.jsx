@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
 import { obtenerPermisosRol, actualizarPermisosRol } from '../services/roles';
+import './PermisosRBAC.css';
 
 /**
  * Componente para gestionar permisos RBAC en el panel de administración
@@ -34,7 +35,7 @@ export default function PermisosRBAC() {
     try {
       const res = await obtenerPermisosRol(rolSeleccionado);
       setRecursosConPermisos(res.data || []);
-      
+
       // Inicializar permisosRol desde los datos del backend
       const inicial = {};
       (res.data || []).forEach(recurso => {
@@ -62,7 +63,6 @@ export default function PermisosRBAC() {
   function togglePermiso(recursoAccionId) {
     setPermisosRol(prev => {
       const nuevo = { ...prev };
-      // Si ya tiene scope, quitarlo (desmarcar). Si no tiene, poner 'global' por defecto.
       if (nuevo[recursoAccionId]) {
         delete nuevo[recursoAccionId];
       } else {
@@ -95,21 +95,19 @@ export default function PermisosRBAC() {
 
   async function guardarPermisos() {
     if (!rolSeleccionado) return;
-    
+
     setCargando(true);
     setMensaje(null);
-    
+
     try {
-      // Preparar datos para enviar: array de { id_recurso_accion, scope }
       const permisos = Object.entries(permisosRol)
         .map(([recursoAccionId, scope]) => ({
           id_recurso_accion: recursoAccionId,
           scope
         }));
 
-      // Enviar al backend usando el service de roles
       await actualizarPermisosRol(rolSeleccionado, permisos);
-      
+
       setMensaje({ tipo: 'exito', texto: 'Permisos actualizados correctamente' });
     } catch (err) {
       console.error('Error guardando permisos:', err);
@@ -127,17 +125,26 @@ export default function PermisosRBAC() {
     return acc;
   }, {});
 
+  const scopeLabels = {
+    global: 'Global',
+    tienda: 'Tienda',
+    propio: 'Propio'
+  };
+
   if (!rolSeleccionado) {
     return (
       <div className="permisos-rbac">
-        <h2>Gestión de Permisos RBAC</h2>
-        <p className="ayuda">Seleccione un rol para gestionar sus permisos</p>
-        
-        <div className="selector-rol">
-          <label htmlFor="rol-select">Rol: </label>
-          <select 
+        <header className="permisos-header">
+          <h1 className="permisos-title">Gestión de Permisos RBAC</h1>
+        </header>
+        <p className="permisos-help">Seleccione un rol para gestionar sus permisos</p>
+
+        <div className="permisos-selector">
+          <label htmlFor="rol-select" className="form-label">Rol</label>
+          <select
             id="rol-select"
-            value={rolSeleccionado || ''} 
+            className="form-input form-select"
+            value={rolSeleccionado || ''}
             onChange={handleRolChange}
           >
             <option value="">-- Seleccionar rol --</option>
@@ -154,13 +161,14 @@ export default function PermisosRBAC() {
 
   return (
     <div className="permisos-rbac">
-      <div className="permisos-header">
-        <h2>Gestión de Permisos RBAC</h2>
-        <div className="selector-rol">
-          <label htmlFor="rol-select">Rol: </label>
-          <select 
+      <header className="permisos-header">
+        <h1 className="permisos-title">Gestión de Permisos RBAC</h1>
+        <div className="permisos-selector">
+          <label htmlFor="rol-select" className="form-label">Rol</label>
+          <select
             id="rol-select"
-            value={rolSeleccionado} 
+            className="form-input form-select"
+            value={rolSeleccionado}
             onChange={handleRolChange}
           >
             <option value="">-- Seleccionar rol --</option>
@@ -171,26 +179,30 @@ export default function PermisosRBAC() {
             ))}
           </select>
         </div>
-      </div>
+      </header>
 
       {mensaje && (
-        <div className={`mensaje mensaje-${mensaje.tipo}`}>
+        <div className={`mensaje mensaje-${mensaje.tipo}`} role="alert">
           {mensaje.texto}
         </div>
       )}
 
-      {cargando && !recursosConPermisos.length && <div className="cargando">Cargando recursos...</div>}
+      {cargando && !recursosConPermisos.length && (
+        <div className="cargando" role="status" aria-live="polite">
+          <div className="skeleton" style={{ width: '200px', height: '20px' }} />
+        </div>
+      )}
 
       {recursosConPermisos.length > 0 && (
         <div className="permisos-grid">
           {Object.entries(recursosPorCategoria).map(([categoria, recursos]) => (
-            <div key={categoria} className="categoria-permisos">
-              <h3>{categoria.charAt(0).toUpperCase() + categoria.slice(1)}</h3>
+            <section key={categoria} className="categoria-permisos card">
+              <h2 className="categoria-title">{categoria.charAt(0).toUpperCase() + categoria.slice(1)}</h2>
               <div className="tabla-permisos-wrapper">
-                <table className="tabla-permisos">
+                <table className="table">
                   <thead>
                     <tr>
-                      <th>Recurso</th>
+                      <th style={{ minWidth: '280px' }}>Recurso</th>
                       <th>Crear</th>
                       <th>Leer</th>
                       <th>Actualizar</th>
@@ -202,28 +214,33 @@ export default function PermisosRBAC() {
                   <tbody>
                     {recursos.map(recurso => (
                       <tr key={recurso.id_recurso}>
-                        <td className="recurso-nombre">{recurso.nombre}</td>
+                        <td className="recurso-nombre">
+                          <strong>{recurso.nombre}</strong>
+                          {recurso.codigo && <code>{recurso.codigo}</code>}
+                        </td>
                         {(recurso.acciones || []).map(accion => (
                           <td key={accion.id_recurso_accion}>
-                            <label className="checkbox-permiso">
+                            <label className="permiso-cell">
                               <input
                                 type="checkbox"
+                                className="permiso-checkbox"
                                 checked={isChecked(accion.id_recurso_accion)}
                                 onChange={() => togglePermiso(accion.id_recurso_accion)}
+                                aria-label={`${accion.accion_nombre} para ${recurso.nombre}`}
                               />
-                              <span className="permiso-label">
-                                {accion.accion_nombre}
-                                {isChecked(accion.id_recurso_accion) && (
-                                  <select
-                                    value={getScopeValue(accion.id_recurso_accion)}
-                                    onChange={(e) => handleScopeChange(accion.id_recurso_accion, e)}
-                                  >
-                                    <option value="global">Global</option>
-                                    <option value="tienda">Tienda</option>
-                                    <option value="propio">Propio</option>
-                                  </select>
-                                )}
-                              </span>
+                              <span className="permiso-label">{accion.accion_nombre}</span>
+                              {isChecked(accion.id_recurso_accion) && (
+                                <select
+                                  className="permiso-scope"
+                                  value={getScopeValue(accion.id_recurso_accion)}
+                                  onChange={(e) => handleScopeChange(accion.id_recurso_accion, e)}
+                                  aria-label={`Scope para ${accion.accion_nombre}`}
+                                >
+                                  <option value="global">{scopeLabels.global}</option>
+                                  <option value="tienda">{scopeLabels.tienda}</option>
+                                  <option value="propio">{scopeLabels.propio}</option>
+                                </select>
+                              )}
                             </label>
                           </td>
                         ))}
@@ -232,20 +249,20 @@ export default function PermisosRBAC() {
                   </tbody>
                 </table>
               </div>
-            </div>
+            </section>
           ))}
         </div>
       )}
 
-      <div className="permisos-acciones">
-        <button 
-          className="btn btn-guardar"
+      <footer className="permisos-footer">
+        <button
+          className="btn btn--primary"
           onClick={guardarPermisos}
           disabled={cargando}
         >
           {cargando ? 'Guardando...' : 'Guardar Permisos'}
         </button>
-      </div>
+      </footer>
     </div>
   );
 }

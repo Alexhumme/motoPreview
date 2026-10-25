@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { solicitarRecuperacion } from '../../services/auth';
-import './Login.css';
+import './Auth.css';
 
 export default function RecuperarPassword() {
   const [email, setEmail] = useState('');
@@ -24,43 +24,71 @@ export default function RecuperarPassword() {
   }
 
   return (
-    <div className="auth">
-      <div className="auth__panel">
-        <Link to="/" className="auth__marca">MotoPreview</Link>
-        <h1 className="auth__titulo">Recupera tu contraseña</h1>
-        <p className="auth__subtitulo">Te enviaremos un enlace a tu correo para crear una nueva.</p>
+    <div className="auth-page">
+      <header className="auth-nav">
+        <Link to="/" className="brand" aria-label="MotoPreview home">
+          <span className="brand-mark">↗</span>
+          <span className="brand-text">Moto<span>Preview</span></span>
+        </Link>
+      </header>
 
-        {enviado ? (
-          <p className="auth__exito">
-            Si ese correo está registrado, revisa tu bandeja de entrada (y spam) — te enviamos un enlace para restablecer tu contraseña.
+      <main className="auth-main">
+        <div className="auth-card">
+          <header className="auth-header">
+            <h1 className="auth-title">Recupera tu contraseña</h1>
+            <p className="auth-subtitle">Te enviaremos un enlace a tu correo para crear una nueva.</p>
+          </header>
+
+          {enviado ? (
+            <div className="auth-success">
+              <span className="success-icon" aria-hidden="true">✓</span>
+              <p>
+                Si ese correo está registrado, revisa tu bandeja de entrada (y spam) —
+                te enviamos un enlace para restablecer tu contraseña.
+              </p>
+            </div>
+          ) : (
+            <form className="auth-form" onSubmit={manejarSubmit} noValidate>
+              <div className="form-field">
+                <label htmlFor="email" className="form-label">Correo electrónico</label>
+                <input
+                  id="email"
+                  type="email"
+                  className="form-input"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="tucorreo@ejemplo.com"
+                  required
+                  autoComplete="email"
+                  disabled={enviando}
+                  aria-describedby={error ? 'auth-error' : undefined}
+                />
+              </div>
+
+              {error && (
+                <p id="auth-error" className="form-error" role="alert">{error}</p>
+              )}
+
+              <button
+                type="submit"
+                className="btn btn--primary btn--full"
+                disabled={enviando}
+              >
+                {enviando ? 'Enviando...' : 'Enviar enlace'}
+              </button>
+            </form>
+          )}
+
+          <p className="auth-footer-link">
+            <Link to="/login" className="link link--muted">← Volver a iniciar sesión</Link>
           </p>
-        ) : (
-          <form onSubmit={manejarSubmit} className="auth__form">
-            <label>Correo electrónico</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="tucorreo@ejemplo.com"
-              required
-            />
+        </div>
+      </main>
 
-            {error && <p className="auth__error">{error}</p>}
-
-            <button type="submit" disabled={enviando} className="auth__boton">
-              {enviando ? 'Enviando...' : 'Enviar enlace'}
-            </button>
-          </form>
-        )}
-
-        <p className="auth__pie">
-          <Link to="/login">← Volver a iniciar sesión</Link>
-        </p>
-      </div>
-
-      <div className="auth__lateral">
-        <span className="auth__lateral-titulo">Tranquilo,<br />te ayudamos<br />a recuperarla</span>
-      </div>
+      <footer className="auth-footer">
+        <span>MP / 2026</span>
+        <span>Hecho para quienes siguen avanzando.</span>
+      </footer>
     </div>
   );
 }

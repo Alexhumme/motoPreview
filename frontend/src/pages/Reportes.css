@@ -1,149 +1,227 @@
-.reportes__header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
-}
+/* ==========================================================================
+   REPORTES — Jam Design System
+   ========================================================================== */
 
-.reportes__titulo {
-  font-family: var(--fuente-titulo);
-  font-size: 26px;
-  color: var(--color-carbon);
-}
-
-.reportes__toggle {
-  display: flex;
-  border: 1px solid var(--color-borde);
-  border-radius: 6px;
-  overflow: hidden;
-}
-
-.reportes__toggle button {
-  background: #FFFFFF;
-  border: none;
-  padding: 8px 16px;
-  font-size: 13px;
-  cursor: pointer;
-  color: var(--color-texto-suave);
-}
-
-.reportes__toggle-boton--activo {
-  background: var(--color-carbon) !important;
-  color: #FFFFFF !important;
-}
-
-.reportes__tarjetas {
-  display: flex;
-  gap: 16px;
-  margin-bottom: 24px;
-}
-
-.reportes__tarjeta {
-  background: #FFFFFF;
-  border: 1px solid var(--color-borde);
-  border-radius: 6px;
-  padding: 20px 24px;
+.reportes {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--space-32);
+}
+
+/* Header */
+.reportes-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-24);
+  flex-wrap: wrap;
+}
+
+.reportes-title {
+  font-family: var(--font-display);
+  font-weight: var(--weight-black);
+  font-size: var(--text-heading);
+  line-height: var(--leading-heading);
+  letter-spacing: var(--tracking-heading);
+  color: var(--color-paper);
+  margin: 0;
+}
+
+.reportes-toggle {
+  display: flex;
+  gap: var(--space-8);
+  background: var(--surface-card);
+  border: 1px solid var(--color-bone);
+  border-radius: var(--radius-pills);
+  padding: var(--space-4);
+}
+
+.reportes-toggle .btn {
+  padding: var(--space-8) var(--space-16);
+  font-size: var(--text-body);
+  border-radius: var(--radius-inputs);
+}
+
+/* KPIs */
+.reportes-kpis {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-20);
+}
+
+.reportes-kpis .kpi {
+  padding: var(--space-24);
+}
+
+.reportes-kpis .kpi-icon {
+  width: 48px;
+  height: 48px;
+  font-size: 22px;
+}
+
+.reportes-kpis .kpi-content small {
+  font-size: var(--text-caption);
+}
+
+.reportes-kpis .kpi-content strong {
+  font-size: var(--text-heading-sm);
+}
+
+.reportes-kpis .kpi-content em {
+  font-size: var(--text-caption);
+}
+
+/* Grid */
+.reportes-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-24);
+}
+
+.reportes-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.card-head {
+  padding-bottom: var(--space-16);
+  border-bottom: 1px solid var(--color-bone);
+  margin-bottom: var(--space-20);
+}
+
+.card-head strong {
+  font-family: var(--font-display);
+  font-weight: var(--weight-black);
+  font-size: var(--text-heading-sm);
+  color: var(--color-paper);
+}
+
+/* Ranking */
+.reportes-ranking {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
   flex: 1;
 }
 
-.reportes__numero {
-  font-family: var(--fuente-titulo);
-  font-size: 26px;
-  font-weight: 700;
-  color: var(--color-carbon);
+.reportes-empty {
+  text-align: center;
+  color: var(--color-mist-gray);
+  padding: var(--space-48) var(--space-24);
+  margin: 0;
 }
 
-.reportes__etiqueta {
-  font-size: 13px;
-  color: var(--color-texto-suave);
-}
-
-.reportes__columnas {
-  display: grid;
-  grid-template-columns: 1.4fr 1fr;
-  gap: 16px;
-}
-
-.reportes__panel {
-  background: #FFFFFF;
-  border: 1px solid var(--color-borde);
-  border-radius: 6px;
-  padding: 20px 24px;
-}
-
-.reportes__panel h2 {
-  font-family: var(--fuente-titulo);
-  font-size: 16px;
-  color: var(--color-carbon);
-  margin-bottom: 16px;
-}
-
-.reportes__vacio {
-  color: var(--color-texto-suave);
-  font-size: 13px;
-}
-
-.reportes__ranking {
+.reportes-row {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--space-8);
 }
 
-.reportes__fila-info {
+.reportes-row-info {
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  font-size: 13px;
-  color: var(--color-texto);
-  margin-bottom: 4px;
+  gap: var(--space-12);
 }
 
-.reportes__fila-cantidad {
-  font-weight: 700;
-  color: var(--color-carbon);
+.reportes-row-info span:first-child {
+  font-family: var(--font-ui);
+  font-size: var(--text-body);
+  color: var(--color-paper);
+  font-weight: var(--weight-medium);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.reportes__barra-fondo {
-  background: var(--color-fondo);
-  border-radius: 3px;
-  height: 8px;
+.reportes-row-count {
+  font-family: var(--font-display);
+  font-weight: var(--weight-bold);
+  font-size: var(--text-body);
+  color: var(--color-signal-mint);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.reportes-bar-track {
+  height: 6px;
+  background: var(--surface-canvas);
+  border-radius: var(--radius-pills);
   overflow: hidden;
 }
 
-.reportes__barra {
-  background: var(--color-rojo);
+.reportes-bar {
   height: 100%;
-  border-radius: 3px;
+  background: linear-gradient(90deg, var(--color-signal-mint), var(--color-electric-violet));
+  border-radius: var(--radius-pills);
+  transition: width 0.3s ease;
 }
 
-.reportes__estados {
+/* Estados */
+.reportes-estados {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--space-12);
+  flex: 1;
 }
 
-.reportes__estado-item {
+.estado-item {
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-size: 14px;
-  color: var(--color-texto);
+  justify-content: space-between;
+  gap: var(--space-16);
+  padding: var(--space-16) var(--space-20);
+  background: var(--surface-elevated);
+  border: 1px solid var(--color-bone);
+  border-radius: var(--radius-inputs);
+  transition: all 0.15s ease;
 }
 
-.reportes__estado-item strong {
-  margin-left: auto;
-  color: var(--color-carbon);
+.estado-item:hover {
+  border-color: var(--color-mist-gray);
 }
 
-.reportes__estado-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
+.estado-item .badge {
+  flex-shrink: 0;
+  font-size: var(--text-caption);
+  padding: var(--space-6) var(--space-12);
 }
 
-.reportes__estado-dot--pendiente { background: #B25900; }
-.reportes__estado-dot--aprobada { background: var(--color-rojo); }
-.reportes__estado-dot--rechazada { background: var(--color-rojo-oscuro); }
-.reportes__estado-dot--completada { background: #4A4FA8; }
+.estado-item strong {
+  font-family: var(--font-display);
+  font-weight: var(--weight-bold);
+  font-size: var(--text-body-lg);
+  color: var(--color-paper);
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .reportes-kpis {
+    grid-template-columns: 1fr;
+  }
+
+  .reportes-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .reportes-title {
+    font-size: var(--text-heading-lg);
+  }
+
+  .reportes-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .reportes-toggle {
+    width: 100%;
+  }
+
+  .reportes-toggle .btn {
+    flex: 1;
+  }
+}

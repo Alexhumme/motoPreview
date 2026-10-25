@@ -4,6 +4,20 @@ import { obtenerCotizaciones, cambiarEstadoCotizacion } from '../services/cotiza
 import { ConPermiso } from '../components/menus/ConPermiso';
 import './Cotizaciones.css';
 
+const estadoLabels = {
+  pendiente: 'Pendiente',
+  aprobada: 'Aprobada',
+  rechazada: 'Rechazada',
+  completada: 'Completada'
+};
+
+const estadoBadge = {
+  pendiente: 'violet',
+  aprobada: 'mint',
+  rechazada: 'pink',
+  completada: 'gray'
+};
+
 export default function Cotizaciones() {
   const { usuario } = useAuth();
   const [cotizaciones, setCotizaciones] = useState([]);
@@ -25,10 +39,7 @@ export default function Cotizaciones() {
   }, [idTienda]);
 
   useEffect(() => {
-    // La carga es asíncrona: el estado se actualiza después del await.
-    async function refrescar() {
-      await cargar();
-    }
+    async function refrescar() { await cargar(); }
     refrescar();
   }, [cargar]);
 
@@ -51,91 +62,107 @@ export default function Cotizaciones() {
   const precioFormateado = (valor) =>
     new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(valor);
 
-  if (cargando) return <p>Cargando cotizaciones...</p>;
+  if (cargando) {
+    return (
+      <div className="cotizaciones" role="status" aria-live="polite">
+        <div className="skeleton" style={{ height: '56px', width: '200px', marginBottom: 'var(--space-32)' }} />
+        <div className="skeleton" style={{ height: '400px' }} />
+      </div>
+    );
+  }
 
   return (
-    <div>
-      <h1 className="cotizaciones__titulo">Cotizaciones</h1>
+    <div className="cotizaciones">
+      <header className="cotizaciones-header">
+        <h1 className="cotizaciones-title">Cotizaciones</h1>
+      </header>
 
-      <div className="cotizaciones__lista">
-        {cotizaciones.length === 0 && <p>No hay cotizaciones todavía.</p>}
-
-        {cotizaciones.map((cot) => (
-          <div key={cot.id_cotizacion} className="cotizaciones__tarjeta">
-            <div className="cotizaciones__resumen" onClick={() => alternarExpandida(cot.id_cotizacion)}>
-             <div>
-              <span className="cotizaciones__moto">
-                {cot.moto?.modelo_moto?.marca_moto?.marca_nombre} {cot.moto?.modelo_moto?.modelo_nombre}
-              </span>
-              <span className="cotizaciones__cliente">
-                {cot.usuario?.usu_nombre} · {cot.usuario?.usu_email}
-              </span>
-              <span className="cotizaciones__fecha">
-                {new Date(cot.fecha_solicitud).toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric' })}
-              </span>
-            </div>
-              <div className="cotizaciones__derecha">
-                <span className="cotizaciones__total">{precioFormateado(cot.total)}</span>
-                <span className={`cotizaciones__estado cotizaciones__estado--${cot.coti_estado}`}>
-                  {cot.coti_estado}
-                </span>
-              </div>
-            </div>
-
-            {expandida === cot.id_cotizacion && (
-              <div className="cotizaciones__detalle">
-                <ul className="cotizaciones__items">
-                  {cot.detalle_cotizacion.map((item) => (
-                    <li key={item.id_detalle_cotizacion}>
-                      {item.cantidad} × {item.accesorio?.acc_nombre} — {precioFormateado(item.subtotal)}
-                    </li>
-                  ))}
-                </ul>
-                {cot.coti_observaciones && (
-                  <p className="cotizaciones__observaciones">"{cot.coti_observaciones}"</p>
-                )}
-
-                {cot.coti_estado === 'pendiente' && (
-                  <div className="cotizaciones__acciones">
-                    <ConPermiso recurso="cotizaciones" accion="actualizar" scope="tienda" fallback={null}>
-                      <button
-                        disabled={actualizando === cot.id_cotizacion}
-                        className="cotizaciones__boton cotizaciones__boton--rechazar"
-                        onClick={() => manejarCambioEstado(cot.id_cotizacion, 'rechazada')}
-                      >
-                        Rechazar
-                      </button>
-                    </ConPermiso>
-                    <ConPermiso recurso="cotizaciones" accion="actualizar" scope="tienda" fallback={null}>
-                      <button
-                        disabled={actualizando === cot.id_cotizacion}
-                        className="cotizaciones__boton cotizaciones__boton--aprobar"
-                        onClick={() => manejarCambioEstado(cot.id_cotizacion, 'aprobada')}
-                      >
-                        Aprobar
-                      </button>
-                    </ConPermiso>
-                  </div>
-                )}
-
-                {cot.coti_estado === 'aprobada' && (
-                  <div className="cotizaciones__acciones">
-                    <ConPermiso recurso="cotizaciones" accion="actualizar" scope="tienda" fallback={null}>
-                      <button
-                        disabled={actualizando === cot.id_cotizacion}
-                        className="cotizaciones__boton cotizaciones__boton--aprobar"
-                        onClick={() => manejarCambioEstado(cot.id_cotizacion, 'completada')}
-                      >
-                        Marcar como completada
-                      </button>
-                    </ConPermiso>
-                  </div>
-                )}
-              </div>
-            )}
+      <section className="cotizaciones-list" aria-label="Listado de cotizaciones">
+        {cotizaciones.length === 0 ? (
+          <div className="cotizaciones-empty">
+            <span className="empty-icon" aria-hidden="true">▤</span>
+            <p>No hay cotizaciones todavía.</p>
           </div>
-        ))}
-      </div>
+        ) : (
+          cotizaciones.map((cot) => (
+            <article key={cot.id_cotizacion} className="cotizacion-card">
+              <header className="cotizacion-header" onClick={() => alternarExpandida(cot.id_cotizacion)}>
+                <div className="cotizacion-main">
+                  <div className="cotizacion-moto">
+                    {cot.moto?.modelo_moto?.marca_moto?.marca_nombre} {cot.moto?.modelo_moto?.modelo_nombre}
+                  </div>
+                  <div className="cotizacion-meta">
+                    <span className="cotizacion-cliente">{cot.usuario?.usu_nombre} · {cot.usuario?.usu_email}</span>
+                    <span className="cotizacion-fecha">
+                      {new Date(cot.fecha_solicitud).toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric' })}
+                    </span>
+                  </div>
+                </div>
+                <div className="cotizacion-side">
+                  <span className="cotizacion-total">{precioFormateado(cot.total)}</span>
+                  <span className={`badge badge--${estadoBadge[cot.coti_estado] || 'gray'}`}>
+                    {estadoLabels[cot.coti_estado] || cot.coti_estado}
+                  </span>
+                </div>
+              </header>
+
+              {expandida === cot.id_cotizacion && (
+                <div className="cotizacion-detail">
+                  <ul className="cotizacion-items">
+                    {cot.detalle_cotizacion?.map((item) => (
+                      <li key={item.id_detalle_cotizacion}>
+                        <span>{item.cantidad} × {item.accesorio?.acc_nombre}</span>
+                        <span>{precioFormateado(item.subtotal)}</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  {cot.coti_observaciones && (
+                    <p className="cotizacion-observaciones">"{cot.coti_observaciones}"</p>
+                  )}
+
+                  <div className="cotizacion-actions">
+                    {cot.coti_estado === 'pendiente' && (
+                      <>
+                        <ConPermiso recurso="cotizaciones" accion="actualizar" scope="tienda" fallback={null}>
+                          <button
+                            className="btn btn--danger btn--sm"
+                            disabled={actualizando === cot.id_cotizacion}
+                            onClick={() => manejarCambioEstado(cot.id_cotizacion, 'rechazada')}
+                          >
+                            Rechazar
+                          </button>
+                        </ConPermiso>
+                        <ConPermiso recurso="cotizaciones" accion="actualizar" scope="tienda" fallback={null}>
+                          <button
+                            className="btn btn--primary btn--sm"
+                            disabled={actualizando === cot.id_cotizacion}
+                            onClick={() => manejarCambioEstado(cot.id_cotizacion, 'aprobada')}
+                          >
+                            Aprobar
+                          </button>
+                        </ConPermiso>
+                      </>
+                    )}
+
+                    {cot.coti_estado === 'aprobada' && (
+                      <ConPermiso recurso="cotizaciones" accion="actualizar" scope="tienda" fallback={null}>
+                        <button
+                          className="btn btn--outline btn--sm"
+                          disabled={actualizando === cot.id_cotizacion}
+                          onClick={() => manejarCambioEstado(cot.id_cotizacion, 'completada')}
+                        >
+                          Marcar como completada
+                        </button>
+                      </ConPermiso>
+                    )}
+                  </div>
+                </div>
+              )}
+            </article>
+          ))
+        )}
+      </section>
     </div>
   );
 }

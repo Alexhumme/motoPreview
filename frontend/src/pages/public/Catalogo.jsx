@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { obtenerAccesorios, obtenerCategorias } from '../../services/accesorios';
 import AccesorioCard from '../../components/buttons/AccesorioCard';
 import SiteHeader from '../../components/SiteHeader';
-import Footer from '../../components/Footer';
+import Footer from '../../components/forms/Footer';
 import heroImage from '../../assets/hero.png';
 import './Catalogo.css';
 
@@ -51,57 +51,93 @@ export default function Catalogo() {
     paginaActual * POR_PAGINA
   );
 
-  if (cargando) return <div className="catalogo__estado">Cargando tu catálogo...</div>;
-  if (error) return <div className="catalogo__estado catalogo__estado--error">{error}</div>;
+  if (cargando) {
+    return (
+      <div className="catalog-page">
+        <SiteHeader />
+        <main>
+          <div className="catalogo-estado">
+            <div className="skeleton" style={{ height: '56px', width: '200px' }} />
+            <div className="skeleton" style={{ height: '400px' }} />
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+  if (error) {
+    return (
+      <div className="catalog-page">
+        <SiteHeader />
+        <main>
+          <div className="catalogo-estado catalogo-estado--error">{error}</div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="catalog-page">
       <SiteHeader />
       <main>
         <section className="catalog-hero">
-          <div className="catalog-hero__grid" />
-          <div className="catalog-hero__copy">
-            <div className="eyebrow eyebrow--light"><span className="eyebrow-dot" /> Accesorios con propósito</div>
-            <h1>Tu moto.<br /><em>Tu firma.</em></h1>
-            <p>Descubre piezas que encajan con tu máquina y con la forma en que quieres vivir la carretera.</p>
-            <div className="catalog-hero__actions">
-              <Link to="/configurador" className="button button--accent">Configurar mi moto <span>→</span></Link>
-              <a href="#catalogo" className="button catalog-hero__ghost">Explorar accesorios</a>
+          <div className="catalog-hero-grid" />
+          <div className="catalog-hero-copy">
+            <div className="eyebrow eyebrow--light"><span className="eyebrow-dot" aria-hidden="true"></span>Accesorios con propósito</div>
+            <h1 className="catalog-hero-title">Tu moto.<br /><em>Tu firma.</em></h1>
+            <p className="catalog-hero-subtitle">Descubre piezas que encajan con tu máquina y con la forma en que quieres vivir la carretera.</p>
+            <div className="catalog-hero-actions">
+              <Link to="/configurador" className="btn btn--primary">Configurar mi moto <span>→</span></Link>
+              <a href="#catalogo" className="btn btn--ghost catalog-hero-ghost">Explorar accesorios</a>
             </div>
-            <div className="catalog-hero__proof"><span>JR</span><span>MG</span><span>DV</span><b>+</b><small>Más de 1.200 motociclistas ya configuraron la suya</small></div>
+            <div className="catalog-hero-proof">
+              <span>JR</span><span>MG</span><span>DV</span><b>+</b><small>Más de 1.200 motociclistas ya configuraron la suya</small>
+            </div>
           </div>
-          <div className="catalog-hero__visual">
-            <div className="catalog-hero__orbit catalog-hero__orbit--one" />
-            <div className="catalog-hero__orbit catalog-hero__orbit--two" />
-            <img src={heroImage} alt="Motocicleta MotoPreview" />
-            <div className="catalog-hero__fallback">MP</div>
-            <div className="catalog-hero__label catalog-hero__label--top">◈ Precisión<br /><b>compatible</b></div>
-            <div className="catalog-hero__label catalog-hero__label--bottom">↯ Diseñado para<br /><b>la ruta</b></div>
+          <div className="catalog-hero-visual">
+            <div className="catalog-hero-orbit catalog-hero-orbit--one" />
+            <div className="catalog-hero-orbit catalog-hero-orbit--two" />
+            <img src={heroImage} alt="Motocicleta MotoPreview" className="catalog-hero-image" />
+            <div className="catalog-hero-fallback">MP</div>
+            <div className="catalog-hero-label catalog-hero-label--top">◈ Precisión<br /><b>compatible</b></div>
+            <div className="catalog-hero-label catalog-hero-label--bottom">↯ Diseñado para<br /><b>la ruta</b></div>
           </div>
         </section>
 
         <section className="stats-row">
-          <div><strong>+240</strong><span>piezas verificadas</span></div>
-          <div><strong>98%</strong><span>compatibilidad real</span></div>
-          <div><strong>24h</strong><span>respuesta de tienda</span></div>
-          <div><strong>4.9/5</strong><span>experiencia promedio</span></div>
+          <div className="stat-item">
+            <strong>+240</strong><span>piezas verificadas</span>
+          </div>
+          <div className="stat-item">
+            <strong>98%</strong><span>compatibilidad real</span>
+          </div>
+          <div className="stat-item">
+            <strong>24h</strong><span>respuesta de tienda</span>
+          </div>
+          <div className="stat-item">
+            <strong>4.9/5</strong><span>experiencia promedio</span>
+          </div>
         </section>
 
         <section className="catalog-section" id="catalogo">
           <div className="section-heading">
-            <div><div className="eyebrow"><span className="eyebrow-dot" /> Curaduría MotoPreview</div><h2>Encuentra tu<br /><em>próxima mejora.</em></h2></div>
-            <p>Todo lo que necesitas para transformar tu motocicleta, filtrado por calidad, compatibilidad y propósito.</p>
+            <div>
+              <div className="eyebrow"><span className="eyebrow-dot" aria-hidden="true"></span>Curaduría MotoPreview</div>
+              <h2 className="section-title">Encuentra tu<br /><em>próxima mejora.</em></h2>
+            </div>
+            <p className="section-subtitle">Todo lo que necesitas para transformar tu motocicleta, filtrado por calidad, compatibilidad y propósito.</p>
           </div>
 
           <div className="catalog-toolbar">
             <div className="category-tabs">
-              <button className={categoriaSeleccionada === 'todas' ? 'category-tab category-tab--active' : 'category-tab'} onClick={() => { setCategoriaSeleccionada('todas'); setPaginaActual(1); }}>
+              <button className={`category-tab${categoriaSeleccionada === 'todas' ? ' category-tab--active' : ''}`} onClick={() => { setCategoriaSeleccionada('todas'); setPaginaActual(1); }}>
                 Todos
               </button>
               {categorias.map((categoria) => (
                 <button
                   key={categoria.id_categoria}
-                  className={categoriaSeleccionada === categoria.id_categoria ? 'category-tab category-tab--active' : 'category-tab'}
+                  className={`category-tab${categoriaSeleccionada === categoria.id_categoria ? ' category-tab--active' : ''}`}
                   onClick={() => { setCategoriaSeleccionada(categoria.id_categoria); setPaginaActual(1); }}
                 >
                   {categoria.cat_nombre}
@@ -116,7 +152,11 @@ export default function Catalogo() {
           </div>
 
           {accesoriosFiltrados.length === 0 ? (
-            <div className="empty-state"><span>⌕</span><h3>No encontramos esa pieza</h3><p>Prueba con otra búsqueda o categoría.</p></div>
+            <div className="empty-state">
+              <span className="empty-icon" aria-hidden="true">⌕</span>
+              <h3 className="empty-title">No encontramos esa pieza</h3>
+              <p className="empty-subtitle">Prueba con otra búsqueda o categoría.</p>
+            </div>
           ) : (
             <>
               <div className="product-grid">
@@ -125,7 +165,7 @@ export default function Catalogo() {
               {totalPaginas > 1 && (
                 <div className="catalog-pagination">
                   <button disabled={paginaActual === 1} onClick={() => setPaginaActual((p) => p - 1)}>← Anterior</button>
-                  <span>Página {paginaActual} de {totalPaginas}</span>
+                  <span className="pagination-current">Página {paginaActual} de {totalPaginas}</span>
                   <button disabled={paginaActual === totalPaginas} onClick={() => setPaginaActual((p) => p + 1)}>Siguiente →</button>
                 </div>
               )}
@@ -134,11 +174,28 @@ export default function Catalogo() {
         </section>
 
         <section className="how-section" id="como-funciona">
-          <div className="how-intro"><div className="eyebrow eyebrow--light"><span className="eyebrow-dot" /> Sin adivinar</div><h2>Arma algo<br /><em>que sí encaje.</em></h2><p>La tecnología de MotoPreview conecta tu modelo con accesorios que realmente son compatibles.</p><Link to="/configurador" className="text-link">Empezar ahora →</Link></div>
+          <div className="how-intro">
+            <div className="eyebrow eyebrow--light"><span className="eyebrow-dot" aria-hidden="true"></span>Sin adivinar</div>
+            <h2 className="section-title">Arma algo<br /><em>que sí encaje.</em></h2>
+            <p className="section-subtitle">La tecnología de MotoPreview conecta tu modelo con accesorios que realmente son compatibles.</p>
+            <Link to="/configurador" className="btn btn--outline">Empezar ahora →</Link>
+          </div>
           <div className="steps">
-            <div className="step"><span>01</span><h3>Elige tu moto</h3><p>Selecciona marca, modelo y año para partir de una base exacta.</p></div>
-            <div className="step"><span>02</span><h3>Explora opciones</h3><p>Ve solo las piezas que fueron hechas para tu motocicleta.</p></div>
-            <div className="step"><span>03</span><h3>Pide tu cotización</h3><p>Guarda tu configuración y déjala en manos de la tienda.</p></div>
+            <div className="step">
+              <span className="step-number">01</span>
+              <h3 className="step-title">Elige tu moto</h3>
+              <p className="step-desc">Selecciona marca, modelo y año para partir de una base exacta.</p>
+            </div>
+            <div className="step">
+              <span className="step-number">02</span>
+              <h3 className="step-title">Explora opciones</h3>
+              <p className="step-desc">Ve solo las piezas que fueron hechas para tu motocicleta.</p>
+            </div>
+            <div className="step">
+              <span className="step-number">03</span>
+              <h3 className="step-title">Pide tu cotización</h3>
+              <p className="step-desc">Guarda tu configuración y déjala en manos de la tienda.</p>
+            </div>
           </div>
         </section>
       </main>

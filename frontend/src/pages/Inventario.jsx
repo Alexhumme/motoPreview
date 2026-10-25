@@ -28,10 +28,7 @@ export default function Inventario() {
   }, [idTienda]);
 
   useEffect(() => {
-    // La carga es asíncrona: el estado se actualiza después del await.
-    async function refrescar() {
-      await cargarInventario();
-    }
+    async function refrescar() { await cargarInventario(); }
     refrescar();
   }, [cargarInventario]);
 
@@ -65,89 +62,149 @@ export default function Inventario() {
     }
   }
 
-  if (cargando) return <p>Cargando inventario...</p>;
+  const estadoLabels = {
+    normal: 'Normal',
+    bajo: 'Stock bajo',
+    agotado: 'Agotado'
+  };
+
+  if (cargando) {
+    return (
+      <div className="inventario" role="status" aria-live="polite">
+        <div className="skeleton" style={{ height: '56px', width: '200px', marginBottom: 'var(--space-32)' }} />
+        <div className="table-wrap"><div className="skeleton" style={{ height: '400px' }} /></div>
+      </div>
+    );
+  }
 
   return (
-    <div>
-      <h1 className="inventario__titulo">Inventario</h1>
+    <div className="inventario">
+      {/* Header */}
+      <header className="inventario-header">
+        <h1 className="inventario-title">Inventario</h1>
+      </header>
 
-      <table className="inventario__tabla">
-        <thead>
-          <tr>
-            <th>Accesorio</th>
-            <th>SKU</th>
-            <th>Stock actual</th>
-            <th>Stock mínimo</th>
-            <th>Estado</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {inventario.map((item) => (
-            <tr key={item.id_inventario}>
-              <td>{item.accesorio?.acc_nombre}</td>
-              <td>{item.accesorio?.codigo_sku}</td>
-              <td>{item.stock_actual}</td>
-              <td>{item.stock_minimo}</td>
-              <td>
-                <span className={`inventario__estado inventario__estado--${item.estado_inventario}`}>
-                  {item.estado_inventario}
-                </span>
-              </td>
-              <td>
-                <ConPermiso recurso="inventario" accion="actualizar" fallback={null}>
-                  <button className="inventario__boton" onClick={() => abrirFormulario(item)}>
-                    Registrar movimiento
-                  </button>
-                </ConPermiso>
-              </td>
+      {/* Table */}
+      <section className="table-wrap" aria-label="Listado de inventario">
+        <table className="table">
+          <thead>
+            <tr>
+              <th>Accesorio</th>
+              <th>SKU</th>
+              <th>Stock actual</th>
+              <th>Stock mínimo</th>
+              <th>Estado</th>
+              <th style={{ width: '120px' }}></th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {inventario.length === 0 ? (
+              <tr>
+                <td colSpan={6} style={{ textAlign: 'center', padding: 'var(--space-64)', color: 'var(--color-mist-gray)' }}>
+                  No hay productos en inventario.
+                </td>
+              </tr>
+            ) : (
+              inventario.map((item) => (
+                <tr key={item.id_inventario}>
+                  <td>
+                    <div className="item-name">
+                      <strong>{item.accesorio?.acc_nombre || 'Sin nombre'}</strong>
+                    </div>
+                  </td>
+                  <td>
+                    <code className="item-sku">{item.accesorio?.codigo_sku || '—'}</code>
+                  </td>
+                  <td>
+                    <span className="stock-value">{item.stock_actual}</span>
+                  </td>
+                  <td>
+                    <span className="stock-min">{item.stock_minimo}</span>
+                  </td>
+                  <td>
+                    <span className={`badge badge--${item.estado_inventario === 'normal' ? 'mint' : item.estado_inventario === 'bajo' ? 'violet' : 'pink'}`}>
+                      {estadoLabels[item.estado_inventario] || item.estado_inventario}
+                    </span>
+                  </td>
+                  <td>
+                    <ConPermiso recurso="inventario" accion="actualizar" fallback={null}>
+                      <button className="btn btn--outline btn--sm" onClick={() => abrirFormulario(item)}>
+                        Movimiento
+                      </button>
+                    </ConPermiso>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </section>
 
+      {/* Modal */}
       {itemSeleccionado && (
-        <div className="inventario__overlay" onClick={cerrarFormulario}>
-          <div className="inventario__modal" onClick={(e) => e.stopPropagation()}>
-            <h2>Movimiento — {itemSeleccionado.accesorio?.acc_nombre}</h2>
-            <p className="inventario__stock-actual">Stock actual: {itemSeleccionado.stock_actual}</p>
-            <form onSubmit={manejarSubmit}>
-              <label>Tipo de movimiento</label>
-              <select
-                value={formulario.id_tipomov}
-                onChange={(e) => setFormulario({ ...formulario, id_tipomov: e.target.value })}
-                required
-              >
-                <option value="">Selecciona...</option>
-                {TIPOS_MOVIMIENTO.map((t) => (
-                  <option key={t.id} value={t.id}>{t.nombre}</option>
-                ))}
-              </select>
+        <div className="modal-overlay" onClick={cerrarFormulario} role="dialog" aria-modal="true" aria-labelledby="movimiento-title">
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <header className="modal-header">
+              <h2 id="movimiento-title" className="modal-title">Movimiento — {itemSeleccionado.accesorio?.acc_nombre}</h2>
+              <button className="modal-close" onClick={cerrarFormulario} aria-label="Cerrar">✕</button>
+            </header>
 
-              <label>Cantidad</label>
-              <input
-                type="number"
-                min="1"
-                value={formulario.mov_cantidad}
-                onChange={(e) => setFormulario({ ...formulario, mov_cantidad: e.target.value })}
-                required
-              />
+            <form onSubmit={manejarSubmit} className="modal-form">
+              <p className="stock-actual">Stock actual: <strong>{itemSeleccionado.stock_actual}</strong></p>
 
-              <label>Observaciones</label>
-              <textarea
-                value={formulario.observaciones}
-                onChange={(e) => setFormulario({ ...formulario, observaciones: e.target.value })}
-                rows={2}
-              />
+              <div className="form-field">
+                <label htmlFor="tipo-mov" className="form-label">Tipo de movimiento</label>
+                <select
+                  id="tipo-mov"
+                  className="form-input form-select"
+                  value={formulario.id_tipomov}
+                  onChange={(e) => setFormulario({ ...formulario, id_tipomov: e.target.value })}
+                  required
+                  disabled={enviando}
+                >
+                  <option value="">Selecciona...</option>
+                  {TIPOS_MOVIMIENTO.map((t) => (
+                    <option key={t.id} value={t.id}>{t.nombre}</option>
+                  ))}
+                </select>
+              </div>
 
-              {mensaje && <p className="inventario__mensaje-error">{mensaje}</p>}
+              <div className="form-field">
+                <label htmlFor="cantidad" className="form-label">Cantidad</label>
+                <input
+                  id="cantidad"
+                  type="number"
+                  min="1"
+                  className="form-input"
+                  value={formulario.mov_cantidad}
+                  onChange={(e) => setFormulario({ ...formulario, mov_cantidad: e.target.value })}
+                  required
+                  disabled={enviando}
+                />
+              </div>
 
-              <div className="inventario__modal-botones">
-                <button type="button" onClick={cerrarFormulario} className="inventario__boton-cancelar">Cancelar</button>
-                <button type="submit" disabled={enviando} className="inventario__boton-confirmar">
+              <div className="form-field">
+                <label htmlFor="observaciones" className="form-label">Observaciones</label>
+                <textarea
+                  id="observaciones"
+                  className="form-input"
+                  value={formulario.observaciones}
+                  onChange={(e) => setFormulario({ ...formulario, observaciones: e.target.value })}
+                  rows={3}
+                  disabled={enviando}
+                />
+              </div>
+
+              {mensaje && <p className="form-error" role="alert">{mensaje}</p>}
+
+              <footer className="modal-footer">
+                <button type="button" className="btn btn--ghost" onClick={cerrarFormulario} disabled={enviando}>
+                  Cancelar
+                </button>
+                <button type="submit" className="btn btn--primary" disabled={enviando}>
                   {enviando ? 'Guardando...' : 'Confirmar'}
                 </button>
-              </div>
+              </footer>
             </form>
           </div>
         </div>

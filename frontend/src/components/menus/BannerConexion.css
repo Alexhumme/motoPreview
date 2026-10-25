@@ -1,31 +1,36 @@
+/* ==========================================================================
+   BANNER CONEXIÓN — Jam Design System
+   ========================================================================== */
+
 .banner-conexion {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
-  background: #B3453D;
-  color: #FFFFFF;
+  background: var(--color-jam-pink);
+  color: var(--color-paper);
   text-align: center;
-  padding: 10px 16px;
-  font-family: 'Inter', sans-serif;
-  font-size: 13px;
-  font-weight: 500;
-  z-index: 999;
+  padding: var(--space-12) var(--space-24);
+  font-family: var(--font-ui);
+  font-size: var(--text-body);
+  font-weight: var(--weight-medium);
+  z-index: 1000;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: var(--space-12);
 }
 
 .banner-conexion__punto {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
-  background: #FFFFFF;
+  background: var(--color-paper);
   animation: banner-conexion-pulso 1.4s infinite;
+  flex-shrink: 0;
 }
 
 @keyframes banner-conexion-pulso {
   0%, 100% { opacity: 1; }
-  50% { opacity: 0.3; }
+  50% { opacity: 0.4; }
 }

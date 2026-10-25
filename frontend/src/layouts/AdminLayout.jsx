@@ -1,7 +1,7 @@
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import './AdminLayout.css';
 import { ROL_ADMIN } from '../utils/constants/roles';
+import './AdminLayout.css';
 
 export default function AdminLayout() {
   const { usuario, logout } = useAuth();
@@ -25,18 +25,38 @@ export default function AdminLayout() {
 
   return (
     <div className="admin-shell">
-      <aside className="admin-sidebar">
-        <Link to="/" className="brand brand--light"><span className="brand-mark">↗</span><span>Moto<span>Preview</span></span></Link>
-        <div className="admin-profile"><span className="profile-avatar">{usuario?.usu_nombre?.slice(0, 2).toUpperCase()}</span><span><strong>{usuario?.usu_nombre}</strong><small>Administrador</small></span></div>
-        <nav>{enlaces.map((enlace) => <Link key={enlace.ruta} to={enlace.ruta} className={location.pathname === enlace.ruta ? 'admin-nav-link admin-nav-link--active' : 'admin-nav-link'}><span>{enlace.icono}</span>{enlace.etiqueta}</Link>)}</nav>
-        <div className="admin-help"><span>?</span><span>¿Necesitas ayuda?<b>Centro de soporte</b></span></div>
-        <Link to="/" className="admin-back">← Volver a la tienda</Link>
-        <button className="admin-logout" onClick={manejarLogout}>Salir de la cuenta</button>
-      </aside>
-      <main className="admin-content">
-        <div className="admin-mobile-top"><Link to="/" className="brand"><span className="brand-mark">↗</span><span>Moto<span>Preview</span></span></Link><button onClick={manejarLogout}>Salir</button></div>
+      <header className="admin-header">
+        <Link to="/" className="brand" aria-label="MotoPreview home">
+          <span className="brand-mark">↗</span>
+          <span className="brand-text">Moto<span>Preview</span></span>
+        </Link>
+        <nav className="admin-nav" aria-label="Navegación principal">
+          {enlaces.map((enlace) => (
+            <Link
+              key={enlace.ruta}
+              to={enlace.ruta}
+              className={location.pathname === enlace.ruta ? 'admin-nav-link admin-nav-link--active' : 'admin-nav-link'}
+              aria-current={location.pathname === enlace.ruta ? 'page' : undefined}
+            >
+              <span className="nav-icon" aria-hidden="true">{enlace.icono}</span>
+              <span>{enlace.etiqueta}</span>
+            </Link>
+          ))}
+        </nav>
+        <div className="admin-header-actions">
+          <Link to="/" className="btn btn--ghost btn--sm">Volver a la tienda</Link>
+          <button className="btn btn--ghost btn--sm" onClick={manejarLogout}>Salir</button>
+        </div>
+      </header>
+
+      <main className="admin-main">
         <Outlet />
       </main>
+
+      <footer className="admin-footer">
+        <span>MP / 2026</span>
+        <span>Hecho para quienes siguen avanzando.</span>
+      </footer>
     </div>
   );
 }

@@ -8,6 +8,23 @@ import './Usuarios.css';
 
 const VACIO = { usu_nombre: '', usu_email: '', password: '', id_rol: ROL_VENDEDOR, estado_usuario: 'activo' };
 
+const rolLabels = {
+  [ROL_ADMIN]: 'Admin',
+  [ROL_VENDEDOR]: 'Vendedor'
+};
+
+const estadoLabels = {
+  activo: 'Activo',
+  inactivo: 'Inactivo',
+  bloqueado: 'Bloqueado'
+};
+
+const estadoBadge = {
+  activo: 'mint',
+  inactivo: 'gray',
+  bloqueado: 'pink'
+};
+
 export default function Usuarios() {
   const { usuario } = useAuth();
   const [usuarios, setUsuarios] = useState([]);
@@ -33,10 +50,7 @@ export default function Usuarios() {
   }, [idTienda]);
 
   useEffect(() => {
-    // La carga es asíncrona: el estado se actualiza después del await.
-    async function refrescar() {
-      await cargar();
-    }
+    async function refrescar() { await cargar(); }
     refrescar();
   }, [cargar]);
 
@@ -95,117 +109,172 @@ export default function Usuarios() {
     await cargar();
   }
 
-  const nombreRol = (id_rol) => (id_rol === ROL_ADMIN ? 'Admin' : id_rol === ROL_VENDEDOR ? 'Vendedor' : 'Cliente');
-
-  if (cargando) return <p>Cargando usuarios...</p>;
+  if (cargando) {
+    return (
+      <div className="usuarios" role="status" aria-live="polite">
+        <div className="skeleton" style={{ height: '56px', width: '280px', marginBottom: 'var(--space-32)' }} />
+        <div className="skeleton" style={{ height: '400px' }} />
+      </div>
+    );
+  }
 
   return (
-    <div>
-      <div className="usuarios-admin__header">
-        <h1 className="usuarios-admin__titulo">Usuarios de la tienda</h1>
+    <div className="usuarios">
+      <header className="usuarios-header">
+        <h1 className="usuarios-title">Usuarios de la tienda</h1>
         <ConPermiso recurso="usuarios" accion="crear" fallback={null}>
-          <button className="usuarios-admin__boton-nuevo" onClick={abrirNuevo}>+ Nuevo usuario</button>
+          <button className="btn btn--primary" onClick={abrirNuevo}>
+            <span aria-hidden="true">+</span> Nuevo usuario
+          </button>
         </ConPermiso>
-      </div>
+      </header>
 
-      <table className="usuarios-admin__tabla">
-        <thead>
-          <tr>
-            <th>Nombre</th>
-            <th>Email</th>
-            <th>Rol</th>
-            <th>Estado</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {usuarios.map((u) => (
-            <tr key={u.id_usuario}>
-              <td>{u.usu_nombre}</td>
-              <td>{u.usu_email}</td>
-              <td>{nombreRol(u.id_rol)}</td>
-              <td>
-                <span className={`usuarios-admin__estado usuarios-admin__estado--${u.estado_usuario}`}>
-                  {u.estado_usuario}
-                </span>
-              </td>
-              <td className="usuarios-admin__acciones">
-                <ConPermiso recurso="usuarios" accion="actualizar" fallback={null}>
-                  <button className="usuarios-admin__boton-editar" onClick={() => abrirEdicion(u)}>Editar</button>
-                </ConPermiso>
-                {u.estado_usuario !== 'bloqueado' && u.id_usuario !== usuario.id_usuario && (
-                  <ConPermiso recurso="usuarios" accion="eliminar" fallback={null}>
-                    <button className="usuarios-admin__boton-desactivar" onClick={() => pedirConfirmacionDesactivar(u)}>
-                      Desactivar
-                    </button>
-                  </ConPermiso>
-                )}
-              </td>
+      <section className="table-wrap" aria-label="Listado de usuarios">
+        <table className="table">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Email</th>
+              <th>Rol</th>
+              <th>Estado</th>
+              <th style={{ width: '200px' }}></th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {usuarios.length === 0 ? (
+              <tr>
+                <td colSpan={5} style={{ textAlign: 'center', padding: 'var(--space-64)', color: 'var(--color-mist-gray)' }}>
+                  No hay usuarios registrados.
+                </td>
+              </tr>
+            ) : (
+              usuarios.map((u) => (
+                <tr key={u.id_usuario}>
+                  <td>
+                    <strong>{u.usu_nombre}</strong>
+                  </td>
+                  <td>{u.usu_email}</td>
+                  <td>
+                    <span className="badge badge--violet">{rolLabels[u.id_rol] || u.id_rol}</span>
+                  </td>
+                  <td>
+                    <span className={`badge badge--${estadoBadge[u.estado_usuario] || 'gray'}`}>
+                      {estadoLabels[u.estado_usuario] || u.estado_usuario}
+                    </span>
+                  </td>
+                  <td>
+                    <div className="acciones">
+                      <ConPermiso recurso="usuarios" accion="actualizar" fallback={null}>
+                        <button className="btn btn--ghost btn--sm" onClick={() => abrirEdicion(u)}>Editar</button>
+                      </ConPermiso>
+                      {u.estado_usuario !== 'bloqueado' && u.id_usuario !== usuario.id_usuario && (
+                        <ConPermiso recurso="usuarios" accion="eliminar" fallback={null}>
+                          <button className="btn btn--danger btn--sm" onClick={() => pedirConfirmacionDesactivar(u)}>
+                            Desactivar
+                          </button>
+                        </ConPermiso>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </section>
 
+      {/* Modal */}
       {modalAbierto && (
-        <div className="usuarios-admin__overlay" onClick={cerrarModal}>
-          <div className="usuarios-admin__modal" onClick={(e) => e.stopPropagation()}>
-            <h2>{editandoId ? 'Editar usuario' : 'Nuevo usuario'}</h2>
-            <form onSubmit={manejarSubmit}>
-              <label>Nombre</label>
-              <input
-                value={formulario.usu_nombre}
-                onChange={(e) => setFormulario({ ...formulario, usu_nombre: e.target.value })}
-                required
-              />
+        <div className="modal-overlay" onClick={cerrarModal} role="dialog" aria-modal="true" aria-labelledby="usuario-modal-title">
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <header className="modal-header">
+              <h2 id="usuario-modal-title" className="modal-title">{editandoId ? 'Editar usuario' : 'Nuevo usuario'}</h2>
+              <button className="modal-close" onClick={cerrarModal} aria-label="Cerrar">✕</button>
+            </header>
 
-              <label>Email</label>
-              <input
-                type="email"
-                value={formulario.usu_email}
-                onChange={(e) => setFormulario({ ...formulario, usu_email: e.target.value })}
-                required
-                disabled={!!editandoId}
-              />
+            <form onSubmit={manejarSubmit} className="modal-form">
+              <div className="form-field">
+                <label htmlFor="nombre" className="form-label">Nombre</label>
+                <input
+                  id="nombre"
+                  type="text"
+                  className="form-input"
+                  value={formulario.usu_nombre}
+                  onChange={(e) => setFormulario({ ...formulario, usu_nombre: e.target.value })}
+                  required
+                  disabled={guardando}
+                />
+              </div>
 
-              <label>{editandoId ? 'Nueva contraseña (opcional)' : 'Contraseña'}</label>
-              <input
-                type="password"
-                value={formulario.password}
-                onChange={(e) => setFormulario({ ...formulario, password: e.target.value })}
-                required={!editandoId}
-              />
+              <div className="form-field">
+                <label htmlFor="email" className="form-label">Email</label>
+                <input
+                  id="email"
+                  type="email"
+                  className="form-input"
+                  value={formulario.usu_email}
+                  onChange={(e) => setFormulario({ ...formulario, usu_email: e.target.value })}
+                  required
+                  disabled={!!editandoId || guardando}
+                />
+              </div>
 
-              <label>Rol</label>
-              <select
-                value={formulario.id_rol}
-                onChange={(e) => setFormulario({ ...formulario, id_rol: e.target.value })}
-              >
-                <option value={ROL_VENDEDOR}>Vendedor</option>
-                <option value={ROL_ADMIN}>Admin</option>
-              </select>
+              <div className="form-field">
+                <label htmlFor="password" className="form-label">
+                  {editandoId ? 'Nueva contraseña (opcional)' : 'Contraseña'}
+                </label>
+                <input
+                  id="password"
+                  type="password"
+                  className="form-input"
+                  value={formulario.password}
+                  onChange={(e) => setFormulario({ ...formulario, password: e.target.value })}
+                  required={!editandoId}
+                  disabled={guardando}
+                />
+              </div>
+
+              <div className="form-field">
+                <label htmlFor="rol" className="form-label">Rol</label>
+                <select
+                  id="rol"
+                  className="form-input form-select"
+                  value={formulario.id_rol}
+                  onChange={(e) => setFormulario({ ...formulario, id_rol: e.target.value })}
+                  disabled={guardando}
+                >
+                  <option value={ROL_VENDEDOR}>Vendedor</option>
+                  <option value={ROL_ADMIN}>Admin</option>
+                </select>
+              </div>
 
               {editandoId && (
-                <>
-                  <label>Estado</label>
+                <div className="form-field">
+                  <label htmlFor="estado" className="form-label">Estado</label>
                   <select
+                    id="estado"
+                    className="form-input form-select"
                     value={formulario.estado_usuario}
                     onChange={(e) => setFormulario({ ...formulario, estado_usuario: e.target.value })}
+                    disabled={guardando}
                   >
                     <option value="activo">Activo</option>
                     <option value="inactivo">Inactivo</option>
                     <option value="bloqueado">Bloqueado</option>
                   </select>
-                </>
+                </div>
               )}
 
-              {error && <p className="usuarios-admin__error">{error}</p>}
+              {error && <p className="form-error" role="alert">{error}</p>}
 
-              <div className="usuarios-admin__modal-botones">
-                <button type="button" onClick={cerrarModal} className="usuarios-admin__boton-cancelar">Cancelar</button>
-                <button type="submit" disabled={guardando} className="usuarios-admin__boton-guardar">
+              <footer className="modal-footer">
+                <button type="button" className="btn btn--ghost" onClick={cerrarModal} disabled={guardando}>
+                  Cancelar
+                </button>
+                <button type="submit" className="btn btn--primary" disabled={guardando}>
                   {guardando ? 'Guardando...' : 'Guardar'}
                 </button>
-              </div>
+              </footer>
             </form>
           </div>
         </div>

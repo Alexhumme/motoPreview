@@ -1,134 +1,237 @@
-.cotizaciones__titulo {
-  font-family: var(--fuente-titulo);
-  font-size: 26px;
-  color: var(--color-carbon);
-  margin-bottom: 20px;
-}
+/* ==========================================================================
+   COTIZACIONES — Jam Design System
+   ========================================================================== */
 
-.cotizaciones__lista {
+.cotizaciones {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--space-32);
 }
 
-.cotizaciones__tarjeta {
-  background: #FFFFFF;
-  border: 1px solid var(--color-borde);
-  border-radius: 6px;
-  overflow: hidden;
-}
-
-.cotizaciones__resumen {
+.cotizaciones-header {
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  align-items: center;
-  padding: 16px 20px;
-  cursor: pointer;
+  gap: var(--space-24);
 }
 
-.cotizaciones__resumen:hover {
-  background: var(--color-fondo);
+.cotizaciones-title {
+  font-family: var(--font-display);
+  font-weight: var(--weight-black);
+  font-size: var(--text-heading);
+  line-height: var(--leading-heading);
+  letter-spacing: var(--tracking-heading);
+  color: var(--color-paper);
+  margin: 0;
 }
 
-.cotizaciones__moto {
-  display: block;
-  font-family: var(--fuente-titulo);
-  font-weight: 700;
-  font-size: 15px;
-  color: var(--color-carbon);
-}
-
-.cotizaciones__cliente {
-  display: block;
-  font-size: 12px;
-  color: var(--color-rojo);
-  margin-top: 2px;
-}
-
-.cotizaciones__fecha {
-  display: block;
-  font-size: 12px;
-  color: var(--color-texto-suave);
-  margin-top: 2px;
-}
-
-.cotizaciones__derecha {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
-.cotizaciones__total {
-  font-family: var(--fuente-titulo);
-  font-weight: 700;
-  font-size: 15px;
-  color: var(--color-carbon);
-}
-
-.cotizaciones__estado-badge {
-  padding: 4px 10px;
-  border-radius: 3px;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.cotizaciones__estado-badge--pendiente { background: #FFF4E8; color: #B25900; }
-.cotizaciones__estado-badge--aprobada { background: #E8F5E9; color: #2E7D32; }
-.cotizaciones__estado-badge--rechazada { background: #FBEAEA; color: var(--color-rojo-oscuro); }
-.cotizaciones__estado-badge--completada { background: #E6E9F5; color: #4A4FA8; }
-
-.cotizaciones__detalle {
-  padding: 0 20px 16px 20px;
-  border-top: 1px solid #F0F0F1;
-}
-
-.cotizaciones__items {
-  list-style: none;
-  padding: 12px 0 0 0;
+/* Empty state */
+.cotizaciones-empty {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  font-size: 13px;
-  color: var(--color-texto);
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-16);
+  padding: var(--space-80) var(--space-24);
+  text-align: center;
+  background: var(--surface-card);
+  border: 1px solid var(--color-bone);
+  border-radius: var(--radius-cards);
 }
 
-.cotizaciones__observaciones {
-  font-size: 13px;
-  color: var(--color-texto-suave);
-  font-style: italic;
-  margin-top: 10px;
+.empty-icon {
+  font-size: 48px;
+  color: var(--color-mist-gray);
+  opacity: 0.5;
 }
 
-.cotizaciones__acciones {
+.cotizaciones-empty p {
+  font-family: var(--font-ui);
+  font-size: var(--text-body-lg);
+  color: var(--color-mist-gray);
+  margin: 0;
+}
+
+/* List */
+.cotizaciones-list {
   display: flex;
-  gap: 10px;
-  margin-top: 14px;
+  flex-direction: column;
+  gap: var(--space-16);
 }
 
-.cotizaciones__boton {
-  border: none;
-  border-radius: 4px;
-  padding: 7px 14px;
-  font-size: 13px;
+/* Card */
+.cotizacion-card {
+  background: var(--surface-card);
+  border: 1px solid var(--color-bone);
+  border-radius: var(--radius-cards);
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.cotizacion-card:hover {
+  border-color: var(--color-mist-gray);
+}
+
+/* Header (clickable summary) */
+.cotizacion-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-24);
+  padding: var(--space-20) var(--space-24);
   cursor: pointer;
+  transition: background 0.15s ease;
 }
 
-.cotizaciones__boton:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+.cotizacion-header:hover {
+  background: var(--surface-elevated);
 }
 
-.cotizaciones__boton--aprobar {
-  background: var(--color-rojo);
-  color: #FFFFFF;
+.cotizacion-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  flex: 1;
+  min-width: 0;
 }
 
-.cotizaciones__boton--aprobar:hover {
-  background: var(--color-rojo-oscuro);
+.cotizacion-moto {
+  font-family: var(--font-display);
+  font-weight: var(--weight-bold);
+  font-size: var(--text-body-lg);
+  color: var(--color-paper);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.cotizaciones__boton--rechazar {
-  background: transparent;
-  border: 1px solid var(--color-borde);
-  color: var(--color-texto-suave);
+.cotizacion-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-16);
+  font-family: var(--font-ui);
+  font-size: var(--text-caption);
+  color: var(--color-mist-gray);
+}
+
+.cotizacion-cliente {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+}
+
+.cotizacion-fecha {
+  font-family: var(--font-mono);
+}
+
+.cotizacion-side {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  flex-shrink: 0;
+}
+
+.cotizacion-total {
+  font-family: var(--font-display);
+  font-weight: var(--weight-bold);
+  font-size: var(--text-body-lg);
+  color: var(--color-paper);
+  white-space: nowrap;
+}
+
+/* Detail (expandable) */
+.cotizacion-detail {
+  padding: 0 var(--space-24) var(--space-24);
+  border-top: 1px solid var(--color-bone);
+  animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.cotizacion-items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  margin: 0 0 var(--space-20);
+  padding: 0;
+  list-style: none;
+}
+
+.cotizacion-items li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-16);
+  padding: var(--space-12) var(--space-16);
+  background: var(--surface-elevated);
+  border: 1px solid var(--color-bone);
+  border-radius: var(--radius-inputs);
+  font-family: var(--font-ui);
+  font-size: var(--text-body);
+  color: var(--color-soft-mist);
+}
+
+.cotizacion-items li span:first-child {
+  color: var(--color-paper);
+  font-weight: var(--weight-medium);
+}
+
+.cotizacion-items li span:last-child {
+  font-family: var(--font-display);
+  font-weight: var(--weight-semibold);
+  color: var(--color-paper);
+  white-space: nowrap;
+}
+
+.cotizacion-observaciones {
+  font-family: var(--font-ui);
+  font-size: var(--text-body);
+  font-style: italic;
+  color: var(--color-mist-gray);
+  margin: 0 0 var(--space-20);
+  padding: var(--space-16);
+  background: var(--surface-canvas);
+  border: 1px solid var(--color-bone);
+  border-radius: var(--radius-inputs);
+  border-left: 3px solid var(--color-electric-violet);
+}
+
+/* Actions */
+.cotizacion-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-12);
+  padding-top: var(--space-16);
+  border-top: 1px solid var(--color-bone);
+}
+
+.cotizacion-actions .btn {
+  flex: 1;
+  min-width: 140px;
+}
+
+/* Responsive */
+@media (max-width: 720px) {
+  .cotizaciones-title {
+    font-size: var(--text-heading-lg);
+  }
+
+  .cotizacion-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-16);
+  }
+
+  .cotizacion-side {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .cotizacion-actions .btn {
+    width: 100%;
+  }
 }

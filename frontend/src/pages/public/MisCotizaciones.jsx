@@ -4,6 +4,23 @@ import { useAuth } from '../../context/AuthContext';
 import { obtenerCotizaciones } from '../../services/cotizaciones';
 import './MisCotizaciones.css';
 
+const precioFormateado = (valor) =>
+  new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(valor);
+
+const estadoLabels = {
+  pendiente: 'Pendiente',
+  aprobada: 'Aprobada',
+  rechazada: 'Rechazada',
+  completada: 'Completada'
+};
+
+const estadoBadge = {
+  pendiente: 'violet',
+  aprobada: 'mint',
+  rechazada: 'pink',
+  completada: 'gray'
+};
+
 export default function MisCotizaciones() {
   const { usuario } = useAuth();
   const [cotizaciones, setCotizaciones] = useState([]);
@@ -28,61 +45,71 @@ export default function MisCotizaciones() {
     setExpandida(expandida === id ? null : id);
   }
 
-  const precioFormateado = (valor) =>
-    new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(valor);
-
-  if (cargando) return <p className="mis-cotizaciones__estado">Cargando tus cotizaciones...</p>;
+  if (cargando) {
+    return (
+      <div className="mis-cotizaciones" role="status" aria-live="polite">
+        <div className="skeleton" style={{ height: '56px', width: '200px', marginBottom: 'var(--space-32)' }} />
+        <div className="skeleton" style={{ height: '400px' }} />
+      </div>
+    );
+  }
 
   return (
     <div className="mis-cotizaciones">
-      <Link to="/" className="mis-cotizaciones__volver">← Volver al catálogo</Link>
-      <h1 className="mis-cotizaciones__titulo">Mis cotizaciones</h1>
+      <header className="mis-cotizaciones-header">
+        <Link to="/" className="btn btn--ghost btn--sm">← Volver al catálogo</Link>
+        <h1 className="mis-cotizaciones-title">Mis cotizaciones</h1>
+      </header>
 
       {cotizaciones.length === 0 && (
-        <p className="mis-cotizaciones__vacio">
-          Todavía no has enviado ninguna cotización. Ve al{' '}
-          <Link to="/configurador">configurador</Link> o al{' '}
-          <Link to="/">catálogo</Link> para armar una.
-        </p>
+        <div className="cotizaciones-empty">
+          <span className="empty-icon" aria-hidden="true">▣</span>
+          <h2 className="empty-title">Todavía no has enviado ninguna cotización.</h2>
+          <p className="empty-subtitle">Ve al <Link to="/configurador">configurador</Link> o al <Link to="/">catálogo</Link> para armar una.</p>
+        </div>
       )}
 
-      <div className="mis-cotizaciones__lista">
+      <section className="mis-cotizaciones-list" aria-label="Mis cotizaciones">
         {cotizaciones.map((cot) => (
-          <div key={cot.id_cotizacion} className="mis-cotizaciones__tarjeta">
-            <div className="mis-cotizaciones__resumen" onClick={() => alternarExpandida(cot.id_cotizacion)}>
-              <div>
-                <span className="mis-cotizaciones__moto">
+          <article key={cot.id_cotizacion} className="cotizacion-card">
+            <header className="cotizacion-header" onClick={() => alternarExpandida(cot.id_cotizacion)}>
+              <div className="cotizacion-main">
+                <div className="cotizacion-moto">
                   {cot.moto?.modelo_moto?.marca_moto?.marca_nombre} {cot.moto?.modelo_moto?.modelo_nombre}
-                </span>
-                <span className="mis-cotizaciones__fecha">
-                  {new Date(cot.fecha_solicitud).toLocaleDateString('es-CO')}
+                </div>
+                <div className="cotizacion-meta">
+                  <span className="cotizacion-fecha">
+                    {new Date(cot.fecha_solicitud).toLocaleDateString('es-CO')}
+                  </span>
+                </div>
+              </div>
+              <div className="cotizacion-side">
+                <span className="cotizacion-total">{precioFormateado(cot.total)}</span>
+                <span className={`badge badge--${estadoBadge[cot.coti_estado] || 'gray'}`}>
+                  {estadoLabels[cot.coti_estado] || cot.coti_estado}
                 </span>
               </div>
-              <div className="mis-cotizaciones__derecha">
-                <span className="mis-cotizaciones__total">{precioFormateado(cot.total)}</span>
-                <span className={`mis-cotizaciones__estado-badge mis-cotizaciones__estado-badge--${cot.coti_estado}`}>
-                  {cot.coti_estado}
-                </span>
-              </div>
-            </div>
+            </header>
 
             {expandida === cot.id_cotizacion && (
-              <div className="mis-cotizaciones__detalle">
-                <ul className="mis-cotizaciones__items">
-                  {cot.detalle_cotizacion.map((item) => (
+              <div className="cotizacion-detail">
+                <ul className="cotizacion-items">
+                  {cot.detalle_cotizacion?.map((item) => (
                     <li key={item.id_detalle_cotizacion}>
-                      {item.cantidad} × {item.accesorio?.acc_nombre} — {precioFormateado(item.subtotal)}
+                      <span>{item.cantidad} × {item.accesorio?.acc_nombre}</span>
+                      <span>{precioFormateado(item.subtotal)}</span>
                     </li>
                   ))}
                 </ul>
+
                 {cot.coti_observaciones && (
-                  <p className="mis-cotizaciones__observaciones">"{cot.coti_observaciones}"</p>
+                  <p className="cotizacion-observaciones">"{cot.coti_observaciones}"</p>
                 )}
               </div>
             )}
-          </div>
+          </article>
         ))}
-      </div>
+      </section>
     </div>
   );
 }

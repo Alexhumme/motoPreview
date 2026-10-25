@@ -34,10 +34,7 @@ export default function Tienda() {
   }, [idTienda]);
 
   useEffect(() => {
-    // La carga es asíncrona: el estado se actualiza después del await.
-    async function refrescar() {
-      await cargar();
-    }
+    async function refrescar() { await cargar(); }
     refrescar();
   }, [cargar]);
 
@@ -58,102 +55,149 @@ export default function Tienda() {
     }
   }
 
-  if (cargando) return <p>Cargando datos de la tienda...</p>;
-  if (!tienda) return <p>No se pudo cargar la tienda.</p>;
-
   const precioFormateado = new Intl.NumberFormat('es-CO', {
     style: 'currency', currency: 'COP', maximumFractionDigits: 0,
   }).format(tienda.plan_subscripcion?.precio_mensual || 0);
 
-  return (
-    <div className="tienda-admin">
-      <h1 className="tienda-admin__titulo">Datos de la tienda</h1>
-
-      <div className="tienda-admin__plan">
-        <div>
-          <span className="tienda-admin__plan-etiqueta">Plan actual</span>
-          <span className="tienda-admin__plan-nombre">{tienda.plan_subscripcion?.plan_nombre}</span>
-        </div>
-        <div>
-          <span className="tienda-admin__plan-etiqueta">Precio mensual</span>
-          <span className="tienda-admin__plan-valor">{precioFormateado}</span>
-        </div>
-        <div>
-          <span className="tienda-admin__plan-etiqueta">Límite de productos</span>
-          <span className="tienda-admin__plan-valor">{tienda.plan_subscripcion?.limite_productos ?? 'Sin límite'}</span>
-        </div>
-        <div>
-          <span className="tienda-admin__plan-etiqueta">Límite de usuarios</span>
-          <span className="tienda-admin__plan-valor">{tienda.plan_subscripcion?.limite_usuarios ?? 'Sin límite'}</span>
-        </div>
+  if (cargando) {
+    return (
+      <div className="tienda" role="status" aria-live="polite">
+        <div className="skeleton" style={{ height: '56px', width: '280px', marginBottom: 'var(--space-32)' }} />
+        <div className="skeleton" style={{ height: '200px' }} />
+        <div className="skeleton" style={{ height: '300px' }} />
       </div>
+    );
+  }
+  if (!tienda) return <div className="tienda"><p style={{ color: 'var(--color-mist-gray)' }}>No se pudo cargar la tienda.</p></div>;
 
-      <div className="tienda-admin__datos">
-        <div className="tienda-admin__datos-header">
-          <h2>Información general</h2>
-          {!editando && (
-            <button className="tienda-admin__boton-editar" onClick={() => setEditando(true)}>Editar</button>
-          )}
+  return (
+    <div className="tienda">
+      <header className="tienda-header">
+        <h1 className="tienda-title">Datos de la tienda</h1>
+      </header>
+
+      {/* Plan */}
+      <section className="card tienda-plan" aria-labelledby="plan-title">
+        <h2 id="plan-title" className="tienda-section-title">Plan de suscripción</h2>
+        <div className="tienda-plan-grid">
+          <div className="plan-item">
+            <span className="plan-label">Plan actual</span>
+            <strong className="plan-value">{tienda.plan_subscripcion?.plan_nombre || '—'}</strong>
+          </div>
+          <div className="plan-item">
+            <span className="plan-label">Precio mensual</span>
+            <strong className="plan-value">{precioFormateado}</strong>
+          </div>
+          <div className="plan-item">
+            <span className="plan-label">Límite de productos</span>
+            <strong className="plan-value">{tienda.plan_subscripcion?.limite_productos ?? 'Sin límite'}</strong>
+          </div>
+          <div className="plan-item">
+            <span className="plan-label">Límite de usuarios</span>
+            <strong className="plan-value">{tienda.plan_subscripcion?.limite_usuarios ?? 'Sin límite'}</strong>
+          </div>
         </div>
+      </section>
+
+      {/* Datos generales */}
+      <section className="card tienda-datos" aria-labelledby="datos-title">
+        <header className="tienda-datos-header">
+          <h2 id="datos-title" className="tienda-section-title">Información general</h2>
+          {!editando && (
+            <button className="btn btn--outline btn--sm" onClick={() => setEditando(true)}>Editar</button>
+          )}
+        </header>
 
         {!editando ? (
-          <div className="tienda-admin__lista-datos">
-            <div><span>Nombre</span><strong>{tienda.nombre_tienda}</strong></div>
-            <div><span>NIT</span><strong>{tienda.nit || '—'}</strong></div>
-            <div><span>Dirección</span><strong>{tienda.direccion_tienda || '—'}</strong></div>
-            <div><span>Teléfono</span><strong>{tienda.telefono_tienda || '—'}</strong></div>
-            <div><span>Email</span><strong>{tienda.email_tienda || '—'}</strong></div>
-            <div><span>Estado</span><strong>{tienda.estado_tienda}</strong></div>
-          </div>
+          <dl className="tienda-data-list">
+            <div><dt>Nombre</dt><dd>{tienda.nombre_tienda}</dd></div>
+            <div><dt>NIT</dt><dd>{tienda.nit || '—'}</dd></div>
+            <div><dt>Dirección</dt><dd>{tienda.direccion_tienda || '—'}</dd></div>
+            <div><dt>Teléfono</dt><dd>{tienda.telefono_tienda || '—'}</dd></div>
+            <div><dt>Email</dt><dd>{tienda.email_tienda || '—'}</dd></div>
+            <div>
+              <dt>Estado</dt>
+              <dd><span className="badge badge--mint">{tienda.estado_tienda}</span></dd>
+            </div>
+          </dl>
         ) : (
-          <form onSubmit={manejarSubmit} className="tienda-admin__form">
-            <label>Nombre de la tienda</label>
-            <input
-              value={formulario.nombre_tienda}
-              onChange={(e) => setFormulario({ ...formulario, nombre_tienda: e.target.value })}
-              required
-            />
+          <form onSubmit={manejarSubmit} className="tienda-form">
+            <div className="form-field">
+              <label htmlFor="nombre-tienda" className="form-label">Nombre de la tienda</label>
+              <input
+                id="nombre-tienda"
+                type="text"
+                className="form-input"
+                value={formulario.nombre_tienda}
+                onChange={(e) => setFormulario({ ...formulario, nombre_tienda: e.target.value })}
+                required
+                disabled={guardando}
+              />
+            </div>
 
-            <label>NIT</label>
-            <input
-              value={formulario.nit}
-              onChange={(e) => setFormulario({ ...formulario, nit: e.target.value })}
-            />
+            <div className="form-field">
+              <label htmlFor="nit" className="form-label">NIT</label>
+              <input
+                id="nit"
+                type="text"
+                className="form-input"
+                value={formulario.nit}
+                onChange={(e) => setFormulario({ ...formulario, nit: e.target.value })}
+                disabled={guardando}
+              />
+            </div>
 
-            <label>Dirección</label>
-            <input
-              value={formulario.direccion_tienda}
-              onChange={(e) => setFormulario({ ...formulario, direccion_tienda: e.target.value })}
-            />
+            <div className="form-field">
+              <label htmlFor="direccion" className="form-label">Dirección</label>
+              <input
+                id="direccion"
+                type="text"
+                className="form-input"
+                value={formulario.direccion_tienda}
+                onChange={(e) => setFormulario({ ...formulario, direccion_tienda: e.target.value })}
+                disabled={guardando}
+              />
+            </div>
 
-            <label>Teléfono</label>
-            <input
-              value={formulario.telefono_tienda}
-              onChange={(e) => setFormulario({ ...formulario, telefono_tienda: e.target.value })}
-            />
+            <div className="form-field">
+              <label htmlFor="telefono" className="form-label">Teléfono</label>
+              <input
+                id="telefono"
+                type="tel"
+                className="form-input"
+                value={formulario.telefono_tienda}
+                onChange={(e) => setFormulario({ ...formulario, telefono_tienda: e.target.value })}
+                disabled={guardando}
+              />
+            </div>
 
-            <label>Email</label>
-            <input
-              type="email"
-              value={formulario.email_tienda}
-              onChange={(e) => setFormulario({ ...formulario, email_tienda: e.target.value })}
-            />
+            <div className="form-field">
+              <label htmlFor="email-tienda" className="form-label">Email</label>
+              <input
+                id="email-tienda"
+                type="email"
+                className="form-input"
+                value={formulario.email_tienda}
+                onChange={(e) => setFormulario({ ...formulario, email_tienda: e.target.value })}
+                disabled={guardando}
+              />
+            </div>
 
-            {error && <p className="tienda-admin__error">{error}</p>}
+            {error && <p className="form-error" role="alert">{error}</p>}
 
-            <div className="tienda-admin__form-botones">
-              <button type="button" onClick={() => setEditando(false)} className="tienda-admin__boton-cancelar">
+            <footer className="modal-footer">
+              <button type="button" className="btn btn--ghost" onClick={() => setEditando(false)} disabled={guardando}>
                 Cancelar
               </button>
-              <button type="submit" disabled={guardando} className="tienda-admin__boton-guardar">
+              <button type="submit" className="btn btn--primary" disabled={guardando}>
                 {guardando ? 'Guardando...' : 'Guardar cambios'}
               </button>
-            </div>
+            </footer>
           </form>
         )}
 
-        {exito && <p className="tienda-admin__exito">Datos actualizados correctamente.</p>}
-      </div>
+        {exito && <p className="mensaje mensaje-exito" role="status">Datos actualizados correctamente.</p>}
+      </section>
     </div>
   );
 }

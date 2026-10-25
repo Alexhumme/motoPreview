@@ -23,36 +23,59 @@ export default function Visualizador() {
         const modelo = await obtenerModelo3dPorAccesorio(id);
         setModelo3d(modelo);
       } catch {
-        setModelo3d(null); // este accesorio no tiene modelo 3D todavía, está bien
+        setModelo3d(null);
       }
       setCargando(false);
     }
     cargar();
   }, [id]);
 
-  if (cargando) return <p className="visualizador__estado">Cargando...</p>;
-  if (!accesorio) return <p className="visualizador__estado">Accesorio no encontrado</p>;
+  if (cargando) {
+    return (
+      <div className="visualizador-page" role="status" aria-live="polite">
+        <div className="skeleton" style={{ height: '56px', width: '200px', marginBottom: 'var(--space-32)' }} />
+        <div className="skeleton" style={{ height: '500px' }} />
+      </div>
+    );
+  }
+  if (!accesorio) {
+    return (
+      <div className="visualizador-page">
+        <Link to="/" className="btn btn--ghost btn--sm">← Volver al catálogo</Link>
+        <div className="visualizador-empty">
+          <span className="empty-icon" aria-hidden="true">⌕</span>
+          <h1 className="empty-title">Accesorio no encontrado</h1>
+          <p className="empty-subtitle">La pieza que buscas no existe o ha sido eliminada.</p>
+          <Link to="/" className="btn btn--primary">Volver al catálogo →</Link>
+        </div>
+      </div>
+    );
+  }
 
   const precioFormateado = new Intl.NumberFormat('es-CO', {
-    style: 'currency', currency: 'COP', maximumFractionDigits: 0,
+    style: 'currency',
+    currency: 'COP',
+    maximumFractionDigits: 0,
   }).format(accesorio.acc_precio);
 
   return (
-    <div className="visualizador">
-      <Link to="/" className="visualizador__volver">← Volver al catálogo</Link>
+    <div className="visualizador-page">
+      <Link to="/" className="btn btn--ghost btn--sm visualizador-back">← Volver al catálogo</Link>
 
-      <div className="visualizador__layout">
+      <div className="visualizador-layout">
         <Visor3D url={modelo3d?.url_modelo3d} nombreAccesorio={accesorio.acc_nombre} />
 
-        <div className="visualizador__info">
-          <span className="visualizador__categoria">{accesorio.categoria_accesorio?.cat_nombre}</span>
-          <h1 className="visualizador__nombre">{accesorio.acc_nombre}</h1>
-          <p className="visualizador__descripcion">{accesorio.acc_descripcion}</p>
-          <div className="visualizador__ficha">
+        <div className="visualizador-info">
+          <span className="visualizador-categoria">{accesorio.categoria_accesorio?.cat_nombre}</span>
+          <h1 className="visualizador-title">{accesorio.acc_nombre}</h1>
+          <p className="visualizador-description">{accesorio.acc_descripcion || ''}</p>
+          <div className="visualizador-ficha">
             <span>SKU: {accesorio.codigo_sku}</span>
             <span>Peso: {accesorio.peso} kg</span>
           </div>
-          <span className="visualizador__precio">{precioFormateado}</span>
+          <span className="visualizador-price">{precioFormateado}</span>
+
+          <button className="btn btn--primary btn--full">Agregar al carrito</button>
         </div>
       </div>
     </div>

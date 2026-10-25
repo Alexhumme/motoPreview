@@ -7,8 +7,8 @@ export default function BannerConexion() {
   if (conectado) return null;
 
   return (
-    <div className="banner-conexion">
-      <span className="banner-conexion__punto" />
+    <div className="banner-conexion" role="alert" aria-live="polite">
+      <span className="banner-conexion__punto" aria-hidden="true"></span>
       No pudimos conectar con el servidor. Revisa tu conexión o intenta de nuevo en un momento.
     </div>
   );

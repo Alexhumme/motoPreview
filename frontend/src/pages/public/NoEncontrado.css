@@ -1,46 +1,51 @@
-.no-encontrado {
+/* ==========================================================================
+   NO ENCONTRADO — Jam Design System
+   ========================================================================== */
+
+.no-encontrado-page {
   min-height: 100vh;
+  background: var(--surface-canvas);
+  color: var(--color-paper);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: #F4F7F6;
-  font-family: 'Inter', sans-serif;
+  padding: var(--space-32);
+}
+
+.not-found {
+  max-width: 560px;
   text-align: center;
-  padding: 20px;
+  padding: var(--space-64) var(--space-40);
+  background: var(--surface-card);
+  border: 1px solid var(--color-bone);
+  border-radius: var(--radius-cards);
 }
 
-.no-encontrado__codigo {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 96px;
-  font-weight: 700;
-  color: #0F2A3D;
-  line-height: 1;
+.not-found-code {
+  font-family: var(--font-display);
+  font-weight: var(--weight-black);
+  font-size: 196px;
+  line-height: var(--leading-display);
+  letter-spacing: var(--tracking-display);
+  color: var(--color-signal-mint);
+  margin: 0 0 var(--space-24);
 }
 
-.no-encontrado__titulo {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 22px;
-  color: #0F2A3D;
-  margin: 8px 0 6px 0;
+.not-found-title {
+  font-family: var(--font-display);
+  font-weight: var(--weight-black);
+  font-size: var(--text-heading-lg);
+  line-height: var(--leading-heading);
+  letter-spacing: var(--tracking-heading);
+  color: var(--color-paper);
+  margin: 0 0 var(--space-16);
 }
 
-.no-encontrado__texto {
-  color: #5B6B6A;
-  font-size: 14px;
-  margin-bottom: 28px;
-}
-
-.no-encontrado__boton {
-  background: #0E6E6E;
-  color: #FFFFFF;
-  text-decoration: none;
-  font-weight: 600;
-  font-size: 14px;
-  padding: 11px 24px;
-  border-radius: 6px;
-}
-
-.no-encontrado__boton:hover {
-  background: #0A5555;
+.not-found-text {
+  font-family: var(--font-ui);
+  font-size: var(--text-body-lg);
+  line-height: var(--leading-body);
+  color: var(--color-mist-gray);
+  margin: 0 0 var(--space-32);
 }

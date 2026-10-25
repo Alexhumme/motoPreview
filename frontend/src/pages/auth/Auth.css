@@ -1,0 +1,512 @@
+/* ==========================================================================
+   AUTH PAGES — Jam Design System
+   Shared styles for Login, Registro, RecuperarPassword, RestablecerPassword, VerificarCorreo
+   ========================================================================== */
+
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface-canvas);
+  color: var(--color-paper);
+  font-family: var(--font-ui);
+  font-size: var(--text-body);
+  line-height: var(--leading-body);
+  letter-spacing: var(--tracking-body);
+  font-weight: var(--weight-regular);
+}
+
+/* ==========================================================================
+   NAVIGATION
+   ========================================================================== */
+
+.auth-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-16) var(--space-24);
+  background: var(--surface-canvas);
+  border-bottom: 1px solid var(--color-ink-border);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  text-decoration: none;
+  color: inherit;
+}
+
+.brand-mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, var(--color-signal-mint), var(--color-electric-violet));
+  border-radius: var(--radius-nav);
+  font-size: 16px;
+  color: var(--color-obsidian-plum);
+}
+
+.brand-text {
+  font-family: var(--font-display);
+  font-weight: var(--weight-black);
+  font-size: 18px;
+  letter-spacing: -0.02em;
+  color: var(--color-jam-pink);
+}
+
+.brand-text span {
+  color: var(--color-paper);
+}
+
+/* ==========================================================================
+   MAIN CONTENT
+   ========================================================================== */
+
+.auth-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-80) var(--space-24);
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 400px;
+  background: var(--surface-card);
+  border: 1px solid var(--color-bone);
+  border-radius: var(--radius-cards);
+  padding: var(--space-48) var(--space-40);
+  box-shadow: var(--shadow-card);
+}
+
+/* ==========================================================================
+   CARD HEADER
+   ========================================================================== */
+
+.auth-header {
+  text-align: center;
+  margin-bottom: var(--space-32);
+}
+
+.auth-title {
+  font-family: var(--font-display);
+  font-weight: var(--weight-black);
+  font-size: var(--text-heading);
+  line-height: var(--leading-heading);
+  letter-spacing: var(--tracking-heading);
+  color: var(--color-paper);
+  margin: 0 0 var(--space-8);
+}
+
+.auth-subtitle {
+  font-family: var(--font-ui);
+  font-weight: var(--weight-regular);
+  font-size: var(--text-body);
+  line-height: var(--leading-body);
+  color: var(--color-mist-gray);
+  margin: 0;
+}
+
+/* ==========================================================================
+   FORM
+   ========================================================================== */
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-20);
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.form-label {
+  font-family: var(--font-display);
+  font-weight: var(--weight-regular);
+  font-size: var(--text-caption);
+  line-height: var(--leading-caption);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-soft-mist);
+}
+
+.form-input {
+  width: 100%;
+  padding: var(--space-12) var(--space-16);
+  border: 1px solid var(--color-bone);
+  border-radius: var(--radius-inputs);
+  background: var(--surface-canvas);
+  color: var(--color-paper);
+  font-family: var(--font-ui);
+  font-size: var(--text-body);
+  font-weight: var(--weight-regular);
+  line-height: var(--leading-body);
+  letter-spacing: var(--tracking-body);
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.form-input::placeholder {
+  color: var(--color-mist-gray);
+  opacity: 0.6;
+}
+
+.form-input:hover:not(:disabled):not([aria-describedby]) {
+  border-color: var(--color-mist-gray);
+}
+
+.form-input:focus {
+  border-color: var(--color-signal-mint);
+  box-shadow: 0 0 0 3px rgba(115, 229, 191, 0.15);
+}
+
+.form-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.form-input[aria-describedby] {
+  border-color: var(--color-jam-pink);
+}
+
+.form-input[aria-describedby]:focus {
+  border-color: var(--color-jam-pink);
+  box-shadow: 0 0 0 3px rgba(255, 64, 112, 0.15);
+}
+
+/* ==========================================================================
+   FORM ERROR
+   ========================================================================== */
+
+.form-error {
+  font-family: var(--font-ui);
+  font-size: var(--text-caption);
+  font-weight: var(--weight-medium);
+  color: var(--color-jam-pink);
+  margin: 0;
+  padding: var(--space-8) var(--space-12);
+  background: rgba(255, 64, 112, 0.1);
+  border: 1px solid rgba(255, 64, 112, 0.2);
+  border-radius: var(--radius-inputs);
+}
+
+/* ==========================================================================
+   BUTTONS
+   ========================================================================== */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-8);
+  padding: var(--space-12) var(--space-24);
+  border-radius: var(--radius-buttons);
+  font-family: var(--font-ui);
+  font-size: var(--text-body);
+  font-weight: var(--weight-semibold);
+  line-height: 1;
+  letter-spacing: var(--tracking-body);
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border: none;
+  white-space: nowrap;
+}
+
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.btn--full {
+  width: 100%;
+}
+
+/* Primary CTA — Signal Mint with glow */
+.btn--primary {
+  background: var(--color-signal-mint);
+  color: var(--color-obsidian-plum);
+  box-shadow: var(--shadow-mint-glow);
+}
+
+.btn--primary:hover:not(:disabled) {
+  background: var(--color-mint-halo);
+  box-shadow: var(--shadow-mint-glow-hover);
+  transform: translateY(-1px);
+}
+
+.btn--primary:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+/* Ghost button — transparent with bone border */
+.btn--ghost {
+  background: transparent;
+  color: var(--color-paper);
+  border: 1px solid var(--color-bone);
+  padding: var(--space-8) var(--space-16);
+  font-size: var(--text-body);
+}
+
+.btn--ghost:hover:not(:disabled) {
+  background: var(--color-smoke-plum);
+  border-color: var(--color-mist-gray);
+}
+
+/* Header CTA — Jam Pink (brand beacon) */
+.btn--brand {
+  background: var(--color-jam-pink);
+  color: var(--color-paper);
+  padding: var(--space-10) var(--space-16);
+  font-size: var(--text-body);
+}
+
+.btn--brand:hover:not(:disabled) {
+  background: #e63864;
+  transform: translateY(-1px);
+}
+
+/* Outline button — secondary actions */
+.btn--outline {
+  background: transparent;
+  color: var(--color-signal-mint);
+  border: 1px solid var(--color-signal-mint);
+}
+
+.btn--outline:hover:not(:disabled) {
+  background: rgba(115, 229, 191, 0.1);
+  color: var(--color-mint-halo);
+}
+
+/* Danger — Destructive actions */
+.btn--danger {
+  background: transparent;
+  color: var(--color-jam-pink);
+  border: 1px solid var(--color-jam-pink);
+}
+
+.btn--danger:hover:not(:disabled) {
+  background: rgba(255, 64, 112, 0.1);
+  color: var(--color-jam-pink);
+}
+
+/* Small variant */
+.btn--sm {
+  padding: var(--space-8) var(--space-12);
+  font-size: var(--text-caption);
+  border-radius: var(--radius-nav);
+}
+
+/* ==========================================================================
+   DIVIDER
+   ========================================================================== */
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-16);
+  margin: var(--space-8) 0;
+  color: var(--color-mist-gray);
+  font-size: var(--text-caption);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--color-bone);
+}
+
+/* ==========================================================================
+   SUCCESS STATE
+   ========================================================================== */
+
+.auth-success {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-16);
+  padding: var(--space-24);
+  background: rgba(115, 229, 191, 0.1);
+  border: 1px solid rgba(115, 229, 191, 0.2);
+  border-radius: var(--radius-cards);
+}
+
+.success-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: var(--color-signal-mint);
+  color: var(--color-obsidian-plum);
+  border-radius: 50%;
+  font-size: 24px;
+  font-weight: var(--weight-bold);
+}
+
+.auth-success p {
+  font-family: var(--font-ui);
+  font-size: var(--text-body);
+  line-height: var(--leading-body);
+  color: var(--color-soft-mist);
+  margin: 0;
+}
+
+.auth-success p strong {
+  color: var(--color-paper);
+  font-weight: var(--weight-semibold);
+}
+
+/* ==========================================================================
+   ERROR STATE
+   ========================================================================== */
+
+.auth-error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-16);
+  padding: var(--space-24);
+  background: rgba(255, 64, 112, 0.1);
+  border: 1px solid rgba(255, 64, 112, 0.2);
+  border-radius: var(--radius-cards);
+}
+
+.error-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: var(--color-jam-pink);
+  color: var(--color-paper);
+  border-radius: 50%;
+  font-size: 24px;
+  font-weight: var(--weight-bold);
+}
+
+.auth-error-state p {
+  font-family: var(--font-ui);
+  font-size: var(--text-body);
+  line-height: var(--leading-body);
+  color: var(--color-soft-mist);
+  margin: 0;
+}
+
+/* ==========================================================================
+   LOADING STATE
+   ========================================================================== */
+
+.auth-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-16);
+  padding: var(--space-32);
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--color-bone);
+  border-top-color: var(--color-signal-mint);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.auth-loading p {
+  font-family: var(--font-ui);
+  font-size: var(--text-body);
+  color: var(--color-mist-gray);
+  margin: 0;
+}
+
+/* ==========================================================================
+   FOOTER LINK
+   ========================================================================== */
+
+.auth-footer-link {
+  text-align: center;
+  margin-top: var(--space-16);
+}
+
+.auth-footer-link .link,
+.auth-footer-link .btn {
+  width: 100%;
+}
+
+/* ==========================================================================
+   AUTH NOTE
+   ========================================================================== */
+
+.auth-note {
+  text-align: center;
+  font-family: var(--font-ui);
+  font-size: var(--text-caption);
+  font-weight: var(--weight-regular);
+  color: var(--color-mist-gray);
+  margin: var(--space-16) 0 0;
+  opacity: 0.8;
+}
+
+/* ==========================================================================
+   FOOTER
+   ========================================================================== */
+
+.auth-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-24) var(--space-24);
+  border-top: 1px solid var(--color-ink-border);
+  background: var(--surface-canvas);
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  color: var(--color-mist-gray);
+  opacity: 0.6;
+}
+
+/* ==========================================================================
+   RESPONSIVE
+   ========================================================================== */
+
+@media (max-width: 480px) {
+  .auth-card {
+    padding: var(--space-32) var(--space-24);
+  }
+
+  .auth-title {
+    font-size: var(--text-heading-lg);
+  }
+
+  .auth-nav {
+    padding: var(--space-12) var(--space-16);
+  }
+
+  .brand-text {
+    font-size: 16px;
+  }
+
+  .auth-main {
+    padding: var(--space-48) var(--space-16);
+  }
+}

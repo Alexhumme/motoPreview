@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { restablecerPassword } from '../../services/auth';
-import './Login.css';
+import './Auth.css';
 
 export default function RestablecerPassword() {
   const { token } = useParams();
@@ -38,44 +38,82 @@ export default function RestablecerPassword() {
   }
 
   return (
-    <div className="auth">
-      <div className="auth__panel">
-        <Link to="/" className="auth__marca">MotoPreview</Link>
-        <h1 className="auth__titulo">Crea una nueva contraseña</h1>
+    <div className="auth-page">
+      <header className="auth-nav">
+        <Link to="/" className="brand" aria-label="MotoPreview home">
+          <span className="brand-mark">↗</span>
+          <span className="brand-text">Moto<span>Preview</span></span>
+        </Link>
+      </header>
 
-        {exito ? (
-          <p className="auth__exito">¡Listo! Tu contraseña fue actualizada. Redirigiendo al inicio de sesión...</p>
-        ) : (
-          <form onSubmit={manejarSubmit} className="auth__form">
-            <label>Nueva contraseña</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Mínimo 6 caracteres"
-              required
-            />
+      <main className="auth-main">
+        <div className="auth-card">
+          <header className="auth-header">
+            <h1 className="auth-title">Crea una nueva contraseña</h1>
+          </header>
 
-            <label>Confirma la contraseña</label>
-            <input
-              type="password"
-              value={confirmar}
-              onChange={(e) => setConfirmar(e.target.value)}
-              required
-            />
+          {exito ? (
+            <div className="auth-success">
+              <span className="success-icon" aria-hidden="true">✓</span>
+              <p>¡Listo! Tu contraseña fue actualizada. Redirigiendo al inicio de sesión...</p>
+            </div>
+          ) : (
+            <form className="auth-form" onSubmit={manejarSubmit} noValidate>
+              <div className="form-field">
+                <label htmlFor="password" className="form-label">Nueva contraseña</label>
+                <input
+                  id="password"
+                  type="password"
+                  className="form-input"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Mínimo 6 caracteres"
+                  required
+                  autoComplete="new-password"
+                  disabled={enviando}
+                  aria-describedby={error ? 'auth-error' : undefined}
+                />
+              </div>
 
-            {error && <p className="auth__error">{error}</p>}
+              <div className="form-field">
+                <label htmlFor="confirmar" className="form-label">Confirma la contraseña</label>
+                <input
+                  id="confirmar"
+                  type="password"
+                  className="form-input"
+                  value={confirmar}
+                  onChange={(e) => setConfirmar(e.target.value)}
+                  required
+                  autoComplete="new-password"
+                  disabled={enviando}
+                  aria-describedby={error ? 'auth-error' : undefined}
+                />
+              </div>
 
-            <button type="submit" disabled={enviando} className="auth__boton">
-              {enviando ? 'Guardando...' : 'Restablecer contraseña'}
-            </button>
-          </form>
-        )}
-      </div>
+              {error && (
+                <p id="auth-error" className="form-error" role="alert">{error}</p>
+              )}
 
-      <div className="auth__lateral">
-        <span className="auth__lateral-titulo">Casi listo</span>
-      </div>
+              <button
+                type="submit"
+                className="btn btn--primary btn--full"
+                disabled={enviando}
+              >
+                {enviando ? 'Guardando...' : 'Restablecer contraseña'}
+              </button>
+            </form>
+          )}
+
+          <p className="auth-footer-link">
+            <Link to="/login" className="link link--muted">← Volver a iniciar sesión</Link>
+          </p>
+        </div>
+      </main>
+
+      <footer className="auth-footer">
+        <span>MP / 2026</span>
+        <span>Hecho para quienes siguen avanzando.</span>
+      </footer>
     </div>
   );
 }

@@ -3,11 +3,14 @@ import { useAuth } from '../context/AuthContext';
 import { obtenerCotizaciones } from '../services/cotizaciones';
 import './Reportes.css';
 
+const precioFormateado = (valor) =>
+  new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(valor);
+
 export default function Reportes() {
   const { usuario } = useAuth();
   const [cotizaciones, setCotizaciones] = useState([]);
   const [cargando, setCargando] = useState(true);
-  const [rango, setRango] = useState('mes'); // 'mes' | 'todo'
+  const [rango, setRango] = useState('mes');
 
   useEffect(() => {
     async function cargar() {
@@ -23,7 +26,18 @@ export default function Reportes() {
     cargar();
   }, [usuario]);
 
-  if (cargando) return <p>Cargando reportes...</p>;
+  if (cargando) {
+    return (
+      <div className="reportes" role="status" aria-live="polite">
+        <div className="skeleton" style={{ height: '56px', width: '200px', marginBottom: 'var(--space-32)' }} />
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 'var(--space-20)' }}>
+          <div className="skeleton" style={{ height: '120px' }} />
+          <div className="skeleton" style={{ height: '120px' }} />
+          <div className="skeleton" style={{ height: '120px' }} />
+        </div>
+      </div>
+    );
+  }
 
   const ahora = new Date();
   const esEsteMes = (fecha) => {
@@ -39,19 +53,16 @@ export default function Reportes() {
     (c) => c.coti_estado === 'aprobada' || c.coti_estado === 'completada'
   );
   const totalVentas = ventasConfirmadas.reduce((suma, c) => suma + Number(c.total), 0);
-
   const totalCotizaciones = cotizacionesEnRango.length;
   const tasaAprobacion = totalCotizaciones > 0
     ? Math.round((ventasConfirmadas.length / totalCotizaciones) * 100)
     : 0;
 
-  // Conteo por estado
   const conteoEstados = { pendiente: 0, aprobada: 0, rechazada: 0, completada: 0 };
   cotizacionesEnRango.forEach((c) => {
     conteoEstados[c.coti_estado] = (conteoEstados[c.coti_estado] || 0) + 1;
   });
 
-  // Accesorios más cotizados (por cantidad total pedida, dentro del rango)
   const conteoAccesorios = {};
   cotizacionesEnRango.forEach((c) => {
     c.detalle_cotizacion?.forEach((item) => {
@@ -64,95 +75,112 @@ export default function Reportes() {
     .slice(0, 5);
   const maxCantidad = topAccesorios.length > 0 ? topAccesorios[0][1] : 1;
 
-  const precioFormateado = (valor) =>
-    new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(valor);
-
   return (
-    <div>
-      <div className="reportes__header">
-        <h1 className="reportes__titulo">Reportes</h1>
-        <div className="reportes__toggle">
+    <div className="reportes">
+      <header className="reportes-header">
+        <h1 className="reportes-title">Reportes</h1>
+        <div className="reportes-toggle" role="radiogroup" aria-label="Filtrar por período">
           <button
-            className={rango === 'mes' ? 'reportes__toggle-boton--activo' : ''}
+            className={`btn ${rango === 'mes' ? 'btn--primary' : 'btn--ghost'}`}
             onClick={() => setRango('mes')}
+            role="radio"
+            aria-checked={rango === 'mes'}
           >
             Este mes
           </button>
           <button
-            className={rango === 'todo' ? 'reportes__toggle-boton--activo' : ''}
+            className={`btn ${rango === 'todo' ? 'btn--primary' : 'btn--ghost'}`}
             onClick={() => setRango('todo')}
+            role="radio"
+            aria-checked={rango === 'todo'}
           >
             Todo el tiempo
           </button>
         </div>
-      </div>
+      </header>
 
-      <div className="reportes__tarjetas">
-        <div className="reportes__tarjeta">
-          <span className="reportes__numero">{precioFormateado(totalVentas)}</span>
-          <span className="reportes__etiqueta">Ventas confirmadas ({rango === 'mes' ? 'este mes' : 'histórico'})</span>
-        </div>
-        <div className="reportes__tarjeta">
-          <span className="reportes__numero">{totalCotizaciones}</span>
-          <span className="reportes__etiqueta">Cotizaciones recibidas</span>
-        </div>
-        <div className="reportes__tarjeta">
-          <span className="reportes__numero">{tasaAprobacion}%</span>
-          <span className="reportes__etiqueta">Tasa de aprobación</span>
-        </div>
-      </div>
+      <section className="reportes-kpis" aria-label="Resumen de métricas">
+        <article className="kpi">
+          <span className="kpi-icon" aria-hidden="true">▤</span>
+          <div className="kpi-content">
+            <small>Ventas confirmadas</small>
+            <strong>{precioFormateado(totalVentas)}</strong>
+            <em>{rango === 'mes' ? 'este mes' : 'histórico'}</em>
+          </div>
+        </article>
+        <article className="kpi">
+          <span className="kpi-icon" aria-hidden="true">▤</span>
+          <div className="kpi-content">
+            <small>Cotizaciones recibidas</small>
+            <strong>{totalCotizaciones}</strong>
+            <em>{rango === 'mes' ? 'este mes' : 'histórico'}</em>
+          </div>
+        </article>
+        <article className="kpi">
+          <span className="kpi-icon" aria-hidden="true">%</span>
+          <div className="kpi-content">
+            <small>Tasa de aprobación</small>
+            <strong>{tasaAprobacion}%</strong>
+            <em>{rango === 'mes' ? 'este mes' : 'histórico'}</em>
+          </div>
+        </article>
+      </section>
 
-      <div className="reportes__columnas">
-        <div className="reportes__panel">
-          <h2>Accesorios más cotizados</h2>
-          {topAccesorios.length === 0 ? (
-            <p className="reportes__vacio">Sin datos en este periodo.</p>
-          ) : (
-            <div className="reportes__ranking">
-              {topAccesorios.map(([nombre, cantidad]) => (
-                <div key={nombre} className="reportes__fila-ranking">
-                  <div className="reportes__fila-info">
+      <section className="reportes-grid" aria-label="Detalles de reportes">
+        <article className="card reportes-card">
+          <header className="card-head">
+            <strong>Accesorios más cotizados</strong>
+          </header>
+          <div className="reportes-ranking">
+            {topAccesorios.length === 0 ? (
+              <p className="reportes-empty">Sin datos en este periodo.</p>
+            ) : (
+              topAccesorios.map(([nombre, cantidad]) => (
+                <div key={nombre} className="reportes-row">
+                  <div className="reportes-row-info">
                     <span>{nombre}</span>
-                    <span className="reportes__fila-cantidad">{cantidad}</span>
+                    <span className="reportes-row-count">{cantidad}</span>
                   </div>
-                  <div className="reportes__barra-fondo">
+                  <div className="reportes-bar-track">
                     <div
-                      className="reportes__barra"
+                      className="reportes-bar"
                       style={{ width: `${(cantidad / maxCantidad) * 100}%` }}
                     />
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div className="reportes__panel">
-          <h2>Cotizaciones por estado</h2>
-          <div className="reportes__estados">
-            <div className="reportes__estado-item">
-              <span className="reportes__estado-dot reportes__estado-dot--pendiente" />
-              <span>Pendientes</span>
-              <strong>{conteoEstados.pendiente}</strong>
-            </div>
-            <div className="reportes__estado-item">
-              <span className="reportes__estado-dot reportes__estado-dot--aprobada" />
-              <span>Aprobadas</span>
-              <strong>{conteoEstados.aprobada}</strong>
-            </div>
-            <div className="reportes__estado-item">
-              <span className="reportes__estado-dot reportes__estado-dot--rechazada" />
-              <span>Rechazadas</span>
-              <strong>{conteoEstados.rechazada}</strong>
-            </div>
-            <div className="reportes__estado-item">
-              <span className="reportes__estado-dot reportes__estado-dot--completada" />
-              <span>Completadas</span>
-              <strong>{conteoEstados.completada}</strong>
-            </div>
+              ))
+            )}
           </div>
-        </div>
-      </div>
+        </article>
+
+        <article className="card reportes-card">
+          <header className="card-head">
+            <strong>Cotizaciones por estado</strong>
+          </header>
+          <div className="reportes-estados">
+            <EstadoItem label="Pendientes" value={conteoEstados.pendiente} color="violet" />
+            <EstadoItem label="Aprobadas" value={conteoEstados.aprobada} color="mint" />
+            <EstadoItem label="Rechazadas" value={conteoEstados.rechazada} color="pink" />
+            <EstadoItem label="Completadas" value={conteoEstados.completada} color="gray" />
+          </div>
+        </article>
+      </section>
+    </div>
+  );
+}
+
+function EstadoItem({ label, value, color }) {
+  const colorMap = {
+    mint: 'badge--mint',
+    violet: 'badge--violet',
+    pink: 'badge--pink',
+    gray: 'badge--gray'
+  };
+
+  return (
+    <div className="estado-item">
+      <span className={`badge ${colorMap[color]}`}>{label}</span>
+      <strong>{value}</strong>
     </div>
   );
 }

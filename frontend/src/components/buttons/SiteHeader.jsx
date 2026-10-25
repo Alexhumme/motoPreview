@@ -9,23 +9,30 @@ export default function SiteHeader() {
   const { totalItems } = useCart();
 
   const isAdmin = usuario && (
+    usuario.id_rol === '00000000-0000-0000-0000-000000000000' ||
     usuario.id_rol === '11111111-0000-0000-0000-000000000001' ||
     usuario.id_rol === '11111111-0000-0000-0000-000000000002'
   );
 
   return (
     <header className="site-header">
-      <div className="site-header__inner">
-        <Link to="/" className="brand">
+      <div className="site-header-inner">
+        <Link to="/" className="brand" aria-label="MotoPreview home">
           <span className="brand-mark">↗</span>
-          <span>Moto<span>Preview</span></span>
+          <span className="brand-text">Moto<span>Preview</span></span>
         </Link>
 
-        <nav className="main-nav">
-          <Link to="/" className={location.pathname === '/' ? 'nav-link nav-link--active' : 'nav-link'}>
+        <nav className="main-nav" aria-label="Navegación principal">
+          <Link
+            to="/"
+            className={`nav-link${location.pathname === '/' ? ' nav-link--active' : ''}`}
+          >
             Catálogo
           </Link>
-          <Link to="/configurador" className={location.pathname === '/configurador' ? 'nav-link nav-link--active' : 'nav-link'}>
+          <Link
+            to="/configurador"
+            className={`nav-link${location.pathname === '/configurador' ? ' nav-link--active' : ''}`}
+          >
             Configurador
           </Link>
           <a href="/#como-funciona" className="nav-link">Cómo funciona</a>
@@ -36,15 +43,15 @@ export default function SiteHeader() {
             <div className="header-account">
               <Link to="/mis-cotizaciones">{usuario.usu_nombre?.split(' ')[0]}</Link>
               {isAdmin && <Link to="/admin">Panel</Link>}
-              <button onClick={logout}>Salir</button>
+              <button onClick={logout} className="btn btn--ghost btn--sm">Salir</button>
             </div>
           ) : (
-            <Link to="/login" className="header-login">↪ Ingresar</Link>
+            <Link to="/login" className="btn btn--brand btn--sm">Ingresar</Link>
           )}
           <Link to="/carrito" className="cart-button">
             <span>▣</span>
-            <span>Carrito</span>
-            {totalItems > 0 && <b>{totalItems}</b>}
+            <span className="cart-label">Carrito</span>
+            {totalItems > 0 && <span className="cart-badge">{totalItems}</span>}
           </Link>
         </div>
       </div>
