@@ -4,6 +4,7 @@ import ModalConfirmacion from '../components/forms/ModalConfirmacion';
 import { obtenerRoles, crearRol, actualizarRol, desactivarRol } from '../services/roles';
 import { ROL_ADMIN, ROL_VENDEDOR, ROL_CLIENTE } from '../utils/constants/roles';
 import { useNavigate } from 'react-router-dom';
+import { ConPermiso } from '../components/menus/ConPermiso';
 import './Roles.css';
 
 const VACIO = { nombre_rol: '', activo: true };
@@ -98,9 +99,11 @@ export default function Roles() {
     <div className="roles-admin">
       <div className="roles-admin__header">
         <h1 className="roles-admin__titulo">Roles y Permisos</h1>
-        <button className="roles-admin__boton-nuevo" onClick={abrirNuevo}>
-          + Nuevo rol
-        </button>
+        <ConPermiso recurso="roles" accion="crear" fallback={null}>
+          <button className="roles-admin__boton-nuevo" onClick={abrirNuevo}>
+            + Nuevo rol
+          </button>
+        </ConPermiso>
       </div>
 
       <table className="roles-admin__tabla">
@@ -127,36 +130,44 @@ export default function Roles() {
                 </span>
               </td>
               <td className="roles-admin__acciones">
-                <button 
-                  className="roles-admin__boton-permisos" 
-                  onClick={() => irAPermisos(r.id_rol)}
-                  title="Gestionar permisos"
-                >
-                  🔐 Permisos
-                </button>
+                <ConPermiso recurso="roles" accion="actualizar" fallback={null}>
+                  <button 
+                    className="roles-admin__boton-permisos" 
+                    onClick={() => irAPermisos(r.id_rol)}
+                    title="Gestionar permisos"
+                  >
+                    🔐 Permisos
+                  </button>
+                </ConPermiso>
                 {!esRolSistema(r.id_rol) && (
                   <>
+                    <ConPermiso recurso="roles" accion="actualizar" fallback={null}>
+                      <button 
+                        className="roles-admin__boton-editar" 
+                        onClick={() => abrirEdicion(r)}
+                      >
+                        Editar
+                      </button>
+                    </ConPermiso>
+                    <ConPermiso recurso="roles" accion="eliminar" fallback={null}>
+                      <button 
+                        className="roles-admin__boton-eliminar" 
+                        onClick={() => pedirConfirmacionEliminar(r)}
+                      >
+                        Eliminar
+                      </button>
+                    </ConPermiso>
+                  </>
+                )}
+                {esRolSistema(r.id_rol) && (
+                  <ConPermiso recurso="roles" accion="actualizar" fallback={null}>
                     <button 
                       className="roles-admin__boton-editar" 
                       onClick={() => abrirEdicion(r)}
                     >
                       Editar
                     </button>
-                    <button 
-                      className="roles-admin__boton-eliminar" 
-                      onClick={() => pedirConfirmacionEliminar(r)}
-                    >
-                      Eliminar
-                    </button>
-                  </>
-                )}
-                {esRolSistema(r.id_rol) && (
-                  <button 
-                    className="roles-admin__boton-editar" 
-                    onClick={() => abrirEdicion(r)}
-                  >
-                    Editar
-                  </button>
+                  </ConPermiso>
                 )}
               </td>
             </tr>

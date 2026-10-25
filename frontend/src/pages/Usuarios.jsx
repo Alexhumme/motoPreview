@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import ModalConfirmacion from '../components/forms/ModalConfirmacion';
 import { obtenerUsuarios, registrarUsuario, actualizarUsuario, desactivarUsuario } from '../services/usuarios';
 import { ROL_ADMIN, ROL_VENDEDOR } from '../utils/constants/roles';
+import { ConPermiso } from '../components/menus/ConPermiso';
 import './Usuarios.css';
 
 const VACIO = { usu_nombre: '', usu_email: '', password: '', id_rol: ROL_VENDEDOR, estado_usuario: 'activo' };
@@ -102,7 +103,9 @@ export default function Usuarios() {
     <div>
       <div className="usuarios-admin__header">
         <h1 className="usuarios-admin__titulo">Usuarios de la tienda</h1>
-        <button className="usuarios-admin__boton-nuevo" onClick={abrirNuevo}>+ Nuevo usuario</button>
+        <ConPermiso recurso="usuarios" accion="crear" fallback={null}>
+          <button className="usuarios-admin__boton-nuevo" onClick={abrirNuevo}>+ Nuevo usuario</button>
+        </ConPermiso>
       </div>
 
       <table className="usuarios-admin__tabla">
@@ -127,11 +130,15 @@ export default function Usuarios() {
                 </span>
               </td>
               <td className="usuarios-admin__acciones">
-                <button className="usuarios-admin__boton-editar" onClick={() => abrirEdicion(u)}>Editar</button>
+                <ConPermiso recurso="usuarios" accion="actualizar" fallback={null}>
+                  <button className="usuarios-admin__boton-editar" onClick={() => abrirEdicion(u)}>Editar</button>
+                </ConPermiso>
                 {u.estado_usuario !== 'bloqueado' && u.id_usuario !== usuario.id_usuario && (
-                  <button className="usuarios-admin__boton-desactivar" onClick={() => pedirConfirmacionDesactivar(u)}>
-                    Desactivar
-                  </button>
+                  <ConPermiso recurso="usuarios" accion="eliminar" fallback={null}>
+                    <button className="usuarios-admin__boton-desactivar" onClick={() => pedirConfirmacionDesactivar(u)}>
+                      Desactivar
+                    </button>
+                  </ConPermiso>
                 )}
               </td>
             </tr>

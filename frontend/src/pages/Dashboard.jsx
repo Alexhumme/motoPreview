@@ -13,9 +13,12 @@ export default function Dashboard() {
   useEffect(() => {
     async function cargar() {
       try {
-        const [datosInventario, datosCotizaciones] = await Promise.all([obtenerInventario(), obtenerCotizaciones()]);
-        setInventario(datosInventario.filter((item) => item.id_tienda === usuario.id_tienda));
-        setCotizaciones(datosCotizaciones.filter((item) => item.id_tienda === usuario.id_tienda));
+        const [datosInventario, datosCotizaciones] = await Promise.all([
+          obtenerInventario(usuario.id_tienda),
+          obtenerCotizaciones(usuario.id_tienda)
+        ]);
+        setInventario(datosInventario);
+        setCotizaciones(datosCotizaciones);
       } catch {
         setInventario([]);
         setCotizaciones([]);

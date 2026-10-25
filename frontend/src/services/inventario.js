@@ -1,7 +1,8 @@
 import api from './api';
 
-export async function obtenerInventario() {
-  const respuesta = await api.get('/inventario');
+export async function obtenerInventario(idTienda) {
+  const params = idTienda ? { id_tienda: idTienda } : {};
+  const respuesta = await api.get('/inventario', { params });
   return respuesta.data;
 }
 

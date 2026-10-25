@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
+import { obtenerPermisosRol, actualizarPermisosRol } from '../services/roles';
 
 /**
  * Componente para gestionar permisos RBAC en el panel de administración
@@ -9,6 +10,7 @@ export default function PermisosRBAC() {
   const [roles, setRoles] = useState([]);
   const [recursosConPermisos, setRecursosConPermisos] = useState([]);
   const [rolSeleccionado, setRolSeleccionado] = useState(null);
+  // permisosRol: { [recursoAccionId]: 'global' | 'tienda' | 'propio' | null }
   const [permisosRol, setPermisosRol] = useState({});
   const [cargando, setCargando] = useState(false);
   const [mensaje, setMensaje] = useState(null);
@@ -30,10 +32,19 @@ export default function PermisosRBAC() {
   async function cargarRecursosConPermisos() {
     if (!rolSeleccionado) return;
     try {
-      const res = await api.get('/recursos-con-permisos', { 
-        params: { rol_id: rolSeleccionado } 
-      });
+      const res = await obtenerPermisosRol(rolSeleccionado);
       setRecursosConPermisos(res.data || []);
+      
+      // Inicializar permisosRol desde los datos del backend
+      const inicial = {};
+      (res.data || []).forEach(recurso => {
+        (recurso.acciones || []).forEach(accion => {
+          if (accion.scope) {
+            inicial[accion.id_recurso_accion] = accion.scope;
+          }
+        });
+      });
+      setPermisosRol(inicial);
     } catch (err) {
       console.error('Error cargando recursos:', err);
     }
@@ -48,35 +59,35 @@ export default function PermisosRBAC() {
     }
   }
 
-  function togglePermiso(recursoAccionId, scope) {
-    const key = `${recursoAccionId}:${scope}`;
-    setPermisosRol(prev => ({
-      ...prev,
-      [key]: !prev[key]
-    }));
+  function togglePermiso(recursoAccionId) {
+    setPermisosRol(prev => {
+      const nuevo = { ...prev };
+      // Si ya tiene scope, quitarlo (desmarcar). Si no tiene, poner 'global' por defecto.
+      if (nuevo[recursoAccionId]) {
+        delete nuevo[recursoAccionId];
+      } else {
+        nuevo[recursoAccionId] = 'global';
+      }
+      return nuevo;
+    });
   }
 
-  function isChecked(recursoAccionId, scope) {
-    return !!permisosRol[`${recursoAccionId}:${scope}`];
+  function isChecked(recursoAccionId) {
+    return !!permisosRol[recursoAccionId];
   }
 
   function getScopeValue(recursoAccionId) {
-    if (permisosRol[`${recursoAccionId}:global`]) return 'global';
-    if (permisosRol[`${recursoAccionId}:tienda`]) return 'tienda';
-    if (permisosRol[`${recursoAccionId}:propio`]) return 'propio';
-    return '';
+    return permisosRol[recursoAccionId] || '';
   }
 
   function handleScopeChange(recursoAccionId, e) {
     const scope = e.target.value;
     setPermisosRol(prev => {
       const nuevo = { ...prev };
-      // Desmarcar todos los scopes para este recurso-acción
-      ['global', 'tienda', 'propio'].forEach(s => {
-        delete nuevo[`${recursoAccionId}:${s}`];
-      });
       if (scope) {
-        nuevo[`${recursoAccionId}:${scope}`] = true;
+        nuevo[recursoAccionId] = scope;
+      } else {
+        delete nuevo[recursoAccionId];
       }
       return nuevo;
     });
@@ -89,16 +100,15 @@ export default function PermisosRBAC() {
     setMensaje(null);
     
     try {
-      // Preparar datos para enviar
+      // Preparar datos para enviar: array de { id_recurso_accion, scope }
       const permisos = Object.entries(permisosRol)
-        .filter(([, value]) => value)
-        .map(([key]) => {
-          const [recursoAccionId, scope] = key.split(':');
-          return { id_recurso_accion: recursoAccionId, scope };
-        });
+        .map(([recursoAccionId, scope]) => ({
+          id_recurso_accion: recursoAccionId,
+          scope
+        }));
 
-      // Enviar al backend
-      await api.put(`/roles/${rolSeleccionado}/permisos`, { permisos });
+      // Enviar al backend usando el service de roles
+      await actualizarPermisosRol(rolSeleccionado, permisos);
       
       setMensaje({ tipo: 'exito', texto: 'Permisos actualizados correctamente' });
     } catch (err) {
@@ -198,22 +208,21 @@ export default function PermisosRBAC() {
                             <label className="checkbox-permiso">
                               <input
                                 type="checkbox"
-                                checked={isChecked(accion.id_recurso_accion, 'global') || 
-                                           isChecked(accion.id_recurso_accion, 'tienda') || 
-                                           isChecked(accion.id_recurso_accion, 'propio')}
-                                onChange={() => togglePermiso(accion.id_recurso_accion, accion.accion_codigo, 'global')}
+                                checked={isChecked(accion.id_recurso_accion)}
+                                onChange={() => togglePermiso(accion.id_recurso_accion)}
                               />
                               <span className="permiso-label">
                                 {accion.accion_nombre}
-                                <select
-                                  value={getScopeValue(accion.id_recurso_accion)}
-                                  onChange={(e) => handleScopeChange(accion.id_recurso_accion, e)}
-                                >
-                                  <option value="">Scope</option>
-                                  <option value="global">Global</option>
-                                  <option value="tienda">Tienda</option>
-                                  <option value="propio">Propio</option>
-                                </select>
+                                {isChecked(accion.id_recurso_accion) && (
+                                  <select
+                                    value={getScopeValue(accion.id_recurso_accion)}
+                                    onChange={(e) => handleScopeChange(accion.id_recurso_accion, e)}
+                                  >
+                                    <option value="global">Global</option>
+                                    <option value="tienda">Tienda</option>
+                                    <option value="propio">Propio</option>
+                                  </select>
+                                )}
                               </span>
                             </label>
                           </td>
@@ -240,4 +249,3 @@ export default function PermisosRBAC() {
     </div>
   );
 }
-

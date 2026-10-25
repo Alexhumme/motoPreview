@@ -10,6 +10,9 @@ import { AuthContext } from './AuthContext';
  *   // Verificar permiso simple
  *   if (tienePermiso('productos', 'crear')) { ... }
  *   
+ *   // Verificar con scope específico
+ *   if (tienePermiso('productos', 'crear', 'global')) { ... }
+ *   
  *   // Cargar permisos del usuario (opcional, se hace automáticamente en login)
  *   await cargarPermisos();
  */
@@ -17,40 +20,51 @@ export function usePermiso() {
   const { usuario, actualizarPermisos } = useContext(AuthContext);
 
   /**
+   * Verifica si el usuario es SUPERADMIN (bypass total)
+   */
+  const esSuperAdmin = () => {
+    if (!usuario) return false;
+    // ROL_SUPERADMIN UUID: '00000000-0000-0000-0000-000000000000'
+    return usuario.id_rol === '00000000-0000-0000-0000-000000000000';
+  };
+
+  /**
    * Verifica si el usuario tiene un permiso específico
    * @param {string} recurso - Código del recurso (ej: 'productos', 'usuarios', 'cotizaciones')
    * @param {string} accion - Código de la acción (ej: 'crear', 'leer', 'actualizar', 'eliminar', 'listar', 'exportar')
+   * @param {string} [scope] - Scope opcional: 'global', 'tienda', 'propio'. Si no se pasa, acepta cualquier scope.
    * @returns {boolean}
    */
-  const tienePermiso = (recurso, accion) => {
+  const tienePermiso = (recurso, accion, scope) => {
     if (!usuario || !usuario.permisos) return false;
     
+    // SUPERADMIN bypass
+    if (esSuperAdmin()) return true;
+
     // Buscar en los permisos del usuario
     const permiso = usuario.permisos.find(p => 
       p.recurso === recurso && 
       p.accion === accion &&
-      p.activo
+      p.activo &&
+      (!scope || p.scope === scope)
     );
     
-    if (!permiso) return false;
-    
-    // TODO: Verificar scope según necesidad (global, tienda, propio)
-    // Por ahora, si tiene el permiso, se permite
-    return true;
+    return !!permiso;
   };
 
   /**
    * Verifica múltiples permisos (AND - todos deben cumplirse)
+   * @param {Array<{recurso: string, accion: string, scope?: string}>} permisos
    */
   const tieneTodosPermisos = (permisos) => {
-    return permisos.every(({ recurso, accion }) => tienePermiso(recurso, accion));
+    return permisos.every(({ recurso, accion, scope }) => tienePermiso(recurso, accion, scope));
   };
 
   /**
    * Verifica si tiene al menos uno de los permisos (OR)
    */
   const tieneAlgunPermiso = (permisos) => {
-    return permisos.some(({ recurso, accion }) => tienePermiso(recurso, accion));
+    return permisos.some(({ recurso, accion, scope }) => tienePermiso(recurso, accion, scope));
   };
 
   /**
@@ -69,7 +83,6 @@ export function usePermiso() {
    */
   const cargarPermisos = async () => {
     try {
-      // Llamar al endpoint para obtener permisos del usuario
       const respuesta = await fetch('/api/permisos/usuario', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -94,36 +107,9 @@ export function usePermiso() {
     tieneAlgunPermiso,
     getPermisosRecurso,
     cargarPermisos,
+    esSuperAdmin,
     permisos: usuario?.permisos || [],
   };
-}
-
-/**
- * Componente wrapper para renderizado condicional basado en permisos
- * Uso:
- *   <ConPermiso recurso="productos" accion="crear">
- *     <BotonCrearProducto />
- *   </ConPermiso>
- */
-export function ConPermiso({ recurso, accion, children, fallback = null }) {
-  const { tienePermiso } = usePermiso();
-  return tienePermiso(recurso, accion) ? children : fallback;
-}
-
-/**
- * Componente para requerir múltiples permisos (AND)
- */
-export function ConTodosPermisos({ permisos, children, fallback = null }) {
-  const { tieneTodosPermisos } = usePermiso();
-  return tieneTodosPermisos(permisos) ? children : fallback;
-}
-
-/**
- * Componente para requerir al menos un permiso (OR)
- */
-export function ConAlgunPermiso({ permisos, children, fallback = null }) {
-  const { tieneAlgunPermiso } = usePermiso();
-  return tieneAlgunPermiso(permisos) ? children : fallback;
 }
 
 export default usePermiso;

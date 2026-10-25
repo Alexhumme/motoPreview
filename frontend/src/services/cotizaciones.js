@@ -1,7 +1,8 @@
 import api from './api';
 
-export async function obtenerCotizaciones() {
-  const respuesta = await api.get('/cotizaciones');
+export async function obtenerCotizaciones(idTienda) {
+  const params = idTienda ? { id_tienda: idTienda } : {};
+  const respuesta = await api.get('/cotizaciones', { params });
   return respuesta.data;
 }
 

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { obtenerInventario, registrarMovimiento } from '../services/inventario';
 import { TIPOS_MOVIMIENTO } from '../utils/constants/tiposMovimiento';
+import { ConPermiso } from '../components/menus/ConPermiso';
 import './Inventario.css';
 
 export default function Inventario() {
@@ -17,8 +18,8 @@ export default function Inventario() {
 
   const cargarInventario = useCallback(async () => {
     try {
-      const datos = await obtenerInventario();
-      setInventario(datos.filter((i) => i.id_tienda === idTienda));
+      const datos = await obtenerInventario(idTienda);
+      setInventario(datos);
     } catch (err) {
       console.error(err);
     } finally {
@@ -94,9 +95,11 @@ export default function Inventario() {
                 </span>
               </td>
               <td>
-                <button className="inventario__boton" onClick={() => abrirFormulario(item)}>
-                  Registrar movimiento
-                </button>
+                <ConPermiso recurso="inventario" accion="actualizar" fallback={null}>
+                  <button className="inventario__boton" onClick={() => abrirFormulario(item)}>
+                    Registrar movimiento
+                  </button>
+                </ConPermiso>
               </td>
             </tr>
           ))}

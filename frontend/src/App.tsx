@@ -1,28 +1,43 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { Suspense, lazy } from 'react';
 import Login from './pages/auth/Login';
 import Catalogo from './pages/public/Catalogo';
 import Carrito from './pages/public/Carrito';
 import AdminLayout from './layouts/AdminLayout';
-import Dashboard from './pages/Dashboard';
-import Inventario from './pages/Inventario';
-import Cotizaciones from './pages/Cotizaciones';
 import RutaProtegida from './components/private/RutaProtegida';
 import { ROL_ADMIN, ROL_VENDEDOR } from './utils/constants/roles';
 import Visualizador from './pages/public/Visualizador';
-import RecursoAdmin from './components/tables/RecursoAdmin';
 import Configurador from './pages/public/Configurador';
 import MisCotizaciones from './pages/public/MisCotizaciones';
 import NoEncontrado from './pages/public/NoEncontrado';
-import Usuarios from './pages/Usuarios';
-import Reportes from './pages/Reportes';
 import VerificarCorreo from './pages/auth/VerificarCorreo';
 import BannerConexion from './components/menus/BannerConexion';
-import Tienda from './pages/Tienda';
 import RecuperarPassword from './pages/auth/RecuperarPassword';
 import RestablecerPassword from './pages/auth/RestablecerPassword';
 import Registro from './pages/auth/Registro';
-import PermisosRBAC from './pages/PermisosRBAC';
-import Roles from './pages/Roles';
+
+// Code-splitting: cargar páginas admin bajo demanda
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Inventario = lazy(() => import('./pages/Inventario'));
+const Cotizaciones = lazy(() => import('./pages/Cotizaciones'));
+const Reportes = lazy(() => import('./pages/Reportes'));
+const Usuarios = lazy(() => import('./pages/Usuarios'));
+const Tienda = lazy(() => import('./pages/Tienda'));
+const PermisosRBAC = lazy(() => import('./pages/PermisosRBAC'));
+const Roles = lazy(() => import('./pages/Roles'));
+const RecursoAdmin = lazy(() => import('./components/tables/RecursoAdmin'));
+
+function LoadingFallback() {
+  return <div className="admin-loading">Cargando módulo...</div>;
+}
+
+function LazyRoute({ component: Component, ...props }) {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <Route {...props} element={<Component />} />
+    </Suspense>
+  );
+}
 
 function App() {
   return (
@@ -55,9 +70,9 @@ function App() {
           }
         >
           <Route index element={<Dashboard />} />
-          <Route path="inventario" element={<Inventario />} />
-          <Route path="cotizaciones" element={<Cotizaciones />} />
-          <Route path="reportes" element={<Reportes />} />
+          <LazyRoute path="inventario" component={Inventario} />
+          <LazyRoute path="cotizaciones" component={Cotizaciones} />
+          <LazyRoute path="reportes" component={Reportes} />
           <Route
             path="productos"
             element={

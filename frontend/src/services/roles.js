@@ -24,3 +24,13 @@ export async function obtenerRol(id) {
   const respuesta = await api.get(`/roles/${id}`);
   return respuesta.data;
 }
+
+export async function obtenerPermisosRol(rolId) {
+  const respuesta = await api.get('/recursos-con-permisos', { params: { rol_id: rolId } });
+  return respuesta.data;
+}
+
+export async function actualizarPermisosRol(rolId, permisos) {
+  const respuesta = await api.put(`/roles/${rolId}/permisos`, { permisos });
+  return respuesta.data;
+}

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { obtenerCotizaciones, cambiarEstadoCotizacion } from '../services/cotizaciones';
+import { ConPermiso } from '../components/menus/ConPermiso';
 import './Cotizaciones.css';
 
 export default function Cotizaciones() {
@@ -14,8 +15,8 @@ export default function Cotizaciones() {
 
   const cargar = useCallback(async () => {
     try {
-      const datos = await obtenerCotizaciones();
-      setCotizaciones(datos.filter((c) => c.id_tienda === idTienda));
+      const datos = await obtenerCotizaciones(idTienda);
+      setCotizaciones(datos);
     } catch (err) {
       console.error(err);
     } finally {
@@ -96,32 +97,38 @@ export default function Cotizaciones() {
 
                 {cot.coti_estado === 'pendiente' && (
                   <div className="cotizaciones__acciones">
-                    <button
-                      disabled={actualizando === cot.id_cotizacion}
-                      className="cotizaciones__boton cotizaciones__boton--rechazar"
-                      onClick={() => manejarCambioEstado(cot.id_cotizacion, 'rechazada')}
-                    >
-                      Rechazar
-                    </button>
-                    <button
-                      disabled={actualizando === cot.id_cotizacion}
-                      className="cotizaciones__boton cotizaciones__boton--aprobar"
-                      onClick={() => manejarCambioEstado(cot.id_cotizacion, 'aprobada')}
-                    >
-                      Aprobar
-                    </button>
+                    <ConPermiso recurso="cotizaciones" accion="actualizar" scope="tienda" fallback={null}>
+                      <button
+                        disabled={actualizando === cot.id_cotizacion}
+                        className="cotizaciones__boton cotizaciones__boton--rechazar"
+                        onClick={() => manejarCambioEstado(cot.id_cotizacion, 'rechazada')}
+                      >
+                        Rechazar
+                      </button>
+                    </ConPermiso>
+                    <ConPermiso recurso="cotizaciones" accion="actualizar" scope="tienda" fallback={null}>
+                      <button
+                        disabled={actualizando === cot.id_cotizacion}
+                        className="cotizaciones__boton cotizaciones__boton--aprobar"
+                        onClick={() => manejarCambioEstado(cot.id_cotizacion, 'aprobada')}
+                      >
+                        Aprobar
+                      </button>
+                    </ConPermiso>
                   </div>
                 )}
 
                 {cot.coti_estado === 'aprobada' && (
                   <div className="cotizaciones__acciones">
-                    <button
-                      disabled={actualizando === cot.id_cotizacion}
-                      className="cotizaciones__boton cotizaciones__boton--aprobar"
-                      onClick={() => manejarCambioEstado(cot.id_cotizacion, 'completada')}
-                    >
-                      Marcar como completada
-                    </button>
+                    <ConPermiso recurso="cotizaciones" accion="actualizar" scope="tienda" fallback={null}>
+                      <button
+                        disabled={actualizando === cot.id_cotizacion}
+                        className="cotizaciones__boton cotizaciones__boton--aprobar"
+                        onClick={() => manejarCambioEstado(cot.id_cotizacion, 'completada')}
+                      >
+                        Marcar como completada
+                      </button>
+                    </ConPermiso>
                   </div>
                 )}
               </div>

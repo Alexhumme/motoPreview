@@ -12,8 +12,8 @@ export default function Reportes() {
   useEffect(() => {
     async function cargar() {
       try {
-        const datos = await obtenerCotizaciones();
-        setCotizaciones(datos.filter((c) => c.id_tienda === usuario.id_tienda));
+        const datos = await obtenerCotizaciones(usuario.id_tienda);
+        setCotizaciones(datos);
       } catch (err) {
         console.error(err);
       } finally {
