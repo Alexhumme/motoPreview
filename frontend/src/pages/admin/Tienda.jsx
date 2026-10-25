@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { obtenerTienda, actualizarTienda } from '../../services/tiendas';
 import './Tienda.css';
@@ -13,9 +13,11 @@ export default function Tienda() {
   const [error, setError] = useState('');
   const [exito, setExito] = useState(false);
 
-  async function cargar() {
+  const idTienda = usuario.id_tienda;
+
+  const cargar = useCallback(async () => {
     try {
-      const datos = await obtenerTienda(usuario.id_tienda);
+      const datos = await obtenerTienda(idTienda);
       setTienda(datos);
       setFormulario({
         nombre_tienda: datos.nombre_tienda,
@@ -29,14 +31,15 @@ export default function Tienda() {
     } finally {
       setCargando(false);
     }
-  }
+  }, [idTienda]);
 
   useEffect(() => {
+    // La carga es asíncrona: el estado se actualiza después del await.
     async function refrescar() {
       await cargar();
     }
     refrescar();
-  }, [usuario]);
+  }, [cargar]);
 
   async function manejarSubmit(e) {
     e.preventDefault();

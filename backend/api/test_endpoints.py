@@ -13,7 +13,7 @@ from unittest import mock
 
 import jwt
 from django.conf import settings
-from django.test import SimpleTestCase, override_settings
+from django.test import SimpleTestCase, TestCase, override_settings
 from django.utils import timezone
 from rest_framework import serializers, status
 from rest_framework.test import APIClient
@@ -22,6 +22,7 @@ from .security import (
     ROLE_ADMIN,
     ROLE_CUSTOMER,
     ROLE_SELLER,
+    ROLE_SUPERADMIN,
     IsStoreAdmin,
     IsStoreStaff,
     has_any_role,
@@ -48,6 +49,7 @@ def usuario_falso(role_ids, *, tienda=None):
 
 
 ANONIMO = SimpleNamespace(is_authenticated=False, is_anonymous=True, role_ids=[], pk=None)
+SUPERADMIN = usuario_falso([ROLE_SUPERADMIN], tienda=UUID_MUESTRA)
 ADMIN = usuario_falso([ROLE_ADMIN], tienda=UUID_MUESTRA)
 VENDEDOR = usuario_falso([ROLE_SELLER], tienda=UUID_MUESTRA)
 CLIENTE = usuario_falso([ROLE_CUSTOMER])
@@ -78,17 +80,18 @@ MARCAS = ConsultaFalsa(
 
 
 # ---------------------------------------------------------------------------
-# Permisos de los catálogos: lectura pública, escritura solo administrador
+# Permisos de los catálogos: lectura pública, escritura solo superadmin
 # ---------------------------------------------------------------------------
-@override_settings(DATABASE_URL="")
-class PermisosCatalogoTests(SimpleTestCase):
+class PermisosCatalogoTests(TestCase):
+    databases = ['default']
+
     def setUp(self):
         self.client = APIClient()
 
     def test_lectura_anonima_permitida(self):
-        # El permiso deja pasar a los anónimos y la vista llega a la BD (503 aquí).
+        # La lectura pública está permitida y devuelve 200 (lista vacía o datos)
         response = self.client.get("/api/marcas")
-        self.assertEqual(response.status_code, status.HTTP_503_SERVICE_UNAVAILABLE)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_anonimo_no_puede_crear(self):
         response = self.client.post("/api/marcas", {"marca_nombre": "Prueba"}, format="json")
@@ -118,18 +121,18 @@ class PermisosCatalogoTests(SimpleTestCase):
         response = self.client.post("/api/marcas", {"marca_nombre": "Prueba"}, format="json")
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
-    def test_administrador_supera_el_permiso(self):
-        self.client.force_authenticate(user=ADMIN)
+    def test_superadmin_puede_crear_marca(self):
+        self.client.force_authenticate(user=SUPERADMIN)
         response = self.client.post("/api/marcas", {"marca_nombre": "Prueba"}, format="json")
-        # Supera el permiso y llega a la vista (que responde 503 sin BD).
-        self.assertEqual(response.status_code, status.HTTP_503_SERVICE_UNAVAILABLE)
+        # Superadmin tiene permiso y la BD está disponible en TestCase.
+        self.assertIn(response.status_code, (status.HTTP_201_CREATED, status.HTTP_400_BAD_REQUEST))
 
-    def test_administrador_supera_el_permiso_en_detalle(self):
-        self.client.force_authenticate(user=ADMIN)
-        response = self.client.put(f"/api/marcas/{UUID_MUESTRA}", {}, format="json")
-        self.assertEqual(response.status_code, status.HTTP_503_SERVICE_UNAVAILABLE)
+    def test_superadmin_puede_actualizar_marca(self):
+        self.client.force_authenticate(user=SUPERADMIN)
+        response = self.client.put(f"/api/marcas/{UUID_MUESTRA}", {"marca_nombre": "Prueba2"}, format="json")
+        self.assertIn(response.status_code, (status.HTTP_200_OK, status.HTTP_404_NOT_FOUND, status.HTTP_400_BAD_REQUEST))
 
-    def test_compatibilidad_restringida_al_administrador(self):
+    def test_compatibilidad_restringida_al_superadmin(self):
         anonimo = self.client.post(
             "/api/compatibilidad",
             {"id_accesorio": UUID_MUESTRA, "id_modelo_moto": UUID_MUESTRA},
@@ -149,8 +152,9 @@ class PermisosCatalogoTests(SimpleTestCase):
 # ---------------------------------------------------------------------------
 # Permisos de inventario y cotizaciones (staff de tienda)
 # ---------------------------------------------------------------------------
-@override_settings(DATABASE_URL="")
-class PermisosInventarioTests(SimpleTestCase):
+class PermisosInventarioTests(TestCase):
+    databases = ['default']
+
     def setUp(self):
         self.client = APIClient()
 
@@ -172,10 +176,10 @@ class PermisosInventarioTests(SimpleTestCase):
         response = self.client.post("/api/inventario/movimiento", {}, format="json")
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
-    def test_vendedor_supera_el_permiso_de_inventario(self):
+    def test_vendedor_puede_registrar_movimiento(self):
         self.client.force_authenticate(user=VENDEDOR)
         response = self.client.post("/api/inventario/movimiento", {}, format="json")
-        self.assertEqual(response.status_code, status.HTTP_503_SERVICE_UNAVAILABLE)
+        self.assertIn(response.status_code, (status.HTTP_201_CREATED, status.HTTP_400_BAD_REQUEST))
 
     def test_cliente_no_puede_cambiar_estado_de_cotizacion(self):
         self.client.force_authenticate(user=CLIENTE)
@@ -186,26 +190,27 @@ class PermisosInventarioTests(SimpleTestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
-    def test_vendedor_supera_el_permiso_de_cotizaciones(self):
+    def test_vendedor_puede_cambiar_estado_cotizacion(self):
         self.client.force_authenticate(user=VENDEDOR)
         response = self.client.put(
             f"/api/cotizaciones/{UUID_MUESTRA}/estado",
             {"coti_estado": "aprobada"},
             format="json",
         )
-        self.assertEqual(response.status_code, status.HTTP_503_SERVICE_UNAVAILABLE)
+        self.assertIn(response.status_code, (status.HTTP_200_OK, status.HTTP_404_NOT_FOUND, status.HTTP_400_BAD_REQUEST))
 
     def test_cliente_puede_leer_sus_cotizaciones(self):
         self.client.force_authenticate(user=CLIENTE)
         response = self.client.get("/api/cotizaciones")
-        self.assertEqual(response.status_code, status.HTTP_503_SERVICE_UNAVAILABLE)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
 
 # ---------------------------------------------------------------------------
 # Gestión de usuarios (solo administrador de tienda)
 # ---------------------------------------------------------------------------
-@override_settings(DATABASE_URL="")
-class PermisosUsuariosTests(SimpleTestCase):
+class PermisosUsuariosTests(TestCase):
+    databases = ['default']
+
     def setUp(self):
         self.client = APIClient()
 
@@ -223,10 +228,10 @@ class PermisosUsuariosTests(SimpleTestCase):
         response = self.client.delete(f"/api/usuarios/{UUID_MUESTRA}")
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
-    def test_administrador_supera_el_permiso(self):
-        self.client.force_authenticate(user=ADMIN)
+    def test_superadmin_puede_ver_usuarios(self):
+        self.client.force_authenticate(user=SUPERADMIN)
         response = self.client.get("/api/usuarios")
-        self.assertEqual(response.status_code, status.HTTP_503_SERVICE_UNAVAILABLE)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
 
 # ---------------------------------------------------------------------------
@@ -420,7 +425,8 @@ class PaginacionEndpointTests(SimpleTestCase):
 # ---------------------------------------------------------------------------
 # Salud y rutas raíz
 # ---------------------------------------------------------------------------
-class SaludTests(SimpleTestCase):
+class SaludTests(TestCase):
+    databases = ['default']
     def test_health(self):
         response = APIClient().get("/api/health")
         data = response.json()
@@ -440,15 +446,15 @@ class SaludTests(SimpleTestCase):
         self.assertIn("mensaje", response.json())
 
 
-@override_settings(DATABASE_URL="")
-class EnrutamientoTests(SimpleTestCase):
+class EnrutamientoTests(TestCase):
+    databases = ['default']
     def test_login_esta_registrado(self):
         response = APIClient().post("/api/auth/login", {}, format="json")
-        self.assertEqual(response.status_code, status.HTTP_503_SERVICE_UNAVAILABLE)
+        self.assertIn(response.status_code, (status.HTTP_400_BAD_REQUEST, status.HTTP_401_UNAUTHORIZED))
 
     def test_registro_esta_registrado(self):
         response = APIClient().post("/api/auth/register", {}, format="json")
-        self.assertEqual(response.status_code, status.HTTP_503_SERVICE_UNAVAILABLE)
+        self.assertIn(response.status_code, (status.HTTP_400_BAD_REQUEST, status.HTTP_401_UNAUTHORIZED))
 
     def test_inventario_esta_registrado(self):
         response = APIClient().get("/api/inventario")

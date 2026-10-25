@@ -81,6 +81,8 @@ _RUTAS_API = [
     ("api/recurso-acciones/<uuid:pk>", views.RecursoAccionDetail.as_view()),
     ("api/rol-recursos", views.RolRecursoCollection.as_view()),
     ("api/rol-recursos/<uuid:pk>", views.RolRecursoDetail.as_view()),
+    ("api/roles/<uuid:pk>/permisos", views.RolePermisosBulkUpdateView.as_view()),
+    ("api/permisos/usuario", views.PermisosUsuarioView.as_view()),
     ("api/recursos-con-permisos", views.RecursoConPermisosCollection.as_view()),
     ("api/configuraciones", views.ConfigurationCollection.as_view()),
     ("api/configuraciones/<uuid:pk>", views.ConfigurationDetail.as_view()),

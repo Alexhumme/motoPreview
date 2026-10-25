@@ -1488,3 +1488,126 @@ class RecursoConPermisosCollection(DatabaseGuardMixin):
         recursos = Recurso.objects.filter(activo=True).order_by("orden")
         serializer = self.serializer_class(recursos, many=True, context={"rol_id": rol_id})
         return Response(serializer.data)
+
+
+# ============================================================================
+# RBAC - Permisos de usuario y roles
+# ============================================================================
+
+class PermisosUsuarioView(DatabaseGuardMixin):
+    """Obtiene los permisos del usuario autenticado"""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        from api.models import RolRecurso, RecursoAccion
+        user = request.user
+        
+        # Superadmin tiene todos los permisos
+        if str(ROLE_SUPERADMIN) in {str(r).lower() for r in user.role_ids}:
+            # Obtener todos los recurso-acción activos
+            from api.models import RecursoAccion
+            raqs = RecursoAccion.objects.filter(activo=True).select_related(
+                "recurso", "accion"
+            ).order_by("recurso__orden", "accion__orden")
+            permisos = []
+            for ra in raqs:
+                permisos.append({
+                    "id_recurso_accion": str(ra.id_recurso_accion),
+                    "recurso": ra.recurso.codigo,
+                    "recurso_nombre": ra.recurso.nombre,
+                    "accion": ra.accion.codigo,
+                    "accion_nombre": ra.accion.nombre,
+                    "scope": "global",
+                    "activo": True,
+                })
+            return Response({"permisos": permisos})
+        
+        # Usuario normal: permisos de sus roles
+        permisos_qs = RolRecurso.objects.filter(
+            rol_id__in=user.role_ids,
+            activo=True,
+            recurso_accion__activo=True,
+            recurso_accion__recurso__activo=True,
+        ).select_related(
+            "recurso_accion__recurso", "recurso_accion__accion", "rol"
+        ).order_by("recurso_accion__recurso__orden", "recurso_accion__accion__orden")
+        
+        permisos = []
+        for rr in permisos_qs:
+            permisos.append({
+                "id_recurso_accion": str(rr.recurso_accion.id_recurso_accion),
+                "recurso": rr.recurso_accion.recurso.codigo,
+                "recurso_nombre": rr.recurso_accion.recurso.nombre,
+                "accion": rr.recurso_accion.accion.codigo,
+                "accion_nombre": rr.recurso_accion.accion.nombre,
+                "scope": rr.scope,
+                "activo": rr.activo,
+            })
+        return Response({"permisos": permisos})
+
+
+class RolePermisosBulkUpdateView(DatabaseGuardMixin):
+    """Actualización masiva de permisos para un rol (solo superadmin)"""
+    permission_classes = [IsSuperAdmin]
+
+    def put(self, request, pk):
+        from api.models import Role, RolRecurso, RecursoAccion
+        try:
+            role = Role.objects.get(pk=pk)
+        except Role.DoesNotExist:
+            return Response({"error": "Rol no encontrado"}, status=status.HTTP_404_NOT_FOUND)
+        
+        permisos = request.data.get("permisos", [])
+        if not isinstance(permisos, list):
+            return Response({"error": "Se espera una lista de permisos"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Validar permisos
+        ids_recurso_accion = [p.get("id_recurso_accion") for p in permisos if p.get("id_recurso_accion")]
+        if not ids_recurso_accion:
+            return Response({"error": "Lista de permisos vacía o inválida"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Verificar que todos los recurso_accion existen
+        ra_existentes = set(
+            RecursoAccion.objects.filter(id_recurso_accion__in=ids_recurso_accion)
+            .values_list("id_recurso_accion", flat=True)
+        )
+        ids_faltantes = set(ids_recurso_accion) - ra_existentes
+        if ids_faltantes:
+            return Response(
+                {"error": f"Recurso-acción no encontrados: {ids_faltantes}"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        
+        # Validar scopes
+        scopes_validos = {"global", "tienda", "propio"}
+        for p in permisos:
+            scope = p.get("scope", "global")
+            if scope not in scopes_validos:
+                return Response(
+                    {"error": f"Scope inválido: {scope}"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+        
+        with transaction.atomic():
+            # Eliminar permisos existentes del rol
+            RolRecurso.objects.filter(rol=role).delete()
+            
+            # Crear nuevos permisos
+            nuevos = []
+            for p in permisos:
+                ra_id = p.get("id_recurso_accion")
+                scope = p.get("scope", "global")
+                if ra_id in ra_existentes:
+                    rr = RolRecurso.objects.create(
+                        rol_id=role.id_rol,
+                        recurso_accion_id=ra_id,
+                        scope=p.get("scope", "global"),
+                        concedido_por=request.user if hasattr(request, "user") else None,
+                        activo=True,
+                    )
+                    nuevos.append(rr)
+            
+            return Response({
+                "mensaje": "Permisos actualizados correctamente",
+                "permisos_creados": len(nuevos),
+            }, status=status.HTTP_200_OK)

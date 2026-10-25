@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
 
 /**
@@ -7,7 +6,6 @@ import api from '../../services/api';
  * Permite asignar permisos (recurso + acción + scope) a roles usando checkboxes
  */
 export default function PermisosRBAC() {
-  const { usuario } = useAuth();
   const [roles, setRoles] = useState([]);
   const [recursosConPermisos, setRecursosConPermisos] = useState([]);
   const [rolSeleccionado, setRolSeleccionado] = useState(null);
@@ -17,17 +15,17 @@ export default function PermisosRBAC() {
 
   // Cargar roles al montar
   useEffect(() => {
-    cargarRoles();
+    let activo = true;
+    (async () => {
+      try {
+        const res = await api.get('/roles');
+        if (activo) setRoles(res.data);
+      } catch (err) {
+        console.error('Error cargando roles:', err);
+      }
+    })();
+    return () => { activo = false; };
   }, []);
-
-  async function cargarRoles() {
-    try {
-      const res = await api.get('/roles');
-      setRoles(res.data);
-    } catch (err) {
-      console.error('Error cargando roles:', err);
-    }
-  }
 
   async function cargarRecursosConPermisos() {
     if (!rolSeleccionado) return;
@@ -175,14 +173,7 @@ export default function PermisosRBAC() {
 
       {recursosConPermisos.length > 0 && (
         <div className="permisos-grid">
-          {Object.entries(
-            recursosConPermisos.reduce((acc, recurso) => {
-              const categoria = (recurso.codigo || '').split('_')[0] || 'otros';
-              if (!acc[categoria]) acc[categoria] = [];
-              acc[categoria].push(recurso);
-              return acc;
-            }, {})
-          ).map(([categoria, recursos]) => (
+          {Object.entries(recursosPorCategoria).map(([categoria, recursos]) => (
             <div key={categoria} className="categoria-permisos">
               <h3>{categoria.charAt(0).toUpperCase() + categoria.slice(1)}</h3>
               <div className="tabla-permisos-wrapper">

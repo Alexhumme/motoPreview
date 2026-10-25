@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import ModalConfirmacion from '../../components/ModalConfirmacion';
 import { obtenerUsuarios, registrarUsuario, actualizarUsuario, desactivarUsuario } from '../../services/usuarios';
@@ -18,23 +18,26 @@ export default function Usuarios() {
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState('');
 
-  async function cargar() {
+  const idTienda = usuario.id_tienda;
+
+  const cargar = useCallback(async () => {
     try {
-      const datos = await obtenerUsuarios(usuario.id_tienda);
+      const datos = await obtenerUsuarios(idTienda);
       setUsuarios(datos);
     } catch (err) {
       console.error(err);
     } finally {
       setCargando(false);
     }
-  }
+  }, [idTienda]);
 
   useEffect(() => {
+    // La carga es asíncrona: el estado se actualiza después del await.
     async function refrescar() {
       await cargar();
     }
     refrescar();
-  }, [usuario]);
+  }, [cargar]);
 
   function abrirNuevo() {
     setEditandoId(null);
