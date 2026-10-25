@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useAuth } from '../../context/AuthContext';
-import { obtenerInventario, registrarMovimiento } from '../../services/inventario';
-import { TIPOS_MOVIMIENTO } from '../../constants/tiposMovimiento';
+import { useAuth } from '../context/AuthContext';
+import { obtenerInventario, registrarMovimiento } from '../services/inventario';
+import { TIPOS_MOVIMIENTO } from '../utils/constants/tiposMovimiento';
 import './Inventario.css';
 
 export default function Inventario() {

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useAuth } from '../../context/AuthContext';
-import { obtenerInventario } from '../../services/inventario';
-import { obtenerCotizaciones } from '../../services/cotizaciones';
+import { useAuth } from '../context/AuthContext';
+import { obtenerInventario } from '../services/inventario';
+import { obtenerCotizaciones } from '../services/cotizaciones';
 import './Dashboard.css';
 
 export default function Dashboard() {

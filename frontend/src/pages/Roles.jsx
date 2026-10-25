@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { useAuth } from '../../context/AuthContext';
-import ModalConfirmacion from '../../components/ModalConfirmacion';
-import { obtenerRoles, crearRol, actualizarRol, desactivarRol } from '../../services/roles';
-import { ROL_ADMIN, ROL_VENDEDOR, ROL_CLIENTE } from '../../constants/roles';
+import { useAuth } from '../context/AuthContext';
+import ModalConfirmacion from '../components/forms/ModalConfirmacion';
+import { obtenerRoles, crearRol, actualizarRol, desactivarRol } from '../services/roles';
+import { ROL_ADMIN, ROL_VENDEDOR, ROL_CLIENTE } from '../utils/constants/roles';
 import { useNavigate } from 'react-router-dom';
 import './Roles.css';
 

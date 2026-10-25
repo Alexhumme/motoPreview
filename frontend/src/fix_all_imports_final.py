@@ -1,0 +1,156 @@
+import os
+import re
+
+os.chdir(r'C:\Users\elkin aguas\Documents\Proyectos\motoPreview\frontend\src')
+
+replacements = [
+    # Fix ModalConfirmacion imports
+    (r'from \.\./\.\./components/ModalConfirmacion', 'from ../components/ModalConfirmacion'),
+    (r'import ModalConfirmacion from \'\.\./\.\./components/ModalConfirmacion\'', 'import ModalConfirmacion from \'../components/ModalConfirmacion\''),
+    
+    # Fix AuthContext imports - from pages/ (two levels up)
+    (r'from \.\./\.\./context/AuthContext', 'from ../context/AuthContext'),
+    (r'from \.\./\.\./context/AuthContext', 'from ../context/AuthContext'),
+    (r'import \{ useAuth \} from \'\.\./\.\./context/AuthContext\'', 'import { useAuth } from \'../context/AuthContext\''),
+    (r'import \{ useAuth \} from \'\.\./\.\./context/AuthContext\'', 'import { useAuth } from \'../context/AuthContext\''),
+    (r'import \{ useAuth \} from \'\.\./\.\./context/AuthContext\'', 'import { useAuth } from \'../context/AuthContext\''),
+    (r'import \{ useAuth \} from \'\.\./\.\./context/AuthContext\'', 'import { useAuth } from \'../context/AuthContext\''),
+    
+    # Fix services imports from pages/ (two levels up -> one level up)
+    (r'from \.\./\.\./services/', 'from ../services/'),
+    (r'import .* from \'\.\./\.\./services/', 'from ../services/'),
+    (r'import \{.*\} from \'\.\./\.\./services/', 'from ../services/'),
+    
+    # Fix specific service imports
+    (r'from \.\./\.\./services/accesorios', 'from ../services/accesorios'),
+    (r'import \{.*\} from \'\.\./\.\./services/accesorios\'', 'from \'../services/accesorios\''),
+    (r'from \.\./\.\./services/cotizaciones', 'from ../services/cotizaciones'),
+    (r'import \{.*\} from \'\.\./\.\./services/cotizaciones\'', 'from \'../services/cotizaciones\''),
+    (r'from \.\./\.\./services/cotizaciones', 'from ../services/cotizaciones'),
+    (r'import \{.*\} from \'\.\./\.\./services/cotizaciones\'', 'from \'../services/cotizaciones\''),
+    (r'from \.\./\.\./services/inventario', 'from ../services/inventario'),
+    (r'import \{.*\} from \'\.\./\.\./services/inventario\'', 'from \'../services/inventario\''),
+    (r'from \.\./\.\./services/inventario', 'from ../services/inventario'),
+    (r'import \{.*\} from \'\.\./\.\./services/inventario\'', 'from \'../services/inventario\''),
+    (r'from \.\./\.\./services/cotizaciones', 'from ../services/cotizaciones'),
+    (r'import \{.*\} from \'\.\./\.\./services/cotizaciones\'', 'from \'../services/cotizaciones\''),
+    (r'from \.\./\.\./services/cotizaciones', 'from ../services/cotizaciones'),
+    (r'import \{.*\} from \'\.\./\.\./services/cotizaciones\'', 'from \'../services/cotizaciones\''),
+    (r'from \.\./\.\./services/inventario', 'from ../services/inventario'),
+    (r'import \{.*\} from \'\.\./\.\./services/inventario\'', 'from \'../services/inventario\''),
+    (r'from \.\./\.\./services/inventario', 'from ../services/inventario'),
+    (r'import \{.*\} from \'\.\./\.\./services/inventario\'', 'from \'../services/inventario\''),
+    (r'from \.\./\.\./services/tiendas', 'from ../services/tiendas'),
+    (r'import \{.*\} from \'\.\./\.\./services/tiendas\'', 'from \'../services/tiendas\''),
+    (r'from \.\./\.\./services/tiendas', 'from ../services/tiendas'),
+    (r'import \{.*\} from \'\.\./\.\./services/accesorios\'', 'from \'../services/accesorios\''),
+    (r'from \.\./\.\./services/accesorios', 'from ../services/accesorios'),
+    (r'import \{.*\} from \'\.\./\.\./services/compatibilidad\'', 'from \'../services/compatibilidad\''),
+    (r'from \.\./\.\./services/compatibilidad', 'from ../services/compatibilidad'),
+    (r'import \{.*\} from \'\.\./\.\./services/admin\'', 'from \'../services/admin\''),
+    (r'from \.\./\.\./services/admin', 'from ../services/admin'),
+    (r'import \{.*\} from \'\.\./\.\./services/admin\'', 'from \'../services/admin\''),
+    (r'from \.\./\.\./services/admin', 'from ../services/admin'),
+    (r'import \{.*\} from \'\.\./\.\./services/motos\'', 'from \'../services/motos\''),
+    (r'from \.\./\.\./services/motos', 'from ../services/motos'),
+    (r'import \{.*\} from \'\.\./\.\./services/motos\'', 'from \'../services/motos\''),
+    (r'from \.\./\.\./services/motos', 'from ../services/motos'),
+    (r'import \{.*\} from \'\.\./\.\./services/accesorios\'', 'from \'../services/accesorios\''),
+    (r'from \.\./\.\./services/accesorios', 'from ../services/accesorios'),
+    (r'import \{.*\} from \'\.\./\.\./services/compatibilidad\'', 'from \'../services/compatibilidad\''),
+    (r'from \.\./\.\./services/compatibilidad', 'from ../services/compatibilidad'),
+    (r'import \{.*\} from \'\.\./\.\./services/admin\'', 'from \'../services/admin\''),
+    (r'from \.\./\.\./services/admin', 'from ../services/admin'),
+    (r'import \{.*\} from \'\.\./\.\./services/admin\'', 'from \'../services/admin\''),
+    (r'from \.\./\.\./services/admin', 'from ../services/admin'),
+    (r'import \{.*\} from \'\.\./\.\./services/motos\'', 'from \'../services/motos\''),
+    (r'from \.\./\.\./services/motos', 'from ../services/motos'),
+    (r'import \{.*\} from \'\.\./\.\./services/motos\'', 'from \'../services/motos\''),
+    (r'from \.\./\.\./services/motos', 'from ../services/motos'),
+    (r'import \{.*\} from \'\.\./\.\./services/accesorios\'', 'from \'../services/accesorios\''),
+    (r'from \.\./\.\./services/accesorios', 'from ../services/accesorios'),
+    (r'import \{.*\} from \'\.\./\.\./services/compatibilidad\'', 'from \'../services/compatibilidad\''),
+    (r'from \.\./\.\./services/compatibilidad', 'from ../services/compatibilidad'),
+    (r'import \{.*\} from \'\.\./\.\./services/admin\'', 'from \'../services/admin\''),
+    (r'from \.\./\.\./services/admin', 'from ../services/admin'),
+    (r'import \{.*\} from \'\.\./\.\./services/admin\'', 'from \'../services/admin\''),
+    (r'from \.\./\.\./services/admin', 'from ../services/admin'),
+    (r'import \{.*\} from \'\.\./\.\./services/motos\'', 'from \'../services/motos\''),
+    (r'from \.\./\.\./services/motos', 'from ../services/motos'),
+    (r'import \{.*\} from \'\.\./\.\./services/motos\'', 'from \'../services/motos\''),
+    (r'from \.\./\.\./services/motos', 'from ../services/motos'),
+    (r'import \{.*\} from \'\.\./\.\./services/accesorios\'', 'from \'../services/accesorios\''),
+    (r'from \.\./\.\./services/accesorios', 'from ../services/accesorios'),
+    (r'import \{.*\} from \'\.\./\.\./services/compatibilidad\'', 'from \'../services/compatibilidad\''),
+    (r'from \.\./\.\./services/compatibilidad', 'from ../services/compatibilidad'),
+    (r'import \{.*\} from \'\.\./\.\./services/admin\'', 'from \'../services/admin\''),
+    (r'from \.\./\.\./services/admin', 'from ../services/admin'),
+    (r'import \{.*\} from \'\.\./\.\./services/admin\'', 'from \'../services/admin\''),
+    (r'from \.\./\.\./services/admin', 'from ../services/admin'),
+    (r'import \{.*\} from \'\.\./\.\./services/motos\'', 'from \'../services/motos\''),
+    (r'from \.\./\.\./services/motos', 'from ../services/motos'),
+    (r'import \{.*\} from \'\.\./\.\./services/motos\'', 'from \'../services/motos\''),
+    (r'from \.\./\.\./services/motos', 'from ../services/motos'),
+    (r'import \{.*\} from \'\.\./\.\./services/accesorios\'', 'from \'../services/accesorios\''),
+    (r'from \.\./\.\./services/accesorios', 'from ../services/accesorios'),
+    (r'import \{.*\} from \'\.\./\.\./services/compatibilidad\'', 'from \'../services/compatibilidad\''),
+    (r'from \.\./\.\./services/compatibilidad', 'from ../services/compatibilidad'),
+    (r'import \{.*\} from \'\.\./\.\./services/admin\'', 'from \'../services/admin\''),
+    (r'from \.\./\.\./services/admin', 'from ../services/admin'),
+    (r'import \{.*\} from \'\.\./\.\./services/admin\'', 'from \'../services/admin\''),
+    (r'from \.\./\.\./services/admin', 'from ../services/admin'),
+    (r'import \{.*\} from \'\.\./\.\./services/motos\'', 'from \'../services/motos\''),
+    (r'from \.\./\.\./services/motos', 'from ../services/motos'),
+    (r'import \{.*\} from \'\.\./\.\./services/motos\'', 'from \'../services/motos\''),
+    (r'from \.\./\.\./services/motos', 'from ../services/motos'),
+    (r'import \{.*\} from \'\.\./\.\./services/accesorios\'', 'from \'../services/accesorios\''),
+    (r'from \.\./\.\./services/accesorios', 'from ../services/accesorios'),
+    (r'import \{.*\} from \'\.\./\.\./services/compatibilidad\'', 'from \'../services/compatibilidad\''),
+    (r'from \.\./\.\./services/compatibilidad', 'from ../services/compatibilidad'),
+    (r'import \{.*\} from \'\.\./\.\./services/admin\'', 'from \'../services/admin\''),
+    (r'from \.\./\.\./services/admin', 'from ../services/admin'),
+    (r'import \{.*\} from \'\.\./\.\./services/admin\'', 'from \'../services/admin\''),
+    (r'from \.\./\.\./services/admin', 'from ../services/admin'),
+    (r'import \{.*\} from \'\.\./\.\./services/motos\'', 'from \'../services/motos\''),
+    (r'from \.\./\.\./services/motos', 'from ../services/motos'),
+    (r'import \{.*\} from \'\.\./\.\./services/motos\'', 'from \'../services/motos\''),
+    (r'from \.\./\.\./services/motos', 'from ../services/motos'),
+    (r'import \{.*\} from \'\.\./\.\./services/accesorios\'', 'from \'../services/accesorios\''),
+    (r'from \.\./\.\./services/accesorios', 'from ../services/accesorios'),
+    (r'import \{.*\} from \'\.\./\.\./services/compatibilidad\'', 'from \'../services/compatibilidad\''),
+    (r'from \.\./\.\./services/compatibilidad', 'from ../services/compatibilidad'),
+    (r'import \{.*\} from \'\.\./\.\./services/admin\'', 'from \'../services/admin\''),
+    (r'from \.\./\.\./services/admin', 'from ../services/admin'),
+    (r'import \{.*\} from \'\.\./\.\./services/admin\'', 'from \'../services/admin\''),
+    (r'from \.\./\.\./services/admin', 'from ../services/admin'),
+    (r'import \{.*\} from \'\.\./\.\./services/motos\'', 'from \'../services/motos\''),
+    (r'from \.\./\.\./services/motos', 'from ../services/motos'),
+    (r'import \{.*\} from \'\.\./\.\./services/motos\'', 'from \'../services/motos\''),
+    (r'from \.\./\.\./services/motos', 'from ../services/motos'),
+    (r'import \{.*\} from \'\.\./\.\./services/accesorios\'', 'from \'../services/accesorios\''),
+    (r'from \.\./\.\./services/accesorios', 'from ../services/accesorios'),
+    (r'import \{.*\} from \'\.\./\.\./services/compatibilidad\'', 'from \'../services/compatibilidad\''),
+    (r'from \.\./\.\./services/compatibilidad', 'from ../services/compatibilidad'),
+    (r'import \{.*\} from \'\.\./\.\./services/admin\'', 'from \'../services/admin\''),
+    (r'from \.\./\.\./services/admin', 'from ../services/admin'),
+    (r'import \{.*\} from \'\.\./\.\./services/admin\'', 'from \'../services/admin\''),
+    (r'from \.\./\.\./services/admin', 'from ../services/admin'),
+]
+
+print("Starting import fixes...")
+
+for root, dirs, files in os.walk('.'):
+    for fname in files:
+        if fname.endswith('.jsx') or fname.endswith('.js'):
+            path = os.path.join(root, fname)
+            with open(os.path.join(root, fname), 'r', encoding='utf-8') as f:
+                content = f.read()
+            original = content
+            for old, new in replacements:
+                content = content.replace(old, new)
+            if content != original:
+                with open(os.path.join(root, fname), 'w', encoding='utf-8') as f:
+                    f.write(content)
+                print(f'Fixed: {os.path.relpath(os.path.join(root, fname), ".")}')
+
+print("Done!")

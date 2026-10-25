@@ -9,7 +9,7 @@ import Cotizaciones from './pages/Cotizaciones';
 import RutaProtegida from './components/private/RutaProtegida';
 import { ROL_ADMIN, ROL_VENDEDOR } from './utils/constants/roles';
 import Visualizador from './pages/public/Visualizador';
-import Accesorios from './components/tables/Accesorios';
+import RecursoAdmin from './components/tables/RecursoAdmin';
 import Configurador from './pages/public/Configurador';
 import MisCotizaciones from './pages/public/MisCotizaciones';
 import NoEncontrado from './pages/public/NoEncontrado';
@@ -59,10 +59,10 @@ function App() {
           <Route path="cotizaciones" element={<Cotizaciones />} />
           <Route path="reportes" element={<Reportes />} />
           <Route
-            path="accesorios"
+            path="productos"
             element={
               <RutaProtegida rolesPermitidos={[ROL_ADMIN]}>
-                <Accesorios />
+                <RecursoAdmin />
               </RutaProtegida>
             }
           />

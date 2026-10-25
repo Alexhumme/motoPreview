@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { useAuth } from '../../context/AuthContext';
-import { obtenerCotizaciones } from '../../services/cotizaciones';
+import { useAuth } from '../context/AuthContext';
+import { obtenerCotizaciones } from '../services/cotizaciones';
 import './Reportes.css';
 
 export default function Reportes() {

@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useAuth } from '../../context/AuthContext';
-import ModalConfirmacion from '../../components/ModalConfirmacion';
-import { obtenerUsuarios, registrarUsuario, actualizarUsuario, desactivarUsuario } from '../../services/usuarios';
-import { ROL_ADMIN, ROL_VENDEDOR } from '../../constants/roles';
+import { useAuth } from '../context/AuthContext';
+import ModalConfirmacion from '../components/forms/ModalConfirmacion';
+import { obtenerUsuarios, registrarUsuario, actualizarUsuario, desactivarUsuario } from '../services/usuarios';
+import { ROL_ADMIN, ROL_VENDEDOR } from '../utils/constants/roles';
 import './Usuarios.css';
 
 const VACIO = { usu_nombre: '', usu_email: '', password: '', id_rol: ROL_VENDEDOR, estado_usuario: 'activo' };

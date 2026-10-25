@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useAuth } from '../../context/AuthContext';
-import { obtenerTienda, actualizarTienda } from '../../services/tiendas';
+import { useAuth } from '../context/AuthContext';
+import { obtenerTienda, actualizarTienda } from '../services/tiendas';
 import './Tienda.css';
 
 export default function Tienda() {

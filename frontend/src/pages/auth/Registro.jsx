@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { registrarCliente } from '../../services/auth';
-import { ROL_CLIENTE, TIENDA_PRINCIPAL } from '../../constants/roles';
+import { ROL_CLIENTE, TIENDA_PRINCIPAL } from '../../utils/constants/roles';
 import './Login.css';
 
 export default function Registro() {

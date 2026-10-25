@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useAuth } from '../../context/AuthContext';
-import { obtenerCotizaciones, cambiarEstadoCotizacion } from '../../services/cotizaciones';
+import { useAuth } from '../context/AuthContext';
+import { obtenerCotizaciones, cambiarEstadoCotizacion } from '../services/cotizaciones';
 import './Cotizaciones.css';
 
 export default function Cotizaciones() {

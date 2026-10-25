@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import DataTable from './DataTable';
-import ModalConfirmacion from '../../forms/ModalConfirmacion';
+import ModalConfirmacion from '../forms/ModalConfirmacion';
 import { mensajeError } from '../../services/crud';
 import './RecursoAdmin.css';
 

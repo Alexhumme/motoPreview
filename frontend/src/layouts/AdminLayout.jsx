@@ -1,7 +1,7 @@
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import './AdminLayout.css';
-import { ROL_ADMIN } from '../constants/roles';
+import { ROL_ADMIN } from '../utils/constants/roles';
 
 export default function AdminLayout() {
   const { usuario, logout } = useAuth();
