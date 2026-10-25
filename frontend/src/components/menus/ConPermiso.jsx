@@ -1,4 +1,4 @@
-import { usePermiso } from '../context/usePermiso';
+import { usePermiso } from '../../context/usePermiso';
 
 /**
  * Componente wrapper para renderizado condicional basado en permisos

@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { useCart } from '../context/CartContext';
+import { useCart } from '../../context/CartContext';
 import './AccesorioCard.css';
 
 export default function AccesorioCard({ accesorio }) {

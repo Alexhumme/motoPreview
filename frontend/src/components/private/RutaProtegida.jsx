@@ -1,6 +1,6 @@
 import { Navigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { usePermiso } from '../context/usePermiso';
+import { useAuth } from '../../context/AuthContext';
+import { usePermiso } from '../../context/usePermiso';
 
 // rolesPermitidos: array de id_rol que pueden entrar (legacy)
 // recurso/accion: nuevo sistema RBAC

@@ -1,4 +1,4 @@
-import { useConnection } from '../context/ConnectionContext';
+import { useConnection } from '../../context/ConnectionContext';
 import './BannerConexion.css';
 
 export default function BannerConexion() {
