@@ -4,7 +4,7 @@ import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { obtenerMotos } from '../../services/motos';
 import { crearCotizacion } from '../../services/cotizaciones';
-import SiteHeader from '../../components/SiteHeader';
+import SiteHeader from '../../components/buttons/SiteHeader';
 import './Carrito.css';
 
 const money = (value) => new Intl.NumberFormat('es-CO', {

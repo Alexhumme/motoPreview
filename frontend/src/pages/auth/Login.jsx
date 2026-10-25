@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { ROL_ADMIN, ROL_VENDEDOR } from '../../constants/roles';
+import { ROL_ADMIN, ROL_VENDEDOR } from '../../utils/constants/roles';
 import './Login.css';
 
 export default function Login() {

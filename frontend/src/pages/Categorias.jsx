@@ -1,4 +1,4 @@
-import RecursoAdmin from '../../components/admin/RecursoAdmin';
+import RecursoAdmin from '../../components/tables/RecursoAdmin';
 import { accesoriosApi, categoriasApi } from '../../services/admin';
 
 async function cargarExtra() {

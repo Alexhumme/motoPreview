@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import RecursoAdmin from '../../components/admin/RecursoAdmin';
+import RecursoAdmin from '../../components/tables/RecursoAdmin';
 import { marcasApi, modelosMotoApi, motosApi } from '../../services/admin';
 
 async function cargarMarcas() {

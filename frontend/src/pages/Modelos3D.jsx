@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import RecursoAdmin from '../../components/admin/RecursoAdmin';
+import RecursoAdmin from '../../components/tables/RecursoAdmin';
 import Visor3D from '../../components/Visor3D';
 import { accesoriosApi, modelos3dApi } from '../../services/admin';
 

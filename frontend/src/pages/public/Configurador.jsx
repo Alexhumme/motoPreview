@@ -4,7 +4,7 @@ import { obtenerMotos } from '../../services/motos';
 import { obtenerAccesoriosCompatibles } from '../../services/compatibilidad';
 import { obtenerCategorias } from '../../services/accesorios';
 import { useCart } from '../../context/CartContext';
-import SiteHeader from '../../components/SiteHeader';
+import SiteHeader from '../../components/buttons/SiteHeader';
 import './Configurador.css';
 
 const money = (value) => new Intl.NumberFormat('es-CO', {
