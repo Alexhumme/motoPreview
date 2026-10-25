@@ -93,6 +93,80 @@ CREATE TRIGGER update_recurso_updated_at
     EXECUTE FUNCTION update_updated_at_column();
 
 -- ============================================================================
+-- 1.1. FIX: Asegurar DEFAULT en columnas UUID existentes
+-- ============================================================================
+
+-- Función auxiliar para agregar DEFAULT gen_random_uuid() si falta
+DO $$
+DECLARE
+    t record;
+BEGIN
+    FOR t IN SELECT table_name, column_name 
+             FROM information_schema.columns 
+             WHERE table_schema = 'public' 
+             AND data_type = 'uuid' 
+             AND column_default IS NULL
+             AND is_nullable = 'NO'
+             AND table_name IN ('recurso', 'accion', 'recurso_accion', 'rol_recurso', 'modelo3d', 'compatibilidad', 'token')
+    LOOP
+        EXECUTE format('ALTER TABLE %I ALTER COLUMN %I SET DEFAULT gen_random_uuid()', t.table_name, t.column_name);
+    END LOOP;
+END $$;
+
+-- ============================================================================
+-- 1.1. FIX: Asegurar DEFAULT en columnas UUID existentes
+-- ============================================================================
+
+-- Función auxiliar para agregar DEFAULT gen_random_uuid() si falta
+DO $$
+DECLARE
+    t record;
+BEGIN
+    FOR t IN SELECT table_name, column_name 
+             FROM information_schema.columns 
+             WHERE table_schema = 'public' 
+             AND data_type = 'uuid' 
+             AND column_default IS NULL
+             AND is_nullable = 'NO'
+             AND table_name IN ('recurso', 'accion', 'recurso_accion', 'rol_recurso', 'modelo3d', 'compatibilidad', 'token', 'cotizacion', 'detalle_cotizacion', 'cotizacion_estado_hist', 'configuracion', 'configuracion_detalle', 'inventario', 'movimiento_inventario', 'tipo_movimiento')
+    LOOP
+        EXECUTE format('ALTER TABLE %I ALTER COLUMN %I SET DEFAULT gen_random_uuid()', t.table_name, t.column_name);
+    END LOOP;
+END $$;
+
+-- Asegurar DEFAULT TRUE en columnas booleanas 'activo' y 'requiere_scope'
+DO $$
+DECLARE
+    t record;
+BEGIN
+    FOR t IN SELECT table_name, column_name 
+             FROM information_schema.columns 
+             WHERE table_schema = 'public' 
+             AND column_name IN ('activo', 'requiere_scope') 
+             AND data_type = 'boolean'
+             AND column_default IS NULL
+    LOOP
+        EXECUTE format('ALTER TABLE %I ALTER COLUMN %I SET DEFAULT TRUE', t.table_name, t.column_name);
+    END LOOP;
+END $$;
+
+-- Asegurar DEFAULT now() en columnas de timestamp
+DO $$
+DECLARE
+    t record;
+BEGIN
+    FOR t IN SELECT table_name, column_name 
+             FROM information_schema.columns 
+             WHERE table_schema = 'public' 
+             AND data_type = 'timestamp with time zone'
+             AND column_default IS NULL
+             AND column_name IN ('creado_en', 'actualizado_en', 'concedido_en', 'fecha_registro', 'fecha_afiliacion', 'fecha_solicitud', 'fecha_movimiento', 'expira_en', 'reset_token_expira', 'modelo3d_fecha', 'fecha', 'fecha_solicitud', 'fecha_actualizacion', 'fecha_movimiento')
+    LOOP
+        EXECUTE format('ALTER TABLE %I ALTER COLUMN %I SET DEFAULT now()', t.table_name, t.column_name);
+    END LOOP;
+END $$;
+
+-- ============================================================================
 -- 2. SEEDS - CATÁLOGOS BASE
 -- ============================================================================
 
