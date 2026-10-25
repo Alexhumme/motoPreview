@@ -27,28 +27,95 @@ export default function Login() {
   }
 
   return (
-    <div className="auth-page">
-      <div className="auth-side">
-        <Link to="/" className="brand brand--light"><span className="brand-mark">↗</span><span>Moto<span>Preview</span></span></Link>
-        <div className="auth-side__copy"><div className="eyebrow eyebrow--light"><span className="eyebrow-dot" /> Tu próxima ruta empieza aquí</div><h1>Hazla tuya<br /><em>desde el primer giro.</em></h1><p>Guarda configuraciones, recibe cotizaciones y encuentra piezas que hablan el mismo idioma que tu moto.</p></div>
-        <div className="auth-side__footer"><span>MP / 2026</span><span>Hecho para quienes siguen avanzando.</span></div>
-      </div>
-      <div className="auth-form-wrap">
-        <div className="auth-form">
-          <div className="eyebrow"><span className="eyebrow-dot" /> Área personal</div>
-          <h2>Bienvenido de vuelta.</h2><p>Accede para ver tus configuraciones y cotizaciones.</p>
-          <form onSubmit={manejarSubmit}>
-            <label>Correo electrónico<input type="email" value={usu_email} onChange={(e) => setEmail(e.target.value)} placeholder="tu@correo.com" required /></label>
-            <label>Contraseña<input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required /></label>
-            <div className="form-options"><label className="check-label"><input type="checkbox" /> Recordarme</label><Link to="/recuperar">¿La olvidaste?</Link></div>
-            {error && <p className="auth-error">{error}</p>}
-            <button className="button button--accent button--full" type="submit" disabled={enviando}>{enviando ? 'Ingresando...' : 'Iniciar sesión →'}</button>
+    <div className="login-page">
+      <header className="login-nav">
+        <Link to="/" className="login-brand" aria-label="MotoPreview home">
+          <span className="brand-mark">↗</span>
+          <span className="brand-text">Moto<span>Preview</span></span>
+        </Link>
+        <nav className="login-nav__actions">
+          <Link to="/registro" className="btn btn--ghost">Crear cuenta</Link>
+        </nav>
+      </header>
+
+      <main className="login-main">
+        <div className="login-card">
+          <div className="login-header">
+            <p className="eyebrow"><span className="eyebrow-dot" aria-hidden="true"></span>Área personal</p>
+            <h1 className="login-title">Bienvenido de vuelta.</h1>
+            <p className="login-subtitle">Accede para ver tus configuraciones y cotizaciones.</p>
+          </div>
+
+          <form className="login-form" onSubmit={manejarSubmit} noValidate>
+            <div className="form-field">
+              <label htmlFor="email" className="form-label">Correo electrónico</label>
+              <input
+                id="email"
+                type="email"
+                className="form-input"
+                value={usu_email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="tu@correo.com"
+                required
+                autoComplete="email"
+                disabled={enviando}
+                aria-describedby={error ? 'login-error' : undefined}
+              />
+            </div>
+
+            <div className="form-field">
+              <label htmlFor="password" className="form-label">Contraseña</label>
+              <input
+                id="password"
+                type="password"
+                className="form-input"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                required
+                autoComplete="current-password"
+                disabled={enviando}
+                aria-describedby={error ? 'login-error' : undefined}
+              />
+            </div>
+
+            <div className="form-options">
+              <label className="checkbox-label">
+                <input type="checkbox" className="checkbox-input" />
+                <span className="checkbox-text">Recordarme</span>
+              </label>
+              <Link to="/recuperar" className="link link--forgot">¿La olvidaste?</Link>
+            </div>
+
+            {error && (
+              <p id="login-error" className="form-error" role="alert">{error}</p>
+            )}
+
+            <button
+              type="submit"
+              className="btn btn--primary btn--full"
+              disabled={enviando}
+            >
+              {enviando ? 'Ingresando...' : 'Iniciar sesión →'}
+            </button>
           </form>
-          <div className="auth-divider"><span>o</span></div>
-          <Link to="/registro" className="button button--outline button--full">Crear una cuenta gratis</Link>
-          <p className="auth-note">✓ Tus datos están protegidos.</p>
+
+          <div className="login-divider" aria-hidden="true">
+            <span>o</span>
+          </div>
+
+          <Link to="/registro" className="btn btn--outline btn--full">
+            Crear una cuenta gratis
+          </Link>
+
+          <p className="login-note">✓ Tus datos están protegidos.</p>
         </div>
-      </div>
+      </main>
+
+      <footer className="login-footer">
+        <span>MP / 2026</span>
+        <span>Hecho para quienes siguen avanzando.</span>
+      </footer>
     </div>
   );
 }
