@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { obtenerCotizaciones, cambiarEstadoCotizacion } from '../../services/cotizaciones';
 import './Cotizaciones.css';
@@ -10,23 +10,26 @@ export default function Cotizaciones() {
   const [expandida, setExpandida] = useState(null);
   const [actualizando, setActualizando] = useState(null);
 
-async function cargar() {
-  try {
-    const datos = await obtenerCotizaciones();
-    setCotizaciones(datos.filter((c) => c.id_tienda === usuario.id_tienda));
-  } catch (err) {
-    console.error(err);
-  } finally {
-    setCargando(false);
-  }
-}
+  const idTienda = usuario.id_tienda;
+
+  const cargar = useCallback(async () => {
+    try {
+      const datos = await obtenerCotizaciones();
+      setCotizaciones(datos.filter((c) => c.id_tienda === idTienda));
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setCargando(false);
+    }
+  }, [idTienda]);
 
   useEffect(() => {
+    // La carga es asíncrona: el estado se actualiza después del await.
     async function refrescar() {
       await cargar();
     }
     refrescar();
-  }, [usuario]);
+  }, [cargar]);
 
   function alternarExpandida(id) {
     setExpandida(expandida === id ? null : id);

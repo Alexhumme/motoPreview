@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { obtenerInventario, registrarMovimiento } from '../../services/inventario';
 import { TIPOS_MOVIMIENTO } from '../../constants/tiposMovimiento';
@@ -13,23 +13,26 @@ export default function Inventario() {
   const [enviando, setEnviando] = useState(false);
   const [mensaje, setMensaje] = useState('');
 
-async function cargarInventario() {
-  try {
-    const datos = await obtenerInventario();
-    setInventario(datos.filter((i) => i.id_tienda === usuario.id_tienda));
-  } catch (err) {
-    console.error(err);
-  } finally {
-    setCargando(false);
-  }
-}
+  const idTienda = usuario.id_tienda;
+
+  const cargarInventario = useCallback(async () => {
+    try {
+      const datos = await obtenerInventario();
+      setInventario(datos.filter((i) => i.id_tienda === idTienda));
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setCargando(false);
+    }
+  }, [idTienda]);
 
   useEffect(() => {
+    // La carga es asíncrona: el estado se actualiza después del await.
     async function refrescar() {
       await cargarInventario();
     }
     refrescar();
-  }, [usuario]);
+  }, [cargarInventario]);
 
   function abrirFormulario(item) {
     setItemSeleccionado(item);

@@ -2,14 +2,29 @@ import { createContext, useContext, useState, useEffect } from 'react';
 
 const CartContext = createContext();
 
+// Lee el carrito guardado sin romper la app si el dato está corrupto o el
+// almacenamiento no está disponible (modo privado, datos manipulados, etc.).
+function leerCarritoGuardado() {
+  try {
+    const guardado = JSON.parse(localStorage.getItem('carrito') || '[]');
+    if (!Array.isArray(guardado)) return [];
+    return guardado.filter(
+      (linea) => linea?.accesorio?.id_accesorio && Number.isFinite(linea.cantidad) && linea.cantidad >= 1
+    );
+  } catch {
+    return [];
+  }
+}
+
 export function CartProvider({ children }) {
-  const [items, setItems] = useState(() => {
-    const guardado = localStorage.getItem('carrito');
-    return guardado ? JSON.parse(guardado) : [];
-  });
+  const [items, setItems] = useState(leerCarritoGuardado);
 
   useEffect(() => {
-    localStorage.setItem('carrito', JSON.stringify(items));
+    try {
+      localStorage.setItem('carrito', JSON.stringify(items));
+    } catch {
+      // Sin almacenamiento disponible: el carrito sigue funcionando en memoria.
+    }
   }, [items]);
 
   function agregarItem(accesorio) {
