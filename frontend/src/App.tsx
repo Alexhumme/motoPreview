@@ -31,10 +31,11 @@ function LoadingFallback() {
   return <div className="admin-loading">Cargando módulo...</div>;
 }
 
-function LazyRoute({ component: Component, ...props }) {
+// Wrapper para rutas lazy con Suspense
+function LazyWrapper({ Component }) {
   return (
     <Suspense fallback={<LoadingFallback />}>
-      <Route {...props} element={<Component />} />
+      <Component />
     </Suspense>
   );
 }
@@ -70,9 +71,9 @@ function App() {
           }
         >
           <Route index element={<Dashboard />} />
-          <LazyRoute path="inventario" component={Inventario} />
-          <LazyRoute path="cotizaciones" component={Cotizaciones} />
-          <LazyRoute path="reportes" component={Reportes} />
+          <Route path="inventario" element={<LazyWrapper Component={Inventario} />} />
+          <Route path="cotizaciones" element={<LazyWrapper Component={Cotizaciones} />} />
+          <Route path="reportes" element={<LazyWrapper Component={Reportes} />} />
           <Route
             path="productos"
             element={
@@ -81,38 +82,10 @@ function App() {
               </RutaProtegida>
             }
           />
-          <Route
-            path="usuarios"
-            element={
-              <RutaProtegida rolesPermitidos={[ROL_ADMIN]}>
-                <Usuarios />
-              </RutaProtegida>
-            }
-          />
-          <Route
-            path="tienda"
-            element={
-              <RutaProtegida rolesPermitidos={[ROL_ADMIN]}>
-                <Tienda />
-              </RutaProtegida>
-            }
-          />
-          <Route
-            path="permisos"
-            element={
-              <RutaProtegida rolesPermitidos={[ROL_ADMIN]}>
-                <PermisosRBAC />
-              </RutaProtegida>
-            }
-          />
-          <Route
-            path="roles"
-            element={
-              <RutaProtegida rolesPermitidos={[ROL_ADMIN]}>
-                <Roles />
-              </RutaProtegida>
-            }
-          />
+          <Route path="usuarios" element={<LazyWrapper Component={Usuarios} />} />
+          <Route path="tienda" element={<LazyWrapper Component={Tienda} />} />
+          <Route path="permisos" element={<LazyWrapper Component={PermisosRBAC} />} />
+          <Route path="roles" element={<LazyWrapper Component={Roles} />} />
         </Route>
         <Route path="*" element={<NoEncontrado />} />
       </Routes>
