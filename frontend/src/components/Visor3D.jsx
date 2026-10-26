@@ -12,7 +12,7 @@ function ModeloReemplazo() {
   return (
     <mesh rotation={[0.4, 0.6, 0]}>
       <torusKnotGeometry args={[1, 0.35, 128, 32]} />
-      <meshStandardMaterial color="#0E6E6E" metalness={0.4} roughness={0.3} />
+      <meshStandardMaterial color="#F26A21" metalness={0.4} roughness={0.3} />
     </mesh>
   );
 }

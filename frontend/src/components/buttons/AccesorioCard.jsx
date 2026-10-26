@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
+import ImagenProducto from '../ImagenProducto';
 import './AccesorioCard.css';
 
 export default function AccesorioCard({ accesorio }) {
@@ -14,11 +15,7 @@ export default function AccesorioCard({ accesorio }) {
   return (
     <article className="product-card">
       <Link to={`/visualizador/${accesorio.id_accesorio}`} className="product-link" aria-label={`Ver ${accesorio.acc_nombre}`}>
-        {accesorio.imagen ? (
-          <img src={accesorio.imagen} alt={accesorio.acc_nombre} className="product-image" />
-        ) : (
-          <span className="product-fallback">MP</span>
-        )}
+        <ImagenProducto src={accesorio.imagen} alt={accesorio.acc_nombre} className="product-image" />
         <div className="product-shine" />
         {disponible && <span className="product-badge badge--mint">✦ Disponible</span>}
         <span className="product-code">{accesorio.codigo_sku}</span>

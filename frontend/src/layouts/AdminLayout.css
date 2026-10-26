@@ -40,10 +40,14 @@
   justify-content: center;
   width: 32px;
   height: 32px;
-  background: linear-gradient(135deg, var(--color-signal-mint), var(--color-electric-violet));
+  background-color: var(--color-paper);
+  background-image: url('/motopreview_icono.png');
+  background-size: 82%;
+  background-position: center;
+  background-repeat: no-repeat;
   border-radius: var(--radius-nav);
-  font-size: 16px;
-  color: var(--color-obsidian-plum);
+  font-size: 0;
+  color: transparent;
 }
 
 .brand-text {
@@ -51,11 +55,11 @@
   font-weight: var(--weight-black);
   font-size: 18px;
   letter-spacing: -0.02em;
-  color: var(--color-jam-pink);
+  color: var(--color-paper);
 }
 
 .brand-text span {
-  color: var(--color-paper);
+  color: var(--color-signal-mint);
 }
 
 /* Navigation links */
@@ -88,7 +92,7 @@
 
 .admin-nav-link--active {
   color: var(--color-signal-mint);
-  background: rgba(115, 229, 191, 0.1);
+  background: rgba(242, 106, 33, 0.1);
 }
 
 .nav-icon {

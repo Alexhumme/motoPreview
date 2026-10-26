@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { obtenerMotos } from '../../services/motos';
 import { crearCotizacion } from '../../services/cotizaciones';
 import SiteHeader from '../../components/buttons/SiteHeader';
+import ImagenProducto from '../../components/ImagenProducto';
 import './Carrito.css';
 
 const money = (value) => new Intl.NumberFormat('es-CO', {
@@ -94,11 +95,7 @@ export default function Carrito() {
                   {items.map((item) => (
                     <article key={item.accesorio.id_accesorio} className="cart-line">
                       <div className="mini-art">
-                        {item.accesorio.imagen ? (
-                          <img src={item.accesorio.imagen} alt="" />
-                        ) : (
-                          <span className="mini-fallback">MP</span>
-                        )}
+                        <ImagenProducto src={item.accesorio.imagen} />
                       </div>
                       <div className="cart-line-info">
                         <span>{item.accesorio.categoria_accesorio?.cat_nombre || 'Accesorio'}</span>

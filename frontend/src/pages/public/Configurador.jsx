@@ -5,6 +5,7 @@ import { obtenerAccesoriosCompatibles } from '../../services/compatibilidad';
 import { obtenerCategorias } from '../../services/accesorios';
 import { useCart } from '../../context/CartContext';
 import SiteHeader from '../../components/buttons/SiteHeader';
+import ImagenProducto from '../../components/ImagenProducto';
 import './Configurador.css';
 
 const money = (value) => new Intl.NumberFormat('es-CO', {
@@ -183,7 +184,7 @@ export default function Configurador() {
                 return (
                   <div className="compatible-item" key={item.id_accesorio}>
                     <div className="mini-art">
-                      {item.imagen ? <img src={item.imagen} alt="" /> : <span className="mini-fallback">MP</span>}
+                      <ImagenProducto src={item.imagen} />
                     </div>
                     <div className="compatible-info">
                       <strong>{item.acc_nombre}</strong>

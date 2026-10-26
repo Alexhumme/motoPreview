@@ -146,8 +146,8 @@
 }
 
 .mensaje-exito {
-  background: rgba(115, 229, 191, 0.15);
-  border: 1px solid rgba(115, 229, 191, 0.3);
+  background: rgba(242, 106, 33, 0.15);
+  border: 1px solid rgba(242, 106, 33, 0.3);
   color: var(--color-signal-mint);
 }
 

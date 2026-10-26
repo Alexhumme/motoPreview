@@ -45,7 +45,7 @@
   position: absolute;
   width: 100px;
   height: 100px;
-  background: radial-gradient(circle, rgba(115, 229, 191, 0.15), transparent 70%);
+  background: radial-gradient(circle, rgba(242, 106, 33, 0.15), transparent 70%);
   animation: float 6s ease-in-out infinite;
 }
 

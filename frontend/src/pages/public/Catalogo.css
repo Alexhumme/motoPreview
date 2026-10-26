@@ -216,7 +216,7 @@
   width: 48px;
   height: 48px;
   border-radius: var(--radius-nav);
-  background: rgba(115, 229, 191, 0.15);
+  background: rgba(242, 106, 33, 0.15);
   color: var(--color-signal-mint);
   font-size: 20px;
 }
@@ -375,7 +375,7 @@
 
 .search-field input:focus {
   border-color: var(--color-signal-mint);
-  box-shadow: 0 0 0 3px rgba(115, 229, 191, 0.15);
+  box-shadow: 0 0 0 3px rgba(242, 106, 33, 0.15);
 }
 
 .search-field kbd {

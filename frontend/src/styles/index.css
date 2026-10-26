@@ -2,16 +2,16 @@
 
 /* ==========================================================================
    JAM DESIGN SYSTEM — Global Tokens & Base Styles
-   Dark theme: Obsidian Plum canvas, Signal Mint accent, Jam Pink brand
+   Dark theme: Carbon Slate canvas, Moto Orange accent (paleta del logo)
    ========================================================================== */
 
 :root {
   /* ===== COLORS ===== */
-  /* Canvas & Surfaces */
-  --color-obsidian-plum: #130f18;   /* Page canvas, deepest background */
-  --color-graphite-plum: #21192a;   /* Card and list surface */
-  --color-smoke-plum: #2e2d36;     /* Inner card surface, second elevation */
-  --color-ink-border: #252542;     /* Subtle violet-tinted borders */
+  /* Canvas & Surfaces (grises del logo: casco #252A34) */
+  --color-obsidian-plum: #171b22;   /* Page canvas, deepest background */
+  --color-graphite-plum: #232833;   /* Card and list surface */
+  --color-smoke-plum: #2e3441;     /* Inner card surface, second elevation */
+  --color-ink-border: #313947;     /* Subtle slate-tinted borders */
   --color-carbon: #25292e;         /* Navigation fills, mid-ground blocks */
 
   /* Text */
@@ -19,14 +19,14 @@
   --color-soft-mist: #d0cfd1;      /* Lighter body text variant */
   --color-paper: #ffffff;          /* Light text on dark, inverse labels */
 
-  /* Accents */
-  --color-signal-mint: #73e5bf;    /* Primary CTA, focus rings, status */
-  --color-mint-halo: #c5ffe7;      /* Soft mint highlight, glow */
-  --color-electric-violet: #a37af5; /* Feature pill icons, gradients */
-  --color-deep-violet: #744ec2;    /* Decorative card fill, gradient start */
-  --color-lilac: #b89fd4;          /* Light accent text/headings */
-  --color-mauve: #947fac;          /* Muted violet for body accents */
-  --color-jam-pink: #ff4070;       /* Wordmark, header CTA, error state */
+  /* Accents (naranja del logo #F26A21; rojo solo para errores/eliminar) */
+  --color-signal-mint: #f26a21;    /* Primary CTA, focus rings, status, marca */
+  --color-mint-halo: #ffd9be;      /* Soft orange highlight, glow */
+  --color-electric-violet: #ffb077; /* Feature pill icons, gradients */
+  --color-deep-violet: #c24e15;    /* Decorative card fill, gradient start */
+  --color-lilac: #ffc49b;          /* Light accent text/headings */
+  --color-mauve: #a8b0bc;          /* Muted neutral for body accents */
+  --color-jam-pink: #e5484d;       /* Error state, danger buttons */
 
   /* Borders */
   --color-bone: #e5e7eb;           /* Hairline borders — connective tissue */
@@ -101,14 +101,14 @@
   --radius-buttons: 12px;
 
   /* ===== SHADOWS ===== */
-  --shadow-mint-glow: rgba(19, 15, 24, 0.1) 0px 0px 0px 2px,
-                       rgba(115, 229, 191, 0.2) 0px 20px 25px -5px,
-                       rgba(115, 229, 191, 0.2) 0px 8px 10px -6px;
-  --shadow-mint-glow-hover: rgba(19, 15, 24, 0.1) 0px 0px 0px 2px,
-                             rgba(115, 229, 191, 0.3) 0px 25px 30px -5px,
-                             rgba(115, 229, 191, 0.3) 0px 10px 12px -6px;
+  --shadow-mint-glow: rgba(23, 27, 34, 0.1) 0px 0px 0px 2px,
+                       rgba(242, 106, 33, 0.2) 0px 20px 25px -5px,
+                       rgba(242, 106, 33, 0.2) 0px 8px 10px -6px;
+  --shadow-mint-glow-hover: rgba(23, 27, 34, 0.1) 0px 0px 0px 2px,
+                             rgba(242, 106, 33, 0.3) 0px 25px 30px -5px,
+                             rgba(242, 106, 33, 0.3) 0px 10px 12px -6px;
   --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.3), 0 0 0 1px var(--color-bone);
-  --shadow-subtle-2: rgb(197, 255, 231) 0px 1px 1px 0px inset;
+  --shadow-subtle-2: rgb(255, 217, 190) 0px 1px 1px 0px inset;
 
   /* ===== SURFACES ===== */
   --surface-canvas: var(--color-obsidian-plum);
@@ -157,7 +157,7 @@ img { max-width: 100%; height: auto; display: block; }
 
 :focus-visible {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(115, 229, 191, 0.4);
+  box-shadow: 0 0 0 3px rgba(242, 106, 33, 0.4);
   border-radius: var(--radius-inputs);
 }
 
@@ -183,7 +183,7 @@ img { max-width: 100%; height: auto; display: block; }
    ========================================================================== */
 
 ::selection {
-  background: rgba(115, 229, 191, 0.3);
+  background: rgba(242, 106, 33, 0.3);
   color: var(--color-paper);
 }
 
@@ -358,16 +358,16 @@ img { max-width: 100%; height: auto; display: block; }
   border-color: var(--color-mist-gray);
 }
 
-/* Header CTA — Jam Pink (brand beacon) */
+/* Header CTA — Moto Orange (marca del logo) */
 .btn--brand {
-  background: var(--color-jam-pink);
-  color: var(--color-paper);
+  background: var(--color-signal-mint);
+  color: var(--color-obsidian-plum);
   padding: var(--space-10) var(--space-16);
   font-size: var(--text-body);
 }
 
 .btn--brand:hover:not(:disabled) {
-  background: #e63864;
+  background: var(--color-mint-halo);
   transform: translateY(-1px);
 }
 
@@ -379,7 +379,7 @@ img { max-width: 100%; height: auto; display: block; }
 }
 
 .btn--outline:hover:not(:disabled) {
-  background: rgba(115, 229, 191, 0.1);
+  background: rgba(242, 106, 33, 0.1);
   color: var(--color-mint-halo);
 }
 
@@ -391,7 +391,7 @@ img { max-width: 100%; height: auto; display: block; }
 }
 
 .btn--danger:hover:not(:disabled) {
-  background: rgba(255, 64, 112, 0.1);
+  background: rgba(229, 72, 77, 0.1);
   color: var(--color-jam-pink);
 }
 
@@ -445,7 +445,7 @@ img { max-width: 100%; height: auto; display: block; }
 
 .form-input:focus {
   border-color: var(--color-signal-mint);
-  box-shadow: 0 0 0 3px rgba(115, 229, 191, 0.15);
+  box-shadow: 0 0 0 3px rgba(242, 106, 33, 0.15);
 }
 
 .form-input:disabled {
@@ -459,7 +459,7 @@ img { max-width: 100%; height: auto; display: block; }
 
 .form-input[aria-describedby]:focus {
   border-color: var(--color-jam-pink);
-  box-shadow: 0 0 0 3px rgba(255, 64, 112, 0.15);
+  box-shadow: 0 0 0 3px rgba(229, 72, 77, 0.15);
 }
 
 .form-select {
@@ -478,8 +478,8 @@ img { max-width: 100%; height: auto; display: block; }
   color: var(--color-jam-pink);
   margin: 0;
   padding: var(--space-8) var(--space-12);
-  background: rgba(255, 64, 112, 0.1);
-  border: 1px solid rgba(255, 64, 112, 0.2);
+  background: rgba(229, 72, 77, 0.1);
+  border: 1px solid rgba(229, 72, 77, 0.2);
   border-radius: var(--radius-inputs);
 }
 
@@ -506,13 +506,13 @@ img { max-width: 100%; height: auto; display: block; }
 .checkbox-input:checked {
   background: var(--color-signal-mint);
   border-color: var(--color-signal-mint);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%23130f18'%3E%3Cpath d='M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%23171b22'%3E%3Cpath d='M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z'/%3E%3C/svg%3E");
   background-position: center;
   background-repeat: no-repeat;
 }
 
 .checkbox-input:focus-visible {
-  box-shadow: 0 0 0 3px rgba(115, 229, 191, 0.3);
+  box-shadow: 0 0 0 3px rgba(242, 106, 33, 0.3);
 }
 
 .checkbox-text {
@@ -607,9 +607,9 @@ img { max-width: 100%; height: auto; display: block; }
 }
 
 .badge--mint {
-  background: rgba(115, 229, 191, 0.15);
+  background: rgba(242, 106, 33, 0.15);
   color: var(--color-signal-mint);
-  border: 1px solid rgba(115, 229, 191, 0.3);
+  border: 1px solid rgba(242, 106, 33, 0.3);
 }
 
 .badge--violet {
@@ -619,9 +619,9 @@ img { max-width: 100%; height: auto; display: block; }
 }
 
 .badge--pink {
-  background: rgba(255, 64, 112, 0.15);
+  background: rgba(229, 72, 77, 0.15);
   color: var(--color-jam-pink);
-  border: 1px solid rgba(255, 64, 112, 0.3);
+  border: 1px solid rgba(229, 72, 77, 0.3);
 }
 
 .badge--gray {
@@ -710,7 +710,7 @@ img { max-width: 100%; height: auto; display: block; }
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(19, 15, 24, 0.8);
+  background: rgba(23, 27, 34, 0.8);
   backdrop-filter: blur(4px);
   display: flex;
   align-items: center;

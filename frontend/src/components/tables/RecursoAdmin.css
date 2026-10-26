@@ -31,20 +31,20 @@
 
 .ra-aviso--ok {
   color: var(--color-signal-mint);
-  background: rgba(115, 229, 191, 0.1);
-  border: 1px solid rgba(115, 229, 191, 0.2);
+  background: rgba(242, 106, 33, 0.1);
+  border: 1px solid rgba(242, 106, 33, 0.2);
 }
 
 .ra-aviso--error {
   color: var(--color-jam-pink);
-  background: rgba(255, 64, 112, 0.08);
-  border: 1px solid rgba(255, 64, 112, 0.2);
+  background: rgba(229, 72, 77, 0.08);
+  border: 1px solid rgba(229, 72, 77, 0.2);
 }
 
 .dt-boton--peligro {
   color: var(--color-jam-pink);
-  background: rgba(255, 64, 112, 0.08);
-  border: 1px solid rgba(255, 64, 112, 0.3);
+  background: rgba(229, 72, 77, 0.08);
+  border: 1px solid rgba(229, 72, 77, 0.3);
 }
 
 .dt-boton--peligro:hover:not(:disabled) {
