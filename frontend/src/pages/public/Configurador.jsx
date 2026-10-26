@@ -189,7 +189,8 @@ export default function Configurador() {
                     </div>
                     <button
                       className={`btn btn--sm ${agregado ? 'btn--primary' : 'btn--outline'}`}
-                      onClick={() => agregarItem(item)}
+                      onClick={() => (agregado ? eliminarItem(item.id_accesorio) : agregarItem(item))}
+                      title={agregado ? 'Quitar del carrito' : 'Agregar al carrito'}
                       aria-label={`${agregado ? 'Quitar' : 'Agregar'} ${item.acc_nombre}`}
                     >
                       {agregado ? '✓' : '+'}
