@@ -115,6 +115,11 @@
   --surface-card: var(--color-graphite-plum);
   --surface-elevated: var(--color-smoke-plum);
   --surface-product: var(--color-paper);
+
+  /* Marca: en oscuro se usa el casco del logo v2 (casco blanco con
+     visor naranja, fondo transparente, sin chip) */
+  --marca-imagen: url('/motopreview_icono_oscuro.png?v=1');
+  --marca-fondo: transparent;
 }
 
 /* ==========================================================================
@@ -143,6 +148,10 @@
   --color-bone: #dfe3ea;
 
   --shadow-card: 0 2px 10px rgba(23, 27, 34, 0.08), 0 0 0 1px var(--color-bone);
+
+  /* Marca clara: casco del logo anterior sobre chip blanco */
+  --marca-imagen: url('/motopreview_icono.png?v=3');
+  --marca-fondo: #ffffff;
 }
 
 /* Botón del conmutador de tema (sol/luna) en los headers */

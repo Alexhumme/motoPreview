@@ -43,8 +43,8 @@
   justify-content: center;
   width: 38px;
   height: 38px;
-  background-color: #ffffff;
-  background-image: url('/motopreview_icono.png?v=3');
+  background-color: var(--marca-fondo);
+  background-image: var(--marca-imagen);
   background-size: 104%;
   background-position: center;
   background-repeat: no-repeat;
