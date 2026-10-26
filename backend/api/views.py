@@ -1726,10 +1726,32 @@ class RecursoConPermisosCollection(DatabaseGuardMixin):
         rol_id = request.query_params.get("rol_id")
         if not rol_id:
             return Response({"error": "Se requiere rol_id"}, status=status.HTTP_400_BAD_REQUEST)
-        
-        from api.models import Recurso, RolRecurso
-        recursos = Recurso.objects.filter(activo=True).order_by("orden")
-        serializer = self.serializer_class(recursos, many=True, context={"rol_id": rol_id})
+
+        from api.models import Recurso, RecursoAccion, RolRecurso
+        recursos = list(Recurso.objects.filter(activo=True).order_by("orden"))
+
+        # Dos consultas globales en vez de dos por recurso (evita N+1)
+        combos_por_recurso = {}
+        for ra in (
+            RecursoAccion.objects.filter(activo=True)
+            .select_related("accion")
+            .order_by("recurso__orden", "accion__orden")
+        ):
+            combos_por_recurso.setdefault(ra.recurso_id, []).append(ra)
+        concedidos = {
+            rr.recurso_accion_id: rr.scope
+            for rr in RolRecurso.objects.filter(rol_id=rol_id, activo=True)
+        }
+
+        serializer = self.serializer_class(
+            recursos,
+            many=True,
+            context={
+                "rol_id": rol_id,
+                "combos_por_recurso": combos_por_recurso,
+                "concedidos": concedidos,
+            },
+        )
         return Response(serializer.data)
 
 

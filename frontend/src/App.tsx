@@ -6,8 +6,6 @@ import Carrito from './pages/public/Carrito';
 import AdminLayout from './layouts/AdminLayout';
 import RutaProtegida from './components/private/RutaProtegida';
 import { ROL_ADMIN, ROL_SUPERADMIN, ROL_VENDEDOR } from './utils/constants/roles';
-import Visualizador from './pages/public/Visualizador';
-import Configurador from './pages/public/Configurador';
 import MisCotizaciones from './pages/public/MisCotizaciones';
 import NoEncontrado from './pages/public/NoEncontrado';
 import VerificarCorreo from './pages/auth/VerificarCorreo';
@@ -15,6 +13,11 @@ import BannerConexion from './components/menus/BannerConexion';
 import RecuperarPassword from './pages/auth/RecuperarPassword';
 import RestablecerPassword from './pages/auth/RestablecerPassword';
 import Registro from './pages/auth/Registro';
+
+// Code-splitting: páginas con three.js bajo demanda (pesan ~1MB);
+// si fueran estáticas ensuciarían el bundle inicial de toda la app.
+const Visualizador = lazy(() => import('./pages/public/Visualizador'));
+const Configurador = lazy(() => import('./pages/public/Configurador'));
 
 // Code-splitting: cargar páginas admin bajo demanda
 const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -51,8 +54,14 @@ function App() {
         <Route path="/verificar/:token" element={<VerificarCorreo />} />
         <Route path="/recuperar" element={<RecuperarPassword />} />
         <Route path="/restablecer/:token" element={<RestablecerPassword />} />
-        <Route path="/visualizador/:id" element={<Visualizador />} />
-        <Route path="/configurador" element={<Configurador />} />
+        <Route
+          path="/visualizador/:id"
+          element={<LazyWrapper Component={Visualizador} />}
+        />
+        <Route
+          path="/configurador"
+          element={<LazyWrapper Component={Configurador} />}
+        />
         <Route
           path="/mis-cotizaciones"
           element={

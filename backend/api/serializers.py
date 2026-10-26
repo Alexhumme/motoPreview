@@ -627,35 +627,42 @@ class RecursoConPermisosSerializer(serializers.ModelSerializer):
         Devuelve cada recurso-acción con su scope cuando el rol lo tiene
         concedido, o ``scope: None`` cuando no (la UI lo pinta como casilla
         sin marcar, de modo que se puedan OTORGAR permisos nuevos).
+
+        Usa los mapas precargados en el contexto (2 consultas en total para
+        todo el listado); si no vienen, cae a consultar por recurso.
         """
         rol_id = self.context.get("rol_id")
         if not rol_id:
             return []
 
-        from api.models import RolRecurso, RecursoAccion
-        combinaciones = RecursoAccion.objects.filter(
-            recurso=obj, activo=True
-        ).select_related("accion").order_by("accion__orden")
-        concedidos = {
-            rr.recurso_accion_id: rr
-            for rr in RolRecurso.objects.filter(
-                rol_id=rol_id,
-                activo=True,
-                recurso_accion__recurso=obj,
-                recurso_accion__activo=True,
+        combos_por_recurso = self.context.get("combos_por_recurso")
+        concedidos_ctx = self.context.get("concedidos")
+        if combos_por_recurso is None or concedidos_ctx is None:
+            from api.models import RolRecurso, RecursoAccion
+            combinaciones = list(
+                RecursoAccion.objects.filter(recurso=obj, activo=True)
+                .select_related("accion")
+                .order_by("accion__orden")
             )
-        }
+            concedidos = {
+                rr.recurso_accion_id: rr.scope
+                for rr in RolRecurso.objects.filter(
+                    rol_id=rol_id,
+                    activo=True,
+                    recurso_accion__recurso=obj,
+                    recurso_accion__activo=True,
+                )
+            }
+        else:
+            combinaciones = combos_por_recurso.get(obj.id_recurso, [])
+            concedidos = concedidos_ctx
 
         return [
             {
                 "id_recurso_accion": str(ra.id_recurso_accion),
                 "accion_codigo": ra.accion.codigo,
                 "accion_nombre": ra.accion.nombre,
-                "scope": (
-                    concedidos[ra.id_recurso_accion].scope
-                    if ra.id_recurso_accion in concedidos
-                    else None
-                ),
+                "scope": concedidos.get(ra.id_recurso_accion),
                 "activo": ra.id_recurso_accion in concedidos,
             }
             for ra in combinaciones
