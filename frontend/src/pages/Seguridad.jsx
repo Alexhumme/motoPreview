@@ -164,13 +164,13 @@ export default function Seguridad() {
     }
   }
 
-  // Columnas compartidas de la matriz: unión de acciones de TODOS los
-  // recursos, en orden de aparición. Así la tabla es una sola y las
-  // columnas quedan alineadas entre filas.
+  // Columnas compartidas de la matriz: unión de ACCIONES (crear, leer,
+  // actualizar...). La clave de deduplicación es accion_codigo (el id de
+  // recurso-accion es único por combinación y daría una columna por celda).
   const accionesUnion = [];
   recursos.forEach((recurso) =>
     (recurso.acciones || []).forEach((accion) => {
-      if (!accionesUnion.some((x) => x.id_recurso_accion === accion.id_recurso_accion)) {
+      if (!accionesUnion.some((x) => x.accion_codigo === accion.accion_codigo)) {
         accionesUnion.push(accion);
       }
     })
@@ -365,7 +365,7 @@ export default function Seguridad() {
                   <tr>
                     <th style={{ minWidth: '260px' }}>Recurso</th>
                     {accionesUnion.map((accion) => (
-                      <th key={accion.id_recurso_accion} className="col-accion">
+                      <th key={accion.accion_codigo} className="col-accion">
                         {accion.accion_nombre}
                       </th>
                     ))}
@@ -379,18 +379,20 @@ export default function Seguridad() {
                         {recurso.codigo && <code>{recurso.codigo}</code>}
                       </td>
                       {accionesUnion.map((accion) => {
+                        // Buscar en ESTE recurso la combinación de la misma
+                        // acción (la columna comparte la acción, no el id)
                         const propia = (recurso.acciones || []).find(
-                          (x) => x.id_recurso_accion === accion.id_recurso_accion
+                          (x) => x.accion_codigo === accion.accion_codigo
                         );
                         if (!propia) {
                           return (
-                            <td key={accion.id_recurso_accion} className="celda-no-aplica">
+                            <td key={accion.accion_codigo} className="celda-no-aplica">
                               <span aria-hidden="true">—</span>
                             </td>
                           );
                         }
                         return (
-                          <td key={accion.id_recurso_accion}>
+                          <td key={accion.accion_codigo}>
                             <div className="permiso-cell">
                               <input
                                 type="checkbox"
