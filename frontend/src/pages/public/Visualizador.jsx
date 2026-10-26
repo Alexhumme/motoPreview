@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import api from '../../services/api';
 import { obtenerModelo3dPorAccesorio } from '../../services/modelos3d';
 import Visor3D from '../../components/Visor3D';
+import SiteHeader from '../../components/buttons/SiteHeader';
 import './Visualizador.css';
 
 export default function Visualizador() {
@@ -60,6 +61,7 @@ export default function Visualizador() {
 
   return (
     <div className="visualizador-page">
+      <SiteHeader />
       <Link to="/" className="btn btn--ghost btn--sm visualizador-back">← Volver al catálogo</Link>
 
       <div className="visualizador-layout">

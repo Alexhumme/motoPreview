@@ -1,5 +1,5 @@
-import RecursoAdmin from '../../components/tables/RecursoAdmin';
-import { accesoriosApi, categoriasApi } from '../../services/admin';
+import RecursoAdmin from '../components/tables/RecursoAdmin';
+import { accesoriosApi, categoriasApi } from '../services/admin';
 
 async function cargarExtra() {
   const accesorios = await accesoriosApi.listar();

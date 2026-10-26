@@ -441,6 +441,54 @@
 }
 
 /* ==========================================================================
+   FORM OPTIONS (recordarme / olvidaste)
+   ========================================================================== */
+
+.form-options {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-16);
+  flex-wrap: wrap;
+}
+
+.checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  font-family: var(--font-ui);
+  font-size: var(--text-body);
+  color: var(--color-mist-gray);
+  cursor: pointer;
+  user-select: none;
+}
+
+.checkbox-input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--color-signal-mint);
+  cursor: pointer;
+}
+
+.checkbox-text {
+  font-size: var(--text-body);
+}
+
+.link--forgot {
+  font-family: var(--font-ui);
+  font-size: var(--text-body);
+  font-weight: var(--weight-medium);
+  color: var(--color-signal-mint);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.link--forgot:hover {
+  color: var(--color-mint-halo);
+  text-decoration: underline;
+}
+
+/* ==========================================================================
    FOOTER LINK
    ========================================================================== */
 

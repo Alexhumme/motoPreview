@@ -1,197 +1,132 @@
+/* ==========================================================================
+   ACCESORIOS (CRUD admin) — Jam Design System
+   ========================================================================== */
+
+.accesorios-admin {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-24);
+}
+
 .accesorios-admin__header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  gap: var(--space-16);
+  flex-wrap: wrap;
 }
 
 .accesorios-admin__titulo {
-  font-family: var(--fuente-titulo);
-  font-size: 26px;
-  color: var(--color-carbon);
+  font-family: var(--font-display);
+  font-weight: var(--weight-black);
+  font-size: var(--text-heading);
+  line-height: var(--leading-heading);
+  letter-spacing: var(--tracking-heading);
+  color: var(--color-paper);
+  margin: 0;
 }
 
-.accesorios-admin__boton-nuevo {
-  background: var(--color-rojo);
-  color: #FFFFFF;
-  border: none;
-  border-radius: 4px;
-  padding: 9px 16px;
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.accesorios-admin__boton-nuevo:hover {
-  background: var(--color-rojo-oscuro);
+/* Tabla */
+.accesorios-admin__card {
+  padding: 0;
+  overflow: hidden;
 }
 
 .accesorios-admin__tabla {
   width: 100%;
   border-collapse: collapse;
-  background: #FFFFFF;
-  border: 1px solid var(--color-borde);
-  border-radius: 6px;
-  overflow: hidden;
 }
 
 .accesorios-admin__tabla th {
   text-align: left;
-  font-size: 12px;
-  color: var(--color-texto-suave);
-  padding: 12px 16px;
-  background: var(--color-fondo);
-  border-bottom: 1px solid var(--color-borde);
+  font-family: var(--font-display);
+  font-weight: var(--weight-regular);
+  font-size: var(--text-caption);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-mist-gray);
+  padding: var(--space-16);
+  background: var(--surface-elevated);
+  border-bottom: 1px solid var(--color-bone);
 }
 
 .accesorios-admin__tabla td {
-  padding: 12px 16px;
-  font-size: 14px;
-  color: var(--color-texto);
-  border-bottom: 1px solid #F0F0F1;
+  padding: var(--space-16);
+  font-family: var(--font-ui);
+  font-size: var(--text-body);
+  color: var(--color-soft-mist);
+  border-bottom: 1px solid var(--color-bone);
 }
 
-.accesorios-admin__estado {
-  padding: 3px 10px;
-  border-radius: 3px;
-  font-size: 12px;
-  font-weight: 600;
+.accesorios-admin__tabla tbody tr:last-child td {
+  border-bottom: none;
 }
 
-.accesorios-admin__estado--disponible { background: #E8F5E9; color: #2E7D32; }
-.accesorios-admin__estado--agotado { background: #FBEAEA; color: var(--color-rojo-oscuro); }
-.accesorios-admin__estado--descontinuado { background: #F0F0F0; color: #7A7A7A; }
-
-.accesorios-admin__boton-editar {
-  background: transparent;
-  border: 1px solid var(--color-borde);
-  border-radius: 4px;
-  padding: 6px 12px;
-  font-size: 12px;
-  cursor: pointer;
+.accesorios-admin__tabla tbody tr:hover td {
+  background: var(--surface-elevated);
+  color: var(--color-paper);
 }
 
-.accesorios-admin__overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(22, 24, 28, 0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
+.accesorios-admin__sku {
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  color: var(--color-electric-violet);
 }
 
-.accesorios-admin__modal {
-  background: #FFFFFF;
-  border-radius: 8px;
-  padding: 24px;
-  width: 480px;
-  max-height: 90vh;
-  overflow-y: auto;
-}
-
-.accesorios-admin__modal h2 {
-  font-family: var(--fuente-titulo);
-  font-size: 18px;
-  color: var(--color-carbon);
-  margin-bottom: 12px;
-}
-
-.accesorios-admin__modal form {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.accesorios-admin__modal label {
-  font-size: 12px;
-  color: var(--color-texto-suave);
-  margin-top: 10px;
-}
-
-.accesorios-admin__modal input,
-.accesorios-admin__modal select,
-.accesorios-admin__modal textarea {
-  padding: 8px 10px;
-  border: 1px solid var(--color-borde);
-  border-radius: 4px;
-  font-family: var(--fuente-cuerpo);
-  font-size: 14px;
-  width: 100%;
-}
-
+/* Formulario en modal */
 .accesorios-admin__fila {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: var(--space-16);
 }
 
-.accesorios-admin__label-compat {
-  margin-top: 16px;
-  font-weight: 600;
-  color: var(--color-texto) !important;
-}
-
+/* Compatibilidad con modelos */
 .accesorios-admin__checkboxes {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  margin-top: 6px;
-  max-height: 140px;
+  gap: var(--space-8);
+  margin-top: var(--space-8);
+  max-height: 180px;
   overflow-y: auto;
-  border: 1px solid var(--color-borde);
-  border-radius: 4px;
-  padding: 10px;
+  padding: var(--space-12);
+  background: var(--surface-elevated);
+  border: 1px solid var(--color-bone);
+  border-radius: var(--radius-inputs);
 }
 
 .accesorios-admin__checkbox {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  color: var(--color-texto);
-  margin: 0 !important;
+  gap: var(--space-10);
+  font-family: var(--font-ui);
+  font-size: var(--text-body);
+  color: var(--color-soft-mist);
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.accesorios-admin__checkbox:hover {
+  color: var(--color-paper);
 }
 
 .accesorios-admin__checkbox input {
-  width: auto !important;
-}
-
-.accesorios-admin__error {
-  color: var(--color-rojo-oscuro);
-  font-size: 13px;
-  margin-top: 8px;
-}
-
-.accesorios-admin__modal-botones {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 16px;
-}
-
-.accesorios-admin__boton-cancelar {
-  background: transparent;
-  border: 1px solid var(--color-borde);
-  border-radius: 4px;
-  padding: 8px 14px;
+  width: 16px;
+  height: 16px;
+  accent-color: var(--color-signal-mint);
   cursor: pointer;
 }
 
-.accesorios-admin__boton-guardar {
-  background: var(--color-rojo);
-  color: #FFFFFF;
-  border: none;
-  border-radius: 4px;
-  padding: 8px 14px;
-  cursor: pointer;
-}
+/* Responsive */
+@media (max-width: 720px) {
+  .accesorios-admin__fila {
+    grid-template-columns: 1fr;
+  }
 
-.accesorios-admin__boton-guardar:hover {
-  background: var(--color-rojo-oscuro);
-}
+  .accesorios-admin__card {
+    overflow-x: auto;
+  }
 
-.accesorios-admin__boton-guardar:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+  .accesorios-admin__tabla {
+    min-width: 640px;
+  }
 }

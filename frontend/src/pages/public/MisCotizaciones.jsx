@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { obtenerCotizaciones } from '../../services/cotizaciones';
+import SiteHeader from '../../components/buttons/SiteHeader';
 import './MisCotizaciones.css';
 
 const precioFormateado = (valor) =>
@@ -55,8 +56,10 @@ export default function MisCotizaciones() {
   }
 
   return (
-    <div className="mis-cotizaciones">
-      <header className="mis-cotizaciones-header">
+    <div className="mis-cotizaciones-page">
+      <SiteHeader />
+      <div className="mis-cotizaciones">
+        <header className="mis-cotizaciones-header">
         <Link to="/" className="btn btn--ghost btn--sm">← Volver al catálogo</Link>
         <h1 className="mis-cotizaciones-title">Mis cotizaciones</h1>
       </header>
@@ -110,6 +113,7 @@ export default function MisCotizaciones() {
           </article>
         ))}
       </section>
+      </div>
     </div>
   );
 }

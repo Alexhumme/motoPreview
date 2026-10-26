@@ -55,10 +55,6 @@ export default function Tienda() {
     }
   }
 
-  const precioFormateado = new Intl.NumberFormat('es-CO', {
-    style: 'currency', currency: 'COP', maximumFractionDigits: 0,
-  }).format(tienda.plan_subscripcion?.precio_mensual || 0);
-
   if (cargando) {
     return (
       <div className="tienda" role="status" aria-live="polite">
@@ -69,6 +65,10 @@ export default function Tienda() {
     );
   }
   if (!tienda) return <div className="tienda"><p style={{ color: 'var(--color-mist-gray)' }}>No se pudo cargar la tienda.</p></div>;
+
+  const precioFormateado = new Intl.NumberFormat('es-CO', {
+    style: 'currency', currency: 'COP', maximumFractionDigits: 0,
+  }).format(tienda.plan_subscripcion?.precio_mensual || 0);
 
   return (
     <div className="tienda">

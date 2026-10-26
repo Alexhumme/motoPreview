@@ -1,12 +1,18 @@
 import { useEffect, useState } from 'react';
-import { obtenerAccesorios, obtenerCategorias, crearAccesorio, actualizarAccesorio } from '../../services/accesorios';
-import { obtenerModelosCompatibles, marcarCompatible, quitarCompatible } from '../../services/compatibilidad';
-import { obtenerMotos } from '../../services/motos';
+import { obtenerAccesorios, obtenerCategorias, crearAccesorio, actualizarAccesorio } from '../services/accesorios';
+import { obtenerModelosCompatibles, marcarCompatible, quitarCompatible } from '../services/compatibilidad';
+import { obtenerMotos } from '../services/motos';
 import './Accesorios.css';
 
 const VACIO = {
   acc_nombre: '', id_categoria: '', acc_descripcion: '',
   acc_precio: '', peso: '', codigo_sku: '', imagen: '', acc_estado: 'disponible',
+};
+
+const estadoBadge = {
+  disponible: 'mint',
+  agotado: 'pink',
+  descontinuado: 'gray',
 };
 
 export default function Accesorios() {
@@ -137,92 +143,127 @@ export default function Accesorios() {
     }
   }
 
-  if (cargando) return <p>Cargando accesorios...</p>;
+  if (cargando) {
+    return (
+      <div className="accesorios-admin" role="status" aria-live="polite">
+        <div className="skeleton" style={{ height: '56px', width: '200px', marginBottom: 'var(--space-32)' }} />
+        <div className="skeleton" style={{ height: '400px' }} />
+      </div>
+    );
+  }
 
   return (
-    <div>
-      <div className="accesorios-admin__header">
+    <div className="accesorios-admin">
+      <header className="accesorios-admin__header">
         <h1 className="accesorios-admin__titulo">Accesorios</h1>
-        <button className="accesorios-admin__boton-nuevo" onClick={abrirNuevo}>+ Nuevo accesorio</button>
+        <button className="btn btn--primary" onClick={abrirNuevo}>+ Nuevo accesorio</button>
+      </header>
+
+      <div className="card accesorios-admin__card">
+        <table className="accesorios-admin__tabla">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Categoría</th>
+              <th>SKU</th>
+              <th>Precio</th>
+              <th>Estado</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {accesorios.map((acc) => (
+              <tr key={acc.id_accesorio}>
+                <td>{acc.acc_nombre}</td>
+                <td>{acc.categoria_accesorio?.cat_nombre}</td>
+                <td><span className="accesorios-admin__sku">{acc.codigo_sku}</span></td>
+                <td>${Number(acc.acc_precio).toLocaleString('es-CO')}</td>
+                <td>
+                  <span className={`badge badge--${estadoBadge[acc.acc_estado] || 'gray'}`}>{acc.acc_estado}</span>
+                </td>
+                <td>
+                  <button className="btn btn--ghost btn--sm" onClick={() => abrirEdicion(acc)}>Editar</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
-      <table className="accesorios-admin__tabla">
-        <thead>
-          <tr>
-            <th>Nombre</th>
-            <th>Categoría</th>
-            <th>SKU</th>
-            <th>Precio</th>
-            <th>Estado</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {accesorios.map((acc) => (
-            <tr key={acc.id_accesorio}>
-              <td>{acc.acc_nombre}</td>
-              <td>{acc.categoria_accesorio?.cat_nombre}</td>
-              <td>{acc.codigo_sku}</td>
-              <td>${Number(acc.acc_precio).toLocaleString('es-CO')}</td>
-              <td>
-                <span className={`accesorios-admin__estado accesorios-admin__estado--${acc.acc_estado}`}>
-                  {acc.acc_estado}
-                </span>
-              </td>
-              <td>
-                <button className="accesorios-admin__boton-editar" onClick={() => abrirEdicion(acc)}>Editar</button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-
       {modalAbierto && (
-        <div className="accesorios-admin__overlay" onClick={cerrarModal}>
-          <div className="accesorios-admin__modal" onClick={(e) => e.stopPropagation()}>
-            <h2>{editandoId ? 'Editar accesorio' : 'Nuevo accesorio'}</h2>
-            <form onSubmit={manejarSubmit}>
-              <label>Nombre</label>
-              <input
-                value={formulario.acc_nombre}
-                onChange={(e) => setFormulario({ ...formulario, acc_nombre: e.target.value })}
-                required
-              />
+        <div className="modal-overlay" onClick={cerrarModal}>
+          <div
+            className="modal accesorios-admin__modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="accesorio-modal-titulo"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <header className="modal-header">
+              <h2 id="accesorio-modal-titulo" className="modal-title">
+                {editandoId ? 'Editar accesorio' : 'Nuevo accesorio'}
+              </h2>
+              <button className="modal-close" onClick={cerrarModal} aria-label="Cerrar">✕</button>
+            </header>
 
-              <label>Categoría</label>
-              <select
-                value={formulario.id_categoria}
-                onChange={(e) => setFormulario({ ...formulario, id_categoria: e.target.value })}
-                required
-              >
-                <option value="">Selecciona...</option>
-                {categorias.map((cat) => (
-                  <option key={cat.id_categoria} value={cat.id_categoria}>{cat.cat_nombre}</option>
-                ))}
-              </select>
+            <form onSubmit={manejarSubmit} noValidate>
+              <div className="form-field">
+                <label className="form-label" htmlFor="acc-nombre">Nombre</label>
+                <input
+                  id="acc-nombre"
+                  className="form-input"
+                  value={formulario.acc_nombre}
+                  onChange={(e) => setFormulario({ ...formulario, acc_nombre: e.target.value })}
+                  required
+                />
+              </div>
 
-              <label>Descripción</label>
-              <textarea
-                value={formulario.acc_descripcion}
-                onChange={(e) => setFormulario({ ...formulario, acc_descripcion: e.target.value })}
-                rows={2}
-              />
+              <div className="form-field">
+                <label className="form-label" htmlFor="acc-categoria">Categoría</label>
+                <select
+                  id="acc-categoria"
+                  className="form-input"
+                  value={formulario.id_categoria}
+                  onChange={(e) => setFormulario({ ...formulario, id_categoria: e.target.value })}
+                  required
+                >
+                  <option value="">Selecciona...</option>
+                  {categorias.map((cat) => (
+                    <option key={cat.id_categoria} value={cat.id_categoria}>{cat.cat_nombre}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="form-field">
+                <label className="form-label" htmlFor="acc-descripcion">Descripción</label>
+                <textarea
+                  id="acc-descripcion"
+                  className="form-input"
+                  value={formulario.acc_descripcion}
+                  onChange={(e) => setFormulario({ ...formulario, acc_descripcion: e.target.value })}
+                  rows={2}
+                />
+              </div>
 
               <div className="accesorios-admin__fila">
-                <div>
-                  <label>Precio (COP)</label>
+                <div className="form-field">
+                  <label className="form-label" htmlFor="acc-precio">Precio (COP)</label>
                   <input
+                    id="acc-precio"
                     type="number"
+                    className="form-input"
                     value={formulario.acc_precio}
                     onChange={(e) => setFormulario({ ...formulario, acc_precio: e.target.value })}
                     required
                   />
                 </div>
-                <div>
-                  <label>Peso (kg)</label>
+                <div className="form-field">
+                  <label className="form-label" htmlFor="acc-peso">Peso (kg)</label>
                   <input
+                    id="acc-peso"
                     type="number"
                     step="0.1"
+                    className="form-input"
                     value={formulario.peso}
                     onChange={(e) => setFormulario({ ...formulario, peso: e.target.value })}
                   />
@@ -230,16 +271,20 @@ export default function Accesorios() {
               </div>
 
               <div className="accesorios-admin__fila">
-                <div>
-                  <label>SKU</label>
+                <div className="form-field">
+                  <label className="form-label" htmlFor="acc-sku">SKU</label>
                   <input
+                    id="acc-sku"
+                    className="form-input"
                     value={formulario.codigo_sku}
                     onChange={(e) => setFormulario({ ...formulario, codigo_sku: e.target.value })}
                   />
                 </div>
-                <div>
-                  <label>Estado</label>
+                <div className="form-field">
+                  <label className="form-label" htmlFor="acc-estado">Estado</label>
                   <select
+                    id="acc-estado"
+                    className="form-input"
                     value={formulario.acc_estado}
                     onChange={(e) => setFormulario({ ...formulario, acc_estado: e.target.value })}
                   >
@@ -250,34 +295,40 @@ export default function Accesorios() {
                 </div>
               </div>
 
-              <label>Imagen (URL, opcional)</label>
-              <input
-                value={formulario.imagen}
-                onChange={(e) => setFormulario({ ...formulario, imagen: e.target.value })}
-              />
-
-              <label className="accesorios-admin__label-compat">Compatible con estos modelos de moto</label>
-              <div className="accesorios-admin__checkboxes">
-                {modelos.map((modelo) => (
-                  <label key={modelo.id_modelo_moto} className="accesorios-admin__checkbox">
-                    <input
-                      type="checkbox"
-                      checked={modelosSeleccionados.has(modelo.id_modelo_moto)}
-                      onChange={() => alternarModelo(modelo.id_modelo_moto)}
-                    />
-                    {modelo.marca_moto?.marca_nombre} {modelo.modelo_nombre}
-                  </label>
-                ))}
+              <div className="form-field">
+                <label className="form-label" htmlFor="acc-imagen">Imagen (URL, opcional)</label>
+                <input
+                  id="acc-imagen"
+                  className="form-input"
+                  value={formulario.imagen}
+                  onChange={(e) => setFormulario({ ...formulario, imagen: e.target.value })}
+                />
               </div>
 
-              {error && <p className="accesorios-admin__error">{error}</p>}
+              <div className="form-field">
+                <label className="form-label">Compatible con estos modelos de moto</label>
+                <div className="accesorios-admin__checkboxes">
+                  {modelos.map((modelo) => (
+                    <label key={modelo.id_modelo_moto} className="accesorios-admin__checkbox">
+                      <input
+                        type="checkbox"
+                        checked={modelosSeleccionados.has(modelo.id_modelo_moto)}
+                        onChange={() => alternarModelo(modelo.id_modelo_moto)}
+                      />
+                      {modelo.marca_moto?.marca_nombre} {modelo.modelo_nombre}
+                    </label>
+                  ))}
+                </div>
+              </div>
 
-              <div className="accesorios-admin__modal-botones">
-                <button type="button" onClick={cerrarModal} className="accesorios-admin__boton-cancelar">Cancelar</button>
-                <button type="submit" disabled={guardando} className="accesorios-admin__boton-guardar">
+              {error && <p className="form-error" role="alert">{error}</p>}
+
+              <footer className="modal-footer">
+                <button type="button" onClick={cerrarModal} className="btn btn--ghost">Cancelar</button>
+                <button type="submit" disabled={guardando} className="btn btn--primary">
                   {guardando ? 'Guardando...' : 'Guardar'}
                 </button>
-              </div>
+              </footer>
             </form>
           </div>
         </div>

@@ -2,6 +2,18 @@
    MIS COTIZACIONES — Jam Design System
    ========================================================================== */
 
+.mis-cotizaciones-page {
+  min-height: 100vh;
+  background: var(--surface-canvas);
+  color: var(--color-paper);
+}
+
+.mis-cotizaciones-page .mis-cotizaciones {
+  max-width: var(--page-max-width);
+  margin: 0 auto;
+  padding: var(--space-48) var(--space-32) var(--space-80);
+}
+
 .mis-cotizaciones {
   display: flex;
   flex-direction: column;

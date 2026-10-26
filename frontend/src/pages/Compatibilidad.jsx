@@ -1,5 +1,5 @@
-import RecursoAdmin from '../../components/tables/RecursoAdmin';
-import { accesoriosApi, compatibilidadApi, modelosMotoApi } from '../../services/admin';
+import RecursoAdmin from '../components/tables/RecursoAdmin';
+import { accesoriosApi, compatibilidadApi, modelosMotoApi } from '../services/admin';
 
 async function cargarExtra() {
   const [accesorios, modelos] = await Promise.all([accesoriosApi.listar(), modelosMotoApi.listar()]);

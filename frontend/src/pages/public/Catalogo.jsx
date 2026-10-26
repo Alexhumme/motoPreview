@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { obtenerAccesorios, obtenerCategorias } from '../../services/accesorios';
 import AccesorioCard from '../../components/buttons/AccesorioCard';
-import SiteHeader from '../../components/SiteHeader';
+import SiteHeader from '../../components/buttons/SiteHeader';
 import Footer from '../../components/forms/Footer';
 import heroImage from '../../assets/hero.png';
 import './Catalogo.css';

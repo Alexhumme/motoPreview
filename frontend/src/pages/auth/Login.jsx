@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { ROL_ADMIN, ROL_VENDEDOR } from '../../utils/constants/roles';
-import './Login.css';
+import './Auth.css';
 
 export default function Login() {
   const [usu_email, setEmail] = useState('');
@@ -27,26 +27,23 @@ export default function Login() {
   }
 
   return (
-    <div className="login-page">
-      <header className="login-nav">
-        <Link to="/" className="login-brand" aria-label="MotoPreview home">
+    <div className="auth-page">
+      <header className="auth-nav">
+        <Link to="/" className="brand" aria-label="MotoPreview home">
           <span className="brand-mark">↗</span>
           <span className="brand-text">Moto<span>Preview</span></span>
         </Link>
-        <nav className="login-nav__actions">
-          <Link to="/registro" className="btn btn--ghost">Crear cuenta</Link>
-        </nav>
       </header>
 
-      <main className="login-main">
-        <div className="login-card">
-          <div className="login-header">
+      <main className="auth-main">
+        <div className="auth-card">
+          <header className="auth-header">
             <p className="eyebrow"><span className="eyebrow-dot" aria-hidden="true"></span>Área personal</p>
-            <h1 className="login-title">Bienvenido de vuelta.</h1>
-            <p className="login-subtitle">Accede para ver tus configuraciones y cotizaciones.</p>
-          </div>
+            <h1 className="auth-title">Bienvenido de vuelta.</h1>
+            <p className="auth-subtitle">Accede para ver tus configuraciones y cotizaciones.</p>
+          </header>
 
-          <form className="login-form" onSubmit={manejarSubmit} noValidate>
+          <form className="auth-form" onSubmit={manejarSubmit} noValidate>
             <div className="form-field">
               <label htmlFor="email" className="form-label">Correo electrónico</label>
               <input
@@ -59,7 +56,7 @@ export default function Login() {
                 required
                 autoComplete="email"
                 disabled={enviando}
-                aria-describedby={error ? 'login-error' : undefined}
+                aria-describedby={error ? 'auth-error' : undefined}
               />
             </div>
 
@@ -75,7 +72,7 @@ export default function Login() {
                 required
                 autoComplete="current-password"
                 disabled={enviando}
-                aria-describedby={error ? 'login-error' : undefined}
+                aria-describedby={error ? 'auth-error' : undefined}
               />
             </div>
 
@@ -88,7 +85,7 @@ export default function Login() {
             </div>
 
             {error && (
-              <p id="login-error" className="form-error" role="alert">{error}</p>
+              <p id="auth-error" className="form-error" role="alert">{error}</p>
             )}
 
             <button
@@ -100,7 +97,7 @@ export default function Login() {
             </button>
           </form>
 
-          <div className="login-divider" aria-hidden="true">
+          <div className="auth-divider" aria-hidden="true">
             <span>o</span>
           </div>
 
@@ -108,11 +105,11 @@ export default function Login() {
             Crear una cuenta gratis
           </Link>
 
-          <p className="login-note">✓ Tus datos están protegidos.</p>
+          <p className="auth-note">✓ Tus datos están protegidos.</p>
         </div>
       </main>
 
-      <footer className="login-footer">
+      <footer className="auth-footer">
         <span>MP / 2026</span>
         <span>Hecho para quienes siguen avanzando.</span>
       </footer>

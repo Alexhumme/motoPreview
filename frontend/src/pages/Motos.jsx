@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import RecursoAdmin from '../../components/tables/RecursoAdmin';
-import { marcasApi, modelosMotoApi, motosApi } from '../../services/admin';
+import RecursoAdmin from '../components/tables/RecursoAdmin';
+import { marcasApi, modelosMotoApi, motosApi } from '../services/admin';
 
 async function cargarMarcas() {
   return { marcas: await marcasApi.listar() };

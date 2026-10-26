@@ -25,7 +25,7 @@ const Usuarios = lazy(() => import('./pages/Usuarios'));
 const Tienda = lazy(() => import('./pages/Tienda'));
 const PermisosRBAC = lazy(() => import('./pages/PermisosRBAC'));
 const Roles = lazy(() => import('./pages/Roles'));
-const RecursoAdmin = lazy(() => import('./components/tables/RecursoAdmin'));
+const Accesorios = lazy(() => import('./pages/Accesorios'));
 
 function LoadingFallback() {
   return <div className="admin-loading">Cargando módulo...</div>;
@@ -47,7 +47,7 @@ function App() {
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/registro" element={<Registro />} />
-        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="/" element={<Catalogo />} />
         <Route path="/carrito" element={<Carrito />} />
         <Route path="/verificar/:token" element={<VerificarCorreo />} />
         <Route path="/recuperar" element={<RecuperarPassword />} />
@@ -75,10 +75,10 @@ function App() {
           <Route path="cotizaciones" element={<LazyWrapper Component={Cotizaciones} />} />
           <Route path="reportes" element={<LazyWrapper Component={Reportes} />} />
           <Route
-            path="productos"
+            path="accesorios"
             element={
               <RutaProtegida rolesPermitidos={[ROL_ADMIN]}>
-                <RecursoAdmin />
+                <LazyWrapper Component={Accesorios} />
               </RutaProtegida>
             }
           />
