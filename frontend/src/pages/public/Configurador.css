@@ -181,10 +181,10 @@
   font-size: var(--text-caption);
   font-weight: var(--weight-bold);
   color: var(--color-electric-violet);
-  background: rgba(163, 122, 245, 0.1);
+  background: rgba(242, 106, 33, 0.1);
   padding: var(--space-4) var(--space-8);
   border-radius: var(--radius-nav);
-  border: 1px solid rgba(163, 122, 245, 0.2);
+  border: 1px solid rgba(242, 106, 33, 0.2);
 }
 
 .bike-image {

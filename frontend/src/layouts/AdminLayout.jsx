@@ -1,6 +1,7 @@
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { usePermiso } from '../context/usePermiso';
+import { useTema } from '../context/TemaContext';
 import { ROL_ADMIN } from '../utils/constants/roles';
 import './AdminLayout.css';
 
@@ -69,6 +70,7 @@ const ENLACES = [
 
 export default function AdminLayout() {
   const { usuario, logout } = useAuth();
+  const { tema, alternarTema } = useTema();
   const { tieneAlgunPermiso, esSuperAdmin } = usePermiso();
   const location = useLocation();
   const navigate = useNavigate();
@@ -110,6 +112,14 @@ export default function AdminLayout() {
           ))}
         </nav>
         <div className="admin-header-actions">
+          <button
+            className="btn-tema"
+            onClick={alternarTema}
+            aria-label={tema === 'oscuro' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+            title={tema === 'oscuro' ? 'Modo claro' : 'Modo oscuro'}
+          >
+            {tema === 'oscuro' ? '☀' : '☾'}
+          </button>
           <Link to="/" className="btn btn--ghost btn--sm">Volver a la tienda</Link>
           <button className="btn btn--ghost btn--sm" onClick={manejarLogout}>Salir</button>
         </div>

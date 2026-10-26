@@ -2,6 +2,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { usePermiso } from '../../context/usePermiso';
 import { useCart } from '../../context/CartContext';
+import { useTema } from '../../context/TemaContext';
 import { ROL_ADMIN, ROL_VENDEDOR } from '../../utils/constants/roles';
 import './SiteHeader.css';
 
@@ -10,6 +11,7 @@ export default function SiteHeader() {
   const { usuario, logout } = useAuth();
   const { tieneAlgunPermiso, esSuperAdmin } = usePermiso();
   const { totalItems } = useCart();
+  const { tema, alternarTema } = useTema();
 
   const esStaff = !!usuario && (
     usuario.id_rol === ROL_ADMIN ||
@@ -52,6 +54,14 @@ export default function SiteHeader() {
         </nav>
 
         <div className="header-actions">
+          <button
+            className="btn-tema"
+            onClick={alternarTema}
+            aria-label={tema === 'oscuro' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+            title={tema === 'oscuro' ? 'Modo claro' : 'Modo oscuro'}
+          >
+            {tema === 'oscuro' ? '☀' : '☾'}
+          </button>
           {usuario ? (
             <div className="header-account">
               {/* El personal va a su panel; los clientes, a sus cotizaciones */}
