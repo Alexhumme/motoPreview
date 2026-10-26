@@ -54,8 +54,18 @@ export default function SiteHeader() {
         <div className="header-actions">
           {usuario ? (
             <div className="header-account">
-              <Link to="/mis-cotizaciones">{usuario.usu_nombre?.split(' ')[0]}</Link>
-              {mostrarPanel && <Link to="/admin">Panel</Link>}
+              {/* El personal va a su panel; los clientes, a sus cotizaciones */}
+              <Link
+                to={esSuperAdmin() ? '/admin/permisos' : esStaff ? '/admin' : '/mis-cotizaciones'}
+              >
+                {usuario.usu_nombre?.split(' ')[0]}
+              </Link>
+              {mostrarPanel &&
+                (esSuperAdmin() ? (
+                  <Link to="/admin/permisos">Seguridad</Link>
+                ) : (
+                  <Link to="/admin">Panel</Link>
+                ))}
               <button onClick={logout} className="btn btn--ghost btn--sm">Salir</button>
             </div>
           ) : (

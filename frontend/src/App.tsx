@@ -23,8 +23,7 @@ const Cotizaciones = lazy(() => import('./pages/Cotizaciones'));
 const Reportes = lazy(() => import('./pages/Reportes'));
 const Usuarios = lazy(() => import('./pages/Usuarios'));
 const Tienda = lazy(() => import('./pages/Tienda'));
-const PermisosRBAC = lazy(() => import('./pages/PermisosRBAC'));
-const Roles = lazy(() => import('./pages/Roles'));
+const Seguridad = lazy(() => import('./pages/Seguridad'));
 const Accesorios = lazy(() => import('./pages/Accesorios'));
 
 function LoadingFallback() {
@@ -100,19 +99,12 @@ function App() {
           <Route
             path="permisos"
             element={
-              <RutaProtegida rolesPermitidos={[ROL_SUPERADMIN]}>
-                <LazyWrapper Component={PermisosRBAC} />
+              <RutaProtegida rolesPermitidos={[ROL_ADMIN, ROL_SUPERADMIN]}>
+                <LazyWrapper Component={Seguridad} />
               </RutaProtegida>
             }
           />
-          <Route
-            path="roles"
-            element={
-              <RutaProtegida rolesPermitidos={[ROL_ADMIN]} recurso="roles" accion="listar">
-                <LazyWrapper Component={Roles} />
-              </RutaProtegida>
-            }
-          />
+          <Route path="roles" element={<Navigate to="/admin/permisos" replace />} />
         </Route>
         <Route path="*" element={<NoEncontrado />} />
       </Routes>

@@ -58,22 +58,11 @@ const ENLACES = [
     ],
   },
   {
-    ruta: '/admin/roles',
-    etiqueta: 'Roles',
-    icono: '✦',
-    soloAdmin: true,
-    permisos: [
-      { recurso: 'roles', accion: 'listar' },
-      { recurso: 'roles', accion: 'actualizar' },
-    ],
-  },
-  {
     ruta: '/admin/permisos',
-    etiqueta: 'Permisos',
+    etiqueta: 'Seguridad',
     icono: '⛨',
     soloAdmin: true,
-    soloSuperAdmin: true,
-    permisos: [{ recurso: 'roles', accion: 'actualizar' }],
+    permisos: [{ recurso: 'roles', accion: 'listar' }],
   },
   { ruta: '/admin/tienda', etiqueta: 'Mi tienda', icono: '⌂' },
 ];

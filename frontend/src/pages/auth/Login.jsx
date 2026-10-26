@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { ROL_ADMIN, ROL_VENDEDOR } from '../../utils/constants/roles';
+import { ROL_ADMIN, ROL_SUPERADMIN, ROL_VENDEDOR } from '../../utils/constants/roles';
 import './Auth.css';
 
 export default function Login() {
@@ -18,7 +18,14 @@ export default function Login() {
     setEnviando(true);
     try {
       const usuario = await login(usu_email, password);
-      navigate(usuario.id_rol === ROL_ADMIN || usuario.id_rol === ROL_VENDEDOR ? '/admin' : '/');
+      // Superadmin → consola de seguridad; personal → panel; cliente → inicio
+      if (usuario.id_rol === ROL_SUPERADMIN) {
+        navigate('/admin/permisos');
+      } else if (usuario.id_rol === ROL_ADMIN || usuario.id_rol === ROL_VENDEDOR) {
+        navigate('/admin');
+      } else {
+        navigate('/');
+      }
     } catch (err) {
       setError(err.response?.data?.error || 'Credenciales inválidas');
     } finally {

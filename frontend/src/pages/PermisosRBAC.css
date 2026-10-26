@@ -214,6 +214,24 @@
   margin-top: var(--space-16);
 }
 
+/* ==== Seguridad (página combinada: roles + matriz) ==== */
+.seguridad-seccion-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-16);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-16);
+}
+
+.seguridad-subtitulo {
+  font-family: var(--font-display);
+  font-weight: var(--weight-bold);
+  font-size: var(--text-heading-sm);
+  color: var(--color-paper);
+  margin: 0;
+}
+
 /* Responsive */
 @media (max-width: 1024px) {
   .permiso-cell {
