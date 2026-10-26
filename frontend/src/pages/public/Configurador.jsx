@@ -121,11 +121,7 @@ export default function Configurador() {
             <div className="bike-stage">
               <div className="stage-grid" />
               <span className="stage-tag">{motoActual?.moto_version || 'Compatible'}</span>
-              {motoActual?.moto_imagen ? (
-                <img src={motoActual.moto_imagen} alt={motoNombre} className="bike-image" />
-              ) : (
-                <div className="bike-stage__mark">MP</div>
-              )}
+              <ImagenProducto src={motoActual?.moto_imagen} alt={motoNombre} className="bike-stage-img" />
               <div className="bike-stage-name">
                 <strong>{motoNombre}</strong>
                 <span>{motoActual?.modelo_moto?.cilindraje || '—'} · {motoActual?.moto_anio || '—'}</span>
@@ -171,10 +167,10 @@ export default function Configurador() {
 
             <div className="compatible-list">
               {cargandoAccesorios && (
-                <p className="list-state">
-                  <div className="skeleton" style={{ height: '16px', width: '200px' }} />
+                <div className="list-state" role="status">
+                  <div className="skeleton" style={{ height: '16px', width: '200px', margin: '0 auto var(--space-12)' }} />
                   Buscando piezas compatibles...
-                </p>
+                </div>
               )}
               {!cargandoAccesorios && accesoriosFiltrados.length === 0 && (
                 <p className="list-state list-empty">No hay accesorios compatibles en esta categoría.</p>

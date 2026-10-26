@@ -6,6 +6,7 @@
   min-height: 100vh;
   background: var(--surface-canvas);
   color: var(--color-paper);
+  overflow-x: clip;
 }
 
 .configurator-main {
@@ -63,8 +64,13 @@
 /* Layout */
 .configurator-layout {
   display: grid;
-  grid-template-columns: 340px 1fr;
+  grid-template-columns: 340px minmax(0, 1fr);
   gap: var(--space-32);
+}
+
+.bike-preview-panel,
+.compatible-panel {
+  min-width: 0;
 }
 
 /* Bike preview panel */
@@ -195,19 +201,14 @@
   z-index: 2;
 }
 
-.bike-stage__mark {
-  width: 120px;
-  height: 120px;
-  background: var(--color-paper);
+.bike-stage-img {
+  width: auto;
+  max-width: 82%;
+  max-height: 190px;
+  object-fit: contain;
   border-radius: var(--radius-cards);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-display);
-  font-weight: var(--weight-black);
-  font-size: 36px;
-  color: var(--color-obsidian-plum);
-  z-index: 1;
+  box-shadow: var(--shadow-card);
+  z-index: 2;
 }
 
 .bike-stage-name {
@@ -216,13 +217,17 @@
 }
 
 .bike-stage-name strong {
+  display: block;
   font-family: var(--font-display);
   font-weight: var(--weight-black);
   font-size: var(--text-heading-sm);
+  line-height: var(--leading-heading-sm);
   color: var(--color-paper);
 }
 
 .bike-stage-name span {
+  display: block;
+  margin-top: var(--space-4);
   font-family: var(--font-ui);
   font-size: var(--text-caption);
   color: var(--color-mist-gray);
@@ -314,6 +319,7 @@
   flex-direction: column;
   gap: var(--space-16);
   flex: 1;
+  min-height: 380px;
 }
 
 .list-state {
@@ -325,6 +331,9 @@
 }
 
 .list-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: var(--surface-elevated);
   border: 1px solid var(--color-bone);
   border-radius: var(--radius-inputs);
