@@ -37,9 +37,9 @@ print("Bounding box del casco dentro de la zona:", caja)
 casco = zona.crop(caja)
 print("Casco:", casco.size)
 
-# Cuadrado con margen del 4% por lado
+# Cuadrado con margen del 2% por lado (ceñido: el casco llena el chip)
 lado = max(casco.size)
-margen = int(lado * 0.04)
+margen = int(lado * 0.02)
 lienzo_lado = lado + margen * 2
 icono = Image.new("RGBA", (lienzo_lado, lienzo_lado), (0, 0, 0, 0))
 icono.paste(casco, ((lienzo_lado - casco.size[0]) // 2, (lienzo_lado - casco.size[1]) // 2), casco)
