@@ -1,5 +1,6 @@
 import { useContext } from 'react';
 import { AuthContext } from './AuthContext';
+import { obtenerPermisosUsuario } from '../services/auth';
 
 /**
  * Hook para verificar permisos RBAC en componentes
@@ -78,23 +79,16 @@ export function usePermiso() {
   };
 
   /**
-   * Carga los permisos del usuario desde el backend
-   * Se llama automáticamente en login, pero se puede forzar recarga
+   * Carga los permisos del usuario desde el backend (via service/api).
+   * Se llama automáticamente en login, pero se puede forzar recarga.
    */
   const cargarPermisos = async () => {
     try {
-      const respuesta = await fetch('/api/permisos/usuario', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-      
-      if (respuesta.ok) {
-        const data = await respuesta.json();
-        // Espera formato: { permisos: [{ recurso, accion, scope, activo }] }
-        actualizarPermisos(data.permisos || []);
-        return data.permisos;
-      }
+      const respuesta = await obtenerPermisosUsuario();
+      const lista = respuesta?.permisos || [];
+      // Espera formato: [{ recurso, accion, scope, activo }]
+      actualizarPermisos(lista);
+      return lista;
     } catch (error) {
       console.warn('No se pudieron cargar permisos:', error);
     }

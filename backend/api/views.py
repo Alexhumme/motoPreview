@@ -56,6 +56,8 @@ from .serializers import (
     AccionSerializer,
     AccionSerializer as AccionSerializer,
     AccionSerializer,
+    AccesorioInputSerializer,
+    AccesorioSerializer,
     AccessoryCategorySerializer,
     AccessoryTypeSerializer,
     CompatibilitySerializer,
@@ -184,7 +186,7 @@ def store_staff(user):
 def scope_configurations(request, *, pk=None):
     """Configuraciones visibles para el usuario (propias) o el personal (de su tienda)."""
     queryset = Configuration.objects.select_related("usuario", "moto__modelo__marca").prefetch_related(
-        "detalles__accesorio__producto"
+        "detalles__categoria_accesorio"
     )
     if store_staff(request.user):
         user_ids = User.objects.filter(tienda_id=request.user.id_tienda).values_list(
@@ -635,9 +637,7 @@ class Model3DCollection(ResourceCollection):
     serializer_class = Model3DSerializer
 
     def get_queryset(self):
-        return Model3D.objects.select_related(
-            "accesorio__producto", "accesorio__categoria", "accesorio__tipo"
-        ).all()
+        return Model3D.objects.select_related("accesorio").all()
 
 
 class Model3DDetail(ResourceDetail):
@@ -646,9 +646,7 @@ class Model3DDetail(ResourceDetail):
     not_found_message = "Modelo 3D no encontrado."
 
     def get_object(self, pk):
-        return Model3D.objects.select_related(
-            "accesorio__producto", "accesorio__categoria", "accesorio__tipo"
-        ).get(pk=pk)
+        return Model3D.objects.select_related("accesorio").get(pk=pk)
 
 
 class Model3DByAccessory(DatabaseGuardMixin):
@@ -656,8 +654,19 @@ class Model3DByAccessory(DatabaseGuardMixin):
     serializer_class = Model3DSerializer
 
     def get(self, request, id_accesorio):
-
-        model = Model3D.objects.filter(accesorio_id=id_accesorio).first()
+        # El parámetro es el id del accesorio (producto); el modelo 3D se
+        # asocia a su categoría. También acepta un id de categoría directo.
+        categoria_id = None
+        producto = Product.objects.filter(pk=id_accesorio).only(
+            "id_producto", "categoria_accesorio_id"
+        ).first()
+        if producto:
+            categoria_id = producto.categoria_accesorio_id
+        model = None
+        if categoria_id:
+            model = Model3D.objects.filter(accesorio_id=categoria_id).first()
+        if not model:
+            model = Model3D.objects.filter(accesorio_id=id_accesorio).first()
         if not model:
             return Response(
                 {"error": "Este accesorio no tiene modelo 3D asociado."},
@@ -674,20 +683,42 @@ class CompatibilityCollection(DatabaseGuardMixin):
         return [AllowAny()] if self.request.method == "GET" else [IsStoreAdmin()]
 
     def get(self, request):
-        links = AccessoryCompatibility.objects.select_related("modelo_moto__marca").all()
+        links = AccessoryCompatibility.objects.select_related(
+            "modelo_moto__marca", "categoria_accesorio"
+        ).all()
         accesorio = request.query_params.get("id_accesorio")
         modelo = request.query_params.get("id_modelo_moto")
         if accesorio:
-            links = links.filter(accesorio_id=accesorio)
+            categoria_id = self._categoria_de_accesorio(accesorio)
+            if categoria_id is None:
+                return Response([], status=status.HTTP_200_OK)
+            links = links.filter(categoria_accesorio_id=categoria_id)
         if modelo:
             links = links.filter(modelo_moto_id=modelo)
         return Response(CompatibilitySerializer(links, many=True).data)
 
     def post(self, request):
-
+        # La entrada del panel usa el id del accesorio (producto); la matriz
+        # guarda la compatibilidad por categoría.
         serializer = CompatibilitySerializer(data=request.data)
         if not serializer.is_valid():
-            return Response({"error": serializer.errors}, status=400)
+            # Puede venir el id del accesorio (producto): lo traducimos.
+            id_accesorio = request.data.get("id_accesorio")
+            id_modelo = request.data.get("id_modelo_moto")
+            if not id_accesorio or not id_modelo:
+                return Response({"error": serializer.errors}, status=400)
+            categoria_id = self._categoria_de_accesorio(str(id_accesorio))
+            if categoria_id is None:
+                return Response(
+                    {"error": "El accesorio indicado no existe."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            instance, creado = AccessoryCompatibility.objects.get_or_create(
+                categoria_accesorio_id=categoria_id,
+                modelo_moto_id=id_modelo,
+            )
+            codigo = status.HTTP_201_CREATED if creado else status.HTTP_200_OK
+            return Response(CompatibilitySerializer(instance).data, status=codigo)
         try:
             instance = serializer.save()
         except IntegrityError:
@@ -696,6 +727,59 @@ class CompatibilityCollection(DatabaseGuardMixin):
                 status=status.HTTP_409_CONFLICT,
             )
         return Response(CompatibilitySerializer(instance).data, status=status.HTTP_201_CREATED)
+
+    @staticmethod
+    def _categoria_de_accesorio(id_accesorio):
+        """Traduce un id de accesorio (producto) al id de su categoría."""
+        producto = Product.objects.filter(pk=id_accesorio).only(
+            "id_producto", "categoria_accesorio_id"
+        ).first()
+        return producto.categoria_accesorio_id if producto else None
+
+
+class CompatibilityByModelo(DatabaseGuardMixin):
+    """Accesorios compatibles con un modelo de moto (catálogo público).
+
+    Devuelve accesorios (forma plana) de las categorías marcadas como
+    compatibles con el modelo indicado.
+    """
+
+    permission_classes = [AllowAny]
+    serializer_class = AccesorioSerializer
+
+    def get(self, request, id_modelo_moto):
+        categorias = AccessoryCompatibility.objects.filter(
+            modelo_moto_id=id_modelo_moto
+        ).values_list("categoria_accesorio_id", flat=True)
+        productos = (
+            Product.objects.filter(
+                es_accesorio=True, categoria_accesorio_id__in=list(categorias)
+            )
+            .select_related("categoria_accesorio", "tipo_accesorio")
+            .order_by("nombre")
+        )
+        return Response(AccesorioSerializer(productos, many=True).data)
+
+
+class CompatibilityByAccesorio(DatabaseGuardMixin):
+    """Modelos compatibles con un accesorio (panel de administración)."""
+
+    permission_classes = [AllowAny]
+    serializer_class = CompatibilitySerializer
+
+    def get(self, request, id_accesorio):
+        producto = Product.objects.filter(pk=id_accesorio).only(
+            "id_producto", "categoria_accesorio_id"
+        ).first()
+        if not producto:
+            return Response(
+                {"error": "El accesorio indicado no existe."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        links = AccessoryCompatibility.objects.filter(
+            categoria_accesorio_id=producto.categoria_accesorio_id
+        ).select_related("modelo_moto__marca", "categoria_accesorio")
+        return Response(CompatibilitySerializer(links, many=True).data)
 
 
 class CompatibilityDetail(ResourceDetail):
@@ -712,9 +796,8 @@ class InventoryCollection(DatabaseGuardMixin):
         return Inventory.objects.select_related(
             "tienda__plan",
             "producto__categoria_producto",
-            "accesorio__producto",
-            "accesorio__categoria",
-            "accesorio__tipo",
+            "producto__categoria_accesorio",
+            "producto__tipo_accesorio",
         ).filter(tienda_id=request.user.id_tienda)
 
     def get(self, request):
@@ -737,20 +820,9 @@ class InventoryCollection(DatabaseGuardMixin):
         if not input_serializer.is_valid():
             return Response({"error": input_serializer.errors}, status=400)
         values = input_serializer.validated_data
-        product_id = values.get("id_producto")
-        accessory = None
-        if values.get("id_accesorio"):
-            accessory = Accessory.objects.select_related("producto").filter(
-                pk=values["id_accesorio"]
-            ).first()
-            if not accessory or not accessory.producto_id:
-                return Response(
-                    {"error": "El accesorio no existe o no está vinculado a un producto."},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-            product_id = accessory.producto_id
-        else:
-            accessory = Accessory.objects.filter(producto_id=product_id).first()
+        # Los accesorios viven en la tabla producto: id_accesorio e
+        # id_producto identifican la misma fila de producto.
+        product_id = values.get("id_producto") or values.get("id_accesorio")
         product = Product.objects.filter(pk=product_id).first()
         if not product:
             return Response({"error": "El producto no existe."}, status=400)
@@ -771,7 +843,6 @@ class InventoryCollection(DatabaseGuardMixin):
         price = values.get("precio", product.precio)
         try:
             instance = Inventory.objects.create(
-                accesorio_id=accessory.id_accesorio if accessory else None,
                 tienda_id=store.id_tienda,
                 producto_id=product_id,
                 stock_actual=stock,
@@ -797,9 +868,8 @@ class InventoryDetail(DatabaseGuardMixin):
         instance = Inventory.objects.select_related(
             "tienda__plan",
             "producto",
-            "accesorio__producto",
-            "accesorio__categoria",
-            "accesorio__tipo",
+            "producto__categoria_accesorio",
+            "producto__tipo_accesorio",
         ).filter(
             pk=pk, tienda_id=request.user.id_tienda
         ).first()
@@ -885,7 +955,7 @@ class QuoteCollection(DatabaseGuardMixin):
 
         queryset = Quote.objects.select_related(
             "tienda", "usuario", "moto__modelo__marca"
-        ).prefetch_related("detalle_cotizacion__accesorio__producto")
+        ).prefetch_related("detalle_cotizacion__categoria_accesorio")
         if store_staff(request.user):
             queryset = queryset.filter(tienda_id=request.user.id_tienda)
         else:
@@ -909,18 +979,20 @@ class QuoteCollection(DatabaseGuardMixin):
             return Response({"error": "La moto indicada no existe."}, status=400)
 
         accessory_ids = [item["id_accesorio"] for item in values["items"]]
-        accessories = {
-            str(accessory.id_accesorio): accessory
-            for accessory in Accessory.objects.select_related("producto").filter(
-                pk__in=accessory_ids
+        # Los accesorios son filas de producto (tabla unificada); el detalle
+        # de la cotización guarda su categoría.
+        productos = {
+            str(producto.id_producto): producto
+            for producto in Product.objects.filter(
+                pk__in=accessory_ids, es_accesorio=True
             )
         }
-        if len(accessories) != len(accessory_ids):
+        if len(productos) != len(accessory_ids):
             return Response({"error": "Uno o más accesorios no existen."}, status=400)
 
         try:
             prepared, total = services.calc_quote(
-                values["items"], accessories, max_items=settings.QUOTE_MAX_ITEMS
+                values["items"], productos, max_items=settings.QUOTE_MAX_ITEMS
             )
         except services.BusinessError as error:
             return Response({"error": str(error)}, status=400)
@@ -936,10 +1008,10 @@ class QuoteCollection(DatabaseGuardMixin):
                     coti_observaciones=values.get("coti_observaciones"),
                     nombre_configuracion=values.get("nombre_configuracion"),
                 )
-                for accessory, quantity, price, subtotal in prepared:
+                for producto, quantity, price, subtotal in prepared:
                     QuoteDetail.objects.create(
                         cotizacion=quote,
-                        accesorio=accessory,
+                        categoria_accesorio_id=producto.categoria_accesorio_id,
                         cantidad=quantity,
                         precio_unitario=price,
                         subtotal=subtotal,
@@ -947,7 +1019,7 @@ class QuoteCollection(DatabaseGuardMixin):
         except IntegrityError:
             return Response({"error": "No se pudo guardar la cotización."}, status=409)
         quote = Quote.objects.select_related("tienda", "usuario", "moto__modelo__marca").prefetch_related(
-            "detalle_cotizacion__accesorio__producto"
+            "detalle_cotizacion__categoria_accesorio"
         ).get(pk=quote.id_cotizacion)
         return Response(QuoteSerializer(quote).data, status=status.HTTP_201_CREATED)
 
@@ -959,7 +1031,7 @@ class QuoteDetailView(DatabaseGuardMixin):
     def get(self, request, pk):
 
         queryset = Quote.objects.select_related("tienda", "usuario", "moto__modelo__marca").prefetch_related(
-            "detalle_cotizacion__accesorio__producto"
+            "detalle_cotizacion__categoria_accesorio"
         )
         if store_staff(request.user):
             queryset = queryset.filter(tienda_id=request.user.id_tienda)
@@ -1354,11 +1426,84 @@ class AccessoryTypeDetail(ResourceDetail):
 
 class AccesoriosCollection(ResourceCollection):
     model = Product
-    serializer_class = ProductSerializer
-    permission_classes = [AllowAny]
+    serializer_class = AccesorioSerializer
+
+    def get_permissions(self):
+        # El catálogo es público; crear solo para el administrador de tienda.
+        return [AllowAny()] if self.request.method == "GET" else [IsStoreAdmin()]
 
     def get_queryset(self):
-        return Product.objects.select_related("categoria_producto").filter(es_accesorio=True)
+        return Product.objects.select_related(
+            "categoria_producto", "categoria_accesorio", "tipo_accesorio"
+        ).filter(es_accesorio=True)
+
+    def get(self, request):
+        return paginate_response(request, self.get_queryset(), AccesorioSerializer)
+
+    @extend_schema(
+        request=AccesorioInputSerializer,
+        responses={201: AccesorioSerializer, 400: ErrorSerializer, 409: ErrorSerializer},
+    )
+    def post(self, request):
+        input_serializer = AccesorioInputSerializer(data=request.data)
+        if not input_serializer.is_valid():
+            return Response({"error": input_serializer.errors}, status=400)
+        campos = input_serializer.to_fields(input_serializer.validated_data)
+        try:
+            with transaction.atomic():
+                instance = Product.objects.create(es_accesorio=True, **campos)
+        except IntegrityError:
+            return Response(
+                {"error": "Ya existe un accesorio con ese código SKU."},
+                status=status.HTTP_409_CONFLICT,
+            )
+        return Response(AccesorioSerializer(instance).data, status=status.HTTP_201_CREATED)
+
+
+class AccesorioDetail(DatabaseGuardMixin):
+    serializer_class = AccesorioSerializer
+    not_found_message = "Accesorio no encontrado."
+
+    def get_permissions(self):
+        # Detalle público (visualizador); edición solo para el administrador.
+        return [AllowAny()] if self.request.method == "GET" else [IsStoreAdmin()]
+
+    def get_object(self, pk):
+        return Product.objects.select_related(
+            "categoria_producto", "categoria_accesorio", "tipo_accesorio"
+        ).get(pk=pk, es_accesorio=True)
+
+    def get(self, request, pk):
+        try:
+            instance = self.get_object(pk)
+        except Product.DoesNotExist:
+            return Response({"error": self.not_found_message}, status=status.HTTP_404_NOT_FOUND)
+        return Response(AccesorioSerializer(instance).data)
+
+    @extend_schema(
+        request=AccesorioInputSerializer,
+        responses={200: AccesorioSerializer, 400: ErrorSerializer, 404: ErrorSerializer},
+    )
+    def put(self, request, pk):
+        try:
+            instance = self.get_object(pk)
+        except Product.DoesNotExist:
+            return Response({"error": self.not_found_message}, status=status.HTTP_404_NOT_FOUND)
+        input_serializer = AccesorioInputSerializer(instance, data=request.data, partial=True)
+        if not input_serializer.is_valid():
+            return Response({"error": input_serializer.errors}, status=400)
+        campos = input_serializer.to_fields(input_serializer.validated_data)
+        for campo, valor in campos.items():
+            setattr(instance, campo, valor)
+        try:
+            with transaction.atomic():
+                instance.save()
+        except IntegrityError:
+            return Response(
+                {"error": "Ya existe un accesorio con ese código SKU."},
+                status=status.HTTP_409_CONFLICT,
+            )
+        return Response(AccesorioSerializer(instance).data)
 
 
 class MovementTypeCollection(ResourceCollection):

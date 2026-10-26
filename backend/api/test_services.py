@@ -74,11 +74,12 @@ class QuoteStateTests(SimpleTestCase):
         self.assertFalse(services.allow_state_transition("inexistente", "pendiente"))
 
 
-class AccesorioFalso:
-    def __init__(self, id_accesorio, producto_id, precio):
-        self.id_accesorio = id_accesorio
-        self.producto_id = producto_id
-        self.producto = SimpleNamespace(precio=precio)
+class ProductoFalso:
+    """Producto mínimo para calc_quote (el precio vive en el producto)."""
+
+    def __init__(self, id_producto, precio):
+        self.id_producto = id_producto
+        self.precio = precio
 
 
 class QuoteTotalTests(SimpleTestCase):
@@ -86,9 +87,9 @@ class QuoteTotalTests(SimpleTestCase):
         ids = [str(uuid4()) for _ in range(3)]
         self.sin_precio = ids[2]
         self.accesorios = {
-            ids[0]: AccesorioFalso(ids[0], "p1", 100),
-            ids[1]: AccesorioFalso(ids[1], "p2", 50),
-            self.sin_precio: AccesorioFalso(self.sin_precio, None, None),
+            ids[0]: ProductoFalso(ids[0], 100),
+            ids[1]: ProductoFalso(ids[1], 50),
+            self.sin_precio: ProductoFalso(self.sin_precio, None),
         }
 
     def test_total_y_subtotales(self):

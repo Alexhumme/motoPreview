@@ -65,16 +65,16 @@ def permite_datos_contacto(request):
     return has_any_role(getattr(request, "user", None), (ROLE_ADMIN, ROLE_SELLER))
 
 
-def calc_quote(items, accessories, max_items=100):
+def calc_quote(items, productos, max_items=100):
     """Calcula las líneas y el total de una cotización.
 
     Parámetros:
-        items: [{"id_accesorio": str, "cantidad": int}]
-        accessories: mapeo {id_accesorio (str): accesorio con .producto_id,
-                            .id_accesorio y .producto.precio}
+        items: [{"id_accesorio": str, "cantidad": int}] — el id del ítem es el
+               id del producto (los accesorios viven en la tabla producto).
+        productos: mapeo {id_producto (str): Product con .precio}
 
     Devuelve (prepared, total) donde cada elemento de prepared es
-    (accesorio, cantidad, precio_unitario, subtotal).
+    (producto, cantidad, precio_unitario, subtotal).
 
     Lanza BusinessError si no hay precio configurado o se supera 'max_items'.
     """
@@ -83,13 +83,13 @@ def calc_quote(items, accessories, max_items=100):
     prepared = []
     total = Decimal("0.00")
     for item in items:
-        accessory = accessories.get(str(item["id_accesorio"])) if accessories else None
-        if not accessory or not accessory.producto_id or accessory.producto.precio is None:
+        producto = productos.get(str(item["id_accesorio"])) if productos else None
+        if not producto or producto.precio is None:
             raise BusinessError(
                 f"El accesorio {item['id_accesorio']} no tiene un precio configurado."
             )
-        price = accessory.producto.precio
+        price = producto.precio
         subtotal = price * item["cantidad"]
         total += subtotal
-        prepared.append((accessory, item["cantidad"], price, subtotal))
+        prepared.append((producto, item["cantidad"], price, subtotal))
     return prepared, total

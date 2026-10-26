@@ -71,143 +71,83 @@ class ProductSerializer(serializers.ModelSerializer):
         read_only_fields = ("id_producto",)
 
 
-class AccessoryCategorySerializer(serializers.Serializer):
-    id_accesorio = serializers.UUIDField(read_only=True)
-    id_categoria = serializers.PrimaryKeyRelatedField(
-        queryset=AccessoryCategory.objects.all(), source="categoria", required=False, allow_null=True
-    )
-    id_tipo = serializers.PrimaryKeyRelatedField(
-        queryset=AccessoryType.objects.all(), source="tipo", required=False, allow_null=True
-    )
-    id_producto = serializers.PrimaryKeyRelatedField(
-        queryset=Product.objects.all(), source="producto", required=False, allow_null=True
-    )
-    acc_nombre = serializers.CharField(required=False, allow_blank=False)
-    acc_descripcion = serializers.CharField(required=False, allow_blank=True, allow_null=True)
-    acc_precio = serializers.DecimalField(
-        max_digits=10, decimal_places=2, required=False, allow_null=True
-    )
-    acc_estado = serializers.CharField(required=False, allow_blank=False, default="disponible")
-    imagen = serializers.CharField(required=False, allow_blank=True, allow_null=True)
-    peso = serializers.DecimalField(max_digits=6, decimal_places=2, required=False, allow_null=True)
-    color = serializers.CharField(required=False, allow_blank=True, allow_null=True)
-    codigo_sku = serializers.CharField(required=False, allow_blank=True, allow_null=True)
-    categoria_accesorio = serializers.SerializerMethodField()
-    producto = serializers.SerializerMethodField()
-
-    def get_categoria_accesorio(self, instance) -> dict | None:
-        return (
-            AccessoryCategorySerializer(instance.categoria).data
-            if instance.categoria_id
-            else None
-        )
-
-    def get_producto(self, instance) -> dict | None:
-        return ProductSerializer(instance.producto).data if instance.producto_id else None
+class AccesorioSerializer(serializers.Serializer):
+    """Representa un accesorio (fila de Product con accesorio=TRUE) en la
+    forma plana que consume el frontend: id_accesorio, acc_nombre, acc_precio,
+    id_categoria y la categoría anidada."""
 
     def to_representation(self, instance):
-        product = instance.producto if instance.producto_id else None
+        categoria = instance.categoria_accesorio
         return {
-            "id_accesorio": str(instance.id_accesorio),
-            "id_categoria": str(instance.categoria_id) if instance.categoria_id else None,
-            "id_tipo": str(instance.tipo_id) if instance.tipo_id else None,
-            "id_producto": str(instance.producto_id) if instance.producto_id else None,
-            "acc_nombre": product.nombre if product else None,
-            "acc_descripcion": product.descripcion if product else None,
-            "acc_precio": str(product.precio) if product and product.precio is not None else None,
-            "acc_estado": product.estado if product else None,
-            "imagen": product.imagen if product else None,
+            "id_accesorio": str(instance.id_producto),
+            "id_categoria": str(instance.categoria_accesorio_id) if instance.categoria_accesorio_id else None,
+            "id_tipo": str(instance.tipo_accesorio_id) if instance.tipo_accesorio_id else None,
+            "acc_nombre": instance.nombre,
+            "acc_descripcion": instance.descripcion,
+            "acc_precio": str(instance.precio) if instance.precio is not None else None,
+            "acc_estado": instance.estado,
+            "imagen": instance.imagen,
             "peso": str(instance.peso) if instance.peso is not None else None,
-            "color": instance.color,
-            "codigo_sku": product.codigo_sku if product else None,
-            "categoria_accesorio": self.get_categoria_accesorio(instance),
-            "producto": self.get_producto(instance),
+            "color": None,
+            "codigo_sku": instance.codigo_sku,
+            "categoria_accesorio": (
+                {
+                    "id_categoria": str(categoria.id_categoria),
+                    "cat_nombre": categoria.cat_nombre,
+                    "cat_descripcion": categoria.cat_descripcion,
+                }
+                if categoria
+                else None
+            ),
+            "producto": ProductSerializer(instance).data,
         }
 
-    def create(self, validated_data):
-        product = validated_data.pop("producto", None)
-        name = validated_data.pop("acc_nombre", "")
-        description = validated_data.pop("acc_descripcion", None)
-        price = validated_data.pop("acc_precio", None)
-        product_state = validated_data.pop("acc_estado", "disponible")
-        image = validated_data.pop("imagen", None)
-        sku = validated_data.pop("codigo_sku", None)
 
-        if product is None:
-            product = Product.objects.create(
-                nombre=name,
-                descripcion=description,
-                estado=product_state,
-                imagen=image,
-                codigo_sku=sku or None,
-                precio=price,
-            )
-        else:
-            self._apply_product_values(
-                product,
-                name=name,
-                description=description,
-                price=price,
-                state=product_state,
-                image=image,
-                sku=sku,
-            )
-            product.save()
-        return Accessory.objects.create(producto=product, **validated_data)
+class AccesorioInputSerializer(serializers.Serializer):
+    """Entrada de crear/editar accesorio (forma plana del panel de administración)."""
 
-    def update(self, instance, validated_data):
-        product = validated_data.pop("producto", instance.producto if instance.producto_id else None)
-        name = validated_data.pop("acc_nombre", None)
-        description = validated_data.pop("acc_descripcion", None)
-        price = validated_data.pop("acc_precio", None)
-        product_state = validated_data.pop("acc_estado", None)
-        image = validated_data.pop("imagen", None)
-        sku = validated_data.pop("codigo_sku", None)
+    acc_nombre = serializers.CharField(max_length=100)
+    id_categoria = serializers.PrimaryKeyRelatedField(
+        queryset=AccessoryCategory.objects.all(),
+        source="categoria_accesorio",
+        required=False,
+        allow_null=True,
+    )
+    acc_descripcion = serializers.CharField(
+        required=False, allow_blank=True, allow_null=True
+    )
+    acc_precio = serializers.DecimalField(max_digits=10, decimal_places=2)
+    peso = serializers.DecimalField(
+        max_digits=6, decimal_places=2, required=False, allow_null=True
+    )
+    codigo_sku = serializers.CharField(
+        max_length=100, required=False, allow_blank=True, allow_null=True
+    )
+    imagen = serializers.URLField(required=False, allow_blank=True, allow_null=True)
+    acc_estado = serializers.CharField(max_length=50, required=False, default="disponible")
 
-        if product is None:
-            if name is None:
-                raise serializers.ValidationError({"acc_nombre": "El nombre es obligatorio."})
-            product = Product.objects.create(nombre=name)
-
-        self._apply_product_values(
-            product,
-            name=name,
-            description=description,
-            price=price,
-            state=product_state,
-            image=image,
-            sku=sku,
+    def to_fields(self, data):
+        """Mapea la entrada plana a campos del modelo Product (parcial-safe)."""
+        mapa = (
+            ("acc_nombre", "nombre"),
+            ("acc_descripcion", "descripcion"),
+            ("acc_precio", "precio"),
+            ("peso", "peso"),
+            ("codigo_sku", "codigo_sku"),
+            ("imagen", "imagen"),
+            ("acc_estado", "estado"),
         )
-        product.save()
-
-        for field, value in validated_data.items():
-            setattr(instance, field, value)
-        instance.producto = product
-        instance.save()
-        return instance
-
-    @staticmethod
-    def _apply_product_values(product, *, name, description, price, state, image, sku):
-        if name is not None:
-            product.nombre = name
-        if description is not None:
-            product.descripcion = description
-        if price is not None:
-            product.precio = price
-        if state is not None:
-            product.estado = state
-        if image is not None:
-            product.imagen = image
-        if sku is not None:
-            product.codigo_sku = sku or None
-
-    def validate(self, attrs):
-        if self.instance is None:
-            if not attrs.get("acc_nombre"):
-                raise serializers.ValidationError({"acc_nombre": "El nombre del accesorio es obligatorio."})
-            if "acc_precio" not in attrs or attrs["acc_precio"] is None:
-                raise serializers.ValidationError({"acc_precio": "El precio del accesorio es obligatorio."})
-        return attrs
+        campos = {}
+        for llave, campo in mapa:
+            if llave not in data:
+                continue
+            valor = data[llave]
+            if campo in ("codigo_sku", "imagen", "descripcion") and valor == "":
+                valor = None
+            campos[campo] = valor
+        if "categoria_accesorio" in data:
+            campos["categoria_accesorio"] = data["categoria_accesorio"]
+        return campos
 
 
 class MotorcycleBrandSerializer(serializers.ModelSerializer):
@@ -377,8 +317,8 @@ class Model3DSerializer(serializers.ModelSerializer):
 
 
 class CompatibilitySerializer(serializers.ModelSerializer):
-    id_accesorio = serializers.PrimaryKeyRelatedField(
-        source="accesorio",
+    id_categoria_accesorio = serializers.PrimaryKeyRelatedField(
+        source="categoria_accesorio",
         queryset=AccessoryCategory.objects.all(),
     )
     id_modelo_moto = serializers.PrimaryKeyRelatedField(
@@ -391,7 +331,7 @@ class CompatibilitySerializer(serializers.ModelSerializer):
         model = AccessoryCompatibility
         fields = (
             "id_compatibilidad",
-            "id_accesorio",
+            "id_categoria_accesorio",
             "id_modelo_moto",
             "anio_desde",
             "anio_hasta",
@@ -401,11 +341,11 @@ class CompatibilitySerializer(serializers.ModelSerializer):
 
 
 class InventorySerializer(serializers.ModelSerializer):
-    id_accesorio = serializers.UUIDField(source="accesorio_id", read_only=True, allow_null=True)
     id_tienda = serializers.UUIDField(source="tienda_id", read_only=True, allow_null=True)
     id_producto = serializers.UUIDField(source="producto_id", read_only=True, allow_null=True)
     tienda = StoreSerializer(read_only=True)
     producto = ProductSerializer(read_only=True)
+    # Forma plana del producto (si es accesorio) para el panel de inventario.
     accesorio = serializers.SerializerMethodField()
 
     class Meta:
@@ -414,7 +354,6 @@ class InventorySerializer(serializers.ModelSerializer):
             "id_inventario",
             "id_tienda",
             "id_producto",
-            "id_accesorio",
             "stock_actual",
             "stock_minimo",
             "estado_inventario",
@@ -426,13 +365,11 @@ class InventorySerializer(serializers.ModelSerializer):
         )
         read_only_fields = ("id_inventario", "id_tienda", "id_producto", "estado_inventario")
 
-    def get_accesorio(self, instance) -> dict | None:
-        accessory = (
-            instance.accesorio
-            if instance.accesorio_id
-            else Accessory.objects.filter(producto_id=instance.producto_id).first()
-        )
-        return AccessoryCategorySerializer(accessory).data if accessory else None
+    def get_accesorio(self, instance):
+        producto = instance.producto
+        if producto and producto.es_accesorio:
+            return AccesorioSerializer(producto).data
+        return None
 
 
 class InventoryMovementSerializer(serializers.ModelSerializer):
@@ -463,20 +400,36 @@ class MovementTypeSerializer(serializers.ModelSerializer):
 
 class QuoteDetailSerializer(serializers.ModelSerializer):
     id_cotizacion = serializers.UUIDField(source="cotizacion_id", read_only=True, allow_null=True)
-    id_accesorio = serializers.UUIDField(source="accesorio_id", read_only=True, allow_null=True)
-    accesorio = AccessoryCategorySerializer(read_only=True)
+    id_categoria_accesorio = serializers.UUIDField(
+        source="categoria_accesorio_id", read_only=True, allow_null=True
+    )
+    categoria_accesorio = AccessoryCategorySerializer(read_only=True)
+    # Forma plana para el frontend: el ítem de cotización identifica a la
+    # categoría del accesorio; el nombre visible es el de la categoría.
+    accesorio = serializers.SerializerMethodField()
 
     class Meta:
         model = QuoteDetail
         fields = (
             "id_detalle_cotizacion",
             "id_cotizacion",
-            "id_accesorio",
+            "id_categoria_accesorio",
             "cantidad",
             "precio_unitario",
             "subtotal",
+            "categoria_accesorio",
             "accesorio",
         )
+
+    def get_accesorio(self, instance):
+        categoria = instance.categoria_accesorio
+        if not categoria:
+            return None
+        return {
+            "id_categoria": str(categoria.id_categoria),
+            "acc_nombre": categoria.cat_nombre,
+            "acc_descripcion": categoria.cat_descripcion,
+        }
 
 
 class QuoteSerializer(serializers.ModelSerializer):
@@ -520,11 +473,13 @@ class QuoteStatusHistorySerializer(serializers.ModelSerializer):
 
 class ConfigurationDetailSerializer(serializers.ModelSerializer):
     id_configuracion = serializers.UUIDField(source="configuracion_id", read_only=True, allow_null=True)
-    id_accesorio = serializers.UUIDField(source="accesorio_id", read_only=True, allow_null=True)
+    id_categoria_accesorio = serializers.UUIDField(
+        source="categoria_accesorio_id", read_only=True, allow_null=True
+    )
 
     class Meta:
         model = ConfigurationDetail
-        fields = ("id_detalle", "id_configuracion", "id_accesorio", "cantidad")
+        fields = ("id_detalle", "id_configuracion", "id_categoria_accesorio", "cantidad")
         read_only_fields = ("id_detalle",)
 
 
