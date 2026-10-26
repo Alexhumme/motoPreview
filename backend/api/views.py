@@ -530,6 +530,36 @@ class RoleDetail(ResourceDetail):
     serializer_class = RoleSerializer
     not_found_message = "Rol no encontrado."
 
+    def delete(self, request, pk):
+        from api.models import RolRecurso
+
+        try:
+            role = self.get_object(pk)
+        except self.model.DoesNotExist:
+            return Response({"error": self.not_found_message}, status=status.HTTP_404_NOT_FOUND)
+
+        if role.es_superadmin:
+            return Response(
+                {"error": "No se puede eliminar el rol de Superadmin."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        with transaction.atomic():
+            # Los permisos del rol se eliminan con él (no tienen sentido solos)
+            RolRecurso.objects.filter(rol=role).delete()
+            try:
+                role.delete()
+            except IntegrityError:
+                # FK restantes: usuarios con este rol en usuario_rol
+                return Response(
+                    {
+                        "error": "No se puede eliminar el rol porque hay usuarios "
+                        "asignados. Reasígnalos a otro rol primero."
+                    },
+                    status=status.HTTP_409_CONFLICT,
+                )
+        return Response({"mensaje": "Rol eliminado."})
+
 
 class StoreCollection(ResourceCollection):
     model = Store

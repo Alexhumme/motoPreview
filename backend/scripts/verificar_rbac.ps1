@@ -15,10 +15,11 @@ $headers = @{ Authorization = "Bearer $token" }
 
 $rolAdmin = "11111111-0000-0000-0000-000000000001"
 
-# 0. Limpiar roles de pruebas anteriores
+# 0. Limpiar roles de pruebas anteriores (revocar permisos y luego borrar)
 $roles = Invoke-RestMethod -Method Get -Uri "$base/roles" -Headers $headers
 foreach ($r in $roles) {
     if ($r.nombre_rol.StartsWith("[TEST]")) {
+        Invoke-RestMethod -Method Put -Uri "$base/roles/$($r.id_rol)/permisos" -Headers $headers -ContentType "application/json" -Body '{"permisos": []}' | Out-Null
         Invoke-RestMethod -Method Delete -Uri "$base/roles/$($r.id_rol)" -Headers $headers | Out-Null
         Write-Host "0) Rol de prueba eliminado: $($r.nombre_rol) ($($r.id_rol))"
     }

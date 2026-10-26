@@ -500,7 +500,7 @@ export default function Seguridad() {
       <ModalConfirmacion
         abierto={!!rolAEliminar}
         titulo="Eliminar rol"
-        mensaje={`¿Seguro que quieres eliminar el rol "${rolAEliminar?.nombre_rol}"? Esta acción no se puede deshacer y los usuarios con este rol perderán sus permisos.`}
+        mensaje={`¿Seguro que quieres eliminar el rol "${rolAEliminar?.nombre_rol}"? Sus permisos asignados se eliminan con él; si hay usuarios con este rol, primero deberás reasignarlos.`}
         textoConfirmar="Sí, eliminar"
         peligroso
         onConfirmar={confirmarEliminar}
