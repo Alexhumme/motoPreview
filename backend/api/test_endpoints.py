@@ -10,6 +10,7 @@ Ejecutar:  python manage.py test api
 from datetime import timedelta
 from types import SimpleNamespace
 from unittest import mock
+from decimal import Decimal
 
 import jwt
 from django.conf import settings
@@ -489,3 +490,37 @@ class RateLimitTests(SimpleTestCase):
         self.assertIn(status.HTTP_429_TOO_MANY_REQUESTS, estados)
         permitidas = [codigo for codigo in estados if codigo != status.HTTP_429_TOO_MANY_REQUESTS]
         self.assertTrue(all(codigo == status.HTTP_503_SERVICE_UNAVAILABLE for codigo in permitidas))
+
+
+class ReporteResumenPermisosTests(TestCase):
+    """El resumen del día (dashboard) es exclusivo del personal de tienda."""
+
+    databases = ['default']
+
+    def setUp(self):
+        self.client = APIClient()
+
+    def test_anonimo_no_puede_ver_resumen(self):
+        response = self.client.get("/api/reportes/resumen")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_cliente_no_puede_ver_resumen(self):
+        self.client.force_authenticate(user=CLIENTE)
+        response = self.client.get("/api/reportes/resumen")
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_staff_sin_tienda_recibe_400(self):
+        self.client.force_authenticate(user=usuario_falso([ROLE_ADMIN], tienda=None))
+        response = self.client.get("/api/reportes/resumen")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("tienda", response.json()["error"].lower())
+
+    def test_staff_obtiene_resumen_vacio(self):
+        self.client.force_authenticate(user=ADMIN)
+        response = self.client.get("/api/reportes/resumen")
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.json())
+        data = response.json()
+        self.assertEqual(data["fecha"], timezone.localdate().isoformat())
+        for metrica in ("ventas_dia", "por_cobrar", "pedidos_pendientes"):
+            self.assertEqual(data[metrica]["cantidad"], 0, metrica)
+            self.assertEqual(Decimal(str(data[metrica]["total"])), Decimal("0"), metrica)

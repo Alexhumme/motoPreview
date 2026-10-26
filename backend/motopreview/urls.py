@@ -95,6 +95,7 @@ _RUTAS_API = [
     ("api/cotizaciones/<uuid:pk>", views.QuoteDetailView.as_view()),
     ("api/cotizaciones/<uuid:pk>/estado", views.QuoteStatus.as_view()),
     ("api/cotizaciones/<uuid:pk>/historial", views.QuoteHistoryView.as_view()),
+    ("api/reportes/resumen", views.ReporteResumenView.as_view()),
 ]
 
 

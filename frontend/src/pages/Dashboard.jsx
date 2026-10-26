@@ -2,26 +2,44 @@ import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { obtenerInventario } from '../services/inventario';
 import { obtenerCotizaciones } from '../services/cotizaciones';
+import { obtenerResumenDia } from '../services/reportes';
 import './Dashboard.css';
+
+const formatoCOP = (valor) =>
+  new Intl.NumberFormat('es-CO', {
+    style: 'currency',
+    currency: 'COP',
+    maximumFractionDigits: 0,
+  }).format(Number(valor) || 0);
+
+const RESUMEN_VACIO = {
+  ventas_dia: { cantidad: 0, total: 0 },
+  por_cobrar: { cantidad: 0, total: 0 },
+  pedidos_pendientes: { cantidad: 0, total: 0 },
+};
 
 export default function Dashboard() {
   const { usuario } = useAuth();
   const [inventario, setInventario] = useState([]);
   const [cotizaciones, setCotizaciones] = useState([]);
+  const [resumen, setResumen] = useState(RESUMEN_VACIO);
   const [cargando, setCargando] = useState(true);
 
   useEffect(() => {
     async function cargar() {
       try {
-        const [datosInventario, datosCotizaciones] = await Promise.all([
+        const [datosInventario, datosCotizaciones, resumenDia] = await Promise.all([
           obtenerInventario(usuario.id_tienda),
-          obtenerCotizaciones(usuario.id_tienda)
+          obtenerCotizaciones(usuario.id_tienda),
+          obtenerResumenDia().catch(() => RESUMEN_VACIO),
         ]);
         setInventario(datosInventario);
         setCotizaciones(datosCotizaciones);
+        setResumen(resumenDia);
       } catch {
         setInventario([]);
         setCotizaciones([]);
+        setResumen(RESUMEN_VACIO);
       } finally {
         setCargando(false);
       }
@@ -32,7 +50,9 @@ export default function Dashboard() {
   const stockBajo = inventario.filter((item) =>
     item.estado_inventario === 'bajo' || item.estado_inventario === 'agotado'
   );
-  const pendientes = cotizaciones.filter((item) => item.coti_estado === 'pendiente').length;
+  const ventasDia = resumen?.ventas_dia || RESUMEN_VACIO.ventas_dia;
+  const porCobrar = resumen?.por_cobrar || RESUMEN_VACIO.por_cobrar;
+  const pendientes = resumen?.pedidos_pendientes?.cantidad ?? 0;
   const aprobadas = cotizaciones.filter((item) => item.coti_estado === 'aprobada').length;
   const agotados = inventario.filter((item) => item.estado_inventario === 'agotado').length;
   const maxStatus = Math.max(cotizaciones.length, 1);
@@ -69,28 +89,36 @@ export default function Dashboard() {
 
       {/* KPIs */}
       <section className="dashboard-kpis" aria-label="Indicadores clave">
-        <article className="kpi">
-          <span className="kpi-icon" aria-hidden="true">▣</span>
+        <article className="kpi kpi--venta">
+          <span className="kpi-icon" aria-hidden="true">↗</span>
           <div className="kpi-content">
-            <small>Productos en inventario</small>
-            <strong>{inventario.length}</strong>
-            <em>Registros activos</em>
+            <small>Ventas del día</small>
+            <strong>{formatoCOP(ventasDia.total)}</strong>
+            <em>{ventasDia.cantidad} venta{ventasDia.cantidad !== 1 ? 's' : ''} completada{ventasDia.cantidad !== 1 ? 's' : ''} hoy</em>
           </div>
         </article>
-        <article className="kpi kpi--alert">
-          <span className="kpi-icon" aria-hidden="true">!</span>
+        <article className="kpi kpi--cobrar">
+          <span className="kpi-icon" aria-hidden="true">◎</span>
           <div className="kpi-content">
-            <small>Stock bajo o agotado</small>
-            <strong>{stockBajo.length}</strong>
-            <em>Requieren atención</em>
+            <small>Pagos que faltan</small>
+            <strong>{formatoCOP(porCobrar.total)}</strong>
+            <em>{porCobrar.cantidad} cotización{porCobrar.cantidad !== 1 ? 'es' : ''} aprobada{porCobrar.cantidad !== 1 ? 's' : ''} por cobrar</em>
           </div>
         </article>
         <article className="kpi">
           <span className="kpi-icon" aria-hidden="true">▤</span>
           <div className="kpi-content">
-            <small>Cotizaciones pendientes</small>
+            <small>Pedidos pendientes</small>
             <strong>{pendientes}</strong>
-            <em>{cotizaciones.length} solicitudes totales</em>
+            <em>Cotizaciones por revisar</em>
+          </div>
+        </article>
+        <article className="kpi">
+          <span className="kpi-icon" aria-hidden="true">▣</span>
+          <div className="kpi-content">
+            <small>Productos en inventario</small>
+            <strong>{inventario.length}</strong>
+            <em>{stockBajo.length} con stock bajo o agotado</em>
           </div>
         </article>
       </section>

@@ -1,18 +1,31 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { usePermiso } from '../../context/usePermiso';
 import { useCart } from '../../context/CartContext';
+import { ROL_ADMIN, ROL_VENDEDOR } from '../../utils/constants/roles';
 import './SiteHeader.css';
 
 export default function SiteHeader() {
   const location = useLocation();
   const { usuario, logout } = useAuth();
+  const { tieneAlgunPermiso, esSuperAdmin } = usePermiso();
   const { totalItems } = useCart();
 
-  const isAdmin = usuario && (
-    usuario.id_rol === '00000000-0000-0000-0000-000000000000' ||
-    usuario.id_rol === '11111111-0000-0000-0000-000000000001' ||
-    usuario.id_rol === '11111111-0000-0000-0000-000000000002'
+  const esStaff = !!usuario && (
+    usuario.id_rol === ROL_ADMIN ||
+    usuario.id_rol === ROL_VENDEDOR ||
+    esSuperAdmin()
   );
+  // Mismo criterio que el panel admin: con matriz RBAC cargada, el enlace
+  // solo se pinta si el rol puede entrar a algún módulo; sin matriz, hereda.
+  const permisosCargados = (usuario?.permisos?.length ?? 0) > 0 || esSuperAdmin();
+  const mostrarPanel = esStaff && (!permisosCargados || tieneAlgunPermiso([
+    { recurso: 'inventario', accion: 'listar' },
+    { recurso: 'cotizaciones', accion: 'listar' },
+    { recurso: 'usuarios', accion: 'listar' },
+    { recurso: 'roles', accion: 'listar' },
+    { recurso: 'productos', accion: 'crear' },
+  ]));
 
   return (
     <header className="site-header">
@@ -42,7 +55,7 @@ export default function SiteHeader() {
           {usuario ? (
             <div className="header-account">
               <Link to="/mis-cotizaciones">{usuario.usu_nombre?.split(' ')[0]}</Link>
-              {isAdmin && <Link to="/admin">Panel</Link>}
+              {mostrarPanel && <Link to="/admin">Panel</Link>}
               <button onClick={logout} className="btn btn--ghost btn--sm">Salir</button>
             </div>
           ) : (

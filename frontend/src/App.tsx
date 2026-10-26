@@ -77,15 +77,42 @@ function App() {
           <Route
             path="accesorios"
             element={
-              <RutaProtegida rolesPermitidos={[ROL_ADMIN]}>
+              <RutaProtegida
+                rolesPermitidos={[ROL_ADMIN]}
+                permisos={[
+                  { recurso: 'productos', accion: 'crear' },
+                  { recurso: 'productos', accion: 'actualizar' },
+                ]}
+              >
                 <LazyWrapper Component={Accesorios} />
               </RutaProtegida>
             }
           />
-          <Route path="usuarios" element={<LazyWrapper Component={Usuarios} />} />
+          <Route
+            path="usuarios"
+            element={
+              <RutaProtegida rolesPermitidos={[ROL_ADMIN]} recurso="usuarios" accion="listar">
+                <LazyWrapper Component={Usuarios} />
+              </RutaProtegida>
+            }
+          />
           <Route path="tienda" element={<LazyWrapper Component={Tienda} />} />
-          <Route path="permisos" element={<LazyWrapper Component={PermisosRBAC} />} />
-          <Route path="roles" element={<LazyWrapper Component={Roles} />} />
+          <Route
+            path="permisos"
+            element={
+              <RutaProtegida rolesPermitidos={[ROL_ADMIN]} recurso="roles" accion="actualizar">
+                <LazyWrapper Component={PermisosRBAC} />
+              </RutaProtegida>
+            }
+          />
+          <Route
+            path="roles"
+            element={
+              <RutaProtegida rolesPermitidos={[ROL_ADMIN]} recurso="roles" accion="listar">
+                <LazyWrapper Component={Roles} />
+              </RutaProtegida>
+            }
+          />
         </Route>
         <Route path="*" element={<NoEncontrado />} />
       </Routes>

@@ -19,6 +19,8 @@ Flujos cubiertos (lo que la revisión P2 pedía probar contra BD real):
 * Crear cotizaciones: límite de ítems, totales calculados, transiciones de estado
   válidas e inválidas y vistas por cliente/admin.
 * Inventario: creación, movimientos de entrada/salida, stock y estados.
+* Resumen del día (dashboard): ventas completadas hoy, por cobrar y pendientes
+  por tienda; acceso exclusivo del personal de tienda.
 """
 import os
 import uuid
@@ -543,3 +545,118 @@ class InventoryFlowTests(EsquemaTestCase):
         sin_token = APIClient()
         respuesta = sin_token.get("/api/inventario")
         self.assertEqual(respuesta.status_code, 401, respuesta.json())
+
+
+class ReporteResumenTests(EsquemaTestCase):
+    """Resumen del día: ventas completadas hoy, por cobrar y pendientes."""
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.plan = seed_base()
+
+    def setUp(self):
+        super().setUp()
+        self.client = APIClient()
+        self.tienda = self._crear_tienda(self.plan, None)
+        self.admin = self._crear_usuario(
+            "Admin", ROLE_ADMIN, tienda=self.tienda, email=self._correo("admin")
+        )
+        self._login(self.admin)
+
+        self.categoria = ProductCategory.objects.create(
+            nombre=f"Categoría-{uuid.uuid4().hex[:6]}"
+        )
+        self.tipo = AccessoryType.objects.create(nombre=f"Tipo-{uuid.uuid4().hex[:6]}")
+        self.cat_acc = AccessoryCategory.objects.create(
+            cat_nombre=f"CatAcc-{uuid.uuid4().hex[:6]}"
+        )
+        producto = Product.objects.create(
+            nombre=f"Producto-{uuid.uuid4().hex[:6]}",
+            estado="disponible",
+            categoria_producto=self.categoria,
+            precio=Decimal("100.00"),
+        )
+        self.accesorio = Product.objects.create(
+            es_accesorio=True,
+            categoria=self.cat_acc,
+            producto=producto,
+            tipo=self.tipo,
+            color="Negro",
+        )
+        marca = MotorcycleBrand.objects.create(marca_nombre=f"Marca-{uuid.uuid4().hex[:6]}")
+        modelo = MotorcycleModel.objects.create(marca=marca, modelo_nombre="Modelo X")
+        self.moto = Motorcycle.objects.create(modelo=modelo, moto_anio=2024)
+
+    def _login(self, usuario):
+        from api.views import issue_jwt
+
+        token = issue_jwt(usuario)
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {token}")
+
+    def _crear_cotizacion(self):
+        return self.client.post(
+            "/api/cotizaciones",
+            {
+                "id_moto": str(self.moto.id_moto),
+                "items": [{"id_accesorio": str(self.accesorio.id_accesorio), "cantidad": 1}],
+            },
+            format="json",
+        )
+
+    def _resumen(self):
+        respuesta = self.client.get("/api/reportes/resumen")
+        self.assertEqual(respuesta.status_code, 200, respuesta.json())
+        return respuesta.json()
+
+    def test_resumen_refleja_ventas_del_dia_por_cobrar_y_pendientes(self):
+        cotizacion = self._crear_cotizacion()
+        self.assertEqual(cotizacion.status_code, 201, cotizacion.json())
+        pk = cotizacion.json()["id_cotizacion"]
+
+        data = self._resumen()
+        self.assertEqual(data["pedidos_pendientes"]["cantidad"], 1)
+        self.assertEqual(Decimal(data["pedidos_pendientes"]["total"]), Decimal("100.00"))
+        self.assertEqual(data["por_cobrar"]["cantidad"], 0)
+        self.assertEqual(data["ventas_dia"]["cantidad"], 0)
+
+        # aprobada => dinero por cobrar
+        self.client.put(
+            f"/api/cotizaciones/{pk}/estado", {"coti_estado": "aprobada"}, format="json"
+        )
+        data = self._resumen()
+        self.assertEqual(data["por_cobrar"]["cantidad"], 1)
+        self.assertEqual(Decimal(data["por_cobrar"]["total"]), Decimal("100.00"))
+        self.assertEqual(data["pedidos_pendientes"]["cantidad"], 0)
+        self.assertEqual(data["ventas_dia"]["cantidad"], 0)
+
+        # completada => venta del día
+        self.client.put(
+            f"/api/cotizaciones/{pk}/estado", {"coti_estado": "completada"}, format="json"
+        )
+        data = self._resumen()
+        self.assertEqual(data["ventas_dia"]["cantidad"], 1)
+        self.assertEqual(Decimal(data["ventas_dia"]["total"]), Decimal("100.00"))
+        self.assertEqual(data["por_cobrar"]["cantidad"], 0)
+        self.assertEqual(data["pedidos_pendientes"]["cantidad"], 0)
+
+    def test_cliente_no_puede_ver_resumen(self):
+        cliente = self._crear_usuario(
+            "Cliente", ROLE_CUSTOMER, tienda=None, email=self._correo("cliente")
+        )
+        self._login(cliente)
+        respuesta = self.client.get("/api/reportes/resumen")
+        self.assertEqual(respuesta.status_code, 403, respuesta.json())
+
+    def test_resumen_aisla_por_tienda(self):
+        otra = self._crear_tienda(self.plan, None)
+        email_admin2 = self._correo("admin2")
+        self._crear_usuario("Admin2", ROLE_ADMIN, tienda=otra, email=email_admin2)
+        # La cotización de esta tienda existe, pero el admin de "otra" no la ve.
+        cotizacion = self._crear_cotizacion()
+        self.assertEqual(cotizacion.status_code, 201, cotizacion.json())
+
+        admin2 = User.objects.get(usu_email=email_admin2)
+        self._login(admin2)
+        data = self._resumen()
+        self.assertEqual(data["pedidos_pendientes"]["cantidad"], 0)

@@ -105,6 +105,37 @@ export default function Catalogo() {
           </div>
         </section>
 
+        <section className="intro-section" id="acerca-de">
+          <div className="section-heading">
+            <div>
+              <div className="eyebrow eyebrow--light"><span className="eyebrow-dot" aria-hidden="true"></span>¿Qué es MotoPreview?</div>
+              <h2 className="section-title">La tienda de tu moto,<br /><em>antes de gastar un peso.</em></h2>
+            </div>
+            <p className="section-subtitle">
+              MotoPreview conecta motociclistas con tiendas de accesorios: exploras piezas,
+              confirmas que encajan con tu modelo exacto, las miras en 3D y envías una cotización.
+              Sin pagos en línea, sin compras a ciegas.
+            </p>
+          </div>
+          <div className="intro-grid">
+            <article className="intro-card">
+              <span className="intro-icon" aria-hidden="true">✓</span>
+              <h3 className="intro-title">Compatibilidad real</h3>
+              <p className="intro-text">Cada accesorio se valida contra la marca, modelo y año de tu motocicleta. Solo ves lo que sí encaja.</p>
+            </article>
+            <article className="intro-card">
+              <span className="intro-icon" aria-hidden="true">◈</span>
+              <h3 className="intro-title">Visualización 3D</h3>
+              <p className="intro-text">Gira la pieza desde todos los ángulos antes de decidir, directo en tu navegador y sin instalar nada.</p>
+            </article>
+            <article className="intro-card">
+              <span className="intro-icon" aria-hidden="true">▤</span>
+              <h3 className="intro-title">Cotización sin fricción</h3>
+              <p className="intro-text">Arma tu pedido con tu moto asociada y la tienda responde con precio y disponibilidad. Tú decides cuándo comprar.</p>
+            </article>
+          </div>
+        </section>
+
         <section className="stats-row">
           <div className="stat-item">
             <strong>+240</strong><span>piezas verificadas</span>

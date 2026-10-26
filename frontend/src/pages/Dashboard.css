@@ -108,6 +108,19 @@
   color: var(--color-jam-pink);
 }
 
+.kpi--venta .kpi-content strong {
+  color: var(--color-signal-mint);
+}
+
+.kpi--cobrar .kpi-icon {
+  background: rgba(163, 122, 245, 0.15);
+  color: var(--color-electric-violet);
+}
+
+.kpi--cobrar .kpi-content strong {
+  color: var(--color-electric-violet);
+}
+
 .kpi-content {
   display: flex;
   flex-direction: column;

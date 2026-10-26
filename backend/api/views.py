@@ -3,6 +3,7 @@ import hashlib
 import logging
 import secrets
 from datetime import timedelta
+from decimal import Decimal
 from uuid import UUID
 
 import bcrypt
@@ -10,6 +11,7 @@ import jwt
 from django.conf import settings
 from django.core.mail import send_mail
 from django.db import IntegrityError, connection, transaction
+from django.db.models import Count, Sum
 from django.utils import timezone, translation
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
@@ -1416,6 +1418,72 @@ class QuoteHistoryView(DatabaseGuardMixin):
             "-fecha", "pk"
         )
         return Response(QuoteStatusHistorySerializer(history, many=True).data)
+
+
+class ReporteResumenView(DatabaseGuardMixin):
+    """Resumen del día para el panel de la tienda (personal de tienda).
+
+    Métricas (siempre filtradas por la tienda del usuario autenticado):
+
+    * ``ventas_dia``: cotizaciones marcadas ``completada`` hoy. La fecha de la
+      venta se toma del historial de estados (la fecha real del cambio), no de
+      la fecha de solicitud.
+    * ``por_cobrar``: cotizaciones ``aprobadas`` cuyo total aún no se cobra.
+    * ``pedidos_pendientes``: cotizaciones ``pendientes`` por revisar.
+    """
+
+    permission_classes = [IsStoreStaff]
+
+    def get(self, request):
+        tienda_id = request.user.id_tienda
+        if not tienda_id:
+            return Response(
+                {"error": "El usuario no pertenece a ninguna tienda."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        hoy = timezone.localdate()
+        cotizaciones = Quote.objects.filter(tienda_id=tienda_id)
+
+        # Ventas del día: la marca 'completada' de hoy según el historial
+        # (distint por si una cotización tuviera entradas duplicadas).
+        ventas_ids = list(
+            QuoteStatusHistory.objects.filter(
+                estado="completada",
+                fecha__date=hoy,
+                cotizacion__tienda_id=tienda_id,
+            )
+            .values_list("cotizacion_id", flat=True)
+            .distinct()
+        )
+        ventas = Quote.objects.filter(id_cotizacion__in=ventas_ids).aggregate(
+            cantidad=Count("id_cotizacion"), total=Sum("total")
+        )
+
+        por_cobrar = cotizaciones.filter(coti_estado="aprobada").aggregate(
+            cantidad=Count("id_cotizacion"), total=Sum("total")
+        )
+        pendientes = cotizaciones.filter(coti_estado="pendiente").aggregate(
+            cantidad=Count("id_cotizacion"), total=Sum("total")
+        )
+
+        return Response(
+            {
+                "fecha": hoy.isoformat(),
+                "ventas_dia": {
+                    "cantidad": ventas["cantidad"] or 0,
+                    "total": ventas["total"] or Decimal("0"),
+                },
+                "por_cobrar": {
+                    "cantidad": por_cobrar["cantidad"] or 0,
+                    "total": por_cobrar["total"] or Decimal("0"),
+                },
+                "pedidos_pendientes": {
+                    "cantidad": pendientes["cantidad"] or 0,
+                    "total": pendientes["total"] or Decimal("0"),
+                },
+            }
+        )
 
 
 # ============================================================================

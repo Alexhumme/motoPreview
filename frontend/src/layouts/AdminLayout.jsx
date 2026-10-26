@@ -1,22 +1,97 @@
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { usePermiso } from '../context/usePermiso';
 import { ROL_ADMIN } from '../utils/constants/roles';
 import './AdminLayout.css';
 
+/**
+ * Menú dinámico: cada enlace se pinta solo si el rol del usuario tiene
+ * alguno de los permisos RBAC indicados. Los enlaces sin `permisos` son
+ * siempre visibles para el personal de tienda, y `soloAdmin` restringe a
+ * administradores. Si el usuario aún no tiene permisos cargados (p. ej. la
+ * tienda no tiene configurada la matriz RBAC), se aplica el menú por rol
+ * heredado para no dejar al personal sin navegación.
+ */
+const ENLACES = [
+  { ruta: '/admin', etiqueta: 'Resumen', icono: '◈' },
+  {
+    ruta: '/admin/accesorios',
+    etiqueta: 'Accesorios',
+    icono: '◇',
+    permisos: [
+      { recurso: 'productos', accion: 'crear' },
+      { recurso: 'productos', accion: 'actualizar' },
+    ],
+  },
+  {
+    ruta: '/admin/inventario',
+    etiqueta: 'Inventario',
+    icono: '▣',
+    permisos: [
+      { recurso: 'inventario', accion: 'listar' },
+      { recurso: 'inventario', accion: 'actualizar' },
+    ],
+  },
+  {
+    ruta: '/admin/cotizaciones',
+    etiqueta: 'Cotizaciones',
+    icono: '▤',
+    permisos: [
+      { recurso: 'cotizaciones', accion: 'listar' },
+      { recurso: 'cotizaciones', accion: 'actualizar' },
+    ],
+  },
+  {
+    ruta: '/admin/reportes',
+    etiqueta: 'Reportes',
+    icono: '▥',
+    permisos: [{ recurso: 'cotizaciones', accion: 'listar' }],
+  },
+  {
+    ruta: '/admin/usuarios',
+    etiqueta: 'Usuarios',
+    icono: '◎',
+    soloAdmin: true,
+    permisos: [
+      { recurso: 'usuarios', accion: 'listar' },
+      { recurso: 'usuarios', accion: 'crear' },
+    ],
+  },
+  {
+    ruta: '/admin/roles',
+    etiqueta: 'Roles',
+    icono: '✦',
+    soloAdmin: true,
+    permisos: [
+      { recurso: 'roles', accion: 'listar' },
+      { recurso: 'roles', accion: 'actualizar' },
+    ],
+  },
+  {
+    ruta: '/admin/permisos',
+    etiqueta: 'Permisos',
+    icono: '⛨',
+    soloAdmin: true,
+    permisos: [{ recurso: 'roles', accion: 'actualizar' }],
+  },
+  { ruta: '/admin/tienda', etiqueta: 'Mi tienda', icono: '⌂' },
+];
+
 export default function AdminLayout() {
   const { usuario, logout } = useAuth();
+  const { tieneAlgunPermiso, esSuperAdmin } = usePermiso();
   const location = useLocation();
   const navigate = useNavigate();
 
-  const enlacesBase = [
-    { ruta: '/admin', etiqueta: 'Resumen', icono: '◈' },
-    { ruta: '/admin/inventario', etiqueta: 'Inventario', icono: '▣' },
-    { ruta: '/admin/cotizaciones', etiqueta: 'Cotizaciones', icono: '▤' },
-    { ruta: '/admin/reportes', etiqueta: 'Reportes', icono: '▥' },
-  ];
-  const enlaces = usuario?.id_rol === ROL_ADMIN
-    ? [enlacesBase[0], { ruta: '/admin/accesorios', etiqueta: 'Accesorios', icono: '◇' }, ...enlacesBase.slice(1), { ruta: '/admin/usuarios', etiqueta: 'Usuarios', icono: '◎' }, { ruta: '/admin/tienda', etiqueta: 'Mi tienda', icono: '⌂' }]
-    : enlacesBase;
+  const esAdmin = usuario?.id_rol === ROL_ADMIN || esSuperAdmin();
+  const permisosCargados = (usuario?.permisos?.length ?? 0) > 0 || esSuperAdmin();
+
+  const enlaces = ENLACES.filter((enlace) => {
+    if (enlace.soloAdmin && !esAdmin) return false;
+    if (!permisosCargados) return true; // sin matriz RBAC: menú por rol heredado
+    if (!enlace.permisos) return true;
+    return tieneAlgunPermiso(enlace.permisos);
+  });
 
   function manejarLogout() {
     logout();

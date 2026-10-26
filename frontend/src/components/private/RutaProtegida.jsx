@@ -2,23 +2,38 @@ import { Navigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { usePermiso } from '../../context/usePermiso';
 
-// rolesPermitidos: array de id_rol que pueden entrar (legacy)
-// recurso/accion: nuevo sistema RBAC
-export default function RutaProtegida({ children, rolesPermitidos, recurso, accion }) {
+/**
+ * Guarda de rutas:
+ * - rolesPermitidos: array de id_rol (guarda heredada por rol).
+ * - recurso/accion:  permiso RBAC simple.
+ * - permisos:        array {recurso, accion} — basta con cumplir uno (any-of).
+ *
+ * Si el usuario tiene la matriz RBAC cargada (usuario.permisos), los permisos
+ * mandan; si no la tiene todavía, se aplica la guarda por rol heredada para
+ * no bloquear al personal mientras se configura la matriz. La validación
+ * definitiva siempre ocurre en el backend.
+ */
+export default function RutaProtegida({ children, rolesPermitidos, recurso, accion, permisos }) {
   const { usuario } = useAuth();
-  const { tienePermiso } = usePermiso();
+  const { tieneAlgunPermiso, esSuperAdmin } = usePermiso();
 
   if (!usuario) {
     return <Navigate to="/login" replace />;
   }
 
-  // Legacy: verificación por roles
-  if (rolesPermitidos && !rolesPermitidos.includes(usuario.id_rol)) {
+  if (esSuperAdmin()) {
+    return children;
+  }
+
+  const permisosCargados = (usuario.permisos?.length ?? 0) > 0;
+  const requeridos = permisos || (recurso && accion ? [{ recurso, accion }] : null);
+
+  if (requeridos && permisosCargados && !tieneAlgunPermiso(requeridos)) {
     return <Navigate to="/" replace />;
   }
 
-  // Nuevo sistema RBAC: verificación por recurso/acción
-  if (recurso && accion && !tienePermiso(recurso, accion)) {
+  // Legacy: verificación por roles
+  if (rolesPermitidos && !rolesPermitidos.includes(usuario.id_rol)) {
     return <Navigate to="/" replace />;
   }
 
