@@ -348,6 +348,13 @@ export default function Seguridad() {
             </div>
           </div>
 
+          {rolSeleccionado === ROL_SUPERADMIN && (
+            <p className="permisos-help" style={{ margin: 0 }}>
+              El Superadmin tiene acceso total al sistema por diseño: la matriz
+              se muestra completa solo como referencia.
+            </p>
+          )}
+
           {cargandoMatriz && (
             <div className="cargando" role="status" aria-live="polite">
               <div className="skeleton" style={{ width: '200px', height: '20px' }} />
