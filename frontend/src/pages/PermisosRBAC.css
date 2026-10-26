@@ -70,27 +70,6 @@
   padding: var(--space-64);
 }
 
-/* Grid */
-.permisos-grid {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-24);
-}
-
-.categoria-permisos {
-  padding: var(--space-24);
-}
-
-.categoria-title {
-  font-family: var(--font-display);
-  font-weight: var(--weight-bold);
-  font-size: var(--text-heading-sm);
-  color: var(--color-paper);
-  margin: 0 0 var(--space-20);
-  padding-bottom: var(--space-12);
-  border-bottom: 1px solid var(--color-bone);
-}
-
 /* Table wrapper */
 .tabla-permisos-wrapper {
   overflow-x: auto;
@@ -117,6 +96,23 @@
 
 .tabla-permisos td {
   font-size: var(--text-body);
+}
+
+/* Columnas de acciones: encabezado y celdas centrados y alineados */
+.tabla-permisos th.col-accion,
+.tabla-permisos td:not(:first-child) {
+  text-align: center;
+}
+
+.tabla-permisos th.col-accion {
+  min-width: 96px;
+}
+
+/* Celda de combinación recurso-acción que no existe en el catálogo */
+.celda-no-aplica {
+  color: var(--color-mist-gray);
+  opacity: 0.6;
+  user-select: none;
 }
 
 .recurso-nombre {
@@ -172,15 +168,6 @@
 
 .permiso-checkbox:focus-visible {
   box-shadow: 0 0 0 3px rgba(115, 229, 191, 0.3);
-}
-
-.permiso-label {
-  font-family: var(--font-ui);
-  font-size: var(--text-caption);
-  font-weight: var(--weight-medium);
-  color: var(--color-soft-mist);
-  text-align: center;
-  text-transform: capitalize;
 }
 
 .permiso-scope {
@@ -269,11 +256,7 @@
   }
 
   .permiso-cell {
-    min-width: 70px;
-  }
-
-  .permiso-label {
-    font-size: 10px;
+    min-width: 60px;
   }
 
   .permiso-scope {
