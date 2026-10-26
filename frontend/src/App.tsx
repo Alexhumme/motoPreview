@@ -5,7 +5,7 @@ import Catalogo from './pages/public/Catalogo';
 import Carrito from './pages/public/Carrito';
 import AdminLayout from './layouts/AdminLayout';
 import RutaProtegida from './components/private/RutaProtegida';
-import { ROL_ADMIN, ROL_VENDEDOR } from './utils/constants/roles';
+import { ROL_ADMIN, ROL_SUPERADMIN, ROL_VENDEDOR } from './utils/constants/roles';
 import Visualizador from './pages/public/Visualizador';
 import Configurador from './pages/public/Configurador';
 import MisCotizaciones from './pages/public/MisCotizaciones';
@@ -100,7 +100,7 @@ function App() {
           <Route
             path="permisos"
             element={
-              <RutaProtegida rolesPermitidos={[ROL_ADMIN]} recurso="roles" accion="actualizar">
+              <RutaProtegida rolesPermitidos={[ROL_SUPERADMIN]}>
                 <LazyWrapper Component={PermisosRBAC} />
               </RutaProtegida>
             }

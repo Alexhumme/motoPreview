@@ -1774,16 +1774,19 @@ class RolePermisosBulkUpdateView(DatabaseGuardMixin):
         if not isinstance(permisos, list):
             return Response({"error": "Se espera una lista de permisos"}, status=status.HTTP_400_BAD_REQUEST)
         
-        # Validar permisos
-        ids_recurso_accion = [p.get("id_recurso_accion") for p in permisos if p.get("id_recurso_accion")]
-        if not ids_recurso_accion:
-            return Response({"error": "Lista de permisos vacía o inválida"}, status=status.HTTP_400_BAD_REQUEST)
-        
-        # Verificar que todos los recurso_accion existen
-        ra_existentes = set(
-            RecursoAccion.objects.filter(id_recurso_accion__in=ids_recurso_accion)
-            .values_list("id_recurso_accion", flat=True)
-        )
+        # Validar permisos (una lista vacía es válida: revoca todos)
+        ids_recurso_accion = [
+            str(p.get("id_recurso_accion")) for p in permisos if p.get("id_recurso_accion")
+        ]
+
+        # Verificar que todos los recurso_accion existen (comparar como texto:
+        # desde JSON llegan strings y la BD devuelve UUID)
+        ra_existentes = {
+            str(ra_id)
+            for ra_id in RecursoAccion.objects.filter(
+                id_recurso_accion__in=ids_recurso_accion
+            ).values_list("id_recurso_accion", flat=True)
+        }
         ids_faltantes = set(ids_recurso_accion) - ra_existentes
         if ids_faltantes:
             return Response(

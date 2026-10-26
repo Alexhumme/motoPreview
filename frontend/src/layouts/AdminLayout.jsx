@@ -72,6 +72,7 @@ const ENLACES = [
     etiqueta: 'Permisos',
     icono: '⛨',
     soloAdmin: true,
+    soloSuperAdmin: true,
     permisos: [{ recurso: 'roles', accion: 'actualizar' }],
   },
   { ruta: '/admin/tienda', etiqueta: 'Mi tienda', icono: '⌂' },
@@ -88,6 +89,7 @@ export default function AdminLayout() {
 
   const enlaces = ENLACES.filter((enlace) => {
     if (enlace.soloAdmin && !esAdmin) return false;
+    if (enlace.soloSuperAdmin && !esSuperAdmin()) return false;
     if (!permisosCargados) return true; // sin matriz RBAC: menú por rol heredado
     if (!enlace.permisos) return true;
     return tieneAlgunPermiso(enlace.permisos);

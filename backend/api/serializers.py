@@ -622,27 +622,43 @@ class RecursoConPermisosSerializer(serializers.ModelSerializer):
         fields = ("id_recurso", "codigo", "nombre", "descripcion", "endpoint_base", "icono", "orden", "activo", "acciones")
     
     def get_acciones(self, obj):
+        """Todas las combinaciones activas del recurso.
+
+        Devuelve cada recurso-acción con su scope cuando el rol lo tiene
+        concedido, o ``scope: None`` cuando no (la UI lo pinta como casilla
+        sin marcar, de modo que se puedan OTORGAR permisos nuevos).
+        """
         rol_id = self.context.get("rol_id")
         if not rol_id:
             return []
-        
+
         from api.models import RolRecurso, RecursoAccion
-        permisos = RolRecurso.objects.filter(
-            rol_id=rol_id,
-            recurso_accion__recurso=obj,
-            activo=True,
-            recurso_accion__activo=True,
-        ).select_related("recurso_accion__accion").order_by("recurso_accion__accion__orden")
-        
+        combinaciones = RecursoAccion.objects.filter(
+            recurso=obj, activo=True
+        ).select_related("accion").order_by("accion__orden")
+        concedidos = {
+            rr.recurso_accion_id: rr
+            for rr in RolRecurso.objects.filter(
+                rol_id=rol_id,
+                activo=True,
+                recurso_accion__recurso=obj,
+                recurso_accion__activo=True,
+            )
+        }
+
         return [
             {
-                "id_recurso_accion": str(p.recurso_accion.id_recurso_accion),
-                "accion_codigo": p.recurso_accion.accion.codigo,
-                "accion_nombre": p.recurso_accion.accion.nombre,
-                "scope": p.scope,
-                "activo": p.activo,
+                "id_recurso_accion": str(ra.id_recurso_accion),
+                "accion_codigo": ra.accion.codigo,
+                "accion_nombre": ra.accion.nombre,
+                "scope": (
+                    concedidos[ra.id_recurso_accion].scope
+                    if ra.id_recurso_accion in concedidos
+                    else None
+                ),
+                "activo": ra.id_recurso_accion in concedidos,
             }
-            for p in permisos
+            for ra in combinaciones
         ]
 
 

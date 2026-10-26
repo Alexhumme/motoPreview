@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import api from '../services/api';
 import { obtenerPermisosRol, actualizarPermisosRol } from '../services/roles';
 import './PermisosRBAC.css';
@@ -108,6 +109,8 @@ export default function PermisosRBAC() {
 
       await actualizarPermisosRol(rolSeleccionado, permisos);
 
+      // Recargar la matriz para reflejar los scopes guardados
+      await cargarRecursosConPermisos();
       setMensaje({ tipo: 'exito', texto: 'Permisos actualizados correctamente' });
     } catch (err) {
       console.error('Error guardando permisos:', err);
@@ -195,66 +198,84 @@ export default function PermisosRBAC() {
 
       {recursosConPermisos.length > 0 && (
         <div className="permisos-grid">
-          {Object.entries(recursosPorCategoria).map(([categoria, recursos]) => (
-            <section key={categoria} className="categoria-permisos card">
-              <h2 className="categoria-title">{categoria.charAt(0).toUpperCase() + categoria.slice(1)}</h2>
-              <div className="tabla-permisos-wrapper">
-                <table className="table">
-                  <thead>
-                    <tr>
-                      <th style={{ minWidth: '280px' }}>Recurso</th>
-                      <th>Crear</th>
-                      <th>Leer</th>
-                      <th>Actualizar</th>
-                      <th>Eliminar</th>
-                      <th>Listar</th>
-                      <th>Exportar</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {recursos.map(recurso => (
-                      <tr key={recurso.id_recurso}>
-                        <td className="recurso-nombre">
-                          <strong>{recurso.nombre}</strong>
-                          {recurso.codigo && <code>{recurso.codigo}</code>}
-                        </td>
-                        {(recurso.acciones || []).map(accion => (
-                          <td key={accion.id_recurso_accion}>
-                            <label className="permiso-cell">
-                              <input
-                                type="checkbox"
-                                className="permiso-checkbox"
-                                checked={isChecked(accion.id_recurso_accion)}
-                                onChange={() => togglePermiso(accion.id_recurso_accion)}
-                                aria-label={`${accion.accion_nombre} para ${recurso.nombre}`}
-                              />
-                              <span className="permiso-label">{accion.accion_nombre}</span>
-                              {isChecked(accion.id_recurso_accion) && (
-                                <select
-                                  className="permiso-scope"
-                                  value={getScopeValue(accion.id_recurso_accion)}
-                                  onChange={(e) => handleScopeChange(accion.id_recurso_accion, e)}
-                                  aria-label={`Scope para ${accion.accion_nombre}`}
-                                >
-                                  <option value="global">{scopeLabels.global}</option>
-                                  <option value="tienda">{scopeLabels.tienda}</option>
-                                  <option value="propio">{scopeLabels.propio}</option>
-                                </select>
-                              )}
-                            </label>
-                          </td>
+          {Object.entries(recursosPorCategoria).map(([categoria, recursos]) => {
+            // Columnas = unión de acciones de la sección (robusto si algún
+            // día agrupan varios recursos bajo el mismo prefijo)
+            const accionesUnion = [];
+            recursos.forEach((recurso) =>
+              (recurso.acciones || []).forEach((accion) => {
+                if (!accionesUnion.some((x) => x.id_recurso_accion === accion.id_recurso_accion)) {
+                  accionesUnion.push(accion);
+                }
+              })
+            );
+            return (
+              <section key={categoria} className="categoria-permisos card">
+                <h2 className="categoria-title">{categoria.charAt(0).toUpperCase() + categoria.slice(1)}</h2>
+                <div className="tabla-permisos-wrapper">
+                  <table className="table">
+                    <thead>
+                      <tr>
+                        <th style={{ minWidth: '280px' }}>Recurso</th>
+                        {accionesUnion.map((accion) => (
+                          <th key={accion.id_recurso_accion}>{accion.accion_nombre}</th>
                         ))}
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </section>
-          ))}
+                    </thead>
+                    <tbody>
+                      {recursos.map((recurso) => (
+                        <tr key={recurso.id_recurso}>
+                          <td className="recurso-nombre">
+                            <strong>{recurso.nombre}</strong>
+                            {recurso.codigo && <code>{recurso.codigo}</code>}
+                          </td>
+                          {accionesUnion.map((accion) => {
+                            const propia = (recurso.acciones || []).find(
+                              (x) => x.id_recurso_accion === accion.id_recurso_accion
+                            );
+                            if (!propia) return <td key={accion.id_recurso_accion} />;
+                            return (
+                              <td key={accion.id_recurso_accion}>
+                                <label className="permiso-cell">
+                                  <input
+                                    type="checkbox"
+                                    className="permiso-checkbox"
+                                    checked={isChecked(propia.id_recurso_accion)}
+                                    onChange={() => togglePermiso(propia.id_recurso_accion)}
+                                    aria-label={`${propia.accion_nombre} para ${recurso.nombre}`}
+                                  />
+                                  <span className="permiso-label">{propia.accion_nombre}</span>
+                                  {isChecked(propia.id_recurso_accion) && (
+                                    <select
+                                      className="permiso-scope"
+                                      value={getScopeValue(propia.id_recurso_accion)}
+                                      onChange={(e) => handleScopeChange(propia.id_recurso_accion, e)}
+                                      aria-label={`Scope para ${propia.accion_nombre}`}
+                                    >
+                                      <option value="global">{scopeLabels.global}</option>
+                                      <option value="tienda">{scopeLabels.tienda}</option>
+                                      <option value="propio">{scopeLabels.propio}</option>
+                                    </select>
+                                  )}
+                                </label>
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            );
+          })}
         </div>
       )}
 
       <footer className="permisos-footer">
+        <Link to="/admin/roles" className="btn btn--ghost">
+          + Crear rol
+        </Link>
         <button
           className="btn btn--primary"
           onClick={guardarPermisos}
