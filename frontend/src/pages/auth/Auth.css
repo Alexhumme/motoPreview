@@ -62,7 +62,7 @@
 }
 
 .brand-text span {
-  color: var(--color-signal-mint);
+  color: var(--color-brand-orange);
 }
 
 /* ==========================================================================
@@ -167,7 +167,7 @@
 }
 
 .form-input:focus {
-  border-color: var(--color-signal-mint);
+  border-color: var(--color-brand-orange);
   box-shadow: 0 0 0 3px rgba(242, 106, 33, 0.15);
 }
 
@@ -236,7 +236,7 @@
 
 /* Primary CTA — Signal Mint with glow */
 .btn--primary {
-  background: var(--color-signal-mint);
+  background: var(--color-brand-orange);
   color: var(--color-obsidian-plum);
   box-shadow: var(--shadow-mint-glow);
 }
@@ -267,7 +267,7 @@
 
 /* Header CTA — Jam Pink (brand beacon) */
 .btn--brand {
-  background: var(--color-signal-mint);
+  background: var(--color-brand-orange);
   color: var(--color-obsidian-plum);
   padding: var(--space-10) var(--space-16);
   font-size: var(--text-body);
@@ -281,8 +281,8 @@
 /* Outline button — secondary actions */
 .btn--outline {
   background: transparent;
-  color: var(--color-signal-mint);
-  border: 1px solid var(--color-signal-mint);
+  color: var(--color-brand-orange);
+  border: 1px solid var(--color-brand-orange);
 }
 
 .btn--outline:hover:not(:disabled) {
@@ -354,7 +354,7 @@
   justify-content: center;
   width: 48px;
   height: 48px;
-  background: var(--color-signal-mint);
+  background: var(--color-brand-orange);
   color: var(--color-obsidian-plum);
   border-radius: 50%;
   font-size: 24px;
@@ -428,7 +428,7 @@
   width: 40px;
   height: 40px;
   border: 3px solid var(--color-bone);
-  border-top-color: var(--color-signal-mint);
+  border-top-color: var(--color-brand-orange);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -470,7 +470,7 @@
 .checkbox-input {
   width: 16px;
   height: 16px;
-  accent-color: var(--color-signal-mint);
+  accent-color: var(--color-brand-orange);
   cursor: pointer;
 }
 
@@ -482,7 +482,7 @@
   font-family: var(--font-ui);
   font-size: var(--text-body);
   font-weight: var(--weight-medium);
-  color: var(--color-signal-mint);
+  color: var(--color-brand-orange);
   text-decoration: none;
   transition: color 0.15s ease;
 }

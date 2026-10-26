@@ -50,7 +50,7 @@
   font-family: var(--font-display);
   font-weight: var(--weight-black);
   font-size: var(--text-body-lg);
-  color: var(--color-signal-mint);
+  color: var(--color-brand-orange);
 }
 
 /* Empty state */
@@ -176,7 +176,7 @@
 .cart-line-sku {
   font-family: var(--font-mono);
   font-size: var(--text-caption);
-  color: var(--color-electric-violet);
+  color: var(--color-brand-orange-soft);
   margin: 0;
 }
 
@@ -248,7 +248,7 @@
 }
 
 .summary-total strong {
-  color: var(--color-signal-mint);
+  color: var(--color-brand-orange);
 }
 
 .quote-form {

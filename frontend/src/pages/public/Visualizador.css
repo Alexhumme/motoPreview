@@ -68,7 +68,7 @@
   font-size: var(--text-caption);
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--color-signal-mint);
+  color: var(--color-brand-orange);
 }
 
 .visualizador-title {
@@ -105,7 +105,7 @@
   font-family: var(--font-display);
   font-weight: var(--weight-black);
   font-size: var(--text-heading-sm);
-  color: var(--color-signal-mint);
+  color: var(--color-brand-orange);
   margin-top: var(--space-8);
 }
 

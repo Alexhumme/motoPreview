@@ -96,13 +96,13 @@
   font-family: var(--font-ui);
   font-size: var(--text-caption);
   font-weight: var(--weight-medium);
-  color: var(--color-signal-mint);
+  color: var(--color-brand-orange);
 }
 
 .live-dot {
   width: 8px;
   height: 8px;
-  background: var(--color-signal-mint);
+  background: var(--color-brand-orange);
   border-radius: 50%;
   animation: pulse 2s infinite;
 }
@@ -144,7 +144,7 @@
 }
 
 .select-wrap select:focus {
-  border-color: var(--color-signal-mint);
+  border-color: var(--color-brand-orange);
   box-shadow: 0 0 0 3px rgba(242, 106, 33, 0.15);
 }
 
@@ -186,7 +186,7 @@
   font-family: var(--font-display);
   font-size: var(--text-caption);
   font-weight: var(--weight-bold);
-  color: var(--color-electric-violet);
+  color: var(--color-brand-orange-soft);
   background: rgba(242, 106, 33, 0.1);
   padding: var(--space-4) var(--space-8);
   border-radius: var(--radius-nav);
@@ -314,8 +314,8 @@
 }
 
 .filter-chip--active {
-  background: var(--color-signal-mint);
-  border-color: var(--color-signal-mint);
+  background: var(--color-brand-orange);
+  border-color: var(--color-brand-orange);
   color: var(--color-obsidian-plum);
 }
 
@@ -409,7 +409,7 @@
 .compatible-info small {
   font-family: var(--font-ui);
   font-size: var(--text-caption);
-  color: var(--color-signal-mint);
+  color: var(--color-brand-orange);
   margin-top: var(--space-4);
   display: block;
 }
@@ -434,7 +434,7 @@
 
 .configuration-title span:first-child {
   font-size: 20px;
-  color: var(--color-signal-mint);
+  color: var(--color-brand-orange);
 }
 
 .configuration-title span:last-child {

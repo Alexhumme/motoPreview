@@ -81,7 +81,7 @@
   font-family: var(--font-display);
   font-weight: var(--weight-bold);
   font-size: var(--text-body-lg);
-  color: var(--color-signal-mint);
+  color: var(--color-brand-orange);
 }
 
 .catalog-hero-proof b {
@@ -217,7 +217,7 @@
   height: 48px;
   border-radius: var(--radius-nav);
   background: rgba(242, 106, 33, 0.15);
-  color: var(--color-signal-mint);
+  color: var(--color-brand-orange);
   font-size: 20px;
 }
 
@@ -259,7 +259,7 @@
   font-family: var(--font-display);
   font-weight: var(--weight-black);
   font-size: var(--text-heading-lg);
-  color: var(--color-signal-mint);
+  color: var(--color-brand-orange);
   display: block;
 }
 
@@ -343,8 +343,8 @@
 }
 
 .category-tab--active {
-  background: var(--color-signal-mint);
-  border-color: var(--color-signal-mint);
+  background: var(--color-brand-orange);
+  border-color: var(--color-brand-orange);
   color: var(--color-obsidian-plum);
 }
 
@@ -374,7 +374,7 @@
 }
 
 .search-field input:focus {
-  border-color: var(--color-signal-mint);
+  border-color: var(--color-brand-orange);
   box-shadow: 0 0 0 3px rgba(242, 106, 33, 0.15);
 }
 
@@ -388,7 +388,7 @@
   border: 1px solid var(--color-bone);
   border-radius: var(--radius-nav);
   padding: var(--space-4) var(--space-8);
-  color: var(--color-electric-violet);
+  color: var(--color-brand-orange-soft);
   opacity: 0;
   transition: opacity 0.2s ease;
 }
@@ -525,7 +525,7 @@
   font-family: var(--font-display);
   font-weight: var(--weight-black);
   font-size: var(--text-heading-sm);
-  color: var(--color-signal-mint);
+  color: var(--color-brand-orange);
 }
 
 .step-title {

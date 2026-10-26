@@ -46,7 +46,7 @@
 .dt-select:focus-visible,
 .dt-boton:focus-visible,
 .dt-orden:focus-visible {
-  outline: 2px solid var(--color-signal-mint);
+  outline: 2px solid var(--color-brand-orange);
   outline-offset: 1px;
 }
 
@@ -55,7 +55,7 @@
   border: 0;
   border-radius: var(--radius-buttons);
   color: var(--color-obsidian-plum);
-  background: var(--color-signal-mint);
+  background: var(--color-brand-orange);
   font: inherit;
   font-family: var(--font-ui);
   font-size: var(--text-caption);

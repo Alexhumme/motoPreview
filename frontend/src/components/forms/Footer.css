@@ -56,7 +56,7 @@
 }
 
 .footer-brand .brand-text span {
-  color: var(--color-signal-mint);
+  color: var(--color-brand-orange);
 }
 
 .footer-desc {
@@ -97,7 +97,7 @@
 }
 
 .footer-link:hover {
-  color: var(--color-signal-mint);
+  color: var(--color-brand-orange);
 }
 
 /* Bottom bar */

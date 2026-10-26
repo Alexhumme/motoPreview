@@ -20,11 +20,11 @@
   --color-paper: #ffffff;          /* Light text on dark, inverse labels */
 
   /* Accents (naranja del logo #F26A21; rojo solo para errores/eliminar) */
-  --color-signal-mint: #f26a21;    /* Primary CTA, focus rings, status, marca */
+  --color-brand-orange: #f26a21;    /* Marca naranja CTA, enfoque, estados de selección */
   --color-mint-halo: #ffd9be;      /* Soft orange highlight, glow */
-  --color-electric-violet: #ffb077; /* Feature pill icons, gradients */
+  --color-brand-orange-soft: #ffb077; /* Iconos de píldora, degradados, acentos suaves */
   --color-deep-violet: #c24e15;    /* Decorative card fill, gradient start */
-  --color-lilac: #ffc49b;          /* Light accent text/headings */
+  --color-text-accent: #ffc49b; /* Luz acento, títulos */
   --color-mauve: #a8b0bc;          /* Muted neutral for body accents */
   --color-jam-pink: #e5484d;       /* Error state, danger buttons */
 
@@ -38,7 +38,7 @@
   --font-mono: 'DM Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
   /* Type Scale */
-  --text-caption: 11px;
+  --text-caption: 12px;
   --text-body: 14px;
   --text-body-lg: 15px;
   --text-heading-sm: 24px;
@@ -120,6 +120,12 @@
      visor naranja, fondo transparente, sin chip) */
   --marca-imagen: url('/motopreview_icono_oscuro.png?v=1');
   --marca-fondo: transparent;
+  /* ===== TOKENS SEMÁNTICOS ===== */
+  --text-primary: #e5e7eb;
+  --text-secondary: #8b94a3;
+  --border-subtle: #313947;
+  --border-strong: #2e3441;
+  --action-primary: #f26a21;
 }
 
 /* ==========================================================================
@@ -139,9 +145,9 @@
   --color-paper: #1d232c;           /* Texto principal (gris casco) */
 
   --color-mint-halo: #ffe3d1;       /* Resaltes suaves */
-  --color-electric-violet: #ff9a4d; /* Degradados */
+  --color-brand-orange-soft: #ff9a4d; /* Degradados modo claro */
   --color-deep-violet: #ffe0cd;     /* Relleno decorativo */
-  --color-lilac: #b35c1d;           /* Acento de títulos (naranja oscuro) */
+  --color-text-accent: #b35c1d;           /* Acento de títulos (naranja oscuro) modo claro */
   --color-mauve: #6b7480;
   --color-jam-pink: #d13438;        /* Errores, más oscuro para fondo claro */
 
@@ -152,6 +158,12 @@
   /* Marca clara: casco del logo anterior sobre chip blanco */
   --marca-imagen: url('/motopreview_icono.png?v=3');
   --marca-fondo: #ffffff;
+  /* ===== TOKENS SEMÁNTICOS ===== */
+  --text-primary: #e5e7eb;
+  --text-secondary: #8b94a3;
+  --border-subtle: #313947;
+  --border-strong: #2e3441;
+  --action-primary: #f26a21;
 }
 
 /* Botón del conmutador de tema (sol/luna) en los headers */
@@ -173,7 +185,7 @@
 
 .btn-tema:hover {
   border-color: var(--color-mist-gray);
-  color: var(--color-signal-mint);
+  color: var(--color-brand-orange);
 }
 
 /* ==========================================================================
@@ -322,14 +334,14 @@ img { max-width: 100%; height: auto; display: block; }
    ========================================================================== */
 
 .gradient-mint-violet {
-  background: linear-gradient(85deg, var(--color-signal-mint), var(--color-electric-violet));
+  background: linear-gradient(85deg, var(--color-brand-orange), var(--color-brand-orange-soft));
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
 .gradient-violet-pink {
-  background: linear-gradient(90deg, var(--color-electric-violet), var(--color-jam-pink));
+  background: linear-gradient(90deg, var(--color-brand-orange-soft), var(--color-jam-pink));
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -349,13 +361,13 @@ img { max-width: 100%; height: auto; display: block; }
   line-height: var(--leading-caption);
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: var(--color-signal-mint);
+  color: var(--color-brand-orange);
 }
 
 .eyebrow-dot {
   width: 6px;
   height: 6px;
-  background: var(--color-signal-mint);
+  background: var(--color-brand-orange);
   border-radius: 50%;
   flex-shrink: 0;
 }
@@ -388,7 +400,7 @@ img { max-width: 100%; height: auto; display: block; }
 
 /* Primary CTA — Signal Mint with 3-layer glow */
 .btn--primary {
-  background: var(--color-signal-mint);
+  background: var(--color-brand-orange);
   color: var(--color-obsidian-plum);
   box-shadow: var(--shadow-mint-glow);
 }
@@ -419,7 +431,7 @@ img { max-width: 100%; height: auto; display: block; }
 
 /* Header CTA — Moto Orange (marca del logo) */
 .btn--brand {
-  background: var(--color-signal-mint);
+  background: var(--color-brand-orange);
   color: var(--color-obsidian-plum);
   padding: var(--space-10) var(--space-16);
   font-size: var(--text-body);
@@ -433,8 +445,8 @@ img { max-width: 100%; height: auto; display: block; }
 /* Outline — Secondary actions */
 .btn--outline {
   background: transparent;
-  color: var(--color-signal-mint);
-  border: 1px solid var(--color-signal-mint);
+  color: var(--color-brand-orange);
+  border: 1px solid var(--color-brand-orange);
 }
 
 .btn--outline:hover:not(:disabled) {
@@ -503,7 +515,7 @@ img { max-width: 100%; height: auto; display: block; }
 }
 
 .form-input:focus {
-  border-color: var(--color-signal-mint);
+  border-color: var(--color-brand-orange);
   box-shadow: 0 0 0 3px rgba(242, 106, 33, 0.15);
 }
 
@@ -563,8 +575,8 @@ img { max-width: 100%; height: auto; display: block; }
 }
 
 .checkbox-input:checked {
-  background: var(--color-signal-mint);
-  border-color: var(--color-signal-mint);
+  background: var(--color-brand-orange);
+  border-color: var(--color-brand-orange);
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%23171b22'%3E%3Cpath d='M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z'/%3E%3C/svg%3E");
   background-position: center;
   background-repeat: no-repeat;
@@ -630,7 +642,7 @@ img { max-width: 100%; height: auto; display: block; }
   font-family: var(--font-ui);
   font-size: var(--text-body);
   font-weight: var(--weight-medium);
-  color: var(--color-signal-mint);
+  color: var(--color-brand-orange);
   text-decoration: none;
   transition: color 0.15s ease;
 }
@@ -667,13 +679,13 @@ img { max-width: 100%; height: auto; display: block; }
 
 .badge--mint {
   background: rgba(242, 106, 33, 0.15);
-  color: var(--color-signal-mint);
+  color: var(--color-brand-orange);
   border: 1px solid rgba(242, 106, 33, 0.3);
 }
 
 .badge--violet {
   background: rgba(242, 106, 33, 0.15);
-  color: var(--color-electric-violet);
+  color: var(--color-brand-orange-soft);
   border: 1px solid rgba(242, 106, 33, 0.3);
 }
 
@@ -704,7 +716,7 @@ img { max-width: 100%; height: auto; display: block; }
   display: inline-flex;
   width: 20px;
   height: 20px;
-  color: var(--color-electric-violet);
+  color: var(--color-brand-orange-soft);
   stroke-width: 1.5;
   flex-shrink: 0;
 }
@@ -873,4 +885,13 @@ img { max-width: 100%; height: auto; display: block; }
   }
 
   .card { padding: var(--space-24); }
+}/* ==========================================================================
+   REDUCED MOTION
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

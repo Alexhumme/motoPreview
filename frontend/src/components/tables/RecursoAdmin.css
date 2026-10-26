@@ -30,7 +30,7 @@
 }
 
 .ra-aviso--ok {
-  color: var(--color-signal-mint);
+  color: var(--color-brand-orange);
   background: rgba(242, 106, 33, 0.1);
   border: 1px solid rgba(242, 106, 33, 0.2);
 }
@@ -115,9 +115,9 @@
 .ra-campo input:focus-visible,
 .ra-campo select:focus-visible,
 .ra-campo textarea:focus-visible {
-  outline: 2px solid var(--color-signal-mint);
+  outline: 2px solid var(--color-brand-orange);
   outline-offset: 1px;
-  border-color: var(--color-signal-mint);
+  border-color: var(--color-brand-orange);
 }
 
 .ra-campo [aria-invalid='true'] {
@@ -164,8 +164,8 @@
 }
 
 .ra-tab[aria-selected='true'] {
-  color: var(--color-signal-mint);
-  border-bottom-color: var(--color-signal-mint);
+  color: var(--color-brand-orange);
+  border-bottom-color: var(--color-brand-orange);
 }
 
 /* Vista 3D */

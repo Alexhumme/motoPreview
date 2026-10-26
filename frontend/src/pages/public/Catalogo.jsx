@@ -37,6 +37,8 @@ export default function Catalogo() {
 
   const accesoriosFiltrados = accesorios
     .filter((a) => categoriaSeleccionada === 'todas' || a.id_categoria === categoriaSeleccionada)
+    // Ocultar accesorios "seed" (de datos de prueba con SKU DEMO-)
+    .filter((a) => !(a.codigo_sku || '').startsWith('DEMO-'))
     .filter((a) => {
       const texto = busqueda.trim().toLowerCase();
       if (!texto) return true;
@@ -178,7 +180,7 @@ export default function Catalogo() {
             <label className="search-field">
               <span>⌕</span>
               <input value={busqueda} onChange={(e) => { setBusqueda(e.target.value); setPaginaActual(1); }} placeholder="Buscar accesorio..." />
-              <kbd>⌘ K</kbd>
+              <kbd>⌘K</kbd> <kbd>Ctrl</kbd>+<kbd>K</kbd>
             </label>
           </div>
 

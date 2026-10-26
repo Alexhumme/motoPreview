@@ -140,7 +140,7 @@
   font-family: var(--font-display);
   font-weight: var(--weight-bold);
   font-size: var(--text-body);
-  color: var(--color-signal-mint);
+  color: var(--color-brand-orange);
   white-space: nowrap;
   flex-shrink: 0;
 }
@@ -154,7 +154,7 @@
 
 .reportes-bar {
   height: 100%;
-  background: linear-gradient(90deg, var(--color-signal-mint), var(--color-electric-violet));
+  background: linear-gradient(90deg, var(--color-brand-orange), var(--color-brand-orange-soft));
   border-radius: var(--radius-pills);
   transition: width 0.3s ease;
 }

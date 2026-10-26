@@ -1,5 +1,5 @@
 /* ==========================================================================
-   ACCESORIO CARD — Jam Design System
+   ACCESORIO CARD — Jam Design System (rediseñado)
    ========================================================================== */
 
 .product-card {
@@ -9,7 +9,13 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  /*height: 100%; */
   transition: all 0.2s ease;
+}
+
+/* Altura consistente para todas las tarjetas en grid */
+.product-card.minima {
+  min-height: 380px;
 }
 
 .product-card:hover {
@@ -17,26 +23,41 @@
   transform: translateY(-4px);
 }
 
+/* -------------------------------------------------------
+   ENLACE DE LA IMÁGEN
+   ------------------------------------------------------- */
 .product-link {
   position: relative;
   display: block;
-  height: 260px;
   overflow: hidden;
   text-decoration: none;
   color: inherit;
 }
 
+/* Altura responsiva del área de imagen */
+.product-link img {
+  width: 100%;
+  display: block;
+}
+
+/* -------------------------------------------------------
+   IMAGEN DEL PRODUCTO
+   ------------------------------------------------------- */
 .product-image {
   width: 100%;
-  height: 100%;
+  height: 200px; /* Altura fija consistente */
   object-fit: cover;
   transition: transform 0.3s ease;
+  /* La imagen nunca debe tener texto incrustado; el alt es solo descriptivo */
 }
 
 .product-card:hover .product-image {
   transform: scale(1.05);
 }
 
+/* -------------------------------------------------------
+   FALLBACK / PLACEHOLDER SIN TEXTO INCORRER
+   ------------------------------------------------------- */
 .product-fallback {
   width: 100%;
   height: 100%;
@@ -48,6 +69,9 @@
   font-family: var(--font-display);
   font-weight: var(--weight-bold);
   font-size: 32px;
+  /* Este fallback se usa solo cuando no hay imagen real;
+     el texto "Foto pendiente" se muestra como elemento HTML
+     fuera del área de imagen en el contenido de la tarjeta. */
 }
 
 .product-shine {
@@ -62,6 +86,9 @@
   pointer-events: none;
 }
 
+/* -------------------------------------------------------
+   ETIQUETAS Y DATOS (FUERA DEL ÁREA DE IMÁGEN)
+   ------------------------------------------------------- */
 .product-badge {
   position: absolute;
   top: var(--space-12);
@@ -69,6 +96,8 @@
   font-family: var(--font-ui);
   font-size: var(--text-caption);
   font-weight: var(--weight-medium);
+  /* Badge "Disponible" - solo cuando el accesorio esté disponible */
+  z-index: 10;
 }
 
 .product-code {
@@ -77,11 +106,16 @@
   left: var(--space-12);
   font-family: var(--font-mono);
   font-size: var(--text-caption);
-  color: var(--color-electric-violet);
+  color: var(--color-brand-orange-soft);
   background: rgba(242, 106, 33, 0.1);
   padding: var(--space-4) var(--space-8);
   border-radius: var(--radius-nav);
   border: 1px solid rgba(242, 106, 33, 0.2);
+  /* El SKU real ahora se muestra en .product-content, no aquí */
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .product-view {
@@ -92,17 +126,22 @@
   font-size: var(--text-caption);
   font-weight: var(--weight-regular);
   color: var(--color-mist-gray);
+  z-index: 10;
+  /* "Vista 3D" como indicador separado y distintivo */
 }
 
-/* Product content */
+/* Contenedor de contenido - empuja todo hacia abajo */
 .product-content {
   padding: var(--space-24);
   display: flex;
   flex-direction: column;
   gap: var(--space-12);
   flex: 1;
+  /* Evita que el contenido se mezcle con la imagen */
+  background: var(--surface-card);
 }
 
+/* Métadatos */
 .product-meta {
   display: flex;
   align-items: center;
@@ -115,6 +154,7 @@
   letter-spacing: 0.08em;
 }
 
+/* Título principal */
 .product-title {
   font-family: var(--font-display);
   font-weight: var(--weight-black);
@@ -123,8 +163,14 @@
   letter-spacing: var(--tracking-heading-sm);
   color: var(--color-paper);
   margin: 0;
+  /* Limitar largo si es necesario */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
 }
 
+/* Descripción */
 .product-description {
   font-family: var(--font-ui);
   font-size: var(--text-body);
@@ -132,6 +178,11 @@
   color: var(--color-soft-mist);
   margin: 0;
   flex: 1;
+  /* Evita que el texto largo invada otras áreas */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
 }
 
 /* Footer */
@@ -163,10 +214,16 @@
   color: var(--color-paper);
 }
 
-/* Responsive */
+/* -------------------------------------------------------
+   ETIQUETAS RESPONSIVE
+   ------------------------------------------------------- */
 @media (max-width: 720px) {
   .product-link {
-    height: 220px;
+    height: 180px;
+  }
+
+  .product-image {
+    height: 180px;
   }
 
   .product-content {
@@ -181,5 +238,32 @@
 
   .product-footer .btn {
     width: 100%;
+  }
+
+  /* En pantallas pequeñas, el SKU y "Vista 3D" se apilan */
+  .product-code,
+  .product-view {
+    position: relative;
+    margin: var(--space-8) 0;
+    /* Quitamos position absolute en móviles para apilar */
+    left: auto;
+    right: auto;
+    bottom: auto;
+    top: auto;
+  }
+}
+
+/* -------------------------------------------------------
+   Tema claro/oscuro ajustes
+   ------------------------------------------------------- */
+@media (prefers-color-scheme: dark) {
+  .product-card {
+    border-color: var(--color-bone-dark, var(--color-bone));
+  }
+}
+
+@media (prefers-color-scheme: light) {
+  .product-card {
+    border-color: var(--color-bone-light, var(--color-bone));
   }
 }

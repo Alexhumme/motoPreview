@@ -26,6 +26,46 @@
   z-index: 100;
 }
 
+/* Módulo header pattern: sección nombre, contexto breve, acción principal */
+.module-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-16);
+  flex: 1;
+}
+
+.module-header__title {
+  font-family: var(--font-display);
+  font-weight: var(--weight-black);
+  font-size: var(--text-heading);
+  line-height: var(--leading-heading);
+  letter-spacing: var(--tracking-heading);
+  color: var(--color-paper);
+  margin: 0;
+  flex: 1;
+}
+
+.module-header__context {
+  font-family: var(--font-ui);
+  font-size: var(--text-caption);
+  color: var(--color-mist-gray);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  flex-shrink: 0;
+}
+
+.module-header__action {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  flex-shrink: 0;
+}
+
+/· Module header pattern: section name, brief context, primary action
+· Used consistently across Dashboard, Inventario, Cotizaciones, etc.
+· Structure: [section title] [brief context] [primary action button]
+· */
+
 .brand {
   display: flex;
   align-items: center;
@@ -59,7 +99,7 @@
 }
 
 .brand-text span {
-  color: var(--color-signal-mint);
+  color: var(--color-brand-orange);
 }
 
 /* Navigation links */
@@ -91,7 +131,7 @@
 }
 
 .admin-nav-link--active {
-  color: var(--color-signal-mint);
+  color: var(--color-brand-orange);
   background: rgba(242, 106, 33, 0.1);
 }
 

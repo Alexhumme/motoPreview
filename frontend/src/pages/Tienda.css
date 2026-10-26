@@ -148,7 +148,7 @@
 .mensaje-exito {
   background: rgba(242, 106, 33, 0.15);
   border: 1px solid rgba(242, 106, 33, 0.3);
-  color: var(--color-signal-mint);
+  color: var(--color-brand-orange);
 }
 
 /* Responsive */
