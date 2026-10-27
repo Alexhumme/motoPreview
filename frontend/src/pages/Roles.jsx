@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/authContexto';
 import ModalConfirmacion from '../components/forms/ModalConfirmacion';
 import { obtenerRoles, crearRol, actualizarRol, desactivarRol } from '../services/roles';
 import { ROL_ADMIN, ROL_VENDEDOR, ROL_CLIENTE } from '../utils/constants/roles';

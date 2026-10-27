@@ -61,8 +61,18 @@ export default function Seguridad() {
     }
   }
 
+  // Cargar roles al montar (inline para evitar warning de setState en effect)
   useEffect(() => {
-    cargar();
+    async function init() {
+      try {
+        setRoles(await obtenerRoles());
+      } catch (err) {
+        console.error('Error cargando roles:', err);
+      } finally {
+        setCargando(false);
+      }
+    }
+    init();
   }, []);
 
   // Auto-selección desde ?rol_id= (p. ej. un enlace guardado)

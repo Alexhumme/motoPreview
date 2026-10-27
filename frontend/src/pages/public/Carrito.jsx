@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/authContexto';
 import { obtenerMotos } from '../../services/motos';
 import { crearCotizacion } from '../../services/cotizaciones';
 import SiteHeader from '../../components/buttons/SiteHeader';

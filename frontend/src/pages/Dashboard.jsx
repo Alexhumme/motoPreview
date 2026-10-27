@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/authContexto';
 import { obtenerInventario } from '../services/inventario';
 import { obtenerCotizaciones } from '../services/cotizaciones';
 import { obtenerResumenDia } from '../services/reportes';

@@ -1,7 +1,7 @@
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/authContexto';
 import { usePermiso } from '../context/usePermiso';
-import { useTema } from '../context/TemaContext';
+import { useTema } from '../context/temaContexto';
 import { ROL_ADMIN } from '../utils/constants/roles';
 import './AdminLayout.css';
 

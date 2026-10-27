@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/authContexto';
 import { obtenerCotizaciones } from '../../services/cotizaciones';
 import SiteHeader from '../../components/buttons/SiteHeader';
 import './MisCotizaciones.css';

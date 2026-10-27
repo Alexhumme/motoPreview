@@ -61,10 +61,9 @@
   flex-shrink: 0;
 }
 
-/· Module header pattern: section name, brief context, primary action
-· Used consistently across Dashboard, Inventario, Cotizaciones, etc.
-· Structure: [section title] [brief context] [primary action button]
-· */
+/* Module header pattern: section name, brief context, primary action
+   Used consistently across Dashboard, Inventario, Cotizaciones, etc.
+   Structure: [section title] [brief context] [primary action button] */
 
 .brand {
   display: flex;

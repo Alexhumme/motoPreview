@@ -1,8 +1,7 @@
-import { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import api from '../services/api';
 import { obtenerPermisosUsuario } from '../services/auth';
-
-const AuthContext = createContext();
+import { AuthContext } from './authContexto';
 
 function leerUsuarioGuardado() {
   const token = localStorage.getItem('token');
@@ -70,9 +69,3 @@ export function AuthProvider({ children }) {
     </AuthContext.Provider>
   );
 }
-
-export function useAuth() {
-  return useContext(AuthContext);
-}
-
-export { AuthContext };

@@ -1,4 +1,4 @@
-import { useTema } from '../context/TemaContext';
+import { useTema } from '../context/temaContexto';
 
 const PLACEHOLDER_CLARO = '/placeholder_pendiente.png';
 const PLACEHOLDER_OSCURO = '/placeholder_pendiente_oscuro.png';

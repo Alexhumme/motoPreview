@@ -1,8 +1,8 @@
 import { Link, useLocation } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/authContexto';
 import { usePermiso } from '../../context/usePermiso';
 import { useCart } from '../../context/CartContext';
-import { useTema } from '../../context/TemaContext';
+import { useTema } from '../../context/temaContexto';
 import { ROL_ADMIN, ROL_VENDEDOR } from '../../utils/constants/roles';
 import './SiteHeader.css';
 

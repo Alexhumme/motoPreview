@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/authContexto';
 import ModalConfirmacion from '../components/forms/ModalConfirmacion';
 import { obtenerUsuarios, registrarUsuario, actualizarUsuario, desactivarUsuario } from '../services/usuarios';
 import { ROL_ADMIN, ROL_VENDEDOR } from '../utils/constants/roles';

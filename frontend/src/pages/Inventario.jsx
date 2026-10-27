@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/authContexto';
 import { obtenerInventario, registrarMovimiento } from '../services/inventario';
 import { TIPOS_MOVIMIENTO } from '../utils/constants/tiposMovimiento';
 import { ConPermiso } from '../components/menus/ConPermiso';

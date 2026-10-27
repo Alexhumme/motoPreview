@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/authContexto';
 import { obtenerCotizaciones, cambiarEstadoCotizacion } from '../services/cotizaciones';
 import { ConPermiso } from '../components/menus/ConPermiso';
 import './Cotizaciones.css';
