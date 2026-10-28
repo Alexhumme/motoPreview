@@ -42,7 +42,14 @@ def inventory_status(stock, minimum):
 
 
 def apply_movement(amount, type_name):
-    """Normaliza la cantidad según el tipo de movimiento (entrada/salida/otro)."""
+    """Normaliza la cantidad según el tipo de movimiento.
+
+    ``entrada`` suma y ``salida`` resta siempre, sea cual sea el signo enviado.
+    Los demás tipos (p. ej. ``Ajuste``) se aplican con el signo tal cual: un
+    ajuste puede corregir hacia arriba o hacia abajo.
+    """
+    if amount == 0:
+        raise BusinessError("mov_cantidad no puede ser cero.")
     if type_name == "entrada":
         return abs(amount)
     if type_name == "salida":

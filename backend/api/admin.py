@@ -23,13 +23,11 @@ from .models import (
     AccessoryCompatibility,
     AccessoryToken,
     AccessoryType,
-    Accion,
     Configuration,
     ConfigurationDetail,
     Inventory,
     InventoryMovement,
     Model3D,
-    Product,
     Motorcycle,
     MotorcycleBrand,
     MotorcycleModel,
@@ -167,7 +165,6 @@ admin_site = MotopreviewAdminSite(name="motopreview_admin")
 
 class RoleAdmin(BaseAdmin):
     list_display = ("nombre_rol",)
-    change_form_template = "admin/role_change_form.html"
     readonly_fields = ("id_rol",)
     
     def get_form(self, request, obj=None, **kwargs):
@@ -222,29 +219,30 @@ class RoleAdmin(BaseAdmin):
     
     def save_model(self, request, obj, form, change):
         super().save_model(request, obj, form, change)
-        
+
         # Guardar permisos RBAC
-        from api.models import RolRecurso, RecursoAccion
+        from api.models import RolRecurso
         if "permisos_rbac" in form.cleaned_data:
             permisos_seleccionados = form.cleaned_data.get("permisos_rbac", [])
-            
+
             # Eliminar permisos antiguos
             RolRecurso.objects.filter(rol=obj).delete()
-            
+
             # Crear nuevos permisos
             for permiso_str in permisos_seleccionados:
                 try:
                     ra_id_str, scope = permiso_str.rsplit(":", 1)
                     ra_id = UUID(ra_id_str)
-                    RolRecurso.objects.create(
-                        rol=obj,
-                        recurso_accion_id=ra_id,
-                        scope=scope,
-                        concedido_por=request.user if hasattr(request, 'user') else None,
-                        activo=True,
-                    )
                 except (ValueError, IndexError):
                     continue
+                # concedido_por queda nulo: el usuario del panel es de auth_user,
+                # otra tabla, y no puede referenciar la FK de usuario (negocio).
+                RolRecurso.objects.create(
+                    rol=obj,
+                    recurso_accion_id=ra_id,
+                    scope=scope,
+                    activo=True,
+                )
 
 
 admin_site.register(Role, RoleAdmin)

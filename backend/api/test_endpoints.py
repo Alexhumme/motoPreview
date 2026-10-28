@@ -28,7 +28,7 @@ from .security import (
     IsStoreStaff,
     has_any_role,
 )
-from .views import BrandCollection, paginate_response
+from .views import BrandCollection, paginate_response, resolver_tienda_cotizacion
 
 UUID_MUESTRA = "22222222-0000-0000-0000-000000000001"
 SECRETO_PRUEBA = "clave-de-prueba-de-32-bytes-para-automatizacion"
@@ -207,7 +207,64 @@ class PermisosInventarioTests(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# Gestión de usuarios (solo administrador de tienda)
+# Resolución de la tienda de una cotización (sin base de datos)
+# ---------------------------------------------------------------------------
+TIENDA_OTRA = "99999999-0000-0000-0000-000000000009"
+
+
+class ResolucionTiendaCotizacionTests(SimpleTestCase):
+    """La cotización se crea siempre con tienda: una sin tienda no aparece en
+    el panel de nadie."""
+
+    def _parchar_store(self, fila):
+        store = mock.MagicMock()
+        store.objects.filter.return_value.first.return_value = fila
+        parche = mock.patch("api.views.Store", store)
+        parche.start()
+        self.addCleanup(parche.stop)
+        return store
+
+    def test_gana_la_tienda_del_usuario_aunque_se_pida_otra(self):
+        fila = SimpleNamespace(id_tienda=UUID_MUESTRA)
+        store = self._parchar_store(fila)
+        usuario = usuario_falso([ROLE_CUSTOMER], tienda=UUID_MUESTRA)
+
+        tienda_id, error = resolver_tienda_cotizacion(usuario, TIENDA_OTRA)
+
+        self.assertIsNone(error)
+        self.assertEqual(tienda_id, UUID_MUESTRA)
+        self.assertEqual(store.objects.filter.call_args.kwargs["pk"], UUID_MUESTRA)
+
+    def test_sin_tienda_propia_usa_la_de_la_peticion(self):
+        fila = SimpleNamespace(id_tienda=TIENDA_OTRA)
+        self._parchar_store(fila)
+        usuario = usuario_falso([ROLE_CUSTOMER])
+
+        tienda_id, error = resolver_tienda_cotizacion(usuario, TIENDA_OTRA)
+
+        self.assertIsNone(error)
+        self.assertEqual(tienda_id, TIENDA_OTRA)
+
+    def test_sin_tienda_en_ninguna_parte_devuelve_error(self):
+        usuario = usuario_falso([ROLE_CUSTOMER])
+
+        tienda_id, error = resolver_tienda_cotizacion(usuario, None)
+
+        self.assertIsNone(tienda_id)
+        self.assertIn("tienda", error)
+
+    def test_tienda_inactiva_o_inexistente_se_rechaza(self):
+        self._parchar_store(None)
+        usuario = usuario_falso([ROLE_CUSTOMER], tienda=UUID_MUESTRA)
+
+        tienda_id, error = resolver_tienda_cotizacion(usuario, None)
+
+        self.assertIsNone(tienda_id)
+        self.assertIn("activa", error)
+
+
+# ---------------------------------------------------------------------------
+# Gestión de usuarios (regida por la matriz RBAC del recurso 'usuarios')
 # ---------------------------------------------------------------------------
 class PermisosUsuariosTests(TestCase):
     databases = ['default']
@@ -220,9 +277,17 @@ class PermisosUsuariosTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_vendedor_no_puede_gestionar_usuarios(self):
+        # Leer la nómina de su tienda sí le corresponde (la semilla RBAC le da
+        # usuarios:leer/listar con scope tienda); escribir, no. Se comprueba por
+        # escritura porque la denegación no depende de qué filas haya en la base.
         self.client.force_authenticate(user=VENDEDOR)
-        response = self.client.get("/api/usuarios")
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        for method in (self.client.put, self.client.patch, self.client.delete):
+            response = method(f"/api/usuarios/{UUID_MUESTRA}", {}, format="json")
+            self.assertEqual(
+                response.status_code,
+                status.HTTP_403_FORBIDDEN,
+                f"{method.__name__} no debió autorizar a un vendedor",
+            )
 
     def test_cliente_no_puede_gestionar_usuarios(self):
         self.client.force_authenticate(user=CLIENTE)

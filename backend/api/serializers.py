@@ -520,6 +520,9 @@ class QuoteItemSerializer(serializers.Serializer):
 
 class QuoteCreateSerializer(serializers.Serializer):
     id_moto = serializers.UUIDField()
+    # Solo se usa si el usuario no pertenece a una tienda; ver
+    # views.resolver_tienda_cotizacion.
+    id_tienda = serializers.UUIDField(required=False, allow_null=True)
     coti_observaciones = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     nombre_configuracion = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     items = QuoteItemSerializer(many=True, allow_empty=False)

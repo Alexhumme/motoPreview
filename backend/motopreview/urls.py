@@ -85,8 +85,6 @@ _RUTAS_API = [
     ("api/roles/<uuid:pk>/permisos", views.RolePermisosBulkUpdateView.as_view()),
     ("api/permisos/usuario", views.PermisosUsuarioView.as_view()),
     ("api/recursos-con-permisos", views.RecursoConPermisosCollection.as_view()),
-    ("api/configuraciones", views.ConfigurationCollection.as_view()),
-    ("api/configuraciones/<uuid:pk>", views.ConfigurationDetail.as_view()),
     ("api/compatibilidad", views.CompatibilityCollection.as_view()),
     ("api/compatibilidad/<uuid:pk>", views.CompatibilityDetail.as_view()),
     ("api/compatibilidad/modelo/<uuid:id_modelo_moto>", views.CompatibilityByModelo.as_view()),

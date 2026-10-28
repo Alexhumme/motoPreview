@@ -53,6 +53,7 @@ from .models import (
 )
 from .security import (
     EscribirConPermiso,
+    HasPermiso,
     IsStoreAdmin,
     IsStoreStaff,
     IsSuperAdmin,
@@ -60,6 +61,7 @@ from .security import (
     ROLE_CUSTOMER,
     ROLE_SELLER,
     ROLE_SUPERADMIN,
+    has_any_role,
 )
 from .serializers import (
     AccionSerializer,
@@ -188,6 +190,30 @@ def user_role_ids(user):
 def store_staff(user):
     roles = {role.lower() for role in user_role_ids(user)}
     return ROLE_ADMIN.lower() in roles or ROLE_SELLER.lower() in roles
+
+
+def es_superadmin(user):
+    return has_any_role(user, (ROLE_SUPERADMIN,))
+
+
+def resolver_tienda_cotizacion(user, tienda_solicitada=None):
+    """Devuelve (id_tienda, error) para la cotización que se va a crear.
+
+    Gana la tienda del usuario autenticado; el ``id_tienda`` de la petición solo
+    se usa cuando el usuario no pertenece a ninguna, y aun así tiene que ser
+    una tienda activa. Se resuelve al crear porque una cotización con tienda
+    nula no aparece en el panel de ninguna tienda: queda huérfana.
+    """
+    tienda_id = getattr(user, "id_tienda", None) or tienda_solicitada
+    if not tienda_id:
+        return None, (
+            "No se pudo determinar la tienda de la cotización. "
+            "Inicia sesión desde una tienda o envía id_tienda."
+        )
+    tienda = Store.objects.filter(pk=tienda_id, estado_tienda="activa").first()
+    if not tienda:
+        return None, "La tienda indicada no existe o no está activa."
+    return tienda.id_tienda, None
 
 
 def scope_configurations(request, *, pk=None):
@@ -592,14 +618,28 @@ class StoreDetail(ResourceDetail):
 
 
 class UserCollection(DatabaseGuardMixin):
-    permission_classes = [IsSuperAdmin]
+    permission_classes = [HasPermiso]
+    permiso_recurso = "usuarios"
     serializer_class = UserSerializer
 
     def get(self, request):
 
-        if not request.user.id_tienda:
-            return Response({"error": "El usuario no tiene una tienda asignada."}, status=400)
-        queryset = User.objects.filter(tienda_id=request.user.id_tienda).order_by("usu_nombre", "pk")
+        queryset = User.objects.all()
+        if es_superadmin(request.user):
+            # El superadmin no pertenece a una tienda: ve a todos y filtra con
+            # ?id_tienda= cuando quiere el personal de una sola.
+            tienda_filtro = request.query_params.get("id_tienda")
+            if tienda_filtro:
+                try:
+                    tienda_filtro = UUID(str(tienda_filtro))
+                except (TypeError, ValueError):
+                    return Response({"error": "id_tienda debe ser un UUID válido."}, status=400)
+                queryset = queryset.filter(tienda_id=tienda_filtro)
+        else:
+            if not request.user.id_tienda:
+                return Response({"error": "El usuario no tiene una tienda asignada."}, status=400)
+            queryset = queryset.filter(tienda_id=request.user.id_tienda)
+        queryset = queryset.order_by("usu_nombre", "pk")
         if request.query_params.get("pagina") is None:
             # Sin paginación: precarga los roles en 2 queries (evita el N+1).
             users = list(queryset)
@@ -609,11 +649,17 @@ class UserCollection(DatabaseGuardMixin):
 
 
 class UserDetail(DatabaseGuardMixin):
-    permission_classes = [IsSuperAdmin]
+    permission_classes = [HasPermiso]
+    permiso_recurso = "usuarios"
     serializer_class = UserSerializer
 
     def get_target(self, request, pk):
-        return User.objects.filter(pk=pk, tienda_id=request.user.id_tienda).first()
+        queryset = User.objects.all()
+        if not es_superadmin(request.user):
+            if not request.user.id_tienda:
+                return None
+            queryset = queryset.filter(tienda_id=request.user.id_tienda)
+        return queryset.filter(pk=pk).first()
 
     def get(self, request, pk):
 
@@ -983,6 +1029,8 @@ class InventoryMovementView(DatabaseGuardMixin):
                 )
         except IntegrityError:
             return Response({"error": "No se pudo registrar el movimiento."}, status=409)
+        except services.BusinessError as error:
+            return Response({"error": str(error)}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response(
             {
@@ -1020,6 +1068,11 @@ class QuoteCollection(DatabaseGuardMixin):
         if not serializer.is_valid():
             return Response({"error": serializer.errors}, status=400)
         values = serializer.validated_data
+        tienda_id, tienda_error = resolver_tienda_cotizacion(
+            request.user, values.get("id_tienda")
+        )
+        if tienda_error:
+            return Response({"error": tienda_error}, status=400)
         motorcycle = Motorcycle.objects.filter(pk=values["id_moto"]).first()
         if not motorcycle:
             return Response({"error": "La moto indicada no existe."}, status=400)
@@ -1046,7 +1099,7 @@ class QuoteCollection(DatabaseGuardMixin):
         try:
             with transaction.atomic():
                 quote = Quote.objects.create(
-                    tienda_id=request.user.id_tienda,
+                    tienda_id=tienda_id,
                     usuario=request.user,
                     moto=motorcycle,
                     coti_estado="pendiente",
@@ -1412,12 +1465,6 @@ def reset_password(request):
         reset_token=token_hash,
         reset_token_expira__gt=timezone.now(),
     ).first()
-    if not user:
-        # Accept an unexpired legacy token created by the previous Node backend.
-        user = User.objects.filter(
-            reset_token=token,
-            reset_token_expira__gt=timezone.now(),
-        ).first()
     if not user:
         return Response({"error": "El enlace es inválido o ya expiró."}, status=400)
 

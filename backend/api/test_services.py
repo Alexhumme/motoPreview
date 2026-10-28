@@ -58,6 +58,13 @@ class InventoryRuleTests(SimpleTestCase):
     def test_otro_tipo_se_mantiene(self):
         self.assertEqual(services.apply_movement(3, "ajuste"), 3)
 
+    def test_ajuste_conserva_el_signo_enviado(self):
+        self.assertEqual(services.apply_movement(-3, "ajuste"), -3)
+
+    def test_cantidad_cero_se_rechaza(self):
+        with self.assertRaises(services.BusinessError):
+            services.apply_movement(0, "entrada")
+
 
 class QuoteStateTests(SimpleTestCase):
     def test_transiciones_validas(self):
