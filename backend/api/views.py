@@ -51,10 +51,17 @@ from .models import (
     User,
     UserRole,
 )
-from .security import HasPermiso, IsStoreAdmin, IsStoreStaff, IsSuperAdmin, ROLE_ADMIN, ROLE_CUSTOMER, ROLE_SELLER, ROLE_SUPERADMIN
+from .security import (
+    EscribirConPermiso,
+    IsStoreAdmin,
+    IsStoreStaff,
+    IsSuperAdmin,
+    ROLE_ADMIN,
+    ROLE_CUSTOMER,
+    ROLE_SELLER,
+    ROLE_SUPERADMIN,
+)
 from .serializers import (
-    AccionSerializer,
-    AccionSerializer as AccionSerializer,
     AccionSerializer,
     AccesorioInputSerializer,
     AccesorioSerializer,
@@ -361,14 +368,11 @@ class ResourceCollection(DatabaseGuardMixin):
     model = None
     serializer_class = None
 
-    # Permitir override en la vista
+    permission_classes = [EscribirConPermiso]
+
+    # La subclase debe declarar el recurso RBAC que protege sus mutaciones.
     permiso_recurso = None
     permiso_accion = None
-
-    def get_permissions(self):
-        if self.request.method == "GET":
-            return [AllowAny()]
-        return [HasPermiso()]
 
     def get_queryset(self):
         return self.model.objects.all()
@@ -400,14 +404,11 @@ class ResourceDetail(DatabaseGuardMixin):
     serializer_class = None
     not_found_message = "Registro no encontrado."
 
-    # Permitir override en la vista
+    permission_classes = [EscribirConPermiso]
+
+    # La subclase debe declarar el recurso RBAC que protege sus mutaciones.
     permiso_recurso = None
     permiso_accion = None
-
-    def get_permissions(self):
-        if self.request.method == "GET":
-            return [AllowAny()]
-        return [HasPermiso()]
 
     def get_object(self, pk):
         return self.model.objects.get(pk=pk)
@@ -467,28 +468,33 @@ class ResourceDetail(DatabaseGuardMixin):
 class CategoryCollection(ResourceCollection):
     model = AccessoryCategory
     serializer_class = AccessoryCategorySerializer
+    permiso_recurso = "categorias"
 
 
 class CategoryDetail(ResourceDetail):
     model = AccessoryCategory
     serializer_class = AccessoryCategorySerializer
+    permiso_recurso = "categorias"
     not_found_message = "Categoría no encontrada."
 
 
 class BrandCollection(ResourceCollection):
     model = MotorcycleBrand
     serializer_class = MotorcycleBrandSerializer
+    permiso_recurso = "marcas"
 
 
 class BrandDetail(ResourceDetail):
     model = MotorcycleBrand
     serializer_class = MotorcycleBrandSerializer
+    permiso_recurso = "marcas"
     not_found_message = "Marca no encontrada."
 
 
 class ModelCollection(ResourceCollection):
     model = MotorcycleModel
     serializer_class = MotorcycleModelSerializer
+    permiso_recurso = "modelos"
 
     def get_queryset(self):
         return MotorcycleModel.objects.select_related("marca").all()
@@ -497,6 +503,7 @@ class ModelCollection(ResourceCollection):
 class ModelDetail(ResourceDetail):
     model = MotorcycleModel
     serializer_class = MotorcycleModelSerializer
+    permiso_recurso = "modelos"
     not_found_message = "Modelo de moto no encontrado."
 
     def get_object(self, pk):
@@ -506,6 +513,7 @@ class ModelDetail(ResourceDetail):
 class MotorcycleCollection(ResourceCollection):
     model = Motorcycle
     serializer_class = MotorcycleSerializer
+    permiso_recurso = "motos"
 
     def get_queryset(self):
         return Motorcycle.objects.select_related("modelo__marca").all()
@@ -514,6 +522,7 @@ class MotorcycleCollection(ResourceCollection):
 class MotorcycleDetail(ResourceDetail):
     model = Motorcycle
     serializer_class = MotorcycleSerializer
+    permiso_recurso = "motos"
     not_found_message = "Moto no encontrada."
 
     def get_object(self, pk):
@@ -523,11 +532,13 @@ class MotorcycleDetail(ResourceDetail):
 class RoleCollection(ResourceCollection):
     model = Role
     serializer_class = RoleSerializer
+    permiso_recurso = "roles"
 
 
 class RoleDetail(ResourceDetail):
     model = Role
     serializer_class = RoleSerializer
+    permiso_recurso = "roles"
     not_found_message = "Rol no encontrado."
 
     def delete(self, request, pk):
@@ -564,6 +575,7 @@ class RoleDetail(ResourceDetail):
 class StoreCollection(ResourceCollection):
     model = Store
     serializer_class = StoreSerializer
+    permiso_recurso = "tiendas"
 
     def get_queryset(self):
         return Store.objects.select_related("plan").all()
@@ -572,6 +584,7 @@ class StoreCollection(ResourceCollection):
 class StoreDetail(ResourceDetail):
     model = Store
     serializer_class = StoreSerializer
+    permiso_recurso = "tiendas"
     not_found_message = "Tienda no encontrada."
 
     def get_object(self, pk):
@@ -665,6 +678,7 @@ class UserDetail(DatabaseGuardMixin):
 class Model3DCollection(ResourceCollection):
     model = Model3D
     serializer_class = Model3DSerializer
+    permiso_recurso = "modelos3d"
 
     def get_queryset(self):
         return Model3D.objects.select_related("accesorio").all()
@@ -673,6 +687,7 @@ class Model3DCollection(ResourceCollection):
 class Model3DDetail(ResourceDetail):
     model = Model3D
     serializer_class = Model3DSerializer
+    permiso_recurso = "modelos3d"
     not_found_message = "Modelo 3D no encontrado."
 
     def get_object(self, pk):
@@ -815,6 +830,7 @@ class CompatibilityByAccesorio(DatabaseGuardMixin):
 class CompatibilityDetail(ResourceDetail):
     model = AccessoryCompatibility
     serializer_class = CompatibilitySerializer
+    permiso_recurso = "compatibilidad"
     not_found_message = "Compatibilidad no encontrada."
 
 
@@ -1418,6 +1434,7 @@ def reset_password(request):
 class ProductCollection(ResourceCollection):
     model = Product
     serializer_class = ProductSerializer
+    permiso_recurso = "productos"
 
     def get_queryset(self):
         return Product.objects.select_related("categoria_producto").all()
@@ -1426,6 +1443,7 @@ class ProductCollection(ResourceCollection):
 class ProductDetail(ResourceDetail):
     model = Product
     serializer_class = ProductSerializer
+    permiso_recurso = "productos"
     not_found_message = "Producto no encontrado."
 
     def get_object(self, pk):
@@ -1435,28 +1453,33 @@ class ProductDetail(ResourceDetail):
 class ProductCategoryCollection(ResourceCollection):
     model = ProductCategory
     serializer_class = ProductCategorySerializer
+    permiso_recurso = "categorias"
 
 
 class ProductCategoryDetail(ResourceDetail):
     model = ProductCategory
     serializer_class = ProductCategorySerializer
+    permiso_recurso = "categorias"
     not_found_message = "Categoría de producto no encontrada."
 
 
 class AccessoryTypeCollection(ResourceCollection):
     model = AccessoryType
     serializer_class = AccessoryTypeSerializer
+    permiso_recurso = "tipos"
 
 
 class AccessoryTypeDetail(ResourceDetail):
     model = AccessoryType
     serializer_class = AccessoryTypeSerializer
+    permiso_recurso = "tipos"
     not_found_message = "Tipo de accesorio no encontrado."
 
 
 class AccesoriosCollection(ResourceCollection):
     model = Product
     serializer_class = AccesorioSerializer
+    permiso_recurso = "productos"
 
     def get_permissions(self):
         # El catálogo es público; crear solo para el administrador de tienda.
@@ -1539,22 +1562,26 @@ class AccesorioDetail(DatabaseGuardMixin):
 class MovementTypeCollection(ResourceCollection):
     model = MovementType
     serializer_class = MovementTypeSerializer
+    permiso_recurso = "inventario"
 
 
 class MovementTypeDetail(ResourceDetail):
     model = MovementType
     serializer_class = MovementTypeSerializer
+    permiso_recurso = "inventario"
     not_found_message = "Tipo de movimiento no encontrado."
 
 
 class SubscriptionPlanCollection(ResourceCollection):
     model = SubscriptionPlan
     serializer_class = SubscriptionPlanSerializer
+    permiso_recurso = "tiendas"
 
 
 class SubscriptionPlanDetail(ResourceDetail):
     model = SubscriptionPlan
     serializer_class = SubscriptionPlanSerializer
+    permiso_recurso = "tiendas"
     not_found_message = "Plan de suscripción no encontrado."
 
 

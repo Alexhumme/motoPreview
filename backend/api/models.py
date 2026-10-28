@@ -346,6 +346,7 @@ class RecursoAccion(DatabaseModel):
         db_table = "recurso_accion"
         unique_together = (("recurso", "accion"),)
         ordering = ["recurso__orden", "accion__orden"]
+        managed = True  # Gestionado por Django en tests; en producción se usa SQL externo
 
     def __str__(self):
         return f"{self.recurso.codigo}:{self.accion.codigo}"

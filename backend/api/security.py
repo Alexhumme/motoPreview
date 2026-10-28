@@ -1,5 +1,10 @@
+import logging
+
 from rest_framework.permissions import BasePermission
 from django.utils.module_loading import import_string
+
+
+logger = logging.getLogger(__name__)
 
 
 ROLE_SUPERADMIN = "00000000-0000-0000-0000-000000000000"
@@ -17,49 +22,21 @@ def has_any_role(user, role_ids):
 
 def get_recurso_from_view(view):
     """
-    Determina el recurso basándose en la vista/URL.
-    Mapea endpoints a códigos de recurso.
+    Recurso RBAC sobre el que actúa la vista.
+
+    Lo único válido es el atributo `permiso_recurso` de la vista. Antes se
+    infería del path con un mapa de prefijos, y eso autorizaba de forma
+    silenciosa contra el recurso equivocado: `/api/modelos-moto` contenía
+    "moto" y caía en `motos`, mientras `/api/modelos-3d` no matcheaba nada.
+    Una vista sin el atributo se deniega y se registra, en vez de adivinar.
     """
-    # Mapeo de basenames/viewsets a códigos de recurso
-    basename_map = {
-        "producto": "productos",
-        "categoria": "categorias",
-        "tipo": "tipos",
-        "marca": "marcas",
-        "modelo-moto": "modelos",
-        "moto": "motos",
-        "inventario": "inventario",
-        "movimiento": "movimientos",
-        "cotizacion": "cotizaciones",
-        "usuario": "usuarios",
-        "rol": "roles",
-        "tienda": "tiendas",
-        "plan": "planes",
-        "configuracion": "configuraciones",
-        "modelo3d": "modelos3d",
-        "compatibilidad": "compatibilidad",
-        "categoria-producto": "categorias",
-        "tipo-accesorio": "tipos",
-        "accesorio": "productos",  # legacy
-    }
-    
-    basename = getattr(view, "basename", None)
-    if basename:
-        return basename_map.get(basename, basename)
-    
-    # Fallback: inferir de la URL
-    path = getattr(view, "request", None)
-    if path and hasattr(path, "path"):
-        path = path.path
-    else:
-        path = getattr(view, "kwargs", {}).get("url_path", "")
-    
-    # Intentar inferir del path
-    for key, value in basename_map.items():
-        if key in str(path):
-            return value
-    
-    return None
+    recurso = getattr(view, "permiso_recurso", None)
+    if not recurso:
+        logger.warning(
+            "La vista %s no declara permiso_recurso; la operación se deniega.",
+            type(view).__name__,
+        )
+    return recurso
 
 
 def get_accion_from_method(method):
@@ -72,6 +49,16 @@ def get_accion_from_method(method):
         "DELETE": "eliminar",
     }
     return method_map.get(method, "leer")
+
+
+# Recursos cuya tabla sí tiene la dimensión del scope. Un alcance 'tienda'
+# sobre `producto` no se puede satisfacer: la tabla no tiene columna de tienda,
+# así que la semilla grantaría escritura global a una tienda concreta. Esas
+# concesiones se deniegan en vez de convertirse en un acceso entre tiendas;
+# la corrección correcta está en los datos, no aquí.
+RECURSOS_CON_TIENDA = {"inventario", "cotizaciones", "configuraciones", "ventas", "usuarios"}
+# Recursos con dueño individual (`id_usuario`), únicos donde 'propio' limita.
+RECURSOS_CON_PROPIETARIO = {"cotizaciones", "configuraciones"}
 
 
 def usuario_tiene_permiso(user, recurso_codigo, accion_codigo, tienda_id=None, usuario_id=None):
@@ -90,55 +77,48 @@ def usuario_tiene_permiso(user, recurso_codigo, accion_codigo, tienda_id=None, u
     if not user.role_ids:
         return False
     
-    from api.models import RolRecurso, RecursoAccion
+    from api.models import RolRecurso
     
-    # Query optimizada: buscar si algún rol del usuario tiene el permiso
-    queryset = RolRecurso.objects.filter(
+    scopes_validos = ["global"]
+    # El scope 'tienda' se resuelve contra la tienda del usuario, no del rol:
+    # `rol` no tiene columna de tienda. Sin tienda asignada el scope no aplica.
+    propia_tienda = getattr(user, "id_tienda", None)
+    if (recurso_codigo in RECURSOS_CON_TIENDA and propia_tienda
+            and (not tienda_id or str(propia_tienda) == str(tienda_id))):
+        scopes_validos.append("tienda")
+    # 'propio' = sus registros: aplica cuando el destino es él mismo o no se
+    # indicó destino (el filtrado por fila lo hace el queryset de la vista).
+    if (recurso_codigo in RECURSOS_CON_PROPIETARIO
+            and (not usuario_id or str(getattr(user, "id_usuario", None)) == str(usuario_id))):
+        scopes_validos.append("propio")
+
+    return RolRecurso.objects.filter(
         rol_id__in=user.role_ids,
         activo=True,
+        scope__in=scopes_validos,
         recurso_accion__activo=True,
         recurso_accion__recurso__activo=True,
         recurso_accion__accion__activo=True,
         recurso_accion__recurso__codigo=recurso_codigo,
         recurso_accion__accion__codigo=accion_codigo,
-    ).select_related(
-        "recurso_accion__recurso",
-        "recurso_accion__accion",
-        "rol"
-    )
-    
-    for rr in queryset:
-        if rr.scope == "global":
-            return True
-        elif rr.scope == "tienda" and tienda_id and str(rr.rol.tienda_id) == str(tienda_id):
-            return True
-        elif rr.scope == "propio" and usuario_id and str(rr.rol.usuario_id) == str(usuario_id):
-            return True
-    
-    return False
+    ).exists()
 
 
 class HasPermiso(BasePermission):
     """
     Permission class que verifica permisos usando el nuevo sistema RBAC.
-    
+
     Uso en views:
         permission_classes = [HasPermiso]
-        # O con recurso/acción específicos:
         permiso_recurso = "productos"
-        permiso_accion = "crear"
+        permiso_accion = "crear"   # opcional; por defecto se deriva del método
     """
     message = "No tiene permisos para realizar esta acción."
-    
-    # Permitir override en la vista
-    permiso_recurso = None
-    permiso_accion = None
-    
+
     def has_permission(self, request, view):
-        # Permitir override en la vista
-        recurso = self.permiso_recurso or get_recurso_from_view(view)
-        accion = self.permiso_accion or get_accion_from_method(request.method)
-        
+        recurso = get_recurso_from_view(view)
+        accion = getattr(view, "permiso_accion", None) or get_accion_from_method(request.method)
+
         if not recurso or not accion:
             # Si no se puede determinar, denegar por seguridad
             return False
@@ -147,6 +127,22 @@ class HasPermiso(BasePermission):
         usuario_id = getattr(request.user, "id_usuario", None)
         
         return usuario_tiene_permiso(request.user, recurso, accion, tienda_id, usuario_id)
+
+
+class EscribirConPermiso(BasePermission):
+    """Lectura de catálogo abierta; mutaciones regidas por la matriz RBAC.
+
+    Las vistas genéricas de catálogo declaraban `permission_classes`
+    (IsSuperAdmin, IsStoreAdmin) encima de un `get_permissions()` que las
+    ignoraba, así que el catálogo RBAC se leía sin autenticar. Al ser una
+    clase de permiso, la subclase puede reemplazarla de verdad.
+    """
+    message = HasPermiso.message
+
+    def has_permission(self, request, view):
+        if request.method in ("GET", "HEAD", "OPTIONS"):
+            return True
+        return HasPermiso().has_permission(request, view)
 
 
 class IsStoreStaff(BasePermission):
@@ -167,4 +163,9 @@ class IsStoreAdmin(BasePermission):
     message = "Se requiere el rol de administrador de tienda."
 
     def has_permission(self, request, view):
+        # El superadmin manda sobre la matriz recurso-acción: `usuario_tiene_permiso`
+        # ya lo trata como acceso total, y estas vistas usaban esa ruta antes de que
+        # `permission_classes` dejara de estar silenciado.
+        if has_any_role(request.user, (ROLE_SUPERADMIN,)):
+            return True
         return has_any_role(request.user, (ROLE_ADMIN,))

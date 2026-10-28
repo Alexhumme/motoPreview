@@ -600,7 +600,6 @@ class RolRecursoSerializer(serializers.ModelSerializer):
         write_only=True,
     )
     concedido_por = serializers.PrimaryKeyRelatedField(
-        source="concedido_por",
         queryset=User.objects.all(),
         allow_null=True,
         required=False,
@@ -609,7 +608,7 @@ class RolRecursoSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = RolRecurso
-        fields = ("id_rol_recurso", "id_rol", "id_recurso_accion", "rol_recurso", "recurso_accion", "scope", "concedido_por", "concedido_en", "activo")
+        fields = ("id_rol_recurso", "id_rol", "id_recurso_accion", "recurso_accion", "scope", "concedido_por", "concedido_en", "activo")
         read_only_fields = ("id_rol_recurso", "concedido_en")
 
 
