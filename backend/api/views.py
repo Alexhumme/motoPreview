@@ -110,6 +110,12 @@ from .serializers import (
 logger = logging.getLogger("motopreview.api")
 QUOTE_STATES = services.QUOTE_STATES
 
+# Forma del resumen cuando no hay nada que medir (aún).
+RESUMEN_VACIO = {
+    clave: {"cantidad": 0, "total": Decimal("0")}
+    for clave in ("ventas_dia", "por_cobrar", "pedidos_pendientes")
+}
+
 
 def database_unavailable():
     if settings.DATABASE_URL:
@@ -602,19 +608,34 @@ class StoreCollection(ResourceCollection):
     model = Store
     serializer_class = StoreSerializer
     permiso_recurso = "tiendas"
+    # A diferencia del resto del catálogo (categorías, marcas, motos), la ficha
+    # de una tienda lleva NIT, dirección, teléfono y correo: no es material de
+    # vitrina y no debe leerse sin sesión.
+    permission_classes = [IsAuthenticated & EscribirConPermiso]
 
     def get_queryset(self):
-        return Store.objects.select_related("plan").all()
+        if es_superadmin(self.request.user):
+            return Store.objects.select_related("plan").all()
+        # El listado completo de tiendas es del superadmin; el personal solo
+        # obtiene la suya.
+        tienda_id = getattr(self.request.user, "id_tienda", None)
+        return Store.objects.select_related("plan").filter(id_tienda=tienda_id)
 
 
 class StoreDetail(ResourceDetail):
     model = Store
     serializer_class = StoreSerializer
     permiso_recurso = "tiendas"
+    permission_classes = [IsAuthenticated & EscribirConPermiso]
     not_found_message = "Tienda no encontrada."
 
     def get_object(self, pk):
-        return Store.objects.select_related("plan").get(pk=pk)
+        queryset = Store.objects.select_related("plan")
+        if not es_superadmin(self.request.user):
+            # El id del path no abre las fichas de otras tiendas: un administrador
+            # autenticado solo ve la suya (y quien no tiene tienda, ninguna).
+            queryset = queryset.filter(id_tienda=getattr(self.request.user, "id_tienda", None))
+        return queryset.get(pk=pk)
 
 
 class UserCollection(DatabaseGuardMixin):
@@ -1669,70 +1690,149 @@ class QuoteHistoryView(DatabaseGuardMixin):
         return Response(QuoteStatusHistorySerializer(history, many=True).data)
 
 
+def _magnitud(agregado):
+    """Fila de ``aggregate()``/``values().annotate()`` con ceros por defecto.
+
+    Una tienda sin cotizaciones en el grupo simplemente no aparece, así que el
+    agregado llega vacío.
+    """
+    return {
+        "cantidad": agregado.get("cantidad") or 0,
+        "total": agregado.get("total") or Decimal("0"),
+    }
+
+
+def resumen_tienda(tienda_id, hoy):
+    """Métricas del día de una sola tienda.
+
+    ``ventas_dia`` usa el historial de estados (la fecha real del cambio a
+    ``completada``), no ``fecha_solicitud``; el ``id__in`` deduplica las
+    cotizaciones con varias entradas del mismo día.
+    """
+    cotizaciones = Quote.objects.filter(tienda_id=tienda_id)
+    ventas_ids = QuoteStatusHistory.objects.filter(
+        estado="completada", fecha__date=hoy, cotizacion__tienda_id=tienda_id
+    ).values_list("cotizacion_id", flat=True)
+
+    return {
+        "ventas_dia": _magnitud(
+            Quote.objects.filter(id_cotizacion__in=list(ventas_ids)).aggregate(
+                cantidad=Count("id_cotizacion"), total=Sum("total")
+            )
+        ),
+        "por_cobrar": _magnitud(
+            cotizaciones.filter(coti_estado="aprobada").aggregate(
+                cantidad=Count("id_cotizacion"), total=Sum("total")
+            )
+        ),
+        "pedidos_pendientes": _magnitud(
+            cotizaciones.filter(coti_estado="pendiente").aggregate(
+                cantidad=Count("id_cotizacion"), total=Sum("total")
+            )
+        ),
+    }
+
+
+def _por_tienda(consulta):
+    return {fila["tienda_id"]: fila for fila in consulta}
+
+
+def resumen_global(hoy):
+    """Consolidado de todas las tiendas activas, con su desglose en ``tiendas``.
+
+    Agrupa por tienda en tres consultas en lugar de medir tienda por tienda: con
+    varias tiendas, el bucle habría hecho 12+ consultas en cada carga del panel.
+    """
+    ventas = _por_tienda(
+        Quote.objects.filter(
+            id_cotizacion__in=list(
+                QuoteStatusHistory.objects.filter(estado="completada", fecha__date=hoy).values_list(
+                    "cotizacion_id", flat=True
+                )
+            )
+        )
+        .exclude(tienda_id__isnull=True)
+        .values("tienda_id")
+        .annotate(cantidad=Count("id_cotizacion"), total=Sum("total"))
+    )
+    por_cobrar = _por_tienda(
+        Quote.objects.exclude(tienda_id__isnull=True)
+        .filter(coti_estado="aprobada")
+        .values("tienda_id")
+        .annotate(cantidad=Count("id_cotizacion"), total=Sum("total"))
+    )
+    pendientes = _por_tienda(
+        Quote.objects.exclude(tienda_id__isnull=True)
+        .filter(coti_estado="pendiente")
+        .values("tienda_id")
+        .annotate(cantidad=Count("id_cotizacion"), total=Sum("total"))
+    )
+
+    tiendas = []
+    consolidado = {
+        clave: {"cantidad": 0, "total": Decimal("0")}
+        for clave in ("ventas_dia", "por_cobrar", "pedidos_pendientes")
+    }
+    for tienda in Store.objects.filter(estado_tienda="activa").order_by("nombre_tienda"):
+        clave = tienda.id_tienda
+        fila = {
+            "id_tienda": str(clave),
+            "nombre": tienda.nombre_tienda,
+            "estado": tienda.estado_tienda,
+            "ventas_dia": _magnitud(ventas.get(clave, {})),
+            "por_cobrar": _magnitud(por_cobrar.get(clave, {})),
+            "pedidos_pendientes": _magnitud(pendientes.get(clave, {})),
+        }
+        tiendas.append(fila)
+        for nombre_metrica, magnitud in fila.items():
+            if nombre_metrica in consolidado:
+                consolidado[nombre_metrica]["cantidad"] += magnitud["cantidad"]
+                consolidado[nombre_metrica]["total"] += magnitud["total"]
+
+    consolidado["tiendas"] = tiendas
+    return consolidado
+
+
 class ReporteResumenView(DatabaseGuardMixin):
-    """Resumen del día para el panel de la tienda (personal de tienda).
+    """Resumen del día para el panel.
 
-    Métricas (siempre filtradas por la tienda del usuario autenticado):
-
-    * ``ventas_dia``: cotizaciones marcadas ``completada`` hoy. La fecha de la
-      venta se toma del historial de estados (la fecha real del cambio), no de
-      la fecha de solicitud.
-    * ``por_cobrar``: cotizaciones ``aprobadas`` cuyo total aún no se cobra.
-    * ``pedidos_pendientes``: cotizaciones ``pendientes`` por revisar.
+    * Personal de tienda: siempre las métricas de SU tienda; ``id_tienda`` no
+      abre una brecha entre tiendas.
+    * Superadmin: sin ``id_tienda`` recibe el consolidado de todas las tiendas
+      activas (con el desglose en ``tiendas``); con ``?id_tienda=`` recibe solo
+      esa tienda, que es como llega desde el inventario de tiendas.
     """
 
-    permission_classes = [IsStoreStaff]
+    permission_classes = [IsStoreStaff | IsSuperAdmin]
 
     def get(self, request):
+        hoy = timezone.localdate()
+
+        if es_superadmin(request.user):
+            tienda_id = request.query_params.get("id_tienda")
+            if not tienda_id:
+                return Response({"fecha": hoy.isoformat(), **resumen_global(hoy)})
+            try:
+                tienda_id = UUID(str(tienda_id))
+            except (TypeError, ValueError):
+                return Response({"error": "id_tienda debe ser un UUID válido."}, status=400)
+            tienda = Store.objects.filter(pk=tienda_id).first()
+            if not tienda:
+                return Response({"error": "Tienda no encontrada."}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {
+                    "fecha": hoy.isoformat(),
+                    "tienda": {"id_tienda": str(tienda.id_tienda), "nombre": tienda.nombre_tienda},
+                    **resumen_tienda(tienda.id_tienda, hoy),
+                }
+            )
+
         tienda_id = request.user.id_tienda
         if not tienda_id:
-            return Response(
-                {"error": "El usuario no pertenece a ninguna tienda."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        hoy = timezone.localdate()
-        cotizaciones = Quote.objects.filter(tienda_id=tienda_id)
-
-        # Ventas del día: la marca 'completada' de hoy según el historial
-        # (distint por si una cotización tuviera entradas duplicadas).
-        ventas_ids = list(
-            QuoteStatusHistory.objects.filter(
-                estado="completada",
-                fecha__date=hoy,
-                cotizacion__tienda_id=tienda_id,
-            )
-            .values_list("cotizacion_id", flat=True)
-            .distinct()
-        )
-        ventas = Quote.objects.filter(id_cotizacion__in=ventas_ids).aggregate(
-            cantidad=Count("id_cotizacion"), total=Sum("total")
-        )
-
-        por_cobrar = cotizaciones.filter(coti_estado="aprobada").aggregate(
-            cantidad=Count("id_cotizacion"), total=Sum("total")
-        )
-        pendientes = cotizaciones.filter(coti_estado="pendiente").aggregate(
-            cantidad=Count("id_cotizacion"), total=Sum("total")
-        )
-
-        return Response(
-            {
-                "fecha": hoy.isoformat(),
-                "ventas_dia": {
-                    "cantidad": ventas["cantidad"] or 0,
-                    "total": ventas["total"] or Decimal("0"),
-                },
-                "por_cobrar": {
-                    "cantidad": por_cobrar["cantidad"] or 0,
-                    "total": por_cobrar["total"] or Decimal("0"),
-                },
-                "pedidos_pendientes": {
-                    "cantidad": pendientes["cantidad"] or 0,
-                    "total": pendientes["total"] or Decimal("0"),
-                },
-            }
-        )
+            # Personal de tienda mal asignado (sin tienda): ceros en vez de un 400
+            # que dejaría el panel sin cargar.
+            return Response({"fecha": hoy.isoformat(), **RESUMEN_VACIO})
+        return Response({"fecha": hoy.isoformat(), **resumen_tienda(tienda_id, hoy)})
 
 
 # ============================================================================
@@ -1768,13 +1868,15 @@ class AccionDetail(ResourceDetail):
 class RecursoAccionCollection(ResourceCollection):
     model = RecursoAccion
     serializer_class = RecursoAccionSerializer
-    permission_classes = [IsStoreAdmin]
+    # El catálogo recurso-acción es global: un admin de tienda no debe poder
+    # crear ni borrar combinaciones que luego verá toda la organización.
+    permission_classes = [IsSuperAdmin]
 
 
 class RecursoAccionDetail(ResourceDetail):
     model = RecursoAccion
     serializer_class = RecursoAccionSerializer
-    permission_classes = [IsStoreAdmin]
+    permission_classes = [IsSuperAdmin]
     not_found_message = "Recurso-Acción no encontrado."
 
 

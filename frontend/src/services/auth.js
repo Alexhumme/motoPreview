@@ -1,4 +1,5 @@
 import api from './api';
+import { crearCrud } from './crud';
 
 export async function registrarCliente(datos) {
   const respuesta = await api.post('/auth/register', datos);
@@ -65,3 +66,8 @@ export async function eliminarRolRecurso(id) {
   const respuesta = await api.delete(`/rol-recursos/${id}`);
   return respuesta.data;
 }
+
+// Catálogo RBAC (recurso × acción × combinación). Solo lo escribe el superadmin.
+export const recursosApi = crearCrud('/recursos');
+export const accionesApi = crearCrud('/acciones');
+export const recursoAccionesApi = crearCrud('/recurso-acciones');

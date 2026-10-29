@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/authContexto';
+import { usePermiso } from '../context/usePermiso';
 import { obtenerInventario } from '../services/inventario';
 import { obtenerCotizaciones } from '../services/cotizaciones';
 import { obtenerResumenDia } from '../services/reportes';
@@ -20,32 +22,45 @@ const RESUMEN_VACIO = {
 
 export default function Dashboard() {
   const { usuario } = useAuth();
+  const { esSuperAdmin } = usePermiso();
   const [inventario, setInventario] = useState([]);
   const [cotizaciones, setCotizaciones] = useState([]);
   const [resumen, setResumen] = useState(RESUMEN_VACIO);
   const [cargando, setCargando] = useState(true);
 
+  // La dependencia es el id de la tienda, no el objeto usuario: el objeto cambia de
+  // referencia cada vez que se cargan los permisos y volvería a disparar la carga.
+  const idTienda = usuario?.id_tienda;
+  const consolidado = esSuperAdmin();
+
   useEffect(() => {
+    let activo = true;
     async function cargar() {
       try {
-        const [datosInventario, datosCotizaciones, resumenDia] = await Promise.all([
-          obtenerInventario(usuario.id_tienda),
-          obtenerCotizaciones(usuario.id_tienda),
-          obtenerResumenDia().catch(() => RESUMEN_VACIO),
+        // Sin tienda propia el panel muestra el consolidado de todas las tiendas;
+        // el inventario y las cotizaciones solo existen por tienda.
+        const resumenDia = await obtenerResumenDia().catch(() => RESUMEN_VACIO);
+        if (!activo) return;
+        setResumen(resumenDia);
+        if (!idTienda) return;
+        const [datosInventario, datosCotizaciones] = await Promise.all([
+          obtenerInventario(idTienda),
+          obtenerCotizaciones(idTienda),
         ]);
+        if (!activo) return;
         setInventario(datosInventario);
         setCotizaciones(datosCotizaciones);
-        setResumen(resumenDia);
       } catch {
         setInventario([]);
         setCotizaciones([]);
         setResumen(RESUMEN_VACIO);
       } finally {
-        setCargando(false);
+        if (activo) setCargando(false);
       }
     }
-    if (usuario?.id_tienda) cargar();
-  }, [usuario]);
+    cargar();
+    return () => { activo = false; };
+  }, [idTienda]);
 
   const stockBajo = inventario.filter((item) =>
     item.estado_inventario === 'bajo' || item.estado_inventario === 'agotado'
@@ -66,6 +81,10 @@ export default function Dashboard() {
         <div className="skeleton" style={{ height: '120px' }} />
       </div>
     );
+  }
+
+  if (consolidado) {
+    return <PanelGlobal resumen={resumen} nombre={nombre} />;
   }
 
   return (
@@ -207,6 +226,104 @@ export default function Dashboard() {
           </div>
         </section>
       )}
+    </div>
+  );
+}
+
+function PanelGlobal({ resumen, nombre }) {
+  const tiendas = resumen?.tiendas || [];
+  const ventasDia = resumen?.ventas_dia || RESUMEN_VACIO.ventas_dia;
+  const porCobrar = resumen?.por_cobrar || RESUMEN_VACIO.por_cobrar;
+  const pendientes = resumen?.pedidos_pendientes?.cantidad ?? 0;
+
+  return (
+    <div className="dashboard">
+      <header className="dashboard-header">
+        <div className="dashboard-breadcrumb">
+          <span className="eyebrow"><span className="eyebrow-dot" aria-hidden="true"></span>Panel / Todas las tiendas</span>
+        </div>
+        <h1 className="dashboard-title">Buenos días, {nombre}.</h1>
+      </header>
+
+      <section className="dashboard-kpis" aria-label="Indicadores clave de todas las tiendas">
+        <article className="kpi kpi--venta">
+          <span className="kpi-icon" aria-hidden="true">↗</span>
+          <div className="kpi-content">
+            <small>Ventas del día</small>
+            <strong>{formatoCOP(ventasDia.total)}</strong>
+            <em>{ventasDia.cantidad} venta{ventasDia.cantidad !== 1 ? 's' : ''} completada{ventasDia.cantidad !== 1 ? 's' : ''} hoy</em>
+          </div>
+        </article>
+        <article className="kpi kpi--cobrar">
+          <span className="kpi-icon" aria-hidden="true">◎</span>
+          <div className="kpi-content">
+            <small>Pagos que faltan</small>
+            <strong>{formatoCOP(porCobrar.total)}</strong>
+            <em>{porCobrar.cantidad} cotización{porCobrar.cantidad !== 1 ? 'es' : ''} aprobada{porCobrar.cantidad !== 1 ? 's' : ''} por cobrar</em>
+          </div>
+        </article>
+        <article className="kpi">
+          <span className="kpi-icon" aria-hidden="true">▤</span>
+          <div className="kpi-content">
+            <small>Pedidos pendientes</small>
+            <strong>{pendientes}</strong>
+            <em>Cotizaciones por revisar</em>
+          </div>
+        </article>
+        <article className="kpi">
+          <span className="kpi-icon" aria-hidden="true">⌂</span>
+          <div className="kpi-content">
+            <small>Tiendas activas</small>
+            <strong>{tiendas.length}</strong>
+            <em><Link to="/admin/tiendas">Ver inventario de tiendas</Link></em>
+          </div>
+        </article>
+      </section>
+
+      <section className="card dashboard-card" aria-label="Resumen por tienda">
+        <header className="card-head">
+          <span>
+            <small>Por tienda</small>
+            <strong>Resumen de hoy</strong>
+          </span>
+        </header>
+        <div className="table-wrap">
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Tienda</th>
+                <th>Ventas del día</th>
+                <th>Por cobrar</th>
+                <th>Pendientes</th>
+                <th style={{ width: '140px' }}></th>
+              </tr>
+            </thead>
+            <tbody>
+              {tiendas.length === 0 ? (
+                <tr>
+                  <td colSpan={5} style={{ textAlign: 'center', padding: 'var(--space-40)', color: 'var(--color-mist-gray)' }}>
+                    No hay tiendas activas.
+                  </td>
+                </tr>
+              ) : (
+                tiendas.map((t) => (
+                  <tr key={t.id_tienda}>
+                    <td><strong>{t.nombre}</strong></td>
+                    <td>{formatoCOP(t.ventas_dia.total)}</td>
+                    <td>{formatoCOP(t.por_cobrar.total)}</td>
+                    <td>{t.pedidos_pendientes.cantidad}</td>
+                    <td>
+                      <Link className="btn btn--outline btn--sm" to={`/admin/tiendas/${t.id_tienda}`}>
+                        Ver resumen
+                      </Link>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
     </div>
   );
 }

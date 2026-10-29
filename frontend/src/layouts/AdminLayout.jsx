@@ -65,7 +65,19 @@ const ENLACES = [
     soloAdmin: true,
     permisos: [{ recurso: 'roles', accion: 'listar' }],
   },
-  { ruta: '/admin/tienda', etiqueta: 'Mi tienda', icono: '⌂' },
+  {
+    ruta: '/admin/tiendas',
+    etiqueta: 'Tiendas',
+    icono: '⌂',
+    soloSuperAdmin: true,
+  },
+  {
+    ruta: '/admin/catalogo',
+    etiqueta: 'Catálogo',
+    icono: '⧉',
+    soloSuperAdmin: true,
+  },
+  { ruta: '/admin/tienda', etiqueta: 'Mi tienda', icono: '▢', soloConTienda: true },
 ];
 
 export default function AdminLayout() {
@@ -81,6 +93,8 @@ export default function AdminLayout() {
   const enlaces = ENLACES.filter((enlace) => {
     if (enlace.soloAdmin && !esAdmin) return false;
     if (enlace.soloSuperAdmin && !esSuperAdmin()) return false;
+    // "Mi tienda" no tiene nada que mostrar en un perfil sin tienda (superadmin).
+    if (enlace.soloConTienda && !usuario?.id_tienda) return false;
     if (!permisosCargados) return true; // sin matriz RBAC: menú por rol heredado
     if (!enlace.permisos) return true;
     return tieneAlgunPermiso(enlace.permisos);

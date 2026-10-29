@@ -574,11 +574,15 @@ class ReporteResumenPermisosTests(TestCase):
         response = self.client.get("/api/reportes/resumen")
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
-    def test_staff_sin_tienda_recibe_400(self):
+    def test_staff_sin_tienda_recibe_ceros(self):
+        """Un administrativo mal asignado ve ceros, no un 400 que rompa el panel."""
         self.client.force_authenticate(user=usuario_falso([ROLE_ADMIN], tienda=None))
         response = self.client.get("/api/reportes/resumen")
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("tienda", response.json()["error"].lower())
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.json())
+        data = response.json()
+        for metrica in ("ventas_dia", "por_cobrar", "pedidos_pendientes"):
+            self.assertEqual(data[metrica]["cantidad"], 0, metrica)
+        self.assertNotIn("tiendas", data)
 
     def test_staff_obtiene_resumen_vacio(self):
         self.client.force_authenticate(user=ADMIN)
@@ -589,3 +593,30 @@ class ReporteResumenPermisosTests(TestCase):
         for metrica in ("ventas_dia", "por_cobrar", "pedidos_pendientes"):
             self.assertEqual(data[metrica]["cantidad"], 0, metrica)
             self.assertEqual(Decimal(str(data[metrica]["total"])), Decimal("0"), metrica)
+
+    def test_superadmin_obtiene_consolidado_de_todas_las_tiendas(self):
+        """El superadmin no tiene tienda: ve el resumen global, no un 400."""
+        self.client.force_authenticate(user=SUPERADMIN)
+        response = self.client.get("/api/reportes/resumen")
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.json())
+        data = response.json()
+        self.assertIn("tiendas", data)
+        for metrica in ("ventas_dia", "por_cobrar", "pedidos_pendientes"):
+            self.assertEqual(data[metrica]["cantidad"], 0, metrica)
+
+    def test_superadmin_pide_el_resumen_de_una_tienda(self):
+        self.client.force_authenticate(user=SUPERADMIN)
+        response = self.client.get("/api/reportes/resumen", {"id_tienda": "no-es-un-uuid"})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        response = self.client.get("/api/reportes/resumen", {"id_tienda": UUID_MUESTRA})
+        # La tienda del usuario falso no existe como fila: 404 en vez de un
+        # resumen inventado.
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_staff_no_puede_asomarse_a_otra_tienda(self):
+        """``id_tienda`` no es una puerta para el personal: siempre ve la suya."""
+        self.client.force_authenticate(user=ADMIN)
+        response = self.client.get("/api/reportes/resumen", {"id_tienda": TIENDA_OTRA})
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.json())
+        self.assertNotIn("tiendas", response.json())

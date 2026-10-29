@@ -28,6 +28,9 @@ const Usuarios = lazy(() => import('./pages/Usuarios'));
 const Tienda = lazy(() => import('./pages/Tienda'));
 const Seguridad = lazy(() => import('./pages/Seguridad'));
 const Accesorios = lazy(() => import('./pages/Accesorios'));
+const CatalogoRBAC = lazy(() => import('./pages/CatalogoRBAC'));
+const Tiendas = lazy(() => import('./pages/Tiendas'));
+const ResumenTienda = lazy(() => import('./pages/ResumenTienda'));
 
 function LoadingFallback() {
   return <div className="admin-loading">Cargando módulo...</div>;
@@ -105,6 +108,30 @@ function App() {
             }
           />
           <Route path="tienda" element={<LazyWrapper Component={Tienda} />} />
+          <Route
+            path="tiendas"
+            element={
+              <RutaProtegida rolesPermitidos={[ROL_SUPERADMIN]}>
+                <LazyWrapper Component={Tiendas} />
+              </RutaProtegida>
+            }
+          />
+          <Route
+            path="tiendas/:id"
+            element={
+              <RutaProtegida rolesPermitidos={[ROL_SUPERADMIN]}>
+                <LazyWrapper Component={ResumenTienda} />
+              </RutaProtegida>
+            }
+          />
+          <Route
+            path="catalogo"
+            element={
+              <RutaProtegida rolesPermitidos={[ROL_SUPERADMIN]}>
+                <LazyWrapper Component={CatalogoRBAC} />
+              </RutaProtegida>
+            }
+          />
           <Route
             path="permisos"
             element={

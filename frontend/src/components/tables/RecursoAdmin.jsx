@@ -20,7 +20,10 @@ function construirPayload(campos, valores) {
   const payload = {};
   campos.forEach((c) => {
     const bruto = (valores[c.nombre] ?? '').toString().trim();
-    if (bruto === '') {
+    if (c.booleano) {
+      // El select manda 'true'/'false'; el campo del modelo es booleano, no texto.
+      payload[c.nombre] = bruto === 'true';
+    } else if (bruto === '') {
       payload[c.nombre] = null;
     } else {
       payload[c.nombre] = c.tipo === 'number' ? Number(bruto) : bruto;
