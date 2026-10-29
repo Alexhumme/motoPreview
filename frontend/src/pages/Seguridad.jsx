@@ -310,7 +310,7 @@ export default function Seguridad() {
                             className="btn btn--outline btn--sm"
                             onClick={() => irAMatriz(r.id_rol)}
                           >
-                            🔐 Permisos
+                             Permisos
                           </button>
                         )}
                         <ConPermiso recurso="roles" accion="actualizar" fallback={null}>
@@ -392,8 +392,10 @@ export default function Seguridad() {
                   {recursos.map((recurso) => (
                     <tr key={recurso.id_recurso}>
                       <td className="recurso-nombre">
-                        <strong>{recurso.nombre}</strong>
-                        {recurso.codigo && <code>{recurso.codigo}</code>}
+                        <div className="recurso-detalle">
+                          <strong>{recurso.nombre}</strong>
+                          {recurso.codigo && <code>{recurso.codigo}</code>}
+                        </div>
                       </td>
                       {accionesUnion.map((accion) => {
                         // Buscar en ESTE recurso la combinación de la misma

@@ -116,10 +116,13 @@
 }
 
 .recurso-nombre {
+  min-width: 280px;
+}
+
+.recurso-detalle {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
-  min-width: 280px;
 }
 
 .recurso-nombre strong {
