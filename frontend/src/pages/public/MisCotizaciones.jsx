@@ -28,11 +28,16 @@ export default function MisCotizaciones() {
   const [cargando, setCargando] = useState(true);
   const [expandida, setExpandida] = useState(null);
 
+  // Depender de `usuario` volvería a recargar al fusionar los permisos: el objeto
+  // cambia de referencia aunque el usuario sea el mismo.
+  const idUsuario = usuario?.id_usuario;
+
   useEffect(() => {
+    if (!idUsuario) return;
     async function cargar() {
       try {
         const datos = await obtenerCotizaciones();
-        setCotizaciones(datos.filter((c) => c.id_usuario === usuario.id_usuario));
+        setCotizaciones(datos.filter((c) => c.id_usuario === idUsuario));
       } catch (err) {
         console.error(err);
       } finally {
@@ -40,7 +45,7 @@ export default function MisCotizaciones() {
       }
     }
     cargar();
-  }, [usuario]);
+  }, [idUsuario]);
 
   function alternarExpandida(id) {
     setExpandida(expandida === id ? null : id);

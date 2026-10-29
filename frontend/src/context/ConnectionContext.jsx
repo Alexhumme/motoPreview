@@ -1,5 +1,4 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import api from '../services/api';
 
 const ConnectionContext = createContext();
 
@@ -14,22 +13,16 @@ export function ConnectionProvider({ children }) {
       setConectado(true);
     }
 
+    // El estado lo mueve el interceptor de api.js: cualquier petición real que
+    // llegue marca online y cualquier petición sin respuesta marca offline. No
+    // hay sondeo periódico: sin tráfico, el banner queda como está hasta que el
+    // usuario vuelve a interactuar.
     window.addEventListener('backend:offline', marcarOffline);
     window.addEventListener('backend:online', marcarOnline);
-
-    // Revisa periódicamente si el backend ya volvió, incluso sin que el usuario interactúe
-    const intervalo = setInterval(async () => {
-      try {
-        await api.get('/health', { timeout: 4000 });
-      } catch {
-        // el propio interceptor ya marca offline si falla
-      }
-    }, 10000);
 
     return () => {
       window.removeEventListener('backend:offline', marcarOffline);
       window.removeEventListener('backend:online', marcarOnline);
-      clearInterval(intervalo);
     };
   }, []);
 

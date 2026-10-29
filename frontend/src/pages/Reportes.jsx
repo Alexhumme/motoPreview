@@ -12,10 +12,14 @@ export default function Reportes() {
   const [cargando, setCargando] = useState(true);
   const [rango, setRango] = useState('mes');
 
+  // Depender de `usuario` volvería a recargar al fusionar los permisos: el objeto
+  // cambia de referencia aunque el usuario sea el mismo.
+  const idTienda = usuario?.id_tienda;
+
   useEffect(() => {
     async function cargar() {
       try {
-        const datos = await obtenerCotizaciones(usuario.id_tienda);
+        const datos = await obtenerCotizaciones(idTienda);
         setCotizaciones(datos);
       } catch (err) {
         console.error(err);
@@ -24,7 +28,7 @@ export default function Reportes() {
       }
     }
     cargar();
-  }, [usuario]);
+  }, [idTienda]);
 
   if (cargando) {
     return (
