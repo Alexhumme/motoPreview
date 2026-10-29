@@ -406,8 +406,15 @@ class ResourceCollection(DatabaseGuardMixin):
     permiso_recurso = None
     permiso_accion = None
 
+    # Relaciones que anida el serializer. Sin esto cada fila dispara un SELECT
+    # por relación, y contra una base remota ese coste es un viaje de red por fila.
+    queryset_relaciones = ()
+
     def get_queryset(self):
-        return self.model.objects.all()
+        queryset = self.model.objects.all()
+        if self.queryset_relaciones:
+            queryset = queryset.select_related(*self.queryset_relaciones)
+        return queryset
 
     def get(self, request):
         queryset = self.get_queryset()
@@ -1871,6 +1878,7 @@ class RecursoAccionCollection(ResourceCollection):
     # El catálogo recurso-acción es global: un admin de tienda no debe poder
     # crear ni borrar combinaciones que luego verá toda la organización.
     permission_classes = [IsSuperAdmin]
+    queryset_relaciones = ("recurso", "accion")
 
 
 class RecursoAccionDetail(ResourceDetail):
@@ -1884,6 +1892,9 @@ class RolRecursoCollection(ResourceCollection):
     model = RolRecurso
     serializer_class = RolRecursoSerializer
     permission_classes = [IsSuperAdmin]
+    # Anida la combinación, y esa anida recurso y acción: sin el join serían
+    # tres consultas por concesión.
+    queryset_relaciones = ("recurso_accion__recurso", "recurso_accion__accion")
 
 
 class RolRecursoDetail(ResourceDetail):

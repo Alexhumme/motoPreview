@@ -11,6 +11,7 @@ from types import SimpleNamespace
 from unittest import mock
 
 from django.test import SimpleTestCase
+from rest_framework import serializers
 
 from .security import (
     EscribirConPermiso,
@@ -193,6 +194,63 @@ class RecursoPorVistaTests(SimpleTestCase):
 
         self.assertEqual(sin_declarar, [], "vistas genéricas sin permiso_recurso")
         self.assertEqual(invalidos, [], "permiso_recurso fuera de los códigos sembrados")
+
+
+class SelectRelatedEnColeccionesTests(SimpleTestCase):
+    """Una colección que anida el serializer de una relación debe traerla con `select_related`.
+
+    Sin el join, Django consulta la relación fila por fila y contra una base
+    remota cada fila es un viaje de red: las 90 combinaciones recurso-acción del
+    catálogo RBAC tardaban 15 segundos en responder. La regla se comprueba sin
+    base de datos, leyendo el `select_related` de la consulta que arma cada vista.
+    """
+
+    def relaciones_anidadas(self, serializer_class):
+        """Relaciones de uno que el serializer pinta en modo lectura.
+
+        Las listas anidadas vienen envueltas en `ListSerializer`, no son
+        `ModelSerializer`, así que quedan fuera: esas se arreglan con
+        `prefetch_related`, que es otra consulta y no un viaje por fila.
+        """
+        anidadas = []
+        for campo in serializer_class().fields.values():
+            if not isinstance(campo, serializers.ModelSerializer) or not campo.read_only:
+                continue
+            if campo.source == "*":
+                continue
+            anidadas.append(campo.source or campo.field_name)
+        return anidadas
+
+    def test_cada_relacion_anidada_llega_con_select_related(self):
+        import api.views as module
+
+        ofensivas = []
+        for nombre in dir(module):
+            vista_clase = getattr(module, nombre)
+            if not isinstance(vista_clase, type):
+                continue
+            if not issubclass(vista_clase, ResourceCollection) or vista_clase is ResourceCollection:
+                continue
+            if not getattr(vista_clase, "serializer_class", None):
+                continue
+            anidadas = self.relaciones_anidadas(vista_clase.serializer_class)
+            if not anidadas:
+                continue
+
+            vista = vista_clase()
+            vista.request = SimpleNamespace(
+                user=usuario(tienda=TIENDA, roles=[ROLE_SUPERADMIN]), query_params={}
+            )
+            rutas = getattr(vista.get_queryset().query, "select_related", None) or ()
+            if isinstance(rutas, dict):
+                rutas = tuple(rutas)
+            raices = {str(ruta).split("__")[0] for ruta in rutas}
+
+            faltan = sorted(set(anidadas) - raices)
+            if faltan:
+                ofensivas.append("%s sin %s" % (nombre, ", ".join(faltan)))
+
+        self.assertEqual(ofensivas, [], "colecciones que anidan relaciones sin select_related")
 
 
 class EscribirConPermisoTests(SimpleTestCase):
