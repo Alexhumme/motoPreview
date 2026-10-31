@@ -432,7 +432,7 @@ def paginate_response(request, queryset, serializer_class, *, context=None):
 
 
 @extend_schema(responses={200: RootSerializer})
-@api_view(["GET"])
+@api_view(["GET", "HEAD"])
 @permission_classes([AllowAny])
 def root(request):
     lang = getattr(request, "lang", i18n.DEFAULT_LANGUAGE)
@@ -1550,13 +1550,9 @@ def login(request):
         )
     try:
         token = issue_jwt(user)
-        payload = user_payload(user)
     except APIException as error:
         return Response({"error": str(error.detail)}, status=503)
-    except Exception as exc:  # noqa: BLE001
-        # Diagnóstico: se devuelve el error real para identificar la causa
-        # en el backend desplegado (se revertirá a un 500 genérico).
-        return Response({"error": f"{type(exc).__name__}: {exc}"}, status=500)
+    payload = user_payload(user)
     # Puente para el navegador: guarda el token y el rol en la sesión para
     # que el DRF navegable los use solos en las siguientes peticiones.
     # No debe bloquear el login si la sesión falla (el token ya va en la respuesta).
