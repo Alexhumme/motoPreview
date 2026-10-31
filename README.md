@@ -34,7 +34,7 @@ Abre http://localhost:5173 (el backend queda en http://127.0.0.1:8000).
 
 | Qué | Dónde |
 | --- | --- |
-| **Panel de administración** | http://127.0.0.1:8000/admin/ → usuario `admin`, contraseña `Motopreview12345` |
+| **Panel de administración** | http://127.0.0.1:8000/admin/ → no trae credenciales: créalo tú con `python manage.py createsuperuser` (vive en `auth_user` y es independiente de la tabla `usuario`) |
 | API | http://127.0.0.1:8000/api/... → JSON para el frontend; **abierto en un navegador muestra la interfaz navegable de DRF** (tras `POST /api/auth/login` el navbar muestra tu rol y la sesión se reutiliza sola). Docs interactivas: http://127.0.0.1:8000/api/docs/ (botón Authorize con el Bearer) |
 | Catálogo en la API | `/api/health` · `/api/categorias` · `/api/marcas` · `/api/modelos-moto` · `/api/motos` · `/api/accesorios` · `/api/productos` · `/api/categorias-producto` · `/api/tipos-accesorio` · `/api/compatibilidad` · `/api/modelos-3d` · `/api/roles` · `/api/tiendas` · `/api/planes-suscripcion` · `/api/tipos-movimiento` · `/api/configuraciones` · `/api/usuarios` · `/api/inventario` · `/api/cotizaciones` |
 | Rutas de la API | `backend/motopreview/urls.py` |

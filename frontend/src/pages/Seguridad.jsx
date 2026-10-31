@@ -138,6 +138,22 @@ export default function Seguridad() {
   const isChecked = (id) => !!permisosRol[id];
   const getScopeValue = (id) => permisosRol[id] || '';
 
+  /**
+   * Alcances que ofrece la celda. La lista la decide el backend
+   * (`scopes_validos`), que es también la que valida al guardar: un `tienda`
+   * sobre un recurso sin columna de tienda no filtra filas, así que la casilla
+   * parecería un permiso cuando no autoriza nada. Si la base ya trae ese valor
+   * (la siembra antigua lo escribía) se muestra marcado como no compatible, para
+   * que quien edita vea el conflicto y lo resuelva en vez de reenviarlo.
+   */
+  function scopesDe(accion) {
+    const permitidos = accion.scopes_validos || ['global', 'tienda', 'propio'];
+    const guardado = getScopeValue(accion.id_recurso_accion);
+    return guardado && !permitidos.includes(guardado)
+      ? [...permitidos, guardado]
+      : permitidos;
+  }
+
   function manejarScope(id, e) {
     const scope = e.target.value;
     setPermisosRol((prev) => {
@@ -427,9 +443,11 @@ export default function Seguridad() {
                                   onChange={(e) => manejarScope(propia.id_recurso_accion, e)}
                                   aria-label={`Scope para ${propia.accion_nombre} en ${recurso.nombre}`}
                                 >
-                                  <option value="global">{scopeLabels.global}</option>
-                                  <option value="tienda">{scopeLabels.tienda}</option>
-                                  <option value="propio">{scopeLabels.propio}</option>
+                                  {scopesDe(propia).map((alcance) => (
+                                    <option key={alcance} value={alcance}>
+                                      {scopeLabels[alcance] || `${alcance} (no compatible)`}
+                                    </option>
+                                  ))}
                                 </select>
                               )}
                             </div>

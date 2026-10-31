@@ -58,15 +58,25 @@ curl https://<tu-backend>.onrender.com/api/health
 Responde `200` con `"ok": true, "database_connected": true` si la base conecta,
 o `503` con `"ok": false` si no.
 
-## 6. Contraseña del superusuario
+## 6. Contraseña del superadmin
 
-En local y contra la base:
+`python manage.py changepassword` **no sirve en esta app**: escribe un hash
+PBKDF2 y el login verifica solo con `bcrypt.checkpw` (`api/views.py:337-341`),
+así que deja la cuenta cerrada. Usar el script que escribe el hash bcrypt
+correcto, desde `backend/`:
 
 ```powershell
-python manage.py changepassword admin
+# sin escribir: muestra la base destino y el estado de la cuenta
+$env:SOLO_VERIFICAR = "1"
+python manage.py shell --no-imports -c "exec(open('scripts/restablecer_password_superadmin.py', encoding='utf-8').read())"
+
+# aplica (pide la contraseña por getpass; no la pongas en la línea de comando)
+python manage.py shell --no-imports -c "exec(open('scripts/restablecer_password_superadmin.py', encoding='utf-8').read())"
 ```
 
-Usa una contraseña fuerte que no sea la temporal conocida.
+Contra una base remota la escritura exige `MOTOPREVIEW_CONFIRMAR_BASE_REMOTA=1`.
+Usa una contraseña fuerte que no sea la temporal conocida y que no haya quedado
+escrita en un chat, un log o el historial de la shell.
 
 ## 7. Pruebas automáticas en Render/CI
 

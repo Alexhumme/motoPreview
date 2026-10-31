@@ -3,9 +3,6 @@
 Aplicación **React 19 + Vite** (SPA) del catálogo, configurador 3D y gestión de
 cotizaciones de accesorios para motocicletas.
 
-superadmin@motopreview.com
-SuperAdmin#2026
-
 ## Scripts
 
 | Comando | Descripción |

@@ -124,6 +124,7 @@ Cambios:
 | `frontend/README.md:6-7` | Borrado el bloque con el correo y la contraseña demo. |
 | `backend/scripts/verificar_rbac.ps1` | Lee `MOTOPREVIEW_ADMIN_EMAIL` / `MOTOPREVIEW_ADMIN_PASSWORD`; si faltan, pide `Get-Credential`. Se quitó además el `Write-Host` que imprimía los primeros 20 caracteres del token JWT (era una sesión válida en consola). |
 | `backend/scripts/sembrar_superadmin.py` | La contraseña sale de `MOTOPREVIEW_SUPERADMIN_PASSWORD` o de `getpass`, y se valida con `api.services.validar_password`. El correo se puede fijar con `MOTOPREVIEW_SUPERADMIN_EMAIL`. Si el usuario ya existe **ya no se le reescribe la contraseña**: solo se asegura `email_verificado`. |
+| `backend/scripts/restablecer_password_superadmin.py` | Nuevo, para el caso que el sembrado no cubre: la cuenta ya existe y hay que cambiarle la puerta maestra. Lee la contraseña por `getpass` (o `MOTOPREVIEW_SUPERADMIN_NEW_PASSWORD`), la valida con `validar_password`, escribe el hash bcrypt que verifica `password_matches` y comprueba el resultado con `bcrypt.checkpw` contra la fila recién escrita. `SOLO_VERIFICAR=1` informa base destino y estado de la cuenta sin escribir; contra una base remota la escritura exige `MOTOPREVIEW_CONFIRMAR_BASE_REMOTA=1`. No usa `manage.py changepassword`: ese comando deja un hash PBKDF2 que el login rechaza y cierra la cuenta. |
 
 Verificación ejecutada:
 

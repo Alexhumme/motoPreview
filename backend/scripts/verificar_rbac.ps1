@@ -1,15 +1,26 @@
 $ErrorActionPreference = "Stop"
 $base = "http://localhost:8000/api"
 
+# Las credenciales no viven en el repo. Pasarlas por variables de entorno o, si
+# faltan, dejar que la consola las pida.
+$correo = $env:MOTOPREVIEW_ADMIN_EMAIL
+$clave = $env:MOTOPREVIEW_ADMIN_PASSWORD
+if (-not $correo -or -not $clave) {
+    $credencial = Get-Credential -Message "Cuenta superadmin para probar $base"
+    $correo = $credencial.UserName
+    $clave = $credencial.GetNetworkCredential().Password
+}
+
 # 1. Login superadmin
 $login = Invoke-RestMethod -Method Post -Uri "$base/auth/login" -ContentType "application/json" -Body (@{
-    usu_email = "superadmin@motopreview.com"
-    password  = "SuperAdmin#2026"
+    usu_email = $correo
+    password  = $clave
 } | ConvertTo-Json)
 $token = $login.token
 if (-not $token) { $token = $login.access_token }
 if (-not $token) { $token = $login.access }
-Write-Host "1) LOGIN superadmin OK -> token=$($token.Substring(0,20))..."
+# No se imprime ni el trozo del token: es una sesión válida.
+Write-Host "1) LOGIN superadmin OK"
 Write-Host "   usuario: $($login.usuario.usu_email)  id_rol: $($login.usuario.id_rol)"
 $headers = @{ Authorization = "Bearer $token" }
 
@@ -57,9 +68,11 @@ foreach ($rec in $matriz) {
         $permiso = $rec.acciones | Where-Object { $_.accion_codigo -eq "leer" } | Select-Object -First 1
     }
 }
-$payload = @{ permisos = @(@{ id_recurso_accion = $permiso.id_recurso_accion; scope = "tienda" }) } | ConvertTo-Json -Depth 5
+# `producto` no tiene columna de tienda: la matriz rechaza un scope `tienda`
+# sobre ese recurso porque no filtraría filas. El catálogo se concede en global.
+$payload = @{ permisos = @(@{ id_recurso_accion = $permiso.id_recurso_accion; scope = "global" }) } | ConvertTo-Json -Depth 5
 $put = Invoke-RestMethod -Method Put -Uri "$base/roles/$idTemp/permisos" -Headers $headers -ContentType "application/json" -Body $payload
-Write-Host "5) PUT otorgar productos:leer[tienda] -> $($put | ConvertTo-Json -Compress)"
+Write-Host "5) PUT otorgar productos:leer[global] -> $($put | ConvertTo-Json -Compress)"
 
 # 6. Verificar
 $matrizTemp = Invoke-RestMethod -Method Get -Uri "$base/recursos-con-permisos?rol_id=$idTemp" -Headers $headers
