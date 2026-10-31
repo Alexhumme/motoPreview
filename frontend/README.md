@@ -18,7 +18,7 @@ cotizaciones de accesorios para motocicletas.
 Copia `.env.example` a `.env.local` y define la URL del backend:
 
 ```
-VITE_API_URL=http://127.0.0.1:8000/api
+VITE_API_URL=http://127.0.0.1:8001/api
 ```
 
 Si no se define, `src/config.js` usa el backend de Render por defecto.
