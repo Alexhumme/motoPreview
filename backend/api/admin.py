@@ -11,11 +11,14 @@ Seguridad, Autenticación) en lugar de agruparlos por aplicación.
 """
 from uuid import UUID
 from django import forms
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.contrib.auth.admin import GroupAdmin, UserAdmin as AuthUserAdmin
 from django.contrib.auth.models import Group
 from django.contrib.auth.models import User as AuthUser
+from django.db import transaction
 from django.utils.text import slugify
+
+from .security import normalizar_concesiones, scopes_validos
 
 from .models import (
     Accion,
@@ -196,12 +199,14 @@ class RoleAdmin(BaseAdmin):
                         for ra in recurso.recurso_acciones.filter(activo=True).select_related("accion").order_by("accion__orden"):
                             if ra.activo:
                                 label = f"{recurso.nombre} → {ra.accion.nombre}"
-                                if ra.requiere_scope:
-                                    choices.append((f"{ra.id_recurso_accion}:global", f"{label} (Global)"))
-                                    choices.append((f"{ra.id_recurso_accion}:tienda", f"{label} (Tienda)"))
-                                    choices.append((f"{ra.id_recurso_accion}:propio", f"{label} (Propio)"))
-                                else:
-                                    choices.append((f"{ra.id_recurso_accion}:global", f"{label} (Global)"))
+                                # Solo los alcances que el recurso puede expresar:
+                                # un `tienda` sobre una tabla sin columna de tienda
+                                # no filtra filas y la casilla parecería un permiso.
+                                nombres = {"global": "Global", "tienda": "Tienda",
+                                           "propio": "Propio"}
+                                for alcance in scopes_validos(recurso.codigo, ra.requiere_scope):
+                                    choices.append((f"{ra.id_recurso_accion}:{alcance}",
+                                                    f"{label} ({nombres[alcance]})"))
                     
                     kwargs["choices"] = choices
                     kwargs["initial"] = [
@@ -221,28 +226,52 @@ class RoleAdmin(BaseAdmin):
         super().save_model(request, obj, form, change)
 
         # Guardar permisos RBAC
-        from api.models import RolRecurso
+        from api.models import RecursoAccion, RolRecurso
         if "permisos_rbac" in form.cleaned_data:
-            permisos_seleccionados = form.cleaned_data.get("permisos_rbac", [])
-
-            # Eliminar permisos antiguos
-            RolRecurso.objects.filter(rol=obj).delete()
-
-            # Crear nuevos permisos
-            for permiso_str in permisos_seleccionados:
+            entradas = []
+            for permiso_str in form.cleaned_data.get("permisos_rbac", []):
+                identificador, _, alcance = permiso_str.rpartition(":")
                 try:
-                    ra_id_str, scope = permiso_str.rsplit(":", 1)
-                    ra_id = UUID(ra_id_str)
-                except (ValueError, IndexError):
-                    continue
-                # concedido_por queda nulo: el usuario del panel es de auth_user,
-                # otra tabla, y no puede referenciar la FK de usuario (negocio).
-                RolRecurso.objects.create(
-                    rol=obj,
-                    recurso_accion_id=ra_id,
-                    scope=scope,
-                    activo=True,
+                    identificador = str(UUID(identificador.strip())).lower()
+                except (ValueError, TypeError):
+                    identificador = None
+                entradas.append((identificador, alcance))
+
+            # Las casillas del formulario solo ofrecen alcances válidos, pero el
+            # estado que llega de la base puede traer los incompatibles que la
+            # siembra antigua escribió; y dos casillas de la misma combinación
+            # ("global" y "tienda") sí son dos decisiones contradictorias.
+            ids = [clave for clave, _ in entradas if clave]
+            combinaciones = {
+                str(id_recurso_accion).lower(): (codigo_recurso, requiere_scope)
+                for id_recurso_accion, codigo_recurso, requiere_scope in
+                RecursoAccion.objects.filter(id_recurso_accion__in=ids).values_list(
+                    "id_recurso_accion", "recurso__codigo", "requiere_scope"
                 )
+            }
+            normalizados, errores = normalizar_concesiones(entradas, combinaciones)
+            if errores:
+                # Sin tocar la tabla: borrar y luego fallar deja al rol sin permisos.
+                self.message_user(
+                    request,
+                    "No se guardaron los permisos RBAC: " + "; ".join(errores),
+                    messages.ERROR,
+                )
+                return
+
+            with transaction.atomic():
+                RolRecurso.objects.filter(rol=obj).delete()
+                RolRecurso.objects.bulk_create([
+                    # concedido_por queda nulo: el usuario del panel es de auth_user,
+                    # otra tabla, y no puede referenciar la FK de usuario (negocio).
+                    RolRecurso(
+                        rol=obj,
+                        recurso_accion_id=entrada["id_recurso_accion"],
+                        scope=entrada["scope"],
+                        activo=True,
+                    )
+                    for entrada in normalizados
+                ])
 
 
 admin_site.register(Role, RoleAdmin)

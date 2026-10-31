@@ -24,8 +24,7 @@ from .security import (
     ROLE_CUSTOMER,
     ROLE_SELLER,
     ROLE_SUPERADMIN,
-    IsStoreAdmin,
-    IsStoreStaff,
+    IsSuperAdmin,
     has_any_role,
 )
 from .views import BrandCollection, paginate_response, resolver_tienda_cotizacion
@@ -35,7 +34,11 @@ SECRETO_PRUEBA = "clave-de-prueba-de-32-bytes-para-automatizacion"
 
 
 def usuario_falso(role_ids, *, tienda=None):
-    """Usuario de prueba sin BD, compatible con los permisos de DRF."""
+    """Usuario de prueba sin BD, compatible con los permisos de DRF.
+
+    `rol_superadmin_vigente` precarga el atributo que `es_superadmin` consulta
+    contra la tabla `rol`; así estas pruebas no necesitan base de datos.
+    """
     return SimpleNamespace(
         is_authenticated=True,
         is_anonymous=False,
@@ -46,6 +49,7 @@ def usuario_falso(role_ids, *, tienda=None):
         role_ids=list(role_ids),
         estado_usuario="activo",
         usu_nombre="Usuario de prueba",
+        rol_superadmin_vigente=True,
     )
 
 
@@ -366,21 +370,10 @@ class PermisosUnitTests(SimpleTestCase):
     def test_has_any_role_no_distingue_mayusculas(self):
         self.assertTrue(has_any_role(usuario_falso([ROLE_ADMIN.upper()]), (ROLE_ADMIN,)))
 
-    def test_staff_admite_administrador_y_vendedor(self):
-        permiso = IsStoreStaff()
-        self.assertTrue(permiso.has_permission(self._request(ADMIN), None))
-        self.assertTrue(permiso.has_permission(self._request(VENDEDOR), None))
-
-    def test_staff_rechaza_cliente_y_anonimo(self):
-        permiso = IsStoreStaff()
-        self.assertFalse(permiso.has_permission(self._request(CLIENTE), None))
-        self.assertFalse(permiso.has_permission(self._request(ANONIMO), None))
-
-    def test_admin_solo_admite_administrador(self):
-        permiso = IsStoreAdmin()
-        self.assertTrue(permiso.has_permission(self._request(ADMIN), None))
-        self.assertFalse(permiso.has_permission(self._request(VENDEDOR), None))
-        self.assertFalse(permiso.has_permission(self._request(CLIENTE), None))
+    def test_superadmin_admite_su_rol(self):
+        permiso = IsSuperAdmin()
+        self.assertTrue(permiso.has_permission(self._request(SUPERADMIN), None))
+        self.assertFalse(permiso.has_permission(self._request(ADMIN), None))
         self.assertFalse(permiso.has_permission(self._request(ANONIMO), None))
 
 

@@ -28,6 +28,7 @@ from .models import (
     User,
 )
 from . import services
+from .security import scopes_validos, validar_concesion
 
 
 class AccessoryCategorySerializer(serializers.ModelSerializer):
@@ -205,7 +206,9 @@ class RoleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Role
         fields = ("id_rol", "nombre_rol", "activo", "es_superadmin")
-        read_only_fields = ("id_rol",)
+        # `es_superadmin` lo fija la siembra del rol de sede; si el panel pudiera
+        # escribirlo, un rol de tienda se marcaría como privilegiado.
+        read_only_fields = ("id_rol", "es_superadmin")
 
 
 class SubscriptionPlanSerializer(serializers.ModelSerializer):
@@ -614,6 +617,31 @@ class RolRecursoSerializer(serializers.ModelSerializer):
         fields = ("id_rol_recurso", "id_rol", "id_recurso_accion", "recurso_accion", "scope", "concedido_por", "concedido_en", "activo")
         read_only_fields = ("id_rol_recurso", "concedido_en")
 
+    def validate(self, attrs):
+        """El scope se normaliza y se valida contra el recurso de la combinación.
+
+        `POST /api/rol-recursos` era la puerta ancha de la matriz: aceptaba
+        cualquier texto y cualquier alcance sobre cualquier recurso. Un `tienda`
+        sobre un recurso sin columna de tienda queda inerte —`scopes_aplicables`
+        nunca lo ofrece—, pero en el panel parece una concesión vigente.
+        """
+        recurso_accion = attrs.get("recurso_accion") or getattr(
+            self.instance, "recurso_accion", None
+        )
+        if recurso_accion is None:
+            raise serializers.ValidationError(
+                {"id_recurso_accion": "Indique la combinación recurso-acción."}
+            )
+        valido, motivo = validar_concesion(
+            recurso_accion.recurso.codigo,
+            attrs.get("scope", getattr(self.instance, "scope", "global")),
+            requiere_scope=recurso_accion.requiere_scope,
+        )
+        if motivo:
+            raise serializers.ValidationError({"scope": motivo})
+        attrs["scope"] = valido
+        return attrs
+
 
 class RecursoConPermisosSerializer(serializers.ModelSerializer):
     """Recurso con sus acciones y estado de permiso para un rol específico"""
@@ -666,6 +694,12 @@ class RecursoConPermisosSerializer(serializers.ModelSerializer):
                 "accion_nombre": ra.accion.nombre,
                 "scope": concedidos.get(ra.id_recurso_accion),
                 "activo": ra.id_recurso_accion in concedidos,
+                # Los alcances que esta combinación puede expresar. La lista la
+                # decide el mismo criterio con el que se valida al guardar, así
+                # que el selector no puede ofrecer una casilla que luego se
+                # rechace o quede inerte.
+                "requiere_scope": ra.requiere_scope,
+                "scopes_validos": list(scopes_validos(obj.codigo, ra.requiere_scope)),
             }
             for ra in combinaciones
         ]

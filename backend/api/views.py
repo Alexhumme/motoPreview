@@ -54,14 +54,19 @@ from .models import (
 from .security import (
     EscribirConPermiso,
     HasPermiso,
-    IsStoreAdmin,
-    IsStoreStaff,
     IsSuperAdmin,
     ROLE_ADMIN,
     ROLE_CUSTOMER,
     ROLE_SELLER,
     ROLE_SUPERADMIN,
-    has_any_role,
+    es_rol_de_sede,
+    es_superadmin,
+    filas_del_scope,
+    politica_de_la_operacion,
+    puede_asignar_rol,
+    mismo_identificador,
+    normalizar_concesiones,
+    scopes_concedidos,
 )
 from .serializers import (
     AccionSerializer,
@@ -170,6 +175,49 @@ class DatabaseGuardMixin(DRFAPIView):
             detail = unavailable.data.get("error") or ServiceUnavailable.default_detail
             raise ServiceUnavailable(detail)
 
+    def check_object_permissions(self, request, obj):
+        """Mismo recorrido que hace `GenericAPIView`, pero en vistas propias.
+
+        Estas clases no heredan de `GenericAPIView`, así que DRF nunca llamaba
+        el chequeo de objeto y la matriz solo se consultaba contra el usuario
+        que firma, nunca contra la fila apuntada por el `pk`.
+        """
+        for permiso in self.get_permissions():
+            if not permiso.has_object_permission(request, self, obj):
+                self.permission_denied(
+                    request,
+                    message=getattr(permiso, "message", None),
+                    code=getattr(permiso, "code", None),
+                )
+
+    def filtrar_por_scope(self, request, queryset, *, campo_tienda="tienda_id",
+                          campo_dueno=None):
+        """(queryset, None) con las filas del alcance concedido, o (None, Response).
+
+        El `Q` sale de los mismos scopes con los que la petición pasó los
+        permisos, así que manipular un `pk` o un `?id_tienda=` no abre filas de
+        otra tienda ni de otro dueño. Devuelve el `Response` en vez de lanzar
+        para conservar los mensajes propios de cada ruta.
+        """
+        politica = politica_de_la_operacion(request, self)
+        if not politica:
+            return None, Response(
+                {"error": "No tiene un alcance de filas sobre este recurso."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        recurso, accion = politica
+        predicado, error = filas_del_scope(
+            request.user,
+            recurso,
+            scopes_concedidos(request.user, recurso, accion),
+            campo_tienda=campo_tienda,
+            campo_dueno=campo_dueno,
+        )
+        if error:
+            estado, mensaje = error
+            return None, Response({"error": mensaje}, status=estado)
+        return queryset.filter(predicado), None
+
 
 def can_send_email():
     return bool(settings.EMAIL_HOST and settings.DEFAULT_FROM_EMAIL)
@@ -193,13 +241,33 @@ def user_role_ids(user):
     return [str(role_id) for role_id in user.role_ids]
 
 
-def store_staff(user):
-    roles = {role.lower() for role in user_role_ids(user)}
-    return ROLE_ADMIN.lower() in roles or ROLE_SELLER.lower() in roles
+def es_cuenta_de_sede(user):
+    """El usuario lleva el rol fijo de sede, lo haya activado la matriz o no."""
+    return ROLE_SUPERADMIN.lower() in {str(rol).lower() for rol in (user_role_ids(user))}
 
 
-def es_superadmin(user):
-    return has_any_role(user, (ROLE_SUPERADMIN,))
+def denegar_edicion_de_cuenta(request, user, *, toca_privilegios):
+    """Los dos casos que la matriz no ve porque no son de una tienda.
+
+    `usuarios:actualizar` es un permiso de personal: no puede bloquear ni
+    desascender una cuenta de la sede, y nadie se reescribe el propio rol o el
+    propio estado (así el bloqueo accidental de la única cuenta de sede queda
+    cerrado). La autoelevación la cierra `puede_asignar_rol`.
+    """
+    if not toca_privilegios:
+        return None
+    if es_cuenta_de_sede(user) and not es_superadmin(request.user):
+        return Response(
+            {"error": "No está autorizado a editar una cuenta de la sede."},
+            status=status.HTTP_403_FORBIDDEN,
+        )
+    if mismo_identificador(
+            getattr(user, "id_usuario", None), getattr(request.user, "id_usuario", None)):
+        return Response(
+            {"error": "El propio rol y el propio estado los cambia otra cuenta."},
+            status=status.HTTP_403_FORBIDDEN,
+        )
+    return None
 
 
 def resolver_tienda_cotizacion(user, tienda_solicitada=None):
@@ -222,19 +290,22 @@ def resolver_tienda_cotizacion(user, tienda_solicitada=None):
     return tienda.id_tienda, None
 
 
-def scope_configurations(request, *, pk=None):
-    """Configuraciones visibles para el usuario (propias) o el personal (de su tienda)."""
+def scope_configurations(view, request, *, pk=None):
+    """(queryset, None) o (None, Response) con las configuraciones del alcance.
+
+    `tienda` se alcanza por el dueño de la ficha (`usuario__tienda`): la tabla
+    `configuracion` no tiene columna de tienda, así que el personal de tienda ve
+    las fichas de los usuarios de su tienda y el cliente las suyas.
+    """
     queryset = Configuration.objects.select_related("usuario", "moto__modelo__marca").prefetch_related(
         "detalles__categoria_accesorio"
     )
-    if store_staff(request.user):
-        user_ids = User.objects.filter(tienda_id=request.user.id_tienda).values_list(
-            "id_usuario", flat=True
-        )
-        queryset = queryset.filter(usuario_id__in=user_ids)
-    else:
-        queryset = queryset.filter(usuario_id=request.user.id_usuario)
-    return queryset.filter(pk=pk) if pk else queryset
+    queryset, error = view.filtrar_por_scope(
+        request, queryset, campo_tienda="usuario__tienda", campo_dueno="usuario_id"
+    )
+    if error:
+        return None, error
+    return (queryset.filter(pk=pk), None) if pk else (queryset, None)
 
 
 def prime_user_roles(users):
@@ -405,6 +476,10 @@ class ResourceCollection(DatabaseGuardMixin):
     # La subclase debe declarar el recurso RBAC que protege sus mutaciones.
     permiso_recurso = None
     permiso_accion = None
+    permiso_detalle = False
+    # `None` obliga a declarar: True = la lectura es la vidriera del catálogo y
+    # se sirve sin sesión; False = leer también pasa por la matriz.
+    lectura_sin_matriz = None
 
     # Relaciones que anida el serializer. Sin esto cada fila dispara un SELECT
     # por relación, y contra una base remota ese coste es un viaje de red por fila.
@@ -448,9 +523,19 @@ class ResourceDetail(DatabaseGuardMixin):
     # La subclase debe declarar el recurso RBAC que protege sus mutaciones.
     permiso_recurso = None
     permiso_accion = None
+    # Un `pk` en la ruta es detalle (`leer`), no listado (`listar`): son acciones
+    # distintas de la matriz y conceder una no concede la otra.
+    permiso_detalle = True
+
+    queryset_relaciones = ()
 
     def get_object(self, pk):
-        return self.model.objects.get(pk=pk)
+        queryset = self.model.objects.all()
+        if self.queryset_relaciones:
+            queryset = queryset.select_related(*self.queryset_relaciones)
+        instance = queryset.get(pk=pk)
+        self.check_object_permissions(self.request, instance)
+        return instance
 
     def get(self, request, pk):
 
@@ -508,6 +593,7 @@ class CategoryCollection(ResourceCollection):
     model = AccessoryCategory
     serializer_class = AccessoryCategorySerializer
     permiso_recurso = "categorias"
+    lectura_sin_matriz = True
 
 
 class CategoryDetail(ResourceDetail):
@@ -515,12 +601,14 @@ class CategoryDetail(ResourceDetail):
     serializer_class = AccessoryCategorySerializer
     permiso_recurso = "categorias"
     not_found_message = "Categoría no encontrada."
+    lectura_sin_matriz = True
 
 
 class BrandCollection(ResourceCollection):
     model = MotorcycleBrand
     serializer_class = MotorcycleBrandSerializer
     permiso_recurso = "marcas"
+    lectura_sin_matriz = True
 
 
 class BrandDetail(ResourceDetail):
@@ -528,12 +616,14 @@ class BrandDetail(ResourceDetail):
     serializer_class = MotorcycleBrandSerializer
     permiso_recurso = "marcas"
     not_found_message = "Marca no encontrada."
+    lectura_sin_matriz = True
 
 
 class ModelCollection(ResourceCollection):
     model = MotorcycleModel
     serializer_class = MotorcycleModelSerializer
     permiso_recurso = "modelos"
+    lectura_sin_matriz = True
 
     def get_queryset(self):
         return MotorcycleModel.objects.select_related("marca").all()
@@ -544,15 +634,15 @@ class ModelDetail(ResourceDetail):
     serializer_class = MotorcycleModelSerializer
     permiso_recurso = "modelos"
     not_found_message = "Modelo de moto no encontrado."
-
-    def get_object(self, pk):
-        return MotorcycleModel.objects.select_related("marca").get(pk=pk)
+    queryset_relaciones = ("marca",)
+    lectura_sin_matriz = True
 
 
 class MotorcycleCollection(ResourceCollection):
     model = Motorcycle
     serializer_class = MotorcycleSerializer
     permiso_recurso = "motos"
+    lectura_sin_matriz = True
 
     def get_queryset(self):
         return Motorcycle.objects.select_related("modelo__marca").all()
@@ -563,15 +653,17 @@ class MotorcycleDetail(ResourceDetail):
     serializer_class = MotorcycleSerializer
     permiso_recurso = "motos"
     not_found_message = "Moto no encontrada."
-
-    def get_object(self, pk):
-        return Motorcycle.objects.select_related("modelo__marca").get(pk=pk)
+    queryset_relaciones = ("modelo__marca",)
+    lectura_sin_matriz = True
 
 
 class RoleCollection(ResourceCollection):
     model = Role
     serializer_class = RoleSerializer
     permiso_recurso = "roles"
+    # La lista de roles ya es información de administración: qué roles existen y
+    # cuáles están activos no le sirve a la vidriera.
+    lectura_sin_matriz = False
 
 
 class RoleDetail(ResourceDetail):
@@ -579,6 +671,21 @@ class RoleDetail(ResourceDetail):
     serializer_class = RoleSerializer
     permiso_recurso = "roles"
     not_found_message = "Rol no encontrado."
+    lectura_sin_matriz = False
+
+    def update(self, request, pk, *, partial):
+        try:
+            role = self.get_object(pk)
+        except self.model.DoesNotExist:
+            return Response({"error": self.not_found_message}, status=status.HTTP_404_NOT_FOUND)
+        if es_rol_de_sede(role) and not es_superadmin(request.user):
+            # `activo=False` en el rol de sede apaga el bypass para toda la
+            # plataforma: es un apagón, no una edición de catálogo.
+            return Response(
+                {"error": "El rol de la sede solo lo edita la sede."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        return super().update(request, pk, partial=partial)
 
     def delete(self, request, pk):
         from api.models import RolRecurso
@@ -588,7 +695,7 @@ class RoleDetail(ResourceDetail):
         except self.model.DoesNotExist:
             return Response({"error": self.not_found_message}, status=status.HTTP_404_NOT_FOUND)
 
-        if role.es_superadmin:
+        if es_rol_de_sede(role):
             return Response(
                 {"error": "No se puede eliminar el rol de Superadmin."},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -619,8 +726,16 @@ class StoreCollection(ResourceCollection):
     # de una tienda lleva NIT, dirección, teléfono y correo: no es material de
     # vitrina y no debe leerse sin sesión.
     permission_classes = [IsAuthenticated & EscribirConPermiso]
+    # `True` aquí no abre la lectura al anónimo (eso lo cierra `IsAuthenticated`):
+    # deja que el vendedor lea su propia ficha en `/admin/tienda`, que es lo que
+    # hace hoy y la semilla no le concede `tiendas:leer`.
+    lectura_sin_matriz = True
 
     def get_queryset(self):
+        # La ficha de la propia tienda no se filtra por la matriz: el vendedor
+        # tiene declarada la lectura sin concesión `tiendas:leer` (así carga
+        # /admin/tienda) y un filtro por scopes le habría quitado su propia fila.
+        # El resultado es el mismo que daría la matriz: sede = todas, tienda = una.
         if es_superadmin(self.request.user):
             return Store.objects.select_related("plan").all()
         # El listado completo de tiendas es del superadmin; el personal solo
@@ -635,6 +750,7 @@ class StoreDetail(ResourceDetail):
     permiso_recurso = "tiendas"
     permission_classes = [IsAuthenticated & EscribirConPermiso]
     not_found_message = "Tienda no encontrada."
+    lectura_sin_matriz = True
 
     def get_object(self, pk):
         queryset = Store.objects.select_related("plan")
@@ -652,21 +768,18 @@ class UserCollection(DatabaseGuardMixin):
 
     def get(self, request):
 
-        queryset = User.objects.all()
-        if es_superadmin(request.user):
-            # El superadmin no pertenece a una tienda: ve a todos y filtra con
-            # ?id_tienda= cuando quiere el personal de una sola.
-            tienda_filtro = request.query_params.get("id_tienda")
-            if tienda_filtro:
-                try:
-                    tienda_filtro = UUID(str(tienda_filtro))
-                except (TypeError, ValueError):
-                    return Response({"error": "id_tienda debe ser un UUID válido."}, status=400)
-                queryset = queryset.filter(tienda_id=tienda_filtro)
-        else:
-            if not request.user.id_tienda:
-                return Response({"error": "El usuario no tiene una tienda asignada."}, status=400)
-            queryset = queryset.filter(tienda_id=request.user.id_tienda)
+        queryset, error = self.filtrar_por_scope(request, User.objects.all())
+        if error:
+            return error
+        # El filtro por tienda del query es una acotación encima del alcance: un
+        # personal de tienda que pida otra tienda no recibe filas, no la otra.
+        tienda_filtro = request.query_params.get("id_tienda")
+        if tienda_filtro:
+            try:
+                tienda_filtro = UUID(str(tienda_filtro))
+            except (TypeError, ValueError):
+                return Response({"error": "id_tienda debe ser un UUID válido."}, status=400)
+            queryset = queryset.filter(tienda_id=tienda_filtro)
         queryset = queryset.order_by("usu_nombre", "pk")
         if request.query_params.get("pagina") is None:
             # Sin paginación: precarga los roles en 2 queries (evita el N+1).
@@ -679,15 +792,21 @@ class UserCollection(DatabaseGuardMixin):
 class UserDetail(DatabaseGuardMixin):
     permission_classes = [HasPermiso]
     permiso_recurso = "usuarios"
+    permiso_detalle = True
     serializer_class = UserSerializer
 
     def get_target(self, request, pk):
-        queryset = User.objects.all()
-        if not es_superadmin(request.user):
-            if not request.user.id_tienda:
-                return None
-            queryset = queryset.filter(tienda_id=request.user.id_tienda)
-        return queryset.filter(pk=pk).first()
+        queryset, error = self.filtrar_por_scope(request, User.objects.all())
+        if error is not None:
+            # Sin alcance de filas no hay usuario que mostrar: la ficha responde
+            # 404, como cuando el `pk` es de otra tienda.
+            return None
+        user = queryset.filter(pk=pk).first()
+        if user is not None:
+            # El filtro de arriba ya cierra la puerta; esto es la comprobación
+            # de la matriz contra la tienda del usuario editado.
+            self.check_object_permissions(request, user)
+        return user
 
     def get(self, request, pk):
 
@@ -715,8 +834,20 @@ class UserDetail(DatabaseGuardMixin):
         valid_states = {"activo", "inactivo", "bloqueado"}
         if state is not None and state not in valid_states:
             return Response({"error": "estado_usuario no es válido."}, status=400)
-        if role_id is not None and not Role.objects.filter(pk=role_id).exists():
-            return Response({"error": "El rol indicado no existe."}, status=400)
+        rol_destino = None
+        if role_id is not None:
+            rol_destino = Role.objects.filter(pk=role_id).first()
+            if not rol_destino:
+                return Response({"error": "El rol indicado no existe."}, status=400)
+            if not puede_asignar_rol(request.user, rol_destino):
+                return Response(
+                    {"error": "No está autorizado a asignar el rol indicado."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+        error = denegar_edicion_de_cuenta(
+            request, user, toca_privilegios=(state is not None or rol_destino is not None))
+        if error:
+            return error
         if password is not None:
             password_error = services.validar_password(password)
             if password_error:
@@ -742,6 +873,9 @@ class UserDetail(DatabaseGuardMixin):
         user = self.get_target(request, pk)
         if not user:
             return Response({"error": "Usuario no encontrado."}, status=status.HTTP_404_NOT_FOUND)
+        error = denegar_edicion_de_cuenta(request, user, toca_privilegios=True)
+        if error:
+            return error
         user.estado_usuario = "bloqueado"
         user.save(update_fields=["estado_usuario"])
         return Response(
@@ -753,6 +887,7 @@ class Model3DCollection(ResourceCollection):
     model = Model3D
     serializer_class = Model3DSerializer
     permiso_recurso = "modelos3d"
+    lectura_sin_matriz = True
 
     def get_queryset(self):
         return Model3D.objects.select_related("accesorio").all()
@@ -763,9 +898,8 @@ class Model3DDetail(ResourceDetail):
     serializer_class = Model3DSerializer
     permiso_recurso = "modelos3d"
     not_found_message = "Modelo 3D no encontrado."
-
-    def get_object(self, pk):
-        return Model3D.objects.select_related("accesorio").get(pk=pk)
+    queryset_relaciones = ("accesorio",)
+    lectura_sin_matriz = True
 
 
 class Model3DByAccessory(DatabaseGuardMixin):
@@ -796,10 +930,11 @@ class Model3DByAccessory(DatabaseGuardMixin):
 
 class CompatibilityCollection(DatabaseGuardMixin):
     serializer_class = CompatibilitySerializer
-
-    def get_permissions(self):
-        # La matriz de compatibilidad solo la administra el administrador de tienda.
-        return [AllowAny()] if self.request.method == "GET" else [IsStoreAdmin()]
+    permission_classes = [EscribirConPermiso]
+    permiso_recurso = "compatibilidad"
+    # La matriz de compatibilidad es parte de la vidriera: el configurador la lee
+    # sin sesión. Las escrituras ya no las manda el rol, sino `compatibilidad:*`.
+    lectura_sin_matriz = True
 
     def get(self, request):
         links = AccessoryCompatibility.objects.select_related(
@@ -906,11 +1041,13 @@ class CompatibilityDetail(ResourceDetail):
     serializer_class = CompatibilitySerializer
     permiso_recurso = "compatibilidad"
     not_found_message = "Compatibilidad no encontrada."
+    lectura_sin_matriz = True
 
 
 class InventoryCollection(DatabaseGuardMixin):
-    permission_classes = [IsStoreStaff]
+    permission_classes = [HasPermiso]
     serializer_class = InventorySerializer
+    permiso_recurso = "inventario"
 
     def get_queryset(self, request):
         return Inventory.objects.select_related(
@@ -918,13 +1055,13 @@ class InventoryCollection(DatabaseGuardMixin):
             "producto__categoria_producto",
             "producto__categoria_accesorio",
             "producto__tipo_accesorio",
-        ).filter(tienda_id=request.user.id_tienda)
+        )
 
     def get(self, request):
 
-        if not request.user.id_tienda:
-            return Response({"error": "El usuario no tiene una tienda asignada."}, status=400)
-        rows = self.get_queryset(request)
+        rows, error = self.filtrar_por_scope(request, self.get_queryset(request))
+        if error:
+            return error
         return paginate_response(request, rows, InventorySerializer)
 
     @extend_schema(
@@ -980,19 +1117,25 @@ class InventoryCollection(DatabaseGuardMixin):
 
 
 class InventoryDetail(DatabaseGuardMixin):
-    permission_classes = [IsStoreStaff]
+    permission_classes = [HasPermiso]
     serializer_class = InventorySerializer
+    permiso_recurso = "inventario"
+    permiso_detalle = True
 
     def get(self, request, pk):
 
-        instance = Inventory.objects.select_related(
-            "tienda__plan",
-            "producto",
-            "producto__categoria_accesorio",
-            "producto__tipo_accesorio",
-        ).filter(
-            pk=pk, tienda_id=request.user.id_tienda
-        ).first()
+        queryset, error = self.filtrar_por_scope(
+            request,
+            Inventory.objects.select_related(
+                "tienda__plan",
+                "producto",
+                "producto__categoria_accesorio",
+                "producto__tipo_accesorio",
+            ),
+        )
+        if error:
+            return error
+        instance = queryset.filter(pk=pk).first()
         if not instance:
             return Response(
                 {"error": "Registro de inventario no encontrado."},
@@ -1002,8 +1145,11 @@ class InventoryDetail(DatabaseGuardMixin):
 
 
 class InventoryMovementView(DatabaseGuardMixin):
-    permission_classes = [IsStoreStaff]
+    permission_classes = [HasPermiso]
     serializer_class = InventoryMovementSerializer
+    # La tabla `movimiento_inventario` no tiene recurso propio sembrado: el
+    # asiento de inventario se autoriza con `inventario:crear`.
+    permiso_recurso = "inventario"
 
     def post(self, request):
 
@@ -1019,10 +1165,14 @@ class InventoryMovementView(DatabaseGuardMixin):
         except (TypeError, ValueError):
             return Response({"error": "mov_cantidad debe ser un entero."}, status=400)
 
+        filas, error = self.filtrar_por_scope(request, Inventory.objects.all())
+        if error:
+            return error
+
         try:
             with transaction.atomic():
-                inventory = Inventory.objects.select_for_update().filter(
-                    pk=request.data["id_inventario"], tienda_id=request.user.id_tienda
+                inventory = filas.select_for_update().filter(
+                    pk=request.data["id_inventario"]
                 ).first()
                 if not inventory:
                     return Response(
@@ -1070,18 +1220,21 @@ class InventoryMovementView(DatabaseGuardMixin):
 
 
 class QuoteCollection(DatabaseGuardMixin):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [HasPermiso]
     serializer_class = QuoteSerializer
+    permiso_recurso = "cotizaciones"
 
     def get(self, request):
 
-        queryset = Quote.objects.select_related(
-            "tienda", "usuario", "moto__modelo__marca"
-        ).prefetch_related("detalle_cotizacion__categoria_accesorio")
-        if store_staff(request.user):
-            queryset = queryset.filter(tienda_id=request.user.id_tienda)
-        else:
-            queryset = queryset.filter(usuario_id=request.user.id_usuario)
+        queryset, error = self.filtrar_por_scope(
+            request,
+            Quote.objects.select_related(
+                "tienda", "usuario", "moto__modelo__marca"
+            ).prefetch_related("detalle_cotizacion__categoria_accesorio"),
+            campo_dueno="usuario_id",
+        )
+        if error:
+            return error
         return paginate_response(
             request, queryset.order_by("-fecha_solicitud", "pk"), QuoteSerializer
         )
@@ -1152,18 +1305,22 @@ class QuoteCollection(DatabaseGuardMixin):
 
 
 class QuoteDetailView(DatabaseGuardMixin):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [HasPermiso]
     serializer_class = QuoteSerializer
+    permiso_recurso = "cotizaciones"
+    permiso_detalle = True
 
     def get(self, request, pk):
 
-        queryset = Quote.objects.select_related("tienda", "usuario", "moto__modelo__marca").prefetch_related(
-            "detalle_cotizacion__categoria_accesorio"
+        queryset, error = self.filtrar_por_scope(
+            request,
+            Quote.objects.select_related("tienda", "usuario", "moto__modelo__marca").prefetch_related(
+                "detalle_cotizacion__categoria_accesorio"
+            ),
+            campo_dueno="usuario_id",
         )
-        if store_staff(request.user):
-            queryset = queryset.filter(tienda_id=request.user.id_tienda)
-        else:
-            queryset = queryset.filter(usuario_id=request.user.id_usuario)
+        if error:
+            return error
         quote = queryset.filter(pk=pk).first()
         if not quote:
             return Response({"error": "Cotización no encontrada."}, status=404)
@@ -1171,8 +1328,13 @@ class QuoteDetailView(DatabaseGuardMixin):
 
 
 class QuoteStatus(DatabaseGuardMixin):
-    permission_classes = [IsStoreStaff]
+    permission_classes = [HasPermiso]
     serializer_class = QuoteSerializer
+    permiso_recurso = "cotizaciones"
+    permiso_detalle = True
+    # Cambiar el estado es una actualización de la cotización, no una creación,
+    # y el verbo POST no lo puede deducir la matriz.
+    permiso_accion = "actualizar"
 
     @extend_schema(
         request=QuoteStatusUpdateSerializer,
@@ -1196,11 +1358,15 @@ class QuoteStatus(DatabaseGuardMixin):
                 {"error": f"coti_estado debe ser uno de: {', '.join(sorted(QUOTE_STATES))}."},
                 status=400,
             )
+        filas, error = self.filtrar_por_scope(
+            request, Quote.objects.all(), campo_dueno="usuario_id"
+        )
+        if error:
+            return error
+
         try:
             with transaction.atomic():
-                quote = Quote.objects.select_for_update().filter(
-                    pk=pk, tienda_id=request.user.id_tienda
-                ).first()
+                quote = filas.select_for_update().filter(pk=pk).first()
                 if not quote:
                     return Response({"error": "Cotización no encontrada para esta tienda."}, status=404)
                 if not services.allow_state_transition(quote.coti_estado, new_state):
@@ -1272,16 +1438,30 @@ def register(request):
             {"error": "Solo un administrador autenticado puede registrar usuarios de tienda."},
             status=status.HTTP_403_FORBIDDEN,
         )
+    if not puede_asignar_rol(request.user, role):
+        # El rol de sede no se autopercibe desde el registro: un administrador de
+        # tienda con `usuarios:crear` crearía una cuenta global con solo cambiar
+        # `id_rol` en el body.
+        return Response(
+            {"error": "No está autorizado a asignar el rol indicado."},
+            status=status.HTTP_403_FORBIDDEN,
+        )
 
     user_store = getattr(request.user, "id_tienda", None)
-    store_id = user_store if not is_customer else request.data.get("id_tienda")
+    es_autenticado = bool(getattr(request.user, "is_authenticated", False))
+    # La vidriera pública es la única que trae tienda en el body. Cuando registra
+    # el personal, la cuenta nace en la tienda de quien registra: si no, un
+    # administrador adscribe clientes a la tienda vecina.
+    store_id = user_store if es_autenticado else request.data.get("id_tienda")
     if store_id:
         try:
             store_id = UUID(str(store_id))
         except (TypeError, ValueError):
             return Response({"error": "id_tienda debe ser un UUID válido."}, status=400)
-        if not Store.objects.filter(pk=store_id).exists():
-            return Response({"error": "La tienda indicada no existe."}, status=400)
+        if not Store.objects.filter(pk=store_id, estado_tienda="activa").exists():
+            return Response(
+                {"error": "La tienda indicada no existe o no está activa."}, status=400
+            )
     if not is_customer:
         store = Store.objects.select_related("plan").filter(pk=store_id).first()
         if not store:
@@ -1504,12 +1684,13 @@ def reset_password(request):
 
 
 # ---------------------------------------------------------------------------
-# Recursos de catálogo adicionales (lectura pública, escritura de store-admin)
+# Recursos de catálogo adicionales (lectura pública, escritura por la matriz)
 # ---------------------------------------------------------------------------
 class ProductCollection(ResourceCollection):
     model = Product
     serializer_class = ProductSerializer
     permiso_recurso = "productos"
+    lectura_sin_matriz = True
 
     def get_queryset(self):
         return Product.objects.select_related("categoria_producto").all()
@@ -1520,15 +1701,15 @@ class ProductDetail(ResourceDetail):
     serializer_class = ProductSerializer
     permiso_recurso = "productos"
     not_found_message = "Producto no encontrado."
-
-    def get_object(self, pk):
-        return Product.objects.select_related("categoria_producto").get(pk=pk)
+    queryset_relaciones = ("categoria_producto",)
+    lectura_sin_matriz = True
 
 
 class ProductCategoryCollection(ResourceCollection):
     model = ProductCategory
     serializer_class = ProductCategorySerializer
     permiso_recurso = "categorias"
+    lectura_sin_matriz = True
 
 
 class ProductCategoryDetail(ResourceDetail):
@@ -1536,12 +1717,14 @@ class ProductCategoryDetail(ResourceDetail):
     serializer_class = ProductCategorySerializer
     permiso_recurso = "categorias"
     not_found_message = "Categoría de producto no encontrada."
+    lectura_sin_matriz = True
 
 
 class AccessoryTypeCollection(ResourceCollection):
     model = AccessoryType
     serializer_class = AccessoryTypeSerializer
     permiso_recurso = "tipos"
+    lectura_sin_matriz = True
 
 
 class AccessoryTypeDetail(ResourceDetail):
@@ -1549,16 +1732,14 @@ class AccessoryTypeDetail(ResourceDetail):
     serializer_class = AccessoryTypeSerializer
     permiso_recurso = "tipos"
     not_found_message = "Tipo de accesorio no encontrado."
+    lectura_sin_matriz = True
 
 
 class AccesoriosCollection(ResourceCollection):
     model = Product
     serializer_class = AccesorioSerializer
     permiso_recurso = "productos"
-
-    def get_permissions(self):
-        # El catálogo es público; crear solo para el administrador de tienda.
-        return [AllowAny()] if self.request.method == "GET" else [IsStoreAdmin()]
+    lectura_sin_matriz = True
 
     def get_queryset(self):
         return Product.objects.select_related(
@@ -1591,10 +1772,10 @@ class AccesoriosCollection(ResourceCollection):
 class AccesorioDetail(DatabaseGuardMixin):
     serializer_class = AccesorioSerializer
     not_found_message = "Accesorio no encontrado."
-
-    def get_permissions(self):
-        # Detalle público (visualizador); edición solo para el administrador.
-        return [AllowAny()] if self.request.method == "GET" else [IsStoreAdmin()]
+    permission_classes = [EscribirConPermiso]
+    permiso_recurso = "productos"
+    permiso_detalle = True
+    lectura_sin_matriz = True
 
     def get_object(self, pk):
         return Product.objects.select_related(
@@ -1617,6 +1798,7 @@ class AccesorioDetail(DatabaseGuardMixin):
             instance = self.get_object(pk)
         except Product.DoesNotExist:
             return Response({"error": self.not_found_message}, status=status.HTTP_404_NOT_FOUND)
+        self.check_object_permissions(request, instance)
         input_serializer = AccesorioInputSerializer(instance, data=request.data, partial=True)
         if not input_serializer.is_valid():
             return Response({"error": input_serializer.errors}, status=400)
@@ -1638,6 +1820,9 @@ class MovementTypeCollection(ResourceCollection):
     model = MovementType
     serializer_class = MovementTypeSerializer
     permiso_recurso = "inventario"
+    # Los tipos de movimiento son catálogo interno de inventario: se listan con
+    # `inventario:listar`, no como vidriera.
+    lectura_sin_matriz = False
 
 
 class MovementTypeDetail(ResourceDetail):
@@ -1645,12 +1830,14 @@ class MovementTypeDetail(ResourceDetail):
     serializer_class = MovementTypeSerializer
     permiso_recurso = "inventario"
     not_found_message = "Tipo de movimiento no encontrado."
+    lectura_sin_matriz = False
 
 
 class SubscriptionPlanCollection(ResourceCollection):
     model = SubscriptionPlan
     serializer_class = SubscriptionPlanSerializer
     permiso_recurso = "tiendas"
+    lectura_sin_matriz = False
 
 
 class SubscriptionPlanDetail(ResourceDetail):
@@ -1658,38 +1845,50 @@ class SubscriptionPlanDetail(ResourceDetail):
     serializer_class = SubscriptionPlanSerializer
     permiso_recurso = "tiendas"
     not_found_message = "Plan de suscripción no encontrado."
+    lectura_sin_matriz = False
 
 
 class ConfigurationCollection(DatabaseGuardMixin):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [HasPermiso]
     serializer_class = ConfigurationSerializer
+    permiso_recurso = "configuraciones"
 
     def get(self, request):
-        return paginate_response(request, scope_configurations(request), ConfigurationSerializer)
+        queryset, error = scope_configurations(self, request)
+        if error:
+            return error
+        return paginate_response(request, queryset, ConfigurationSerializer)
 
 
 class ConfigurationDetail(DatabaseGuardMixin):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [HasPermiso]
     serializer_class = ConfigurationSerializer
+    permiso_recurso = "configuraciones"
+    permiso_detalle = True
 
     def get(self, request, pk):
-        instance = scope_configurations(request, pk=pk).first()
+        queryset, error = scope_configurations(self, request, pk=pk)
+        if error:
+            return error
+        instance = queryset.first()
         if not instance:
             return Response({"error": "Configuración no encontrada."}, status=status.HTTP_404_NOT_FOUND)
         return Response(ConfigurationSerializer(instance).data)
 
 
 class QuoteHistoryView(DatabaseGuardMixin):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [HasPermiso]
     serializer_class = QuoteStatusHistorySerializer
+    permiso_recurso = "cotizaciones"
+    permiso_detalle = True
 
     def get(self, request, pk):
-        quote_qs = Quote.objects.all()
-        if store_staff(request.user):
-            quote_qs = quote_qs.filter(tienda_id=request.user.id_tienda)
-        else:
-            quote_qs = quote_qs.filter(usuario_id=request.user.id_usuario)
-        if not quote_qs.filter(pk=pk).exists():
+        filas, error = self.filtrar_por_scope(
+            request, Quote.objects.all(), campo_dueno="usuario_id"
+        )
+        if error:
+            return error
+        if not filas.filter(pk=pk).exists():
             return Response({"error": "Cotización no encontrada."}, status=status.HTTP_404_NOT_FOUND)
         history = QuoteStatusHistory.objects.filter(cotizacion_id=pk).select_related("usuario").order_by(
             "-fecha", "pk"
@@ -1808,9 +2007,15 @@ class ReporteResumenView(DatabaseGuardMixin):
     * Superadmin: sin ``id_tienda`` recibe el consolidado de todas las tiendas
       activas (con el desglose en ``tiendas``); con ``?id_tienda=`` recibe solo
       esa tienda, que es como llega desde el inventario de tiendas.
+
+    No pasa por :meth:`filtrar_por_scope` porque no entrega filas: mide
+    agregados. La decisión es la misma que sale de los scopes (sede = todas,
+    tienda = la suya, cuenta sin tienda = ninguna) y el ``?id_tienda=`` solo lo
+    mira la sede, así que no abre el resumen de otra tienda.
     """
 
-    permission_classes = [IsStoreStaff | IsSuperAdmin]
+    permission_classes = [HasPermiso]
+    permiso_recurso = "ventas"
 
     def get(self, request):
         hoy = timezone.localdate()
@@ -1955,7 +2160,7 @@ class PermisosUsuarioView(DatabaseGuardMixin):
         user = request.user
         
         # Superadmin tiene todos los permisos
-        if str(ROLE_SUPERADMIN) in {str(r).lower() for r in user.role_ids}:
+        if es_superadmin(user):
             # Obtener todos los recurso-acción activos
             from api.models import RecursoAccion
             raqs = RecursoAccion.objects.filter(activo=True).select_related(
@@ -1978,8 +2183,12 @@ class PermisosUsuarioView(DatabaseGuardMixin):
         permisos_qs = RolRecurso.objects.filter(
             rol_id__in=user.role_ids,
             activo=True,
+            # Los mismos filtros con los que decide la autorización: un rol
+            # desactivado no puede seguir pintando puertas en la interfaz.
+            rol__activo=True,
             recurso_accion__activo=True,
             recurso_accion__recurso__activo=True,
+            recurso_accion__accion__activo=True,
         ).select_related(
             "recurso_accion__recurso", "recurso_accion__accion", "rol"
         ).order_by("recurso_accion__recurso__orden", "recurso_accion__accion__orden")
@@ -2008,61 +2217,54 @@ class RolePermisosBulkUpdateView(DatabaseGuardMixin):
             role = Role.objects.get(pk=pk)
         except Role.DoesNotExist:
             return Response({"error": "Rol no encontrado"}, status=status.HTTP_404_NOT_FOUND)
-        
+
         permisos = request.data.get("permisos", [])
         if not isinstance(permisos, list):
             return Response({"error": "Se espera una lista de permisos"}, status=status.HTTP_400_BAD_REQUEST)
-        
-        # Validar permisos (una lista vacía es válida: revoca todos)
-        ids_recurso_accion = [
-            str(p.get("id_recurso_accion")) for p in permisos if p.get("id_recurso_accion")
-        ]
 
-        # Verificar que todos los recurso_accion existen (comparar como texto:
-        # desde JSON llegan strings y la BD devuelve UUID)
-        ra_existentes = {
-            str(ra_id)
-            for ra_id in RecursoAccion.objects.filter(
-                id_recurso_accion__in=ids_recurso_accion
-            ).values_list("id_recurso_accion", flat=True)
+        entradas = [
+            (p.get("id_recurso_accion"), p.get("scope", "global")) if isinstance(p, dict)
+            else (None, None)
+            for p in permisos
+        ]
+        ids = [str(identificador).strip().lower()
+               for identificador, _ in entradas if identificador]
+        # Una sola lectura de la matriz: el identificador normalizado, el código del
+        # recurso y si la combinación admite alcance. Con esto se valida antes de borrar.
+        combinaciones = {
+            str(id_recurso_accion).strip().lower(): (codigo_recurso, requiere_scope)
+            for id_recurso_accion, codigo_recurso, requiere_scope in
+            RecursoAccion.objects.filter(id_recurso_accion__in=ids).values_list(
+                "id_recurso_accion", "recurso__codigo", "requiere_scope"
+            )
         }
-        ids_faltantes = set(ids_recurso_accion) - ra_existentes
-        if ids_faltantes:
+        normalizados, errores = normalizar_concesiones(entradas, combinaciones)
+        if errores:
             return Response(
-                {"error": f"Recurso-acción no encontrados: {ids_faltantes}"},
+                {"error": "; ".join(errores), "errores": errores},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        
-        # Validar scopes
-        scopes_validos = {"global", "tienda", "propio"}
-        for p in permisos:
-            scope = p.get("scope", "global")
-            if scope not in scopes_validos:
-                return Response(
-                    {"error": f"Scope inválido: {scope}"},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-        
+
+        concedente = getattr(request, "user", None)
+        if concedente is not None and not getattr(concedente, "is_authenticated", False):
+            concedente = None
+
         with transaction.atomic():
-            # Eliminar permisos existentes del rol
+            # Aquí es donde el reemplazo es destructivo: todo lo que el body podía
+            # echar a perder ya se rechazó arriba con 400.
             RolRecurso.objects.filter(rol=role).delete()
-            
-            # Crear nuevos permisos
-            nuevos = []
-            for p in permisos:
-                ra_id = p.get("id_recurso_accion")
-                scope = p.get("scope", "global")
-                if ra_id in ra_existentes:
-                    rr = RolRecurso.objects.create(
-                        rol_id=role.id_rol,
-                        recurso_accion_id=ra_id,
-                        scope=p.get("scope", "global"),
-                        concedido_por=request.user if hasattr(request, "user") else None,
-                        activo=True,
-                    )
-                    nuevos.append(rr)
-            
-            return Response({
-                "mensaje": "Permisos actualizados correctamente",
-                "permisos_creados": len(nuevos),
-            }, status=status.HTTP_200_OK)
+            RolRecurso.objects.bulk_create([
+                RolRecurso(
+                    rol_id=role.id_rol,
+                    recurso_accion_id=entrada["id_recurso_accion"],
+                    scope=entrada["scope"],
+                    concedido_por=concedente,
+                    activo=True,
+                )
+                for entrada in normalizados
+            ])
+
+        return Response({
+            "mensaje": "Permisos actualizados correctamente",
+            "permisos_creados": len(normalizados),
+        }, status=status.HTTP_200_OK)
