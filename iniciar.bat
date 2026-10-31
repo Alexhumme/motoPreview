@@ -7,9 +7,10 @@ set "ROOT=%~dp0"
 set "BACK=%ROOT%backend"
 set "FRONT=%ROOT%frontend"
 set "PY=%BACK%\venv\Scripts\python.exe"
+set "PORT=8001"
 
 echo ==============================================
-echo   MotoPreview - Django (8000) + Vite (5173)
+echo   MotoPreview - Django (%PORT%) + Vite (5173)
 echo ==============================================
 
 rem --- Requisitos ---
@@ -79,14 +80,13 @@ if not exist "%FRONT%\node_modules" (
         exit /b 1
     )
 )
-if not exist "%FRONT%\.env.local" (
-    echo [FRONTEND] Creando frontend\.env.local apuntando al backend local...
-    echo VITE_API_URL=http://127.0.0.1:8000/api> "%FRONT%\.env.local"
-)
+rem Siempre sincronizar .env.local con el puerto del backend (8001 evita
+rem conflictos con otros proyectos que ocupan el 8000, como BrasaGo/WSL).
+echo VITE_API_URL=http://127.0.0.1:%PORT%/api> "%FRONT%\.env.local"
 
 rem --- Arranque (cada servicio en su propia ventana) ---
-echo [BACKEND] Iniciando Django en http://127.0.0.1:8000 ...
-start "MotoPreview - Backend" /d "%BACK%" cmd /k "venv\Scripts\python.exe manage.py runserver 127.0.0.1:8000"
+echo [BACKEND] Iniciando Django en http://127.0.0.1:%PORT% ...
+start "MotoPreview - Backend" /d "%BACK%" cmd /k "venv\Scripts\python.exe manage.py runserver 127.0.0.1:%PORT%"
 
 echo [FRONTEND] Iniciando Vite en http://localhost:5173 ...
 start "MotoPreview - Frontend" /d "%FRONT%" cmd /k npm run dev
