@@ -8,6 +8,7 @@ from uuid import UUID
 
 import bcrypt
 import jwt
+from django.http import HttpResponse, JsonResponse
 from django.conf import settings
 from django.core.mail import send_mail
 from django.db import IntegrityError, connection, transaction
@@ -431,12 +432,11 @@ def paginate_response(request, queryset, serializer_class, *, context=None):
     )
 
 
-@extend_schema(responses={200: RootSerializer})
-@api_view(["GET", "HEAD"])
-@permission_classes([AllowAny])
 def root(request):
+    if request.method == "HEAD":
+        return HttpResponse(status=200)
     lang = getattr(request, "lang", i18n.DEFAULT_LANGUAGE)
-    return Response(
+    return JsonResponse(
         {"mensaje": i18n.translate_text("API de MotoPreview con Django funcionando.", lang)}
     )
 
