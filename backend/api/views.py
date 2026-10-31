@@ -1550,14 +1550,22 @@ def login(request):
         )
     try:
         token = issue_jwt(user)
+        payload = user_payload(user)
     except APIException as error:
         return Response({"error": str(error.detail)}, status=503)
+    except Exception as exc:  # noqa: BLE001
+        # Diagnóstico: se devuelve el error real para identificar la causa
+        # en el backend desplegado (se revertirá a un 500 genérico).
+        return Response({"error": f"{type(exc).__name__}: {exc}"}, status=500)
     # Puente para el navegador: guarda el token y el rol en la sesión para
     # que el DRF navegable los use solos en las siguientes peticiones.
-    payload = user_payload(user)
-    request.session["jwt"] = token
-    request.session["usu_nombre"] = user.usu_nombre
-    request.session["rol_nombre"] = (payload.get("rol") or {}).get("nombre_rol")
+    # No debe bloquear el login si la sesión falla (el token ya va en la respuesta).
+    try:
+        request.session["jwt"] = token
+        request.session["usu_nombre"] = user.usu_nombre
+        request.session["rol_nombre"] = (payload.get("rol") or {}).get("nombre_rol")
+    except Exception:  # noqa: BLE001
+        pass
     return Response({"mensaje": "Login exitoso.", "token": token, "usuario": payload})
 
 
