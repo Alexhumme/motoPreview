@@ -1,4 +1,5 @@
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../context/authContexto';
 import { usePermiso } from '../context/usePermiso';
 import { useTema } from '../context/temaContexto';
@@ -87,6 +88,9 @@ export default function AdminLayout() {
   const location = useLocation();
   const navigate = useNavigate();
 
+  const [menuAbierto, setMenuAbierto] = useState(false);
+  useEffect(() => { setMenuAbierto(false); }, [location.pathname]);
+
   const esAdmin = usuario?.id_rol === ROL_ADMIN || esSuperAdmin();
   const permisosCargados = (usuario?.permisos?.length ?? 0) > 0 || esSuperAdmin();
 
@@ -127,6 +131,14 @@ export default function AdminLayout() {
         </nav>
         <div className="admin-header-actions">
           <button
+            className="menu-toggle"
+            onClick={() => setMenuAbierto((v) => !v)}
+            aria-label={menuAbierto ? 'Cerrar menú' : 'Abrir menú'}
+            aria-expanded={menuAbierto}
+          >
+            {menuAbierto ? '✕' : '☰'}
+          </button>
+          <button
             className="btn-tema"
             onClick={alternarTema}
             aria-label={tema === 'oscuro' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
@@ -138,6 +150,24 @@ export default function AdminLayout() {
           <button className="btn btn--ghost btn--sm" onClick={manejarLogout}>Salir</button>
         </div>
       </header>
+
+      {menuAbierto && (
+        <div className="mobile-menu">
+          <nav className="mobile-nav" aria-label="Navegación móvil del panel">
+            {enlaces.map((enlace) => (
+              <Link
+                key={enlace.ruta}
+                to={enlace.ruta}
+                className={location.pathname === enlace.ruta ? 'mobile-nav-link mobile-nav-link--active' : 'mobile-nav-link'}
+              >
+                <span className="nav-icon" aria-hidden="true">{enlace.icono}</span>
+                <span>{enlace.etiqueta}</span>
+              </Link>
+            ))}
+            <Link to="/" className="mobile-nav-link">Volver a la tienda</Link>
+          </nav>
+        </div>
+      )}
 
       <main className="admin-main">
         <Outlet />

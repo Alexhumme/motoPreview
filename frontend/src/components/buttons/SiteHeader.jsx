@@ -1,4 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/authContexto';
 import { usePermiso } from '../../context/usePermiso';
 import { useCart } from '../../context/CartContext';
@@ -12,6 +13,13 @@ export default function SiteHeader() {
   const { tieneAlgunPermiso, esSuperAdmin } = usePermiso();
   const { totalItems } = useCart();
   const { tema, alternarTema } = useTema();
+
+  const [menuAbierto, setMenuAbierto] = useState(false);
+
+  // Cierra el menú móvil al cambiar de ruta.
+  useEffect(() => {
+    setMenuAbierto(false);
+  }, [location.pathname]);
 
   const esStaff = !!usuario && (
     usuario.id_rol === ROL_ADMIN ||
@@ -55,6 +63,14 @@ export default function SiteHeader() {
 
         <div className="header-actions">
           <button
+            className="menu-toggle"
+            onClick={() => setMenuAbierto((v) => !v)}
+            aria-label={menuAbierto ? 'Cerrar menú' : 'Abrir menú'}
+            aria-expanded={menuAbierto}
+          >
+            {menuAbierto ? '✕' : '☰'}
+          </button>
+          <button
             className="btn-tema"
             onClick={alternarTema}
             aria-label={tema === 'oscuro' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
@@ -88,6 +104,32 @@ export default function SiteHeader() {
           </Link>
         </div>
       </div>
+
+      {menuAbierto && (
+        <div className="mobile-menu">
+          <nav className="mobile-nav" aria-label="Navegación móvil">
+            <Link to="/" className={`mobile-nav-link${location.pathname === '/' ? ' mobile-nav-link--active' : ''}`}>Catálogo</Link>
+            <Link to="/configurador" className={`mobile-nav-link${location.pathname === '/configurador' ? ' mobile-nav-link--active' : ''}`}>Configurador</Link>
+            <a href="/#como-funciona" className="mobile-nav-link">Cómo funciona</a>
+            <Link to="/carrito" className="mobile-nav-link">Carrito {totalItems > 0 && `(${totalItems})`}</Link>
+            {usuario ? (
+              <>
+                <Link to={esSuperAdmin() ? '/admin/permisos' : esStaff ? '/admin' : '/mis-cotizaciones'} className="mobile-nav-link">
+                  {usuario.usu_nombre?.split(' ')[0]}
+                </Link>
+                {mostrarPanel && (esSuperAdmin() ? (
+                  <Link to="/admin/permisos" className="mobile-nav-link">Seguridad</Link>
+                ) : (
+                  <Link to="/admin" className="mobile-nav-link">Panel</Link>
+                ))}
+                <button onClick={logout} className="mobile-nav-link mobile-nav-link--button">Salir</button>
+              </>
+            ) : (
+              <Link to="/login" className="mobile-nav-link mobile-nav-link--brand">Ingresar</Link>
+            )}
+          </nav>
+        </div>
+      )}
     </header>
   );
 }

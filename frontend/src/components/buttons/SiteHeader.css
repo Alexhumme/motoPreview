@@ -142,14 +142,97 @@
   font-weight: var(--weight-bold);
 }
 
-/* Responsive */
+/* Hamburger (solo móvil) */
+.menu-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--color-ink-border);
+  border-radius: var(--radius-nav);
+  background: var(--color-carbon);
+  color: var(--color-paper);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.menu-toggle:hover {
+  border-color: var(--color-mist-gray);
+  color: var(--color-signal-mint);
+}
+
+/* Menú móvil desplegable */
+.mobile-menu {
+  border-top: 1px solid var(--color-ink-border);
+  background: var(--surface-canvas);
+  padding: var(--space-16) var(--space-20) var(--space-24);
+}
+
+.mobile-nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.mobile-nav-link {
+  display: block;
+  padding: var(--space-12) var(--space-16);
+  border-radius: var(--radius-nav);
+  font-family: var(--font-ui);
+  font-size: var(--text-body);
+  font-weight: var(--weight-medium);
+  color: var(--color-mist-gray);
+  text-decoration: none;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.mobile-nav-link:hover,
+.mobile-nav-link--active {
+  background: var(--surface-elevated);
+  color: var(--color-paper);
+}
+
+.mobile-nav-link--button {
+  background: none;
+  border: none;
+  text-align: left;
+  width: 100%;
+  cursor: pointer;
+  font: inherit;
+}
+
+.mobile-nav-link--brand {
+  background: var(--color-signal-mint);
+  color: var(--color-obsidian-plum);
+  text-align: center;
+  font-weight: var(--weight-bold);
+}
+
+.mobile-nav-link--brand:hover {
+  color: var(--color-obsidian-plum);
+  opacity: 0.9;
+}
+
+/* Responsive: mostrar hamburger y ocultar nav de escritorio */
 @media (max-width: 1024px) {
+  .menu-toggle {
+    display: inline-flex;
+  }
+
   .main-nav {
     display: none;
   }
 
-  .site-header-inner {
-    padding: 0 var(--space-20);
+  /* El carrito y la cuenta siguen visibles en la barra; el menú móvil
+     replica los enlaces para pantallas chicas. */
+}
+
+@media (min-width: 1025px) {
+  .mobile-menu {
+    display: none;
   }
 }
 

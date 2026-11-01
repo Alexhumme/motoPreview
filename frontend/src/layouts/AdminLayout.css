@@ -147,6 +147,61 @@
   gap: var(--space-12);
 }
 
+/* Hamburger (solo móvil) */
+.menu-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--color-ink-border);
+  border-radius: var(--radius-nav);
+  background: var(--color-carbon);
+  color: var(--color-paper);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.menu-toggle:hover {
+  border-color: var(--color-mist-gray);
+  color: var(--color-signal-mint);
+}
+
+/* Menú móvil desplegable */
+.mobile-menu {
+  border-top: 1px solid var(--color-ink-border);
+  background: var(--surface-canvas);
+  padding: var(--space-12) var(--space-16) var(--space-20);
+}
+
+.mobile-nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.mobile-nav-link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-10);
+  padding: var(--space-10) var(--space-12);
+  border-radius: var(--radius-nav);
+  font-family: var(--font-ui);
+  font-size: var(--text-body);
+  font-weight: var(--weight-medium);
+  color: var(--color-mist-gray);
+  text-decoration: none;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.mobile-nav-link:hover,
+.mobile-nav-link--active {
+  background: var(--surface-elevated);
+  color: var(--color-paper);
+}
+
 /* Button size variant */
 .btn--sm {
   padding: var(--space-8) var(--space-12);
@@ -188,8 +243,12 @@
    ========================================================================== */
 
 @media (max-width: 1024px) {
+  .menu-toggle {
+    display: inline-flex;
+  }
+
   .admin-nav {
-    display: none; /* Could be replaced with mobile drawer */
+    display: none;
   }
 
   .admin-header {
@@ -197,6 +256,12 @@
   }
 
   .brand-text { font-size: 16px; }
+}
+
+@media (min-width: 1025px) {
+  .mobile-menu {
+    display: none;
+  }
 }
 
 @media (max-width: 720px) {
