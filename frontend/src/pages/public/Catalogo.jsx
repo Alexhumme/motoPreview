@@ -101,7 +101,6 @@ export default function Catalogo() {
             <div className="catalog-hero-orbit catalog-hero-orbit--one" />
             <div className="catalog-hero-orbit catalog-hero-orbit--two" />
             <img src={heroImage} alt="Motocicleta MotoPreview" className="catalog-hero-image" />
-            <div className="catalog-hero-fallback">MP</div>
             <div className="catalog-hero-label catalog-hero-label--top">◈ Precisión<br /><b>compatible</b></div>
             <div className="catalog-hero-label catalog-hero-label--bottom">↯ Diseñado para<br /><b>la ruta</b></div>
           </div>

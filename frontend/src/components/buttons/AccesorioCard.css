@@ -101,17 +101,14 @@
 }
 
 .product-code {
-  position: absolute;
-  bottom: var(--space-12);
-  left: var(--space-12);
+  display: inline-block;
   font-family: var(--font-mono);
   font-size: var(--text-caption);
-  color: var(--color-brand-orange-soft);
-  background: rgba(242, 106, 33, 0.1);
+  color: var(--color-mist-gray);
+  background: var(--surface-elevated);
   padding: var(--space-4) var(--space-8);
   border-radius: var(--radius-nav);
-  border: 1px solid rgba(242, 106, 33, 0.2);
-  /* El SKU real ahora se muestra en .product-content, no aquí */
+  border: 1px solid var(--color-ink-border);
   white-space: nowrap;
   max-width: 100%;
   overflow: hidden;
@@ -119,15 +116,11 @@
 }
 
 .product-view {
-  position: absolute;
-  bottom: var(--space-12);
-  right: var(--space-12);
   font-family: var(--font-display);
   font-size: var(--text-caption);
-  font-weight: var(--weight-regular);
-  color: var(--color-mist-gray);
+  font-weight: var(--weight-medium);
+  color: var(--color-brand-orange-soft);
   z-index: 10;
-  /* "Vista 3D" como indicador separado y distintivo */
 }
 
 /* Contenedor de contenido - empuja todo hacia abajo */

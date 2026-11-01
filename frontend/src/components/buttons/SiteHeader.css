@@ -106,18 +106,21 @@
 }
 
 .cart-button {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: var(--space-8);
   padding: var(--space-10) var(--space-16);
-  border: 1px solid var(--color-bone);
+  border: 1px solid var(--color-ink-border);
   border-radius: var(--radius-buttons);
   background: var(--surface-elevated);
   font-family: var(--font-ui);
   font-size: var(--text-body);
   font-weight: var(--weight-semibold);
   color: var(--color-paper);
+  text-decoration: none;
   transition: all 0.15s ease;
+  white-space: nowrap;
 }
 
 .cart-button:hover {
@@ -130,16 +133,20 @@
 }
 
 .cart-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
   min-width: 20px;
   height: 20px;
   display: grid;
   place-items: center;
   padding: 0 var(--space-4);
   border-radius: var(--radius-pills);
-  background: var(--color-brand-orange);
+  background: var(--color-signal-mint);
   color: var(--color-obsidian-plum);
   font-size: var(--text-caption);
   font-weight: var(--weight-bold);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
 }
 
 /* Hamburger (solo móvil) */
