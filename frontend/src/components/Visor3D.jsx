@@ -1,6 +1,6 @@
 import { Component, Suspense, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls, useGLTF, Environment } from '@react-three/drei';
+import { OrbitControls, useGLTF } from '@react-three/drei';
 import './Visor3D.css';
 
 function ModeloReal({ url }) {
@@ -50,11 +50,11 @@ export default function Visor3D({ url, nombreAccesorio }) {
   return (
     <div className="visor3d">
       <Canvas camera={{ position: [3, 2, 3], fov: 45 }}>
-        <ambientLight intensity={0.6} />
-        <directionalLight position={[5, 5, 5]} intensity={1} />
+        <ambientLight intensity={0.7} />
+        <directionalLight position={[5, 5, 5]} intensity={1.1} />
+        <directionalLight position={[-4, 3, -2]} intensity={0.4} />
         <Suspense fallback={null}>
           <ModeloConFallback url={url} />
-          <Environment preset="city" />
         </Suspense>
         <OrbitControls enablePan={false} minDistance={2} maxDistance={8} />
       </Canvas>
