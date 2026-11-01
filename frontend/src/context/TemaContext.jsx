@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { TemaContext } from './temaContexto';
+import { TemaContext, leerTemaGuardado } from './temaContexto';
 
 export function TemaProvider({ children }) {
-  const [tema, setTema] = useState('oscuro');
+  const [tema, setTema] = useState(leerTemaGuardado);
 
   useEffect(() => {
     document.documentElement.dataset.tema = tema;
