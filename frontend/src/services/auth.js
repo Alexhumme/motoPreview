@@ -38,7 +38,7 @@ export async function obtenerRecursos() {
 }
 
 export async function actualizarRecurso(id, datos) {
-  const respuesta = await api.put(`/recursos/${id}`, datos);
+  const respuesta = await api.patch(`/recursos/${id}`, datos);
   return respuesta.data;
 }
 

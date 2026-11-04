@@ -262,7 +262,14 @@ export default function Seguridad() {
       );
       cerrarModalRecurso();
     } catch (err) {
-      setErrorRecurso(err.response?.data?.error || 'Error al actualizar el recurso');
+      const detalle = err.response?.data?.error;
+      const mensaje =
+        typeof detalle === 'string'
+          ? detalle
+          : detalle
+          ? Object.values(detalle).flat().join(' ')
+          : 'Error al actualizar el recurso';
+      setErrorRecurso(mensaje);
     } finally {
       setGuardandoRecurso(false);
     }
@@ -614,7 +621,7 @@ export default function Seguridad() {
                 />
               </div>
               <p className="form-hint">
-                Código: <code>{recursoEditando.codigo}</code>
+                Código: <code>{String(recursoEditando.codigo)}</code>
               </p>
               {errorRecurso && <p className="form-error" role="alert">{errorRecurso}</p>}
               <footer className="modal-footer">
