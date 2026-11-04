@@ -1,5 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
+import { Menu, X, Sun, Moon } from 'lucide-react';
 import { useAuth } from '../../context/authContexto';
 import { usePermiso } from '../../context/usePermiso';
 import { useCart } from '../../context/CartContext';
@@ -79,7 +80,7 @@ export default function SiteHeader() {
             aria-label={menuAbierto ? 'Cerrar menú' : 'Abrir menú'}
             aria-expanded={menuAbierto}
           >
-            {menuAbierto ? '✕' : '☰'}
+            {menuAbierto ? <X size={18} /> : <Menu size={18} />}
           </button>
           <button
             className="btn-tema"
@@ -87,7 +88,7 @@ export default function SiteHeader() {
             aria-label={tema === 'oscuro' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
             title={tema === 'oscuro' ? 'Modo claro' : 'Modo oscuro'}
           >
-            {tema === 'oscuro' ? '☀' : '☾'}
+            {tema === 'oscuro' ? <Sun size={16} /> : <Moon size={16} />}
           </button>
           {usuario ? (
             <div className="header-account">

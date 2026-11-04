@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '../context/authContexto';
 import ModalConfirmacion from '../components/forms/ModalConfirmacion';
 import { obtenerUsuarios, registrarUsuario, actualizarUsuario, desactivarUsuario } from '../services/usuarios';
+import { obtenerRoles } from '../services/roles';
 import { ROL_ADMIN, ROL_VENDEDOR } from '../utils/constants/roles';
 import { ConPermiso } from '../components/menus/ConPermiso';
 import './Usuarios.css';
@@ -28,6 +29,7 @@ const estadoBadge = {
 export default function Usuarios() {
   const { usuario } = useAuth();
   const [usuarios, setUsuarios] = useState([]);
+  const [roles, setRoles] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [modalAbierto, setModalAbierto] = useState(false);
   const [usuarioADesactivar, setUsuarioADesactivar] = useState(null);
@@ -40,8 +42,12 @@ export default function Usuarios() {
 
   const cargar = useCallback(async () => {
     try {
-      const datos = await obtenerUsuarios(idTienda);
+      const [datos, datosRoles] = await Promise.all([
+        obtenerUsuarios(idTienda),
+        obtenerRoles(),
+      ]);
       setUsuarios(datos);
+      setRoles(datosRoles);
     } catch (err) {
       console.error(err);
     } finally {
@@ -158,7 +164,7 @@ export default function Usuarios() {
                   </td>
                   <td>{u.usu_email}</td>
                   <td>
-                    <span className="badge badge--violet">{rolLabels[u.id_rol] || u.id_rol}</span>
+                    <span className="badge badge--violet">{roles.find((r) => r.id_rol === u.id_rol)?.nombre_rol || u.id_rol}</span>
                   </td>
                   <td>
                     <span className={`badge badge--${estadoBadge[u.estado_usuario] || 'gray'}`}>
@@ -246,8 +252,9 @@ export default function Usuarios() {
                   onChange={(e) => setFormulario({ ...formulario, id_rol: e.target.value })}
                   disabled={guardando}
                 >
-                  <option value={ROL_VENDEDOR}>Vendedor</option>
-                  <option value={ROL_ADMIN}>Admin</option>
+                  {roles.map((r) => (
+                    <option key={r.id_rol} value={r.id_rol}>{r.nombre_rol}</option>
+                  ))}
                 </select>
               </div>
 

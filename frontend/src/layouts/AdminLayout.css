@@ -288,4 +288,153 @@
     text-align: center;
     padding: var(--space-20) var(--space-16);
   }
+}/* ==========================================================================
+   SIDEBAR (admin) — categorías colapsables
+   ========================================================================== */
+.admin-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.admin-sidebar {
+  width: 232px;
+  flex-shrink: 0;
+  padding: var(--space-20) var(--space-12);
+  border-right: 1px solid var(--color-ink-border);
+  background: var(--surface-canvas);
+  position: sticky;
+  top: 65px; /* debajo del header sticky */
+  align-self: flex-start;
+  max-height: calc(100vh - 65px);
+  overflow-y: auto;
+}
+
+.sidebar-cat {
+  margin-bottom: var(--space-8);
+}
+
+.sidebar-cat__head {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  padding: var(--space-10) var(--space-12);
+  border: none;
+  border-radius: var(--radius-nav);
+  background: transparent;
+  color: var(--color-mist-gray);
+  font-family: var(--font-ui);
+  font-size: var(--text-body);
+  font-weight: var(--weight-semibold);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+  text-align: left;
+}
+
+.sidebar-cat__head:hover {
+  background: var(--surface-elevated);
+  color: var(--color-paper);
+}
+
+.sidebar-cat--open .sidebar-cat__head {
+  color: var(--color-paper);
+  background: var(--surface-elevated);
+}
+
+.sidebar-cat__icon {
+  width: 20px;
+  text-align: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.sidebar-cat__label {
+  flex: 1;
+}
+
+.sidebar-cat__chevron {
+  font-size: 12px;
+  color: var(--color-mist-gray);
+}
+
+/* Colapsado: solo icono */
+.sidebar-cat:not(.sidebar-cat--open) .sidebar-cat__label,
+.sidebar-cat:not(.sidebar-cat--open) .sidebar-cat__chevron {
+  display: none;
+}
+
+.sidebar-cat:not(.sidebar-cat--open) .sidebar-cat__head {
+  justify-content: center;
+  padding: var(--space-10);
+}
+
+.sidebar-cat__items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+  padding-left: var(--space-4);
+}
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-10);
+  padding: var(--space-8) var(--space-12);
+  border-radius: var(--radius-nav);
+  font-family: var(--font-ui);
+  font-size: var(--text-body);
+  font-weight: var(--weight-medium);
+  color: var(--color-mist-gray);
+  text-decoration: none;
+  transition: background 0.15s ease, color 0.15s ease;
+  white-space: nowrap;
+}
+
+.sidebar-link:hover {
+  background: var(--surface-elevated);
+  color: var(--color-paper);
+}
+
+.sidebar-link--active {
+  color: var(--color-signal-mint);
+  background: rgba(242, 106, 33, 0.1);
+  font-weight: var(--weight-semibold);
+}
+
+.sidebar-link__icon {
+  width: 18px;
+  text-align: center;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.sidebar-link__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* admin-main dentro del body: sin max-width propio (el body ya centra) */
+.admin-body .admin-main {
+  flex: 1;
+  max-width: none;
+  margin: 0;
+  padding: var(--space-40) var(--space-32) var(--space-64);
+}
+
+/* Responsive: sidebar se oculta en móvil (se usa el menú hamburguesa) */
+@media (max-width: 1024px) {
+  .admin-sidebar {
+    display: none;
+  }
+  .admin-body .admin-main {
+    padding: var(--space-32) var(--space-20) var(--space-48);
+  }
+}
+
+@media (max-width: 720px) {
+  .admin-body .admin-main {
+    padding: var(--space-24) var(--space-16) var(--space-40);
+  }
 }

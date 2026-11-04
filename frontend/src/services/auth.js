@@ -37,6 +37,11 @@ export async function obtenerRecursos() {
   return respuesta.data;
 }
 
+export async function actualizarRecurso(id, datos) {
+  const respuesta = await api.put(`/recursos/${id}`, datos);
+  return respuesta.data;
+}
+
 export async function obtenerAcciones() {
   const respuesta = await api.get('/acciones');
   return respuesta.data;

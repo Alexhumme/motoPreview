@@ -11,6 +11,7 @@ import {
   obtenerPermisosRol,
   actualizarPermisosRol,
 } from '../services/roles';
+import { obtenerRecursos, actualizarRecurso } from '../services/auth';
 import { ROL_SUPERADMIN, ROL_ADMIN, ROL_VENDEDOR, ROL_CLIENTE } from '../utils/constants/roles';
 import './Roles.css';
 import './PermisosRBAC.css';
@@ -47,6 +48,12 @@ export default function Seguridad() {
   const [permisosRol, setPermisosRol] = useState({});
   const [cargandoMatriz, setCargandoMatriz] = useState(false);
   const [mensaje, setMensaje] = useState(null);
+
+  // ---- Edición de recurso (nombre) ----
+  const [recursoEditando, setRecursoEditando] = useState(null);
+  const [nombreRecurso, setNombreRecurso] = useState('');
+  const [guardandoRecurso, setGuardandoRecurso] = useState(false);
+  const [errorRecurso, setErrorRecurso] = useState('');
 
   const puedeEditarMatriz = esSuperAdmin();
   const scopeLabels = { global: 'Global', tienda: 'Tienda', propio: 'Propio' };
@@ -224,6 +231,41 @@ export default function Seguridad() {
 
   function cerrarModal() {
     setModalAbierto(false);
+  }
+
+  function abrirEdicionRecurso(recurso) {
+    setRecursoEditando(recurso);
+    setNombreRecurso(recurso.nombre);
+    setErrorRecurso('');
+  }
+
+  function cerrarModalRecurso() {
+    setRecursoEditando(null);
+    setErrorRecurso('');
+  }
+
+  async function manejarSubmitRecurso(e) {
+    e.preventDefault();
+    if (!nombreRecurso.trim()) {
+      setErrorRecurso('El nombre es obligatorio.');
+      return;
+    }
+    setGuardandoRecurso(true);
+    setErrorRecurso('');
+    try {
+      await actualizarRecurso(recursoEditando.id_recurso, { nombre: nombreRecurso.trim() });
+      // Actualizar en la lista de recursos de la matriz
+      setRecursos((prev) =>
+        prev.map((r) =>
+          r.id_recurso === recursoEditando.id_recurso ? { ...r, nombre: nombreRecurso.trim() } : r
+        )
+      );
+      cerrarModalRecurso();
+    } catch (err) {
+      setErrorRecurso(err.response?.data?.error || 'Error al actualizar el recurso');
+    } finally {
+      setGuardandoRecurso(false);
+    }
   }
 
   async function manejarSubmit(e) {
@@ -414,6 +456,17 @@ export default function Seguridad() {
                         <div className="recurso-detalle">
                           <strong>{recurso.nombre}</strong>
                           {recurso.codigo && <code>{recurso.codigo}</code>}
+                          {puedeEditarMatriz && (
+                            <button
+                              type="button"
+                              className="recurso-editar"
+                              onClick={() => abrirEdicionRecurso(recurso)}
+                              aria-label={`Editar nombre de ${recurso.nombre}`}
+                              title="Editar nombre del recurso"
+                            >
+                              ✎
+                            </button>
+                          )}
                         </div>
                       </td>
                       {accionesUnion.map((accion) => {
@@ -506,7 +559,7 @@ export default function Seguridad() {
                   value={formulario.nombre_rol}
                   onChange={(e) => setFormulario({ ...formulario, nombre_rol: e.target.value })}
                   required
-                  disabled={!!editandoId || guardando}
+                  disabled={guardando}
                 />
               </div>
 
@@ -532,6 +585,44 @@ export default function Seguridad() {
                 </button>
                 <button type="submit" className="btn btn--primary" disabled={guardando}>
                   {guardando ? 'Guardando...' : 'Guardar'}
+                </button>
+              </footer>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ====================== MODAL EDITAR RECURSO ====================== */}
+      {recursoEditando && (
+        <div className="modal-overlay" onClick={cerrarModalRecurso} role="dialog" aria-modal="true" aria-labelledby="recurso-modal-title">
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <header className="modal-header">
+              <h2 id="recurso-modal-title" className="modal-title">Editar recurso</h2>
+              <button className="modal-close" onClick={cerrarModalRecurso} aria-label="Cerrar">✕</button>
+            </header>
+            <form onSubmit={manejarSubmitRecurso} className="modal-form">
+              <div className="form-field">
+                <label htmlFor="nombre-recurso" className="form-label">Nombre del recurso</label>
+                <input
+                  id="nombre-recurso"
+                  type="text"
+                  className="form-input"
+                  value={nombreRecurso}
+                  onChange={(e) => setNombreRecurso(e.target.value)}
+                  required
+                  disabled={guardandoRecurso}
+                />
+              </div>
+              <p className="form-hint">
+                Código: <code>{recursoEditando.codigo}</code>
+              </p>
+              {errorRecurso && <p className="form-error" role="alert">{errorRecurso}</p>}
+              <footer className="modal-footer">
+                <button type="button" className="btn btn--ghost" onClick={cerrarModalRecurso} disabled={guardandoRecurso}>
+                  Cancelar
+                </button>
+                <button type="submit" className="btn btn--primary" disabled={guardandoRecurso}>
+                  {guardandoRecurso ? 'Guardando...' : 'Guardar'}
                 </button>
               </footer>
             </form>
