@@ -4,16 +4,10 @@ import ModalConfirmacion from '../components/forms/ModalConfirmacion';
 import { obtenerUsuarios, registrarUsuario, actualizarUsuario, desactivarUsuario } from '../services/usuarios';
 import { obtenerRoles } from '../services/roles';
 import { obtenerTiendas } from '../services/tiendas';
-import { ROL_ADMIN, ROL_VENDEDOR } from '../utils/constants/roles';
 import { ConPermiso } from '../components/menus/ConPermiso';
 import './Usuarios.css';
 
 const VACIO = { usu_nombre: '', usu_email: '', password: '', id_rol: '', id_tienda: '', estado_usuario: 'activo' };
-
-const rolLabels = {
-  [ROL_ADMIN]: 'Admin',
-  [ROL_VENDEDOR]: 'Vendedor'
-};
 
 const estadoLabels = {
   activo: 'Activo',

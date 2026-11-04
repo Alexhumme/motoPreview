@@ -11,7 +11,7 @@ import {
   obtenerPermisosRol,
   actualizarPermisosRol,
 } from '../services/roles';
-import { obtenerRecursos, actualizarRecurso } from '../services/auth';
+import { actualizarRecurso } from '../services/auth';
 import { ROL_SUPERADMIN, ROL_ADMIN, ROL_VENDEDOR, ROL_CLIENTE } from '../utils/constants/roles';
 import './Roles.css';
 import './PermisosRBAC.css';

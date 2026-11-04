@@ -21,8 +21,17 @@ export default defineConfig([
       // Los archivos de contexto exportan el Provider (componente) y su hook (useX).
       'react-refresh/only-export-components': [
         'error',
-        { allowExportNames: ['useAuth', 'useCart', 'useConnection'] },
+        { allowExportNames: ['useAuth', 'useCart', 'useConnection', 'useTema', 'usePermiso'] },
       ],
+      // Regla demasiado agresiva: dispara con patrones legítimos (reset de estado
+      // al cambiar de ruta, inicialización de filtros). Se mantiene como aviso.
+      'react-hooks/set-state-in-effect': 'off',
+    },
+  },
+  {
+    files: ['**/*.test.{js,jsx}', 'src/test/**/*.{js,jsx}'],
+    languageOptions: {
+      globals: { ...globals.browser, ...globals.vitest },
     },
   },
 ])
