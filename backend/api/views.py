@@ -1450,11 +1450,20 @@ def register(request):
 
     user_store = getattr(request.user, "id_tienda", None)
     es_autenticado = bool(getattr(request.user, "is_authenticated", False))
+    es_super = es_autenticado and es_superadmin(request.user)
+
     # La vidriera pública es la única que trae tienda en el body. Cuando registra
     # el personal, la cuenta nace en la tienda de quien registra: si no, un
-    # administrador adscribe clientes a la tienda vecina.
-    store_id = user_store if es_autenticado else request.data.get("id_tienda")
-    if store_id:
+    # administrador adscribe clientes a la tienda vecina. El superadmin puede
+    # elegir la tienda (o dejarla global = None) para crear usuarios sin tienda.
+    if es_autenticado and not es_super:
+        store_id = user_store
+    else:
+        store_id = request.data.get("id_tienda")
+        if store_id in (None, "", "null"):
+            store_id = None
+
+    if store_id is not None:
         try:
             store_id = UUID(str(store_id))
         except (TypeError, ValueError):
@@ -1463,23 +1472,33 @@ def register(request):
             return Response(
                 {"error": "La tienda indicada no existe o no está activa."}, status=400
             )
+
     if not is_customer:
-        store = Store.objects.select_related("plan").filter(pk=store_id).first()
-        if not store:
-            return Response({"error": "El administrador no tiene una tienda asignada."}, status=400)
-        plan = store.plan
-        limit = plan.limite_usuarios if plan else None
-        active_staff = User.objects.filter(
-            tienda_id=store_id,
-            id_usuario__in=UserRole.objects.filter(
-                id_rol__in=[ROLE_ADMIN, ROLE_SELLER]
-            ).values("id_usuario"),
-        ).exclude(estado_usuario="bloqueado").count()
-        if limit is not None and active_staff >= limit:
-            return Response(
-                {"error": f"Se alcanzó el límite de {limit} empleados del plan."},
-                status=status.HTTP_403_FORBIDDEN,
-            )
+        if store_id is None:
+            if not es_super:
+                return Response(
+                    {"error": "El administrador no tiene una tienda asignada."}, status=400
+                )
+            # Usuario global (sin tienda): solo el superadmin puede crearlo.
+        else:
+            store = Store.objects.select_related("plan").filter(pk=store_id).first()
+            if not store:
+                return Response(
+                    {"error": "La tienda indicada no existe o no está activa."}, status=400
+                )
+            plan = store.plan
+            limit = plan.limite_usuarios if plan else None
+            active_staff = User.objects.filter(
+                tienda_id=store_id,
+                id_usuario__in=UserRole.objects.filter(
+                    id_rol__in=[ROLE_ADMIN, ROLE_SELLER]
+                ).values("id_usuario"),
+            ).exclude(estado_usuario="bloqueado").count()
+            if limit is not None and active_staff >= limit:
+                return Response(
+                    {"error": f"Se alcanzó el límite de {limit} empleados del plan."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
 
     try:
         with transaction.atomic():

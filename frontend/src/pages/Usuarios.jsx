@@ -3,11 +3,12 @@ import { useAuth } from '../context/authContexto';
 import ModalConfirmacion from '../components/forms/ModalConfirmacion';
 import { obtenerUsuarios, registrarUsuario, actualizarUsuario, desactivarUsuario } from '../services/usuarios';
 import { obtenerRoles } from '../services/roles';
+import { obtenerTiendas } from '../services/tiendas';
 import { ROL_ADMIN, ROL_VENDEDOR } from '../utils/constants/roles';
 import { ConPermiso } from '../components/menus/ConPermiso';
 import './Usuarios.css';
 
-const VACIO = { usu_nombre: '', usu_email: '', password: '', id_rol: ROL_VENDEDOR, estado_usuario: 'activo' };
+const VACIO = { usu_nombre: '', usu_email: '', password: '', id_rol: '', id_tienda: '', estado_usuario: 'activo' };
 
 const rolLabels = {
   [ROL_ADMIN]: 'Admin',
@@ -30,6 +31,7 @@ export default function Usuarios() {
   const { usuario } = useAuth();
   const [usuarios, setUsuarios] = useState([]);
   const [roles, setRoles] = useState([]);
+  const [tiendas, setTiendas] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [modalAbierto, setModalAbierto] = useState(false);
   const [usuarioADesactivar, setUsuarioADesactivar] = useState(null);
@@ -42,12 +44,14 @@ export default function Usuarios() {
 
   const cargar = useCallback(async () => {
     try {
-      const [datos, datosRoles] = await Promise.all([
+      const [datos, datosRoles, datosTiendas] = await Promise.all([
         obtenerUsuarios(idTienda),
         obtenerRoles(),
+        obtenerTiendas(),
       ]);
       setUsuarios(datos);
       setRoles(datosRoles);
+      setTiendas(datosTiendas);
     } catch (err) {
       console.error(err);
     } finally {
@@ -72,7 +76,7 @@ export default function Usuarios() {
 
   function abrirEdicion(u) {
     setEditandoId(u.id_usuario);
-    setFormulario({ usu_nombre: u.usu_nombre, usu_email: u.usu_email, password: '', id_rol: u.id_rol, estado_usuario: u.estado_usuario });
+    setFormulario({ usu_nombre: u.usu_nombre, usu_email: u.usu_email, password: '', id_rol: u.id_rol, id_tienda: u.id_tienda || '', estado_usuario: u.estado_usuario });
     setError('');
     setModalAbierto(true);
   }
@@ -96,7 +100,7 @@ export default function Usuarios() {
           usu_email: formulario.usu_email,
           password: formulario.password,
           id_rol: formulario.id_rol,
-          id_tienda: usuario.id_tienda,
+          id_tienda: formulario.id_tienda || null,
         });
       }
       await cargar();
@@ -257,6 +261,25 @@ export default function Usuarios() {
                   ))}
                 </select>
               </div>
+
+              {!editandoId && (
+                <div className="form-field">
+                  <label htmlFor="tienda" className="form-label">Tienda (opcional)</label>
+                  <select
+                    id="tienda"
+                    className="form-input form-select"
+                    value={formulario.id_tienda}
+                    onChange={(e) => setFormulario({ ...formulario, id_tienda: e.target.value })}
+                    disabled={guardando}
+                  >
+                    <option value="">Sin tienda (global)</option>
+                    {tiendas.map((t) => (
+                      <option key={t.id_tienda} value={t.id_tienda}>{t.tienda_nombre || t.nombre_tienda || t.id_tienda}</option>
+                    ))}
+                  </select>
+                  <small className="form-hint">Solo asigna una tienda si el usuario pertenece a una sede. Deja "Sin tienda" para usuarios globales (ej. Superadmin).</small>
+                </div>
+              )}
 
               {editandoId && (
                 <div className="form-field">
