@@ -268,7 +268,7 @@
 
 .catalog-section {
   max-width: var(--page-max-width);
-  margin: 0 auto var(--space-96);
+  margin: 60px auto var(--space-96);
   padding: 0 var(--space-32);
 }
 
@@ -671,5 +671,87 @@
 
   .catalog-pagination {
     flex-direction: column;
+  }
+}/* ==========================================================================
+   SLIDER DE RANGO DE PRECIOS (catálogo completo)
+   ========================================================================== */
+.price-slider {
+  margin: var(--space-24) 0 var(--space-32);
+  padding: var(--space-20) var(--space-24);
+  background: var(--surface-elevated);
+  border: 1px solid var(--color-ink-border);
+  border-radius: var(--radius-cards);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+}
+
+.price-slider-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-16);
+  flex-wrap: wrap;
+}
+
+.price-slider-label {
+  font-family: var(--font-display);
+  font-size: var(--text-caption);
+  font-weight: var(--weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-mist-gray);
+}
+
+.price-slider-value {
+  font-family: var(--font-display);
+  font-size: var(--text-body);
+  font-weight: var(--weight-bold);
+  color: var(--color-signal-mint);
+}
+
+.price-slider-tracks {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-24);
+}
+
+.price-slider-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  font-family: var(--font-ui);
+  font-size: var(--text-caption);
+  color: var(--color-mist-gray);
+}
+
+.price-slider-field input[type="range"] {
+  width: 100%;
+  accent-color: var(--color-signal-mint);
+  cursor: pointer;
+}
+
+.price-slider-reset {
+  align-self: flex-start;
+  background: none;
+  border: 1px solid var(--color-ink-border);
+  border-radius: var(--radius-nav);
+  padding: var(--space-6) var(--space-12);
+  font-family: var(--font-ui);
+  font-size: var(--text-caption);
+  color: var(--color-mist-gray);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.price-slider-reset:hover {
+  border-color: var(--color-signal-mint);
+  color: var(--color-signal-mint);
+}
+
+@media (max-width: 720px) {
+  .price-slider-tracks {
+    grid-template-columns: 1fr;
+    gap: var(--space-16);
   }
 }
