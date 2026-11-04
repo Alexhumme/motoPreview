@@ -88,14 +88,6 @@
   color: var(--color-paper);
 }
 
-.catalog-hero-visual {
-  position: relative;
-  height: 400px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
 .catalog-hero-orbit {
   position: absolute;
   border-radius: 50%;
@@ -544,15 +536,77 @@
   margin: 0;
 }
 
+/* CTA del catálogo (landing) */
+.catalog-cta {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: var(--space-48);
+  align-items: center;
+  padding: var(--space-48) var(--space-32);
+  background: var(--surface-card);
+  border: 1px solid var(--color-ink-border);
+  border-radius: var(--radius-cards);
+  margin: var(--space-32) auto;
+  max-width: var(--page-max-width);
+}
+
+.catalog-cta-copy {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+}
+
+.catalog-cta-visual {
+  display: flex;
+  justify-content: center;
+}
+
+.catalog-cta-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-8);
+  padding: var(--space-32);
+  background: var(--surface-elevated);
+  border: 1px solid var(--color-ink-border);
+  border-radius: var(--radius-cards);
+  text-align: center;
+  min-width: 220px;
+}
+
+.catalog-cta-icon {
+  font-size: 32px;
+  color: var(--color-signal-mint);
+}
+
+.catalog-cta-card strong {
+  font-family: var(--font-display);
+  font-weight: var(--weight-bold);
+  font-size: var(--text-body-lg);
+  color: var(--color-paper);
+}
+
+.catalog-cta-card small {
+  font-family: var(--font-ui);
+  font-size: var(--text-caption);
+  color: var(--color-mist-gray);
+}
+
+@media (max-width: 900px) {
+  .catalog-cta {
+    grid-template-columns: 1fr;
+    padding: var(--space-32) var(--space-20);
+  }
+  .catalog-cta-visual {
+    display: none;
+  }
+}
+
 /* Responsive */
 @media (max-width: 1024px) {
   .catalog-hero-grid {
     grid-template-columns: 1fr;
     gap: var(--space-40);
-  }
-
-  .catalog-hero-visual {
-    order: -1;
   }
 
   .intro-grid {
@@ -591,10 +645,6 @@
 
   .catalog-hero-actions .btn {
     width: 100%;
-  }
-
-  .catalog-hero-visual {
-    height: 300px;
   }
 
   .stats-row {

@@ -2,6 +2,8 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { Suspense, lazy } from 'react';
 import Login from './pages/auth/Login';
 import Catalogo from './pages/public/Catalogo';
+import CatalogoCompleto from './pages/public/CatalogoCompleto';
+import Contacto from './pages/public/Contacto';
 import Carrito from './pages/public/Carrito';
 import AdminLayout from './layouts/AdminLayout';
 import RutaProtegida from './components/private/RutaProtegida';
@@ -53,6 +55,8 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/registro" element={<Registro />} />
         <Route path="/" element={<Catalogo />} />
+        <Route path="/catalogo" element={<CatalogoCompleto />} />
+        <Route path="/contacto" element={<Contacto />} />
         <Route path="/carrito" element={<Carrito />} />
         <Route path="/verificar/:token" element={<VerificarCorreo />} />
         <Route path="/recuperar" element={<RecuperarPassword />} />

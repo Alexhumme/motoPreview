@@ -50,7 +50,7 @@ export default function SiteHeader() {
             to="/"
             className={`nav-link${location.pathname === '/' ? ' nav-link--active' : ''}`}
           >
-            Catálogo
+            Inicio
           </Link>
           <Link
             to="/configurador"
@@ -58,7 +58,18 @@ export default function SiteHeader() {
           >
             Configurador
           </Link>
-          <a href="/#como-funciona" className="nav-link">Cómo funciona</a>
+          <Link
+            to="/catalogo"
+            className={`nav-link${location.pathname === '/catalogo' ? ' nav-link--active' : ''}`}
+          >
+            Catálogo
+          </Link>
+          <Link
+            to="/contacto"
+            className={`nav-link${location.pathname === '/contacto' ? ' nav-link--active' : ''}`}
+          >
+            Contactanos
+          </Link>
         </nav>
 
         <div className="header-actions">
@@ -97,7 +108,7 @@ export default function SiteHeader() {
           ) : (
             <Link to="/login" className="btn btn--brand btn--sm">Ingresar</Link>
           )}
-          <Link to="/carrito" className="cart-button">
+          <Link to="/carrito" className="btn cart-button">
             <span>▣</span>
             <span className="cart-label">Carrito</span>
             {totalItems > 0 && <span className="cart-badge">{totalItems}</span>}
@@ -108,8 +119,10 @@ export default function SiteHeader() {
       {menuAbierto && (
         <div className="mobile-menu">
           <nav className="mobile-nav" aria-label="Navegación móvil">
-            <Link to="/" className={`mobile-nav-link${location.pathname === '/' ? ' mobile-nav-link--active' : ''}`}>Catálogo</Link>
+            <Link to="/" className={`mobile-nav-link${location.pathname === '/' ? ' mobile-nav-link--active' : ''}`}>Inicio</Link>
+            <Link to="/catalogo" className={`mobile-nav-link${location.pathname === '/catalogo' ? ' mobile-nav-link--active' : ''}`}>Catálogo</Link>
             <Link to="/configurador" className={`mobile-nav-link${location.pathname === '/configurador' ? ' mobile-nav-link--active' : ''}`}>Configurador</Link>
+            <Link to="/contacto" className={`mobile-nav-link${location.pathname === '/contacto' ? ' mobile-nav-link--active' : ''}`}>Contactanos</Link>
             <a href="/#como-funciona" className="mobile-nav-link">Cómo funciona</a>
             <Link to="/carrito" className="mobile-nav-link">Carrito {totalItems > 0 && `(${totalItems})`}</Link>
             {usuario ? (
