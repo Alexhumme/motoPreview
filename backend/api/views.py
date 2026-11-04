@@ -1432,6 +1432,7 @@ def register(request):
     is_customer = role_id.lower() == ROLE_CUSTOMER.lower() or role_name == "cliente"
     is_admin = bool(getattr(request.user, "is_authenticated", False)) and (
         ROLE_ADMIN.lower() in {role.lower() for role in user_role_ids(request.user)}
+        or es_superadmin(request.user)
     )
     if not is_customer and not is_admin:
         return Response(
