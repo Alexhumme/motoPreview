@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '../context/authContexto';
 import { obtenerCotizaciones, cambiarEstadoCotizacion } from '../services/cotizaciones';
 import { ConPermiso } from '../components/menus/ConPermiso';
@@ -38,7 +38,10 @@ export default function Cotizaciones() {
     }
   }, [idTienda]);
 
+  const cargarRef = useRef();
   useEffect(() => {
+    if (cargarRef.current === cargar) return;
+    cargarRef.current = cargar;
     async function refrescar() { await cargar(); }
     refrescar();
   }, [cargar]);

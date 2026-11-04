@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { obtenerAccesorios, obtenerCategorias, crearAccesorio, actualizarAccesorio } from '../services/accesorios';
 import { obtenerModelosCompatibles, marcarCompatible, quitarCompatible } from '../services/compatibilidad';
 import { obtenerMotos } from '../services/motos';
@@ -48,7 +48,10 @@ export default function Accesorios() {
     setCargando(false);
   }
 
+  const cargadoRef = useRef(false);
   useEffect(() => {
+    if (cargadoRef.current) return;
+    cargadoRef.current = true;
     async function refrescar() {
       await cargarTodo();
     }

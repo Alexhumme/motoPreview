@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '../context/authContexto';
 import ModalConfirmacion from '../components/forms/ModalConfirmacion';
 import { obtenerUsuarios, registrarUsuario, actualizarUsuario, desactivarUsuario } from '../services/usuarios';
@@ -49,7 +49,10 @@ export default function Usuarios() {
     }
   }, [idTienda]);
 
+  const cargarRef = useRef();
   useEffect(() => {
+    if (cargarRef.current === cargar) return;
+    cargarRef.current = cargar;
     async function refrescar() { await cargar(); }
     refrescar();
   }, [cargar]);

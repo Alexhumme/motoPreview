@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../context/authContexto';
 import { obtenerCotizaciones } from '../services/cotizaciones';
 import './Reportes.css';
@@ -16,7 +16,10 @@ export default function Reportes() {
   // cambia de referencia aunque el usuario sea el mismo.
   const idTienda = usuario?.id_tienda;
 
+  const idTiendaRef = useRef();
   useEffect(() => {
+    if (idTiendaRef.current === idTienda) return;
+    idTiendaRef.current = idTienda;
     async function cargar() {
       try {
         const datos = await obtenerCotizaciones(idTienda);

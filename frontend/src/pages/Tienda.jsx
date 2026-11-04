@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '../context/authContexto';
 import { obtenerTienda, actualizarTienda } from '../services/tiendas';
 import './Tienda.css';
@@ -33,7 +33,10 @@ export default function Tienda() {
     }
   }, [idTienda]);
 
+  const cargarRef = useRef();
   useEffect(() => {
+    if (cargarRef.current === cargar) return;
+    cargarRef.current = cargar;
     async function refrescar() { await cargar(); }
     refrescar();
   }, [cargar]);

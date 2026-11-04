@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { obtenerResumenDia } from '../services/reportes';
 import { obtenerTienda } from '../services/tiendas';
@@ -40,7 +40,10 @@ export default function ResumenTienda() {
     }
   }, [id]);
 
+  const cargarRef = useRef();
   useEffect(() => {
+    if (cargarRef.current === cargar) return;
+    cargarRef.current = cargar;
     async function init() { await cargar(); }
     init();
   }, [cargar]);

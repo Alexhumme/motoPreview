@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/authContexto';
 import { usePermiso } from '../context/usePermiso';
@@ -33,7 +33,10 @@ export default function Dashboard() {
   const idTienda = usuario?.id_tienda;
   const consolidado = esSuperAdmin();
 
+  const idTiendaRef = useRef();
   useEffect(() => {
+    if (idTiendaRef.current === idTienda) return;
+    idTiendaRef.current = idTienda;
     let activo = true;
     async function cargar() {
       try {

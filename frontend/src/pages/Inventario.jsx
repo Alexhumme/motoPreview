@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '../context/authContexto';
 import { obtenerInventario, registrarMovimiento } from '../services/inventario';
 import { TIPOS_MOVIMIENTO } from '../utils/constants/tiposMovimiento';
@@ -27,7 +27,10 @@ export default function Inventario() {
     }
   }, [idTienda]);
 
+  const cargarInventarioRef = useRef();
   useEffect(() => {
+    if (cargarInventarioRef.current === cargarInventario) return;
+    cargarInventarioRef.current = cargarInventario;
     async function refrescar() { await cargarInventario(); }
     refrescar();
   }, [cargarInventario]);

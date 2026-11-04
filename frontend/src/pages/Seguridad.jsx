@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { usePermiso } from '../context/usePermiso';
 import ModalConfirmacion from '../components/forms/ModalConfirmacion';
@@ -61,8 +61,11 @@ export default function Seguridad() {
     }
   }
 
-  // Cargar roles al montar (inline para evitar warning de setState en effect)
+  // Cargar roles al montar (una sola vez, incluso en StrictMode de desarrollo)
+  const cargadoRef = useRef(false);
   useEffect(() => {
+    if (cargadoRef.current) return;
+    cargadoRef.current = true;
     async function init() {
       try {
         setRoles(await obtenerRoles());

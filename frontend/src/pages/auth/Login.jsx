@@ -1,20 +1,43 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/authContexto';
 import { ROL_ADMIN, ROL_SUPERADMIN, ROL_VENDEDOR } from '../../utils/constants/roles';
 import './Auth.css';
+import SiteHeader from '../../components/buttons/SiteHeader';
+
+function generarCaptcha() {
+  const ops = ['+', '-', '×'];
+  const op = ops[Math.floor(Math.random() * ops.length)];
+  let a = Math.floor(Math.random() * 9) + 1;
+  let b = Math.floor(Math.random() * 9) + 1;
+  if (op === '-' && b > a) [a, b] = [b, a]; // evitar negativos
+  const resultado = op === '+' ? a + b : op === '-' ? a - b : a * b;
+  return { a, b, op, resultado };
+}
 
 export default function Login() {
   const [usu_email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [enviando, setEnviando] = useState(false);
+  const [captcha, setCaptcha] = useState(generarCaptcha);
+  const [captchaInput, setCaptchaInput] = useState('');
   const { login } = useAuth();
   const navigate = useNavigate();
+
+  const refrescarCaptcha = useCallback(() => {
+    setCaptcha(generarCaptcha());
+    setCaptchaInput('');
+  }, []);
 
   async function manejarSubmit(event) {
     event.preventDefault();
     setError('');
+    if (parseInt(captchaInput, 10) !== captcha.resultado) {
+      setError('La verificación (captcha) es incorrecta.');
+      refrescarCaptcha();
+      return;
+    }
     setEnviando(true);
     try {
       const usuario = await login(usu_email, password);
@@ -28,6 +51,7 @@ export default function Login() {
       }
     } catch (err) {
       setError(err.response?.data?.error || 'Credenciales inválidas');
+      refrescarCaptcha();
     } finally {
       setEnviando(false);
     }
@@ -35,12 +59,7 @@ export default function Login() {
 
   return (
     <div className="auth-page">
-      <header className="auth-nav">
-        <Link to="/" className="brand" aria-label="MotoPreview home">
-          <span className="brand-mark">↗</span>
-          <span className="brand-text">Moto<span>Preview</span></span>
-        </Link>
-      </header>
+      <SiteHeader/>
 
       <main className="auth-main">
         <div className="auth-card">
@@ -89,6 +108,24 @@ export default function Login() {
                 <span className="checkbox-text">Recordarme</span>
               </label>
               <Link to="/recuperar" className="link link--forgot">¿La olvidaste?</Link>
+            </div>
+
+            <div className="form-field">
+              <label htmlFor="captcha" className="form-label">
+                Verificación: ¿cuánto es {captcha.a} {captcha.op} {captcha.b}?
+              </label>
+              <input
+                id="captcha"
+                type="text"
+                inputMode="numeric"
+                className="form-input"
+                value={captchaInput}
+                onChange={(e) => setCaptchaInput(e.target.value)}
+                placeholder="Resultado"
+                required
+                disabled={enviando}
+                aria-describedby={error ? 'auth-error' : undefined}
+              />
             </div>
 
             {error && (

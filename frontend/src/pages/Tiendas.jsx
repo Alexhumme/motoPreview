@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import DataTable from '../components/tables/DataTable';
 import { obtenerTiendas } from '../services/tiendas';
@@ -47,7 +47,10 @@ export default function Tiendas() {
     }
   }, []);
 
+  const cargarRef = useRef();
   useEffect(() => {
+    if (cargarRef.current === cargar) return;
+    cargarRef.current = cargar;
     async function init() { await cargar(); }
     init();
   }, [cargar]);
