@@ -24,11 +24,12 @@ flowchart TB
     GUARD1{"RutaProtegida<br/>sesión requerida"}:::guard
     MIS --- GUARD1
 
-    ADMIN(["/admin · AdminLayout<br/>sidebar por rol"]):::admin
+    ADMIN(["/admin · AdminLayout<br/>riel de categorías + segunda barra"]):::admin
     GUARD2{"RutaProtegida<br/>roles: ADMIN | VENDEDOR"}:::admin
     ADMIN --- GUARD2
 
     ADMIN --> DASH["/admin<br/>Dashboard.jsx"]:::admin
+    ADMIN --> PERFIL["/admin/perfil<br/>Perfil.jsx"]:::admin
     ADMIN --> INV["/admin/inventario<br/>Inventario.jsx"]:::admin
     ADMIN --> COT["/admin/cotizaciones<br/>Cotizaciones.jsx"]:::admin
     ADMIN --> REP["/admin/reportes<br/>Reportes.jsx"]:::admin

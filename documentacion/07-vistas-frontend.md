@@ -33,11 +33,12 @@ flowchart TB
     GUARD1{"RutaProtegida<br/>sesión requerida"}:::guard
     MIS --- GUARD1
 
-    ADMIN(["/admin · AdminLayout<br/>sidebar por rol"]):::admin
+    ADMIN(["/admin · AdminLayout<br/>riel de categorías + segunda barra"]):::admin
     GUARD2{"RutaProtegida<br/>roles: ADMIN | VENDEDOR"}:::admin
     ADMIN --- GUARD2
 
     ADMIN --> DASH["/admin<br/>Dashboard.jsx"]:::admin
+    ADMIN --> PERFIL["/admin/perfil<br/>Perfil.jsx"]:::admin
     ADMIN --> INV["/admin/inventario<br/>Inventario.jsx"]:::admin
     ADMIN --> COT["/admin/cotizaciones<br/>Cotizaciones.jsx"]:::admin
     ADMIN --> REP["/admin/reportes<br/>Reportes.jsx"]:::admin
@@ -72,13 +73,17 @@ flowchart TB
 | `/recuperar` | Recuperar contraseña | `pages/auth/RecuperarPassword.jsx` | Pública |
 | `/restablecer/:token` | Restablecer contraseña | `pages/auth/RestablecerPassword.jsx` | Pública |
 | `/verificar/:token` | Verificar correo | `pages/auth/VerificarCorreo.jsx` | Pública |
-| `/admin` | Dashboard | `pages/admin/Dashboard.jsx` | ADMIN o VENDEDOR |
-| `/admin/inventario` | Inventario | `pages/admin/Inventario.jsx` | ADMIN o VENDEDOR |
-| `/admin/cotizaciones` | Cotizaciones | `pages/admin/Cotizaciones.jsx` | ADMIN o VENDEDOR |
-| `/admin/reportes` | Reportes | `pages/admin/Reportes.jsx` | ADMIN o VENDEDOR |
-| `/admin/accesorios` | Catálogo y compatibilidad | `pages/admin/Accesorios.jsx` | **solo ADMIN** |
-| `/admin/usuarios` | Usuarios de la tienda | `pages/admin/Usuarios.jsx` | **solo ADMIN** |
-| `/admin/tienda` | Tienda y plan | `pages/admin/Tienda.jsx` | **solo ADMIN** |
+| `/admin` | Dashboard | `pages/Dashboard.jsx` | ADMIN o VENDEDOR |
+| `/admin/perfil` | Mi perfil | `pages/Perfil.jsx` | ADMIN o VENDEDOR |
+| `/admin/inventario` | Inventario | `pages/Inventario.jsx` | ADMIN o VENDEDOR |
+| `/admin/cotizaciones` | Cotizaciones | `pages/Cotizaciones.jsx` | ADMIN o VENDEDOR |
+| `/admin/reportes` | Reportes | `pages/Reportes.jsx` | ADMIN o VENDEDOR |
+| `/admin/accesorios` | Catálogo y compatibilidad | `pages/Accesorios.jsx` | ADMIN con permisos `productos:crear/actualizar` |
+| `/admin/usuarios` | Usuarios de la tienda | `pages/Usuarios.jsx` | **solo ADMIN** |
+| `/admin/tienda` | Tienda y plan | `pages/Tienda.jsx` | ADMIN o VENDEDOR (la vista solo tiene datos si la sesión pertenece a una tienda) |
+| `/admin/permisos` | Seguridad (matriz RBAC) | `pages/Seguridad.jsx` | **solo ADMIN** |
+| `/admin/catalogo` | Catálogo de permisos | `pages/CatalogoRBAC.jsx` | **solo SUPERADMIN** |
+| `/admin/tiendas` · `/admin/tiendas/:id` | Tiendas y resumen de sede | `pages/Tiendas.jsx` · `pages/ResumenTienda.jsx` | **solo SUPERADMIN** |
 | `*` | 404 | `pages/public/NoEncontrado.jsx` | — |
 
 ### Lógica de `RutaProtegida`
@@ -153,6 +158,24 @@ petición extra a `/categorias` o `/tipos-accesorio`):
 | **Accesorios** (admin) | `GET/POST/PUT /accesorios`, `GET /categorias`, compatibilidad | CRUD completo + gestión de compatibilidades (diff con `Set`: `marcarCompatible`/`quitarCompatible`) |
 | **Usuarios** (admin) | `GET /usuarios?id_tienda=`, `POST /auth/register`, `PUT/DELETE /usuarios/:id` | Alta/edición (nombre, email, rol, contraseña, estado), desactivación con `ModalConfirmacion` |
 | **Tienda** (admin) | `GET/PUT /tiendas/:id` | Vista/edición de datos generales + tarjeta del plan (precio, límites) |
+| **Perfil** `/admin/perfil` | sesión (`usuario`) + `GET /tiendas/:id` solo si la sesión tiene tienda | Identidad (avatar icono, nombre, rol), datos de la cuenta (correo, rol, tienda, estado, fecha de registro) y acciones de sesión (tema, cerrar sesión). No hace falta un endpoint nuevo: `UserSerializer` ya manda `rol.nombre_rol` |
+
+#### Navegación del panel: riel + segunda barra
+
+`AdminLayout` divide la navegación en dos columnas dentro de `.admin-body`:
+
+| Zona | Contenido |
+|---|---|
+| **Riel** (`.admin-sidebar`) | Arriba: las categorías (`General`, `Catálogo`, `Ventas`, `Administración`), cada una con su icono. Abajo, separada por `space-between`: el enlace a `/admin/perfil` (icono `CircleUser`, con nombre + rol como título) y el botón de despliegue (`PanelLeftOpen`/`PanelLeftClose`) |
+| **Segunda barra** (`.admin-subsidebar`) | Cabecera con el icono y el título de la categoría activa + botón de cierre; debajo, los enlaces de esa categoría |
+
+- El botón de despliegue alterna el riel entre **solo iconos** (68 px) e **iconos + títulos** (240 px). Pulsar una categoría **no** cambia el modo.
+- Pulsar una categoría abre su segunda barra al costado derecho (y volverla a pulsar, o la X, la cierra); los enlaces ya no se despliegan debajo.
+- El estado se guarda en `localStorage['motopreview-admin-riel']` como `{"desplegada": bool, "categoria": id|null}` y se reaplica al montar.
+- Cada categoría filtra sus enlaces con las mismas reglas RBAC de antes (`soloAdmin`, `soloSuperAdmin`, `soloConTienda`, `permisos`); una categoría sin enlaces visibles no se pinta.
+- Al cambiar de ruta, la categoría dueña de la ruta pasa a ser la activa; en pantallas ≤ 1024 px la segunda barra es un panel superpuesto (con respaldo que lo cierra) y elegir un enlace lo cierra.
+- Hasta 1024 px el riel se queda siempre visible en modo iconos: no hay menú hamburguesa ni botón de despliegue.
+- Riel y segunda barra son `position: sticky` con `top: var(--admin-header-h)` y `height: calc(100vh - var(--admin-header-h))` (71 px de header en escritorio, 63 px en estrecho). Al estar dentro de `.admin-body`, el propio sticky los encierra: no trepan sobre el header ni bajan sobre el footer.
 
 ---
 
@@ -162,7 +185,7 @@ petición extra a `/categorias` o `/tipos-accesorio`):
 |---|---|---|
 | `SiteHeader` | Cabecera pública: nav, sesión, contador del carrito | Acceso a "Panel" solo para ADMIN/VENDEDOR |
 | `Footer` | Pie con columnas Explora / Cuenta / Ayuda | Ancla |
-| `AdminLayout` | Shell del panel: sidebar por rol, perfil con iniciales, logout, `<Outlet />` | Añade Accesorios/Usuarios/Tienda si es admin |
+| `AdminLayout` | Shell del panel: riel de categorías + segunda barra de enlaces, header con tema/salir, `<Outlet />` y footer | Las categorías y sus enlaces se filtran por rol y permisos RBAC; el modo del riel y la categoría activa se persisten en `localStorage['motopreview-admin-riel']`. Ver §3.3 |
 | `RutaProtegida` | Guard de rutas | `children`, `rolesPermitidos?: UUID[]` |
 | `Visor3D` | Visor 3D three.js | `url`, `nombreAccesorio`; incluye `ErrorBoundary3D` y fallback |
 | `BannerConexion` | Banner fijo "sin conexión al servidor" | Se muestra si `conectado === false` |
@@ -213,10 +236,15 @@ Orden de providers en `main.jsx`:
 
 **`constants/roles.js`**
 ```js
+ROL_SUPERADMIN    = '00000000-0000-0000-0000-000000000000'
 ROL_ADMIN         = '11111111-0000-0000-0000-000000000001'
 ROL_VENDEDOR      = '11111111-0000-0000-0000-000000000002'
 ROL_CLIENTE       = '11111111-0000-0000-0000-000000000003'
 TIENDA_PRINCIPAL  = '33333333-0000-0000-0000-000000000001'
+NOMBRE_ROL        = { [ROL_SUPERADMIN]: 'Superadmin', [ROL_ADMIN]: 'Admin Tienda',
+                      [ROL_VENDEDOR]: 'Vendedor', [ROL_CLIENTE]: 'Cliente' }
+                                                            // respaldo para sesiones
+                                                            // antiguas sin `rol.nombre_rol`
 ```
 
 **`constants/tiposMovimiento.js`**

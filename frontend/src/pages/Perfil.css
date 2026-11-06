@@ -1,0 +1,136 @@
+/* ==========================================================================
+   PERFIL (admin) — Jam Design System
+   ========================================================================== */
+
+.perfil {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-32);
+  max-width: 720px;
+}
+
+.perfil-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+}
+
+.perfil-title {
+  font-family: var(--font-display);
+  font-weight: var(--weight-black);
+  font-size: var(--text-heading-sm);
+  line-height: var(--leading-heading-sm);
+  letter-spacing: var(--tracking-heading-sm);
+  color: var(--color-paper);
+  margin: 0;
+}
+
+.perfil-seccion-title {
+  font-family: var(--font-display);
+  font-weight: var(--weight-bold);
+  font-size: var(--text-body-lg);
+  color: var(--color-paper);
+  margin: 0 0 var(--space-20);
+}
+
+/* Identidad */
+.perfil-identidad-fila {
+  display: flex;
+  align-items: center;
+  gap: var(--space-20);
+}
+
+.perfil-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-pills);
+  border: 1px solid var(--color-bone);
+  background: var(--surface-elevated);
+  color: var(--color-brand-orange);
+  flex-shrink: 0;
+}
+
+.perfil-identidad-texto {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.perfil-nombre {
+  font-family: var(--font-display);
+  font-weight: var(--weight-bold);
+  font-size: var(--text-body-lg);
+  color: var(--color-paper);
+}
+
+.perfil-rol {
+  font-size: var(--text-caption);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-mist-gray);
+}
+
+.perfil-verificado {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6);
+  font-size: var(--text-caption);
+  color: var(--color-brand-orange);
+}
+
+/* Datos */
+.perfil-data-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-16) var(--space-24);
+  margin: 0;
+}
+
+.perfil-data-list > div {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.perfil-data-list dt {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  font-size: var(--text-caption);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-mist-gray);
+}
+
+.perfil-data-list dd {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--text-body);
+  color: var(--color-soft-mist);
+  overflow-wrap: anywhere;
+}
+
+/* Preferencias */
+.perfil-preferencias-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-12);
+}
+
+.perfil-vacio {
+  color: var(--color-mist-gray);
+}
+
+@media (max-width: 720px) {
+  .perfil-data-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .perfil-identidad-fila {
+    gap: var(--space-16);
+  }
+}

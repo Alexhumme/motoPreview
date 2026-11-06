@@ -33,6 +33,7 @@ const Accesorios = lazy(() => import('./pages/Accesorios'));
 const CatalogoRBAC = lazy(() => import('./pages/CatalogoRBAC'));
 const Tiendas = lazy(() => import('./pages/Tiendas'));
 const ResumenTienda = lazy(() => import('./pages/ResumenTienda'));
+const Perfil = lazy(() => import('./pages/Perfil'));
 
 function LoadingFallback() {
   return <div className="admin-loading">Cargando módulo...</div>;
@@ -86,6 +87,7 @@ function App() {
           }
         >
           <Route index element={<Dashboard />} />
+          <Route path="perfil" element={<LazyWrapper Component={Perfil} />} />
           <Route path="inventario" element={<LazyWrapper Component={Inventario} />} />
           <Route path="cotizaciones" element={<LazyWrapper Component={Cotizaciones} />} />
           <Route path="reportes" element={<LazyWrapper Component={Reportes} />} />

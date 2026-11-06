@@ -3,6 +3,10 @@
    ========================================================================== */
 
 .admin-shell {
+  --admin-header-h: 71px;                 /* 16 + 16 de padding + 38 de marca + 1 de borde */
+  --admin-riel-ancho: 68px;
+  --admin-riel-ancho-desplegado: 240px;
+  --admin-subsidebar-ancho: 208px;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -147,61 +151,6 @@
   gap: var(--space-12);
 }
 
-/* Hamburger (solo móvil) */
-.menu-toggle {
-  display: none;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  border: 1px solid var(--color-ink-border);
-  border-radius: var(--radius-nav);
-  background: var(--color-carbon);
-  color: var(--color-paper);
-  font-size: 16px;
-  line-height: 1;
-  cursor: pointer;
-  flex-shrink: 0;
-}
-
-.menu-toggle:hover {
-  border-color: var(--color-mist-gray);
-  color: var(--color-signal-mint);
-}
-
-/* Menú móvil desplegable */
-.mobile-menu {
-  border-top: 1px solid var(--color-ink-border);
-  background: var(--surface-canvas);
-  padding: var(--space-12) var(--space-16) var(--space-20);
-}
-
-.mobile-nav {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-}
-
-.mobile-nav-link {
-  display: flex;
-  align-items: center;
-  gap: var(--space-10);
-  padding: var(--space-10) var(--space-12);
-  border-radius: var(--radius-nav);
-  font-family: var(--font-ui);
-  font-size: var(--text-body);
-  font-weight: var(--weight-medium);
-  color: var(--color-mist-gray);
-  text-decoration: none;
-  transition: background 0.15s ease, color 0.15s ease;
-}
-
-.mobile-nav-link:hover,
-.mobile-nav-link--active {
-  background: var(--surface-elevated);
-  color: var(--color-paper);
-}
-
 /* Button size variant */
 .btn--sm {
   padding: var(--space-8) var(--space-12);
@@ -243,8 +192,8 @@
    ========================================================================== */
 
 @media (max-width: 1024px) {
-  .menu-toggle {
-    display: inline-flex;
+  .admin-shell {
+    --admin-header-h: 63px; /* 12 + 12 de padding + 38 de marca + 1 de borde */
   }
 
   .admin-nav {
@@ -256,12 +205,6 @@
   }
 
   .brand-text { font-size: 16px; }
-}
-
-@media (min-width: 1025px) {
-  .mobile-menu {
-    display: none;
-  }
 }
 
 @media (max-width: 720px) {
@@ -288,8 +231,10 @@
     text-align: center;
     padding: var(--space-20) var(--space-16);
   }
-}/* ==========================================================================
-   SIDEBAR (admin) — categorías colapsables
+}
+
+/* ==========================================================================
+   SIDEBAR (admin) — riel de categorías + segunda barra de enlaces
    ========================================================================== */
 .admin-body {
   display: flex;
@@ -297,28 +242,42 @@
   min-height: 0;
 }
 
+/* El riel y la segunda barra se pegan bajo el header y miden justo lo que queda
+   de viewport: el sticky los encierra en .admin-body, así que nunca cubren ni
+   el header ni el footer. */
 .admin-sidebar {
   flex-shrink: 0;
-  padding: var(--space-20) var(--space-12);
+  width: var(--admin-riel-ancho);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: var(--space-16);
+  padding: var(--space-16) var(--space-10);
   border-right: 1px solid var(--color-ink-border);
   background: var(--surface-canvas);
   position: sticky;
-  top: 65px; /* debajo del header sticky */
+  top: var(--admin-header-h);
   align-self: flex-start;
-  max-height: calc(100vh - 65px);
+  height: calc(100vh - var(--admin-header-h));
   overflow-y: auto;
+  overflow-x: hidden;
+  transition: width 0.18s ease;
+}
+
+.sidebar-cats,
+.sidebar-bottom {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
 }
 
 .sidebar-cat {
-  margin-bottom: var(--space-8);
-}
-
-.sidebar-cat__head {
   width: 100%;
   display: flex;
   align-items: center;
-  gap: var(--space-12);
-  padding: var(--space-10) var(--space-12);
+  justify-content: center;
+  gap: var(--space-10);
+  padding: var(--space-10);
   border: none;
   border-radius: var(--radius-nav);
   background: transparent;
@@ -331,49 +290,213 @@
   text-align: left;
 }
 
-.sidebar-cat__head:hover {
+.sidebar-cat:hover {
   background: var(--surface-elevated);
   color: var(--color-paper);
 }
 
-.sidebar-cat--open .sidebar-cat__head {
+.sidebar-cat--activa {
   color: var(--color-paper);
   background: var(--surface-elevated);
 }
 
 .sidebar-cat__icon {
   width: 20px;
-  text-align: center;
-  font-size: 16px;
+  display: flex;
+  justify-content: center;
   flex-shrink: 0;
 }
 
-.sidebar-cat__label {
-  flex: 1;
+/* En reposo el riel solo muestra iconos; los títulos aparecen al desplegarlo. */
+.sidebar-cat__label,
+.sidebar-profile__text,
+.sidebar-toggle__label {
+  display: none;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.sidebar-cat__chevron {
-  font-size: 12px;
+.sidebar-profile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-10);
+  padding: var(--space-8) var(--space-10);
+  border: 1px solid var(--color-ink-border);
+  border-radius: var(--radius-nav);
   color: var(--color-mist-gray);
+  font-family: var(--font-ui);
+  font-size: var(--text-body);
+  text-decoration: none;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
-/* Colapsado: solo icono */
-.sidebar-cat:not(.sidebar-cat--open) .sidebar-cat__label,
-.sidebar-cat:not(.sidebar-cat--open) .sidebar-cat__chevron {
+.sidebar-profile:hover {
+  background: var(--surface-elevated);
+  border-color: var(--color-mist-gray);
+  color: var(--color-paper);
+}
+
+.sidebar-profile--activa {
+  background: rgba(242, 106, 33, 0.1);
+  border-color: rgba(242, 106, 33, 0.45);
+  color: var(--color-brand-orange);
+}
+
+.sidebar-profile__icon,
+.sidebar-toggle__icon {
+  width: 20px;
+  display: flex;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.sidebar-profile__name {
+  display: block;
+  font-weight: var(--weight-semibold);
+  color: var(--color-paper);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-profile__role {
+  display: block;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-mist-gray);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-10);
+  width: 100%;
+  padding: var(--space-10);
+  border: none;
+  border-radius: var(--radius-nav);
+  background: transparent;
+  color: var(--color-mist-gray);
+  font-family: var(--font-ui);
+  font-size: var(--text-body);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.sidebar-toggle:hover {
+  background: var(--surface-elevated);
+  color: var(--color-paper);
+}
+
+/* Desplegado: iconos + títulos (el botón solo existe en escritorio). */
+@media (min-width: 1025px) {
+  .admin-sidebar--desplegada {
+    width: var(--admin-riel-ancho-desplegado);
+  }
+
+  .admin-sidebar--desplegada .sidebar-cat,
+  .admin-sidebar--desplegada .sidebar-profile,
+  .admin-sidebar--desplegada .sidebar-toggle {
+    justify-content: flex-start;
+    padding: var(--space-10) var(--space-12);
+  }
+
+  .admin-sidebar--desplegada .sidebar-profile {
+    padding: var(--space-8) var(--space-12);
+  }
+
+  .admin-sidebar--desplegada .sidebar-cat__label {
+    display: block;
+    flex: 1;
+  }
+
+  .admin-sidebar--desplegada .sidebar-profile__text {
+    display: block;
+    flex: 1;
+  }
+
+  .admin-sidebar--desplegada .sidebar-toggle__label {
+    display: block;
+  }
+}
+
+/* Segunda barra: enlaces de la categoría activa en el riel. */
+.admin-subsidebar {
+  flex-shrink: 0;
+  width: var(--admin-subsidebar-ancho);
+  padding: var(--space-20) var(--space-10);
+  border-right: 1px solid var(--color-ink-border);
+  background: var(--surface-card);
+  position: sticky;
+  top: var(--admin-header-h);
+  align-self: flex-start;
+  height: calc(100vh - var(--admin-header-h));
+  overflow-y: auto;
+}
+
+.subsidebar-respaldo {
   display: none;
 }
 
-.sidebar-cat:not(.sidebar-cat--open) .sidebar-cat__head {
-  justify-content: center;
-  padding: var(--space-10);
+.subsidebar-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  margin: 0 var(--space-2) var(--space-12);
+  padding: 0 var(--space-10) var(--space-12);
+  border-bottom: 1px solid var(--color-bone);
 }
 
-.sidebar-cat__items {
+.subsidebar-header__icon {
+  display: flex;
+  color: var(--color-brand-orange);
+  flex-shrink: 0;
+}
+
+.subsidebar-title {
+  flex: 1;
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--weight-bold);
+  font-size: var(--text-body-lg);
+  color: var(--color-paper);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.subsidebar-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: var(--radius-nav);
+  background: transparent;
+  color: var(--color-mist-gray);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.subsidebar-close:hover {
+  background: var(--surface-elevated);
+  color: var(--color-paper);
+}
+
+.subsidebar-nav {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
-  margin-top: var(--space-4);
-  padding-left: var(--space-4);
 }
 
 .sidebar-link {
@@ -397,15 +520,15 @@
 }
 
 .sidebar-link--active {
-  color: var(--color-signal-mint);
+  color: var(--color-brand-orange);
   background: rgba(242, 106, 33, 0.1);
   font-weight: var(--weight-semibold);
 }
 
 .sidebar-link__icon {
   width: 18px;
-  text-align: center;
-  font-size: 14px;
+  display: flex;
+  justify-content: center;
   flex-shrink: 0;
 }
 
@@ -417,16 +540,43 @@
 /* admin-main dentro del body: sin max-width propio (el body ya centra) */
 .admin-body .admin-main {
   flex: 1;
+  min-width: 0;
   max-width: none;
   margin: 0;
   padding: var(--space-40) var(--space-32) var(--space-64);
 }
 
-/* Responsive: sidebar se oculta en móvil (se usa el menú hamburguesa) */
+/* Responsive: el riel siempre se ve (solo iconos) y la segunda barra se superpone. */
 @media (max-width: 1024px) {
   .admin-sidebar {
+    padding: var(--space-12) var(--space-8);
+  }
+
+  .sidebar-toggle {
     display: none;
   }
+
+  .subsidebar-respaldo {
+    display: block;
+    position: fixed;
+    inset: var(--admin-header-h) 0 0 0;
+    background: rgba(23, 27, 34, 0.62);
+    z-index: 90;
+  }
+
+  .admin-subsidebar {
+    position: fixed;
+    top: var(--admin-header-h);
+    bottom: 0;
+    left: var(--admin-riel-ancho);
+    width: min(260px, 76vw);
+    height: auto;
+    /* Sin esto, align-self: flex-start de la barra en flujo recorta el alto del panel. */
+    align-self: stretch;
+    z-index: 95;
+    box-shadow: var(--shadow-card);
+  }
+
   .admin-body .admin-main {
     padding: var(--space-32) var(--space-20) var(--space-48);
   }
