@@ -92,7 +92,9 @@ export default function Cotizaciones() {
               <header className="cotizacion-header" onClick={() => alternarExpandida(cot.id_cotizacion)}>
                 <div className="cotizacion-main">
                   <div className="cotizacion-moto">
-                    {cot.moto?.modelo_moto?.marca_moto?.marca_nombre} {cot.moto?.modelo_moto?.modelo_nombre}
+                    {cot.moto
+                      ? `${cot.moto.modelo_moto?.marca_moto?.marca_nombre || ''} ${cot.moto.modelo_moto?.modelo_nombre || ''}`.trim()
+                      : 'Sin moto específica'}
                   </div>
                   <div className="cotizacion-meta">
                     <span className="cotizacion-cliente">{cot.usuario?.usu_nombre} · {cot.usuario?.usu_email}</span>

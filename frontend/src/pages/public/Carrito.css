@@ -258,12 +258,34 @@
   margin-top: var(--space-24);
 }
 
+.form-optional {
+  font-weight: var(--weight-regular);
+  color: var(--color-mist-gray);
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.form-hint {
+  margin: var(--space-6) 0 0;
+  font-family: var(--font-ui);
+  font-size: var(--text-caption);
+  line-height: var(--leading-body);
+  color: var(--color-mist-gray);
+}
+
 .summary-note {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
   font-family: var(--font-ui);
   font-size: var(--text-caption);
   color: var(--color-mist-gray);
   margin: 0;
   opacity: 0.8;
+}
+
+.summary-note svg {
+  flex-shrink: 0;
 }
 
 /* Responsive */

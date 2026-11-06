@@ -1,5 +1,16 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import {
+  ArrowLeft,
+  ArrowRight,
+  CheckCircle2,
+  LogIn,
+  Minus,
+  Plus,
+  ShieldCheck,
+  ShoppingCart,
+  Trash2,
+} from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/authContexto';
 import { obtenerMotos } from '../../services/motos';
@@ -36,15 +47,11 @@ export default function Carrito() {
       navigate('/login');
       return;
     }
-    if (!idMoto) {
-      setError('Selecciona tu moto para continuar.');
-      return;
-    }
     setEnviando(true);
     try {
       await crearCotizacion({
         id_tienda: usuario.id_tienda,
-        id_moto: idMoto,
+        id_moto: idMoto || null,
         coti_observaciones: observaciones,
         items: items.map((item) => ({ id_accesorio: item.accesorio.id_accesorio, cantidad: item.cantidad })),
       });
@@ -62,15 +69,15 @@ export default function Carrito() {
       <SiteHeader />
       <main className="cart-main">
         <Link to="/" className="btn btn--ghost btn--sm cart-back">
-          ← Volver al catálogo
+          <ArrowLeft size={15} aria-hidden="true" /> Volver al catálogo
         </Link>
 
         {exito ? (
           <div className="cart-empty">
-            <div className="empty-icon" aria-hidden="true">✓</div>
+            <CheckCircle2 className="empty-icon" size={48} strokeWidth={1.5} aria-hidden="true" />
             <h1 className="cart-empty-title">¡Cotización enviada!</h1>
             <p className="cart-empty-subtitle">La tienda va a revisar tu solicitud pronto.</p>
-            <Link to="/" className="btn btn--primary">Volver al catálogo →</Link>
+            <Link to="/" className="btn btn--primary">Volver al catálogo <ArrowRight size={16} aria-hidden="true" /></Link>
           </div>
         ) : (
           <>
@@ -84,10 +91,10 @@ export default function Carrito() {
 
             {items.length === 0 ? (
               <div className="cart-empty">
-                <div className="empty-icon" aria-hidden="true">▣</div>
+                <ShoppingCart className="empty-icon" size={48} strokeWidth={1.5} aria-hidden="true" />
                 <h1 className="cart-empty-title">Tu carrito está esperando una buena idea.</h1>
                 <p className="cart-empty-subtitle">Explora las piezas disponibles y empieza a construir una configuración a tu medida.</p>
-                <Link to="/configurador" className="btn btn--primary">Abrir configurador →</Link>
+                <Link to="/configurador" className="btn btn--primary">Abrir configurador <ArrowRight size={16} aria-hidden="true" /></Link>
               </div>
             ) : (
               <div className="cart-layout">
@@ -109,7 +116,7 @@ export default function Carrito() {
                           disabled={item.cantidad <= 1}
                           aria-label="Disminuir cantidad"
                         >
-                          −
+                          <Minus size={14} aria-hidden="true" />
                         </button>
                         <b>{item.cantidad}</b>
                         <button
@@ -117,7 +124,7 @@ export default function Carrito() {
                           onClick={() => actualizarCantidad(item.accesorio.id_accesorio, item.cantidad + 1)}
                           aria-label="Aumentar cantidad"
                         >
-                          +
+                          <Plus size={14} aria-hidden="true" />
                         </button>
                       </div>
                       <strong className="cart-line-price">{money(item.accesorio.acc_precio * item.cantidad)}</strong>
@@ -126,7 +133,7 @@ export default function Carrito() {
                         onClick={() => eliminarItem(item.accesorio.id_accesorio)}
                         aria-label={`Eliminar ${item.accesorio.acc_nombre}`}
                       >
-                        ×
+                        <Trash2 size={14} aria-hidden="true" />
                       </button>
                     </article>
                   ))}
@@ -151,21 +158,25 @@ export default function Carrito() {
 
                   <form onSubmit={manejarEnvio} className="quote-form">
                     <div className="form-field">
-                      <label htmlFor="moto-select" className="form-label">¿Para qué moto es esta cotización?</label>
+                      <label htmlFor="moto-select" className="form-label">
+                        ¿Para qué moto es esta cotización? <span className="form-optional">(opcional)</span>
+                      </label>
                       <select
                         id="moto-select"
                         className="form-input form-select"
                         value={idMoto}
                         onChange={(e) => setIdMoto(e.target.value)}
-                        required
                       >
-                        <option value="">Selecciona tu moto...</option>
+                        <option value="">Sin moto específica</option>
                         {motos.map((moto) => (
                           <option key={moto.id_moto} value={moto.id_moto}>
                             {moto.modelo_moto?.marca_moto?.marca_nombre} {moto.modelo_moto?.modelo_nombre} {moto.moto_anio}
                           </option>
                         ))}
                       </select>
+                      <p className="form-hint">
+                        Puedes dejarlo vacío si la cotización no está atada a una moto en particular.
+                      </p>
                     </div>
 
                     <div className="form-field">
@@ -187,14 +198,21 @@ export default function Carrito() {
 
                     <button
                       className="btn btn--primary btn--full"
-                      disabled={enviando || !usuario || !idMoto}
+                      disabled={enviando || !usuario}
                       type="submit"
                     >
-                      {enviando ? 'Enviando...' : usuario ? 'Solicitar cotización →' : 'Iniciar sesión para continuar'}
+                      {enviando
+                        ? 'Enviando...'
+                        : usuario
+                          ? <>Solicitar cotización <ArrowRight size={16} aria-hidden="true" /></>
+                          : <><LogIn size={16} aria-hidden="true" /> Iniciar sesión para continuar</>}
                     </button>
                   </form>
 
-                  <p className="summary-note">✓ Sin pagos en línea. La tienda confirmará disponibilidad.</p>
+                  <p className="summary-note">
+                    <ShieldCheck size={14} aria-hidden="true" />
+                    Sin pagos en línea. La tienda confirmará disponibilidad.
+                  </p>
                 </aside>
               </div>
             )}

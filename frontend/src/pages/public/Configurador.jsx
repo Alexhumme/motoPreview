@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { ArrowRight, Check, ChevronDown, Plus, Settings2, ShoppingCart, Trash2, X } from 'lucide-react';
 import { obtenerMotos } from '../../services/motos';
 import { obtenerAccesoriosCompatibles } from '../../services/compatibilidad';
 import { obtenerCategorias } from '../../services/accesorios';
@@ -94,6 +95,7 @@ export default function Configurador() {
             <p className="configurator-subtitle">Selecciona tu moto y encuentra accesorios que encajan sin complicaciones.</p>
           </div>
           <Link to="/carrito" className="btn btn--outline">
+            <ShoppingCart size={16} aria-hidden="true" />
             Ver carrito <span className="btn-count">{totalItems}</span>
           </Link>
         </header>
@@ -116,7 +118,7 @@ export default function Configurador() {
                   </option>
                 ))}
               </select>
-              <span className="select-arrow">⌄</span>
+              <ChevronDown className="select-arrow" size={16} aria-hidden="true" />
             </div>
             <div className="bike-stage">
               <div className="stage-grid" />
@@ -138,7 +140,7 @@ export default function Configurador() {
               </div>
               <div>
                 <small>Estado</small>
-                <strong className="status-good">✓ Compatible</strong>
+                <strong className="status-good"><Check size={14} aria-hidden="true" /> Compatible</strong>
               </div>
             </div>
           </section>
@@ -185,7 +187,6 @@ export default function Configurador() {
                     <div className="compatible-info">
                       <strong>{item.acc_nombre}</strong>
                       <span>{item.categoria_accesorio?.cat_nombre} · {money(item.acc_precio)}</span>
-                      <small>✓ Compatible con {motoActual?.modelo_moto?.modelo_nombre || 'tu moto'}</small>
                     </div>
                     <button
                       className={`btn btn--sm ${agregado ? 'btn--primary' : 'btn--outline'}`}
@@ -193,7 +194,7 @@ export default function Configurador() {
                       title={agregado ? 'Quitar del carrito' : 'Agregar al carrito'}
                       aria-label={`${agregado ? 'Quitar' : 'Agregar'} ${item.acc_nombre}`}
                     >
-                      {agregado ? '✓' : '+'}
+                      {agregado ? <Check size={14} aria-hidden="true" /> : <Plus size={14} aria-hidden="true" />}
                     </button>
                   </div>
                 );
@@ -206,7 +207,7 @@ export default function Configurador() {
         <section className="configuration-bar card">
           <div className="configuration-items">
             <div className="configuration-title">
-              <span>⚙</span>
+              <span><Settings2 size={18} aria-hidden="true" /></span>
               <span>
                 <strong>Tu configuración</strong>
                 <small>{totalItems ? `${totalItems} accesorios seleccionados` : 'Aún no has agregado accesorios'}</small>
@@ -215,7 +216,9 @@ export default function Configurador() {
             {items.slice(0, 3).map((line) => (
               <div className="configuration-pill" key={line.accesorio.id_accesorio}>
                 <span>{line.accesorio.acc_nombre}</span>
-                <button onClick={() => eliminarItem(line.accesorio.id_accesorio)} className="btn btn--danger btn--sm">×</button>
+                <button onClick={() => eliminarItem(line.accesorio.id_accesorio)} className="btn btn--danger btn--sm" aria-label={`Quitar ${line.accesorio.acc_nombre}`}>
+                  <X size={13} aria-hidden="true" />
+                </button>
               </div>
             ))}
             {items.length > 3 && <span className="configuration-pill more-pill">+{items.length - 3} más</span>}
@@ -227,9 +230,11 @@ export default function Configurador() {
               <strong>{money(totalPrecio)}</strong>
             </span>
             {items.length ? (
-              <button className="btn btn--danger" onClick={vaciarCarrito}>Limpiar ×</button>
+              <button className="btn btn--danger" onClick={vaciarCarrito}>
+                <Trash2 size={15} aria-hidden="true" /> Limpiar
+              </button>
             ) : (
-              <Link to="/" className="btn btn--brand">Explorar piezas →</Link>
+              <Link to="/" className="btn btn--brand">Explorar piezas <ArrowRight size={16} aria-hidden="true" /></Link>
             )}
           </div>
         </section>
