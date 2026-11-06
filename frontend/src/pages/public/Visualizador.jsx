@@ -73,12 +73,15 @@ export default function Visualizador() {
         <Visor3D url={modelo3d?.url_modelo3d} nombreAccesorio={accesorio.acc_nombre} />
 
         <div className="visualizador-info">
-          <span className="visualizador-categoria" data-scramble>{accesorio.categoria_accesorio?.cat_nombre}</span>
+          <span className="visualizador-categoria" data-scramble>{accesorio.marca?.nombre || 'Sin marca'}</span>
           <h1 className="visualizador-title" data-reveal="lineas">{accesorio.acc_nombre}</h1>
           <p className="visualizador-description" data-reveal="up" data-reveal-delay="0.1">{accesorio.acc_descripcion || ''}</p>
           <div className="visualizador-ficha" data-reveal="up" data-reveal-delay="0.16">
             <span>SKU: {accesorio.codigo_sku}</span>
             <span>Peso: {accesorio.peso} kg</span>
+            {accesorio.tipos?.length > 0 && (
+              <span>Tipos: {accesorio.tipos.map((t) => t.nombre).join(', ')}</span>
+            )}
           </div>
           <span className="visualizador-price" data-reveal="up" data-reveal-delay="0.22">{precioFormateado}</span>
 

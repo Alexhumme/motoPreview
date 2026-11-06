@@ -56,6 +56,18 @@ const CATEGORIAS = [
         icono: Settings,
         soloSuperAdmin: true,
       },
+      {
+        ruta: '/admin/marcas',
+        etiqueta: 'Marcas',
+        icono: Package,
+        soloSuperAdmin: true,
+      },
+      {
+        ruta: '/admin/tipos-producto',
+        etiqueta: 'Tipos',
+        icono: Wrench,
+        soloSuperAdmin: true,
+      },
     ],
   },
   {

@@ -19,15 +19,12 @@ erDiagram
     STORE ||--o{ USER : "emplea"
     SUBSCRIPTION_PLAN ||--o{ STORE : "define"
     PRODUCT_CATEGORY ||--o{ PRODUCT : "agrupa"
-    ACCESSORY_CATEGORY ||--o{ PRODUCT : "clasifica"
-    ACCESSORY_TYPE ||--o{ PRODUCT : "tipifica"
+    MARCA ||--o{ PRODUCT : "fabrica"
+    TIPO_PRODUCTO }o--o{ PRODUCT : "clasifica (M2M)"
     PRODUCT ||--o{ INVENTORY : "se stockea"
     STORE ||--o{ INVENTORY : "posee"
     MOTORCYCLE_BRAND ||--o{ MOTORCYCLE_MODEL : "tiene"
     MOTORCYCLE_MODEL ||--o{ MOTORCYCLE : "genera"
-    MOTORCYCLE_MODEL ||--o{ ACCESSORY_COMPATIBILITY : "acepta"
-    ACCESSORY_CATEGORY ||--o{ ACCESSORY_COMPATIBILITY : "encaja en"
-    ACCESSORY_CATEGORY ||--o{ MODEL_3D : "modela"
     MOVEMENT_TYPE ||--o{ INVENTORY_MOVEMENT : "clasifica"
     INVENTORY ||--o{ INVENTORY_MOVEMENT : "registra"
     USER ||--o{ INVENTORY_MOVEMENT : "ejecuta"
@@ -35,13 +32,11 @@ erDiagram
     USER ||--o{ QUOTE : "solicita"
     MOTORCYCLE ||--o{ QUOTE : "refiere"
     QUOTE ||--o{ QUOTE_DETAIL : "detalla"
-    ACCESSORY_CATEGORY ||--o{ QUOTE_DETAIL : "incluye"
     QUOTE ||--o{ QUOTE_STATUS_HISTORY : "historial"
     USER ||--o{ QUOTE_STATUS_HISTORY : "audita"
     USER ||--o{ CONFIGURATION : "guarda"
     MOTORCYCLE ||--o{ CONFIGURATION : "configura"
     CONFIGURATION ||--o{ CONFIGURATION_DETAIL : "detalla"
-    ACCESSORY_CATEGORY ||--o{ CONFIGURATION_DETAIL : "añade"
     USER ||--o{ TOKEN : "recibe"
 ```
 
@@ -70,24 +65,33 @@ Semilla: `Administrador` (`...0001`), `Vendedor` (`...0002`), `Cliente` (`...000
 | `limite_usuarios` | Int | null → límite aplicado en `POST /api/auth/register` |
 | `plan_estado` | `plan_estado_enum` | `activo` \| `inactivo` \| `suspendido` (default `activo`) |
 
-### `categoria_accesorio`
-| Columna | Tipo |
-|---|---|
-| `id_categoria` | UUID (PK) |
-| `cat_nombre` | Text |
-| `cat_descripcion` | Text (null) |
+### `marca` (marcas de producto)
+| Columna | Tipo | Restricción |
+|---|---|---|
+| `id_marca` | UUID | PK |
+| `nombre` | Text | — |
+| `logo` | Text | null (URL de la imagen) |
+| `activo` | Bool | default `True` |
+
+### `tipo_producto` (tipos de producto)
+| Columna | Tipo | Restricción |
+|---|---|---|
+| `id_tipo_producto` | UUID | PK |
+| `nombre` | Text | — |
+| `descripcion` | Text | null |
+| `accesorio` | Bool | default `False`; `True` ⇒ el producto aparece en el Configurador |
+| `activo` | Bool | default `True` |
+
+### `producto_tipo_producto` (relación M2M producto ↔ tipo)
+| Columna | Tipo | Restricción |
+|---|---|---|
+| `id_producto` | UUID | FK → `producto`, PK compuesta |
+| `id_tipo_producto` | UUID | FK → `tipo_producto`, PK compuesta |
 
 ### `categoria_producto`
 | Columna | Tipo |
 |---|---|
 | `id_categoria_producto` | UUID (PK) |
-| `nombre` | Text |
-| `descripcion` | Text (null) |
-
-### `tipo_accesorio`
-| Columna | Tipo |
-|---|---|
-| `id_tipo` | UUID (PK) |
 | `nombre` | Text |
 | `descripcion` | Text (null) |
 
@@ -119,25 +123,22 @@ Semilla del frontend: `Entrada` (`cccc...0001`), `Salida` (`cccc...0002`), `Ajus
 | `descripcion` | Text | null |
 | `estado` | Char(50) | default `disponible` |
 | `id_categoria_producto` | UUID | FK → `categoria_producto`; **capa de categoría del catálogo** |
+| `id_marca` | UUID | FK → `marca`; **marca del producto** (logo opcional) |
 | `imagen` | Text | null |
 | `codigo_sku` | Text | **UNIQUE**, null |
 | `precio` | Decimal(10,2) | null; **debe existir** para poder cotizar el producto |
 | `accesorio` | Bool | default `False`; expuesto como `es_accesorio` — dice si el producto es un accesorio de moto |
-| `id_categoria_accesorio` | UUID | FK → `categoria_accesorio`; **capa que gobierna la compatibilidad** (solo accesorios) |
-| `id_tipo_accesorio` | UUID | FK → `tipo_accesorio`; **capa de tipo** dentro de la categoría (solo accesorios) |
 | `peso` | Decimal(6,2) | null (kg) |
 
 > **Una sola tabla para todo el catálogo.** La antigua tabla `accesorio` fue eliminada: sus
-> campos (`peso`, tipo y categoría) viven ahora en `producto`, y `es_accesorio` decide si
-> aplican las capas de accesorio. Por eso el catálogo puede listar **todos** los productos
-> y filtrar por categorías de producto, mientras el configurador combina categoría
-> de accesorio + tipo (ver [07 — Vistas del frontend](07-vistas-frontend.md)).
+> campos (`peso`, tipo y categoría) viven ahora en `producto`. El producto se vincula a
+> uno o varios `tipo_producto` mediante la tabla intermedia `producto_tipo_producto`; solo
+> los tipos con `accesorio = True` aparecen en el Configurador. La marca (`marca`) es
+> independiente de la marca de moto (`marca_moto`).
 >
-> **Compatibilidad por categoría**, no por pieza: `accesorio_modelo_moto` enlaza
-> `categoria_accesorio` ↔ `modelo_moto`, así que un accesorio es compatible con una moto
-> cuando su `id_categoria_accesorio` está marcado como compatible con ese modelo.
-> `Model3DByAccessory` y `CompatibilityCollection` traducen el `id_accesorio` (id de
-> producto) que envía el frontend al id de su categoría.
+> **Compatibilidad por categoría retirada:** el Configurador ya no filtra por
+> compatibilidad moto↔categoría; muestra todos los productos marcados como accesorio y
+> filtra por los tipos seleccionados (multi-selección).
 
 ### `modelo_3d`
 | Columna | Tipo | Nota |
@@ -172,18 +173,14 @@ Semilla del frontend: `Entrada` (`cccc...0001`), `Salida` (`cccc...0002`), `Ajus
 | `moto_version` | Text | null |
 | `moto_imagen` | Text | null (usada en el configurador) |
 
-### `accesorio_modelo_moto` (compatibilidad)
-| Columna | Tipo | Restricción |
-|---|---|---|
-| `id_compatibilidad` | UUID | PK |
-| `id_categoria_accesorio` | UUID | FK → `categoria_accesorio`, null (la categoría que hace compatible al accesorio) |
-| `id_modelo_moto` | UUID | FK → `modelo_moto`, NOT NULL |
-| `anio_desde` | Int | null (rango de años) |
-| `anio_hasta` | Int | null |
+### `accesorio_modelo_moto` (compatibilidad) — **RETIRADA**
 
-**`UNIQUE (id_categoria_accesorio, id_modelo_moto)`** → un `POST /api/compatibilidad` duplicado devuelve **409**. El panel sigue enviando `id_accesorio` (id de producto); la vista lo traduce a la categoría del producto antes de crear el registro.
+Esta tabla se eliminó en la migración a marca + tipo. El Configurador ya no filtra por
+compatibilidad moto↔categoría: muestra todos los productos marcados como accesorio y
+filtra por los tipos seleccionados (multi-selección) y por marca.
 
 ---
+
 
 ## 5. Tablas de tiendas y usuarios
 

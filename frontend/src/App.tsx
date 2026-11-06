@@ -31,6 +31,8 @@ const Usuarios = lazy(() => import('./pages/Usuarios'));
 const Tienda = lazy(() => import('./pages/Tienda'));
 const Seguridad = lazy(() => import('./pages/Seguridad'));
 const Accesorios = lazy(() => import('./pages/Accesorios'));
+const Marcas = lazy(() => import('./pages/Marcas'));
+const TiposProducto = lazy(() => import('./pages/TiposProducto'));
 const CatalogoRBAC = lazy(() => import('./pages/CatalogoRBAC'));
 const Tiendas = lazy(() => import('./pages/Tiendas'));
 const ResumenTienda = lazy(() => import('./pages/ResumenTienda'));
@@ -156,6 +158,22 @@ function App() {
             element={
               <RutaProtegida rolesPermitidos={[ROL_SUPERADMIN]}>
                 <LazyWrapper Component={CatalogoRBAC} />
+              </RutaProtegida>
+            }
+          />
+          <Route
+            path="marcas"
+            element={
+              <RutaProtegida rolesPermitidos={[ROL_SUPERADMIN]}>
+                <LazyWrapper Component={Marcas} />
+              </RutaProtegida>
+            }
+          />
+          <Route
+            path="tipos-producto"
+            element={
+              <RutaProtegida rolesPermitidos={[ROL_SUPERADMIN]}>
+                <LazyWrapper Component={TiposProducto} />
               </RutaProtegida>
             }
           />

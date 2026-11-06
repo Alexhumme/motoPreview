@@ -122,22 +122,22 @@
 
 ---
 
-## 4. Accesorios y compatibilidad
+## 4. Accesorios, marcas y tipos de producto
 
 | Método | Ruta | Permiso | Descripción | Códigos |
 |---|---|---|---|---|
-| GET | `/api/accesorios` | 🌐 | Solo accesorios (`es_accesorio=True`), en la forma plana de §4-bis | 200 |
-| POST | `/api/accesorios` | 🛡️ | Crea `producto` con `es_accesorio=True`; exige `acc_nombre` y `acc_precio` | 201, 400, 409 |
+| GET | `/api/accesorios` | 🌐 | Solo accesorios (`es_accesorio=True`), en la forma plana de §4-bis (ahora incluye `marca` y `tipos`) | 200 |
+| POST | `/api/accesorios` | 🛡️ | Crea `producto` con `es_accesorio=True`; exige `acc_nombre` y `acc_precio`. Acepta `id_marca` e `id_tipos` (lista) | 201, 400, 409 |
 | GET/PUT/PATCH/DELETE | `/api/accesorios/<uuid>` | GET 🌐 / esc. 🛡️ | Detalle y actualización. El `GET` **no filtra por `es_accesorio`**: abre cualquier producto (lo usa `/visualizador/:id`) | 200, 400, 404, 409 |
-| GET | `/api/modelos-3d/accesorio/<uuid>` | 🌐 | Primer `modelo_3d` de la **categoría de accesorio** del producto (resuelve el id del producto a su categoría; si no, intenta el id directo) | 200, 404 |
-| GET | `/api/compatibilidad/modelo/<uuid>` | 🌐 | **Accesorios compatibles con un modelo de moto** (accesorios de las categorías marcadas como compatibles; alimenta el configurador) | 200 |
-| GET | `/api/compatibilidad/accesorio/<uuid>` | 🌐 | Modelos compatibles con la categoría de un accesorio | 200 |
-| POST | `/api/compatibilidad` | 🛡️ | Crea compatibilidad; acepta `id_categoria_accesorio` o `id_accesorio` (lo traduce a su categoría) | 201, 400, **409** (par duplicado) |
-| DELETE | `/api/compatibilidad/<uuid>` | 🛡️ | Elimina compatibilidad | 200, 404 |
+| GET | `/api/marcas-producto` | 🌐 | Listado de marcas de producto (con logo) | 200 |
+| GET/POST/PUT/PATCH/DELETE | `/api/marcas-producto/<uuid>` | 🛡️ | CRUD de marca de producto | 200, 201, 400, 404, 409 |
+| GET | `/api/tipos-producto` | 🌐 | Listado de tipos de producto (incluye flag `accesorio`) | 200 |
+| GET/POST/PUT/PATCH/DELETE | `/api/tipos-producto/<uuid>` | 🛡️ | CRUD de tipo de producto | 200, 201, 400, 404, 409 |
+| GET | `/api/compatibilidad/modelo/<uuid>` | 🌐 | **Accesorios para el configurador** (todos los productos marcados como accesorio; el filtrado por tipo se hace en el frontend) | 200 |
 
 ```json
-// POST /api/compatibilidad
-{ "id_accesorio": "<uuid del producto>", "id_modelo_moto": "<uuid>", "anio_desde": 2020, "anio_hasta": 2025 }
+// POST /api/accesorios (ejemplo con marca y tipos)
+{ "acc_nombre": "Escape Akrapovic", "acc_precio": 1850000, "id_marca": "<uuid>", "id_tipos": ["<uuid-tipo-1>", "<uuid-tipo-2>"] }
 ```
 
 ---
@@ -156,29 +156,30 @@ tarjeta (`AccesorioCard`), el carrito, la cotización y el visualizador:
   "acc_nombre": "Escape Slip-On", "acc_descripcion": "...",
   "acc_precio": "450000.00", "acc_estado": "disponible",
   "imagen": "https://...", "codigo_sku": "ESC-001", "peso": "2.50", "color": null,
-  "id_categoria": "<categoria_accesorio>",  "id_categoria_producto": "<...>",  "id_tipo": "<...>",
-  "categoria_producto":   { "id_categoria_producto": "...", "nombre": "Escapes" },
-  "categoria_accesorio":  { "id_categoria": "...", "cat_nombre": "Escapes", "cat_descripcion": "..." },
-  "tipo_accesorio":       { "id_tipo": "...", "nombre": "Slip-on" },
+  "id_marca": "<marca>", "id_categoria_producto": "<...>",
+  "marca": { "id_marca": "...", "nombre": "Yamaha", "logo": "https://..." },
+  "categoria_producto": { "id_categoria_producto": "...", "nombre": "Escapes" },
+  "tipos": [ { "id_tipo_producto": "...", "nombre": "Escape", "accesorio": true } ],
   "producto": { /* representación completa de `producto` (ProductSerializer) */ }
 }
 ```
 
-- **Tres capas de clasificación** conviven en la misma fila; cada vista usa las que necesita:
-  - **Catálogo (`/catalogo`)** → `categoria_producto` como capa principal y `tipo_accesorio`
-    como subcapa (solo aparece cuando la categoría seleccionada tiene accesorios).
-  - **Configurador (`/configurador`)** → `categoria_accesorio` (capa amplia) +
-    `tipo_accesorio` (capa específica), sobre la lista de accesorios compatibles.
-- Cada capa vale `null` cuando el producto no la tiene asignada (`categoria_producto` sin
-  categoría, o `categoria_accesorio`/`tipo_accesorio` y sus ids correspondientes). El
-  catálogo usa `tipo_accesorio` **solo** si `es_accesorio` es `true`, y `color` siempre es
-  `null` (campo histórico de la tabla `accesorio` ya eliminada).
+- **Clasificación por marca y tipo**: un producto tiene una `marca` (opcional) y
+  uno o varios `tipos` (relación M2M vía `producto_tipo_producto`). Solo los
+  tipos con `accesorio = True` aparecen en el Configurador.
+- **Catálogo (`/catalogo`)** → filtra por `marca` (chips con logo o placeholder
+  con la inicial) y por `tipos` (selección múltiple).
+- **Configurador (`/configurador`)** → una sola fila de tipos (multi-selección)
+  con todos los tipos donde `accesorio = True`; la selección de moto se hace
+  con tres selectores en cascada (marca → modelo → año) más una barra de búsqueda.
+- `color` siempre es `null` (campo histórico de la tabla `accesorio` ya eliminada).
 - Las claves `acc_*` se conservan por compatibilidad con el carrito, la cotización y el
-  visualizador; **no** cambia el contrato de escritura: `POST/PUT /api/productos` siguen
-  usando `ProductSerializer` (campos reales de `producto`).
+  visualizador; **no** cambia el contrato de escritura: `POST/PUT /api/accesorios` siguen
+  usando `AccesorioInputSerializer` (campos reales de `producto`, ahora con `id_marca` e `id_tipos`).
 - Paginación opcional igual que el resto de catálogos: `?pagina=&por_pagina=` (máx. 100).
 
 ---
+
 
 ## 5. Usuarios (gestión de la tienda) 🛡️
 
@@ -287,10 +288,8 @@ tarjeta (`AccesorioCard`), el carrito, la cotización y el visualizador:
 | `modelos3d.js` | `obtenerModelo3dPorAccesorio` | GET | `/modelos-3d/accesorio/{id}` |
 | `accesorios.js` | `obtenerAccesorios` / `obtenerCategorias` | GET | `/accesorios` · `/categorias` |
 | | `crearAccesorio` / `actualizarAccesorio` | POST/PUT | `/accesorios` · `/accesorios/{id}` |
-| `productos.js` | `obtenerProductos` (vidriera del catálogo) | GET | `/productos` |
-| `compatibilidad.js` | `obtenerAccesoriosCompatibles` | GET | `/compatibilidad/modelo/{id}` |
-| | `obtenerModelosCompatibles` | GET | `/compatibilidad/accesorio/{id}` |
-| | `marcarCompatible` / `quitarCompatible` | POST/DELETE | `/compatibilidad` · `/compatibilidad/{id}` |
+| | `obtenerTiposProducto` / `obtenerMarcasProducto` | GET | `/tipos-producto` · `/marcas-producto` |
+| `compatibilidad.js` | `obtenerAccesoriosCompatibles` (legacy) | GET | `/compatibilidad/modelo/{id}` (devuelve todos los accesorios) |
 | `inventario.js` | `obtenerInventario` | GET | `/inventario` |
 | | `registrarMovimiento` | POST | `/inventario/movimiento` |
 | `cotizaciones.js` | `obtenerCotizaciones` / `crearCotizacion` | GET/POST | `/cotizaciones` |
