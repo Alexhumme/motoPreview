@@ -365,6 +365,25 @@ class QuoteFlowTests(EsquemaTestCase):
             QuoteDetail.objects.filter(cotizacion=cotizacion).count(), 2
         )
 
+    def test_crear_cotizacion_sin_moto_es_opcional(self):
+        a100 = self.accesorios[Decimal("100.00")]
+        items = [{"id_accesorio": str(a100.id_accesorio), "cantidad": 1}]
+
+        for etiqueta, payload in (
+            ("campo omitido", {"items": items}),
+            ("id_moto null", {"id_moto": None, "items": items}),
+        ):
+            with self.subTest(etiqueta=etiqueta):
+                respuesta = self.client.post(
+                    "/api/cotizaciones", payload, format="json"
+                )
+                self.assertEqual(respuesta.status_code, 201, respuesta.json())
+                data = respuesta.json()
+                self.assertIsNone(data["id_moto"])
+                self.assertIsNone(data["moto"])
+                cotizacion = Quote.objects.get(pk=data["id_cotizacion"])
+                self.assertIsNone(cotizacion.moto_id)
+
     def test_cotizacion_con_accesorios_inexistentes_se_rechaza(self):
         a100 = self.accesorios[Decimal("100.00")]
         respuesta = self._crear_cotizacion((a100, 1))

@@ -264,7 +264,7 @@ Regla de estado: `agotado` si `stock_actual ≤ 0`; `bajo` si `≤ stock_minimo`
 | `id_cotizacion` | UUID | PK |
 | `id_tienda` | UUID | FK → `tienda` |
 | `id_usuario` | UUID | FK → `usuario` (solicitante) |
-| `id_moto` | UUID | FK → `moto` |
+| `id_moto` | UUID | FK → `moto` (opcional: la cotización puede no estar atada a una moto) |
 | `fecha_solicitud` | DateTime | default `timezone.now` |
 | `coti_estado` | `cotizacion_estado_enum` | `pendiente` (default) \| `aprobada` \| `rechazada` \| `completada` |
 | `total` | Decimal(10,2) | default 0; suma de subtotales |

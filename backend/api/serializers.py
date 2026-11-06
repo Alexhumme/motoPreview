@@ -522,7 +522,8 @@ class QuoteItemSerializer(serializers.Serializer):
 
 
 class QuoteCreateSerializer(serializers.Serializer):
-    id_moto = serializers.UUIDField()
+    # Opcional: una cotización puede no estar atada a una moto concreta.
+    id_moto = serializers.UUIDField(required=False, allow_null=True)
     # Solo se usa si el usuario no pertenece a una tienda; ver
     # views.resolver_tienda_cotizacion.
     id_tienda = serializers.UUIDField(required=False, allow_null=True)

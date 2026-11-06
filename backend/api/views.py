@@ -1254,9 +1254,11 @@ class QuoteCollection(DatabaseGuardMixin):
         )
         if tienda_error:
             return Response({"error": tienda_error}, status=400)
-        motorcycle = Motorcycle.objects.filter(pk=values["id_moto"]).first()
-        if not motorcycle:
-            return Response({"error": "La moto indicada no existe."}, status=400)
+        motorcycle = None
+        if values.get("id_moto"):
+            motorcycle = Motorcycle.objects.filter(pk=values["id_moto"]).first()
+            if not motorcycle:
+                return Response({"error": "La moto indicada no existe."}, status=400)
 
         accessory_ids = [item["id_accesorio"] for item in values["items"]]
         # Los accesorios son filas de producto (tabla unificada); el detalle

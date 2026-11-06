@@ -207,7 +207,8 @@
   "items": [ { "id_accesorio": "<uuid>", "cantidad": 2 },
              { "id_accesorio": "<uuid>", "cantidad": 1 } ] }
 ```
-- Valida existencia de la moto y de los accesorios; **400** si algún accesorio no tiene `producto.precio`.
+- `id_moto` es **opcional** (`null` u omitido): la cotización puede incluir productos que no dependen de una moto concreta.
+- Valida existencia de la moto (si se envía) y de los accesorios; **400** si algún accesorio no tiene `producto.precio`.
 - Calcula `subtotal` por línea y `total`; crea la cotización en estado **`pendiente`** dentro de una transacción.
 - Códigos: **201**, 400, 409.
 
