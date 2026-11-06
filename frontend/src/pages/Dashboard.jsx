@@ -34,7 +34,7 @@ export default function Dashboard() {
   const idTienda = usuario?.id_tienda;
   const consolidado = esSuperAdmin();
 
-  const idTiendaRef = useRef();
+  const idTiendaRef = useRef(Symbol('unset'));
   useEffect(() => {
     if (idTiendaRef.current === idTienda) return;
     idTiendaRef.current = idTienda;

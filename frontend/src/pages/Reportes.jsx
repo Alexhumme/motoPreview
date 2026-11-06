@@ -16,7 +16,7 @@ export default function Reportes() {
   // cambia de referencia aunque el usuario sea el mismo.
   const idTienda = usuario?.id_tienda;
 
-  const idTiendaRef = useRef();
+  const idTiendaRef = useRef(Symbol('unset'));
   useEffect(() => {
     if (idTiendaRef.current === idTienda) return;
     idTiendaRef.current = idTienda;
