@@ -40,9 +40,9 @@ export default function AccesorioCard({ accesorio }) {
         </span>
 
         <div className="product-meta">
-          <span>{accesorio.categoria_producto?.nombre || 'Sin categoría'}</span>
-          {accesorio.es_accesorio && (
-            <span className="product-tag">{accesorio.categoria_accesorio?.cat_nombre || 'Accesorio'}</span>
+          <span>{accesorio.marca?.nombre || 'Sin marca'}</span>
+          {accesorio.tipos?.length > 0 && (
+            <span className="product-tag">{accesorio.tipos.map((t) => t.nombre).join(' · ')}</span>
           )}
         </div>
 

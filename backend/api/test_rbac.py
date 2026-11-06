@@ -658,8 +658,6 @@ class RecursoPorVistaTests(SimpleTestCase):
             "PermisosUsuarioView": "el usuario lee sus propios permisos",
             # Vidriera: lectura de catálogo por relación, sin sesión.
             "Model3DByAccessory": "visor 3D público del accesorio",
-            "CompatibilityByModelo": "configurador público: compatibilidad por modelo",
-            "CompatibilityByAccesorio": "configurador público: compatibilidad por accesorio",
         }
 
         encontradas = {}
@@ -1197,13 +1195,16 @@ class MatrizPermitirDenegarTests(SimpleTestCase):
         matriz, esta prueba la nombra para que la decisión se tome en revisión.
         """
         publicas = {
-            "AccesorioDetail", "AccesoriosCollection", "AccessoryTypeCollection",
-            "AccessoryTypeDetail", "BrandCollection", "BrandDetail",
-            "CategoryCollection", "CategoryDetail", "CompatibilityCollection",
-            "CompatibilityDetail", "Model3DCollection", "Model3DDetail",
+            "AccesorioDetail", "AccesoriosCollection",
+            "BrandCollection", "BrandDetail",
+            "CategoryCollection", "CategoryDetail",
+            "CompatibilityByModelo",
+            "MarcaCollection", "MarcaDetail",
+            "Model3DCollection", "Model3DDetail",
             "ModelCollection", "ModelDetail", "MotorcycleCollection",
             "MotorcycleDetail", "ProductCategoryCollection", "ProductCategoryDetail",
             "ProductCollection", "ProductDetail", "StoreCollection", "StoreDetail",
+            "TipoProductoCollection", "TipoProductoDetail",
         }
         declaradas = set()
         for nombre, vista, _metodo, _recurso, _accion in self.operaciones:

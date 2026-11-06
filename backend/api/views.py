@@ -8,7 +8,6 @@ from uuid import UUID
 
 import bcrypt
 import jwt
-from django.http import HttpResponse, JsonResponse
 from django.conf import settings
 from django.core.mail import send_mail
 from django.db import IntegrityError, connection, transaction
@@ -33,6 +32,7 @@ from .models import (
     ConfigurationDetail,
     Inventory,
     InventoryMovement,
+    Marca,
     Model3D,
     Motorcycle,
     MotorcycleBrand,
@@ -49,6 +49,7 @@ from .models import (
     RolRecurso,
     Store,
     SubscriptionPlan,
+    TipoProducto,
     User,
     UserRole,
 )
@@ -73,9 +74,7 @@ from .serializers import (
     AccionSerializer,
     AccesorioInputSerializer,
     AccesorioSerializer,
-    AccessoryCategorySerializer,
-    AccessoryTypeSerializer,
-    CompatibilitySerializer,
+    TipoProductoSerializer,
     ConfigurationSerializer,
     ErrorSerializer,
     ForgotRequestSerializer,
@@ -83,6 +82,7 @@ from .serializers import (
     InventoryInputSerializer,
     InventoryMovementSerializer,
     InventorySerializer,
+    MarcaSerializer,
     LoginRequestSerializer,
     LoginResponseSerializer,
     MessageSerializer,
@@ -432,11 +432,12 @@ def paginate_response(request, queryset, serializer_class, *, context=None):
     )
 
 
+@extend_schema(responses={200: RootSerializer})
+@api_view(["GET"])
+@permission_classes([AllowAny])
 def root(request):
-    if request.method == "HEAD":
-        return HttpResponse(status=200)
     lang = getattr(request, "lang", i18n.DEFAULT_LANGUAGE)
-    return JsonResponse(
+    return Response(
         {"mensaje": i18n.translate_text("API de MotoPreview con Django funcionando.", lang)}
     )
 
@@ -590,15 +591,15 @@ class ResourceDetail(DatabaseGuardMixin):
 
 
 class CategoryCollection(ResourceCollection):
-    model = AccessoryCategory
-    serializer_class = AccessoryCategorySerializer
+    model = ProductCategory
+    serializer_class = ProductCategorySerializer
     permiso_recurso = "categorias"
     lectura_sin_matriz = True
 
 
 class CategoryDetail(ResourceDetail):
-    model = AccessoryCategory
-    serializer_class = AccessoryCategorySerializer
+    model = ProductCategory
+    serializer_class = ProductCategorySerializer
     permiso_recurso = "categorias"
     not_found_message = "Categoría no encontrada."
     lectura_sin_matriz = True
@@ -902,6 +903,28 @@ class Model3DDetail(ResourceDetail):
     lectura_sin_matriz = True
 
 
+class CompatibilityByModelo(DatabaseGuardMixin):
+    """Accesorios para el configurador (catálogo público).
+
+    Tras el cambio de esquema la compatibilidad ya no se filtra por
+    categoría/moto: se devuelven todos los productos marcados como
+    accesorio. El filtrado por tipo se hace en el frontend.
+    """
+    permission_classes = [AllowAny]
+    serializer_class = AccesorioSerializer
+    permiso_recurso = "productos"
+    lectura_sin_matriz = True
+
+    def get(self, request, id_modelo_moto):
+        productos = (
+            Product.objects.filter(es_accesorio=True)
+            .select_related("categoria_producto", "marca")
+            .prefetch_related("tipos")
+            .order_by("nombre")
+        )
+        return Response(AccesorioSerializer(productos, many=True).data)
+
+
 class Model3DByAccessory(DatabaseGuardMixin):
     permission_classes = [AllowAny]
     serializer_class = Model3DSerializer
@@ -928,121 +951,7 @@ class Model3DByAccessory(DatabaseGuardMixin):
         return Response(Model3DSerializer(model).data)
 
 
-class CompatibilityCollection(DatabaseGuardMixin):
-    serializer_class = CompatibilitySerializer
-    permission_classes = [EscribirConPermiso]
-    permiso_recurso = "compatibilidad"
-    # La matriz de compatibilidad es parte de la vidriera: el configurador la lee
-    # sin sesión. Las escrituras ya no las manda el rol, sino `compatibilidad:*`.
-    lectura_sin_matriz = True
-
-    def get(self, request):
-        links = AccessoryCompatibility.objects.select_related(
-            "modelo_moto__marca", "categoria_accesorio"
-        ).all()
-        accesorio = request.query_params.get("id_accesorio")
-        modelo = request.query_params.get("id_modelo_moto")
-        if accesorio:
-            categoria_id = self._categoria_de_accesorio(accesorio)
-            if categoria_id is None:
-                return Response([], status=status.HTTP_200_OK)
-            links = links.filter(categoria_accesorio_id=categoria_id)
-        if modelo:
-            links = links.filter(modelo_moto_id=modelo)
-        return Response(CompatibilitySerializer(links, many=True).data)
-
-    def post(self, request):
-        # La entrada del panel usa el id del accesorio (producto); la matriz
-        # guarda la compatibilidad por categoría.
-        serializer = CompatibilitySerializer(data=request.data)
-        if not serializer.is_valid():
-            # Puede venir el id del accesorio (producto): lo traducimos.
-            id_accesorio = request.data.get("id_accesorio")
-            id_modelo = request.data.get("id_modelo_moto")
-            if not id_accesorio or not id_modelo:
-                return Response({"error": serializer.errors}, status=400)
-            categoria_id = self._categoria_de_accesorio(str(id_accesorio))
-            if categoria_id is None:
-                return Response(
-                    {"error": "El accesorio indicado no existe."},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-            instance, creado = AccessoryCompatibility.objects.get_or_create(
-                categoria_accesorio_id=categoria_id,
-                modelo_moto_id=id_modelo,
-            )
-            codigo = status.HTTP_201_CREATED if creado else status.HTTP_200_OK
-            return Response(CompatibilitySerializer(instance).data, status=codigo)
-        try:
-            instance = serializer.save()
-        except IntegrityError:
-            return Response(
-                {"error": "La compatibilidad entre este accesorio y modelo ya existe."},
-                status=status.HTTP_409_CONFLICT,
-            )
-        return Response(CompatibilitySerializer(instance).data, status=status.HTTP_201_CREATED)
-
-    @staticmethod
-    def _categoria_de_accesorio(id_accesorio):
-        """Traduce un id de accesorio (producto) al id de su categoría."""
-        producto = Product.objects.filter(pk=id_accesorio).only(
-            "id_producto", "categoria_accesorio_id"
-        ).first()
-        return producto.categoria_accesorio_id if producto else None
-
-
-class CompatibilityByModelo(DatabaseGuardMixin):
-    """Accesorios compatibles con un modelo de moto (catálogo público).
-
-    Devuelve accesorios (forma plana) de las categorías marcadas como
-    compatibles con el modelo indicado.
-    """
-
-    permission_classes = [AllowAny]
-    serializer_class = AccesorioSerializer
-
-    def get(self, request, id_modelo_moto):
-        categorias = AccessoryCompatibility.objects.filter(
-            modelo_moto_id=id_modelo_moto
-        ).values_list("categoria_accesorio_id", flat=True)
-        productos = (
-            Product.objects.filter(
-                es_accesorio=True, categoria_accesorio_id__in=list(categorias)
-            )
-            .select_related("categoria_producto", "categoria_accesorio", "tipo_accesorio")
-            .order_by("nombre")
-        )
-        return Response(AccesorioSerializer(productos, many=True).data)
-
-
-class CompatibilityByAccesorio(DatabaseGuardMixin):
-    """Modelos compatibles con un accesorio (panel de administración)."""
-
-    permission_classes = [AllowAny]
-    serializer_class = CompatibilitySerializer
-
-    def get(self, request, id_accesorio):
-        producto = Product.objects.filter(pk=id_accesorio).only(
-            "id_producto", "categoria_accesorio_id"
-        ).first()
-        if not producto:
-            return Response(
-                {"error": "El accesorio indicado no existe."},
-                status=status.HTTP_404_NOT_FOUND,
-            )
-        links = AccessoryCompatibility.objects.filter(
-            categoria_accesorio_id=producto.categoria_accesorio_id
-        ).select_related("modelo_moto__marca", "categoria_accesorio")
-        return Response(CompatibilitySerializer(links, many=True).data)
-
-
-class CompatibilityDetail(ResourceDetail):
-    model = AccessoryCompatibility
-    serializer_class = CompatibilitySerializer
-    permiso_recurso = "compatibilidad"
-    not_found_message = "Compatibilidad no encontrada."
-    lectura_sin_matriz = True
-
+# (Compatibilidad por categoria retirada: el Configurador ahora filtra por tipo de producto)
 
 class InventoryCollection(DatabaseGuardMixin):
     permission_classes = [HasPermiso]
@@ -1761,19 +1670,34 @@ class ProductCategoryDetail(ResourceDetail):
     lectura_sin_matriz = True
 
 
-class AccessoryTypeCollection(ResourceCollection):
-    model = AccessoryType
-    serializer_class = AccessoryTypeSerializer
+class TipoProductoCollection(ResourceCollection):
+    model = TipoProducto
+    serializer_class = TipoProductoSerializer
     permiso_recurso = "tipos"
     lectura_sin_matriz = True
 
 
-class AccessoryTypeDetail(ResourceDetail):
-    model = AccessoryType
-    serializer_class = AccessoryTypeSerializer
+class TipoProductoDetail(ResourceDetail):
+    model = TipoProducto
+    serializer_class = TipoProductoSerializer
     permiso_recurso = "tipos"
-    not_found_message = "Tipo de accesorio no encontrado."
+    not_found_message = "Tipo de producto no encontrado."
     lectura_sin_matriz = True
+
+class MarcaCollection(ResourceCollection):
+    model = Marca
+    serializer_class = MarcaSerializer
+    permiso_recurso = "marcas"
+    lectura_sin_matriz = True
+
+
+class MarcaDetail(ResourceDetail):
+    model = Marca
+    serializer_class = MarcaSerializer
+    permiso_recurso = "marcas"
+    not_found_message = "Marca no encontrada."
+    lectura_sin_matriz = True
+
 
 
 class AccesoriosCollection(ResourceCollection):
@@ -1799,9 +1723,12 @@ class AccesoriosCollection(ResourceCollection):
         if not input_serializer.is_valid():
             return Response({"error": input_serializer.errors}, status=400)
         campos = input_serializer.to_fields(input_serializer.validated_data)
+        tipos = campos.pop("_tipos", None)
         try:
             with transaction.atomic():
                 instance = Product.objects.create(es_accesorio=True, **campos)
+                if tipos is not None:
+                    instance.tipos.set(tipos)
         except IntegrityError:
             return Response(
                 {"error": "Ya existe un accesorio con ese código SKU."},
@@ -1822,8 +1749,8 @@ class AccesorioDetail(DatabaseGuardMixin):
         # Sin filtro por `es_accesorio`: el visualizador abre cualquier producto
         # del catálogo, y la ficha plana es la misma para accesorios y no accesorios.
         return Product.objects.select_related(
-            "categoria_producto", "categoria_accesorio", "tipo_accesorio"
-        ).get(pk=pk)
+            "categoria_producto", "marca"
+        ).prefetch_related("tipos").get(pk=pk)
 
     def get(self, request, pk):
         try:
@@ -1846,11 +1773,14 @@ class AccesorioDetail(DatabaseGuardMixin):
         if not input_serializer.is_valid():
             return Response({"error": input_serializer.errors}, status=400)
         campos = input_serializer.to_fields(input_serializer.validated_data)
+        tipos = campos.pop("_tipos", None)
         for campo, valor in campos.items():
             setattr(instance, campo, valor)
         try:
             with transaction.atomic():
                 instance.save()
+                if tipos is not None:
+                    instance.tipos.set(tipos)
         except IntegrityError:
             return Response(
                 {"error": "Ya existe un accesorio con ese código SKU."},

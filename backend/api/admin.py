@@ -33,10 +33,8 @@ from .services import validar_password
 
 from .models import (
     Accion,
-    AccessoryCategory,
-    AccessoryCompatibility,
-    AccessoryToken,
-    AccessoryType,
+    Marca,
+    TipoProducto,
     Configuration,
     ConfigurationDetail,
     Inventory,
@@ -90,9 +88,8 @@ class MotopreviewAdminSite(admin.AdminSite):
         Motorcycle: "Motos",
         MotorcycleModel: "Modelos de moto",
         MotorcycleBrand: "Marcas de moto",
-        AccessoryCompatibility: "Compatibilidades de accesorio",
-        AccessoryType: "Tipos de accesorio",
-        AccessoryCategory: "Categorías de accesorio",
+        Marca: "Marcas de producto",
+        TipoProducto: "Tipos de producto",
         Product: "Productos",
         ProductCategory: "Categorías de producto",
         Model3D: "Modelos 3D",
@@ -108,7 +105,6 @@ class MotopreviewAdminSite(admin.AdminSite):
         Configuration: "Configuraciones",
         ConfigurationDetail: "Detalles de configuración",
         Role: "Roles",
-        AccessoryToken: "Tokens de accesorio",
         AuthUser: "Usuarios del panel (Django)",
         Group: "Grupos",
         # RBAC
@@ -123,11 +119,11 @@ class MotopreviewAdminSite(admin.AdminSite):
     SECTIONS = [
         (
             "MOTOS",
-            (Motorcycle, MotorcycleModel, MotorcycleBrand, AccessoryCompatibility),
+            (Motorcycle, MotorcycleModel, MotorcycleBrand),
         ),
         (
             "CATÁLOGO Y ACCESORIOS",
-            (AccessoryType, AccessoryCategory, Product, ProductCategory, Model3D),
+            (Marca, TipoProducto, Product, ProductCategory, Model3D),
         ),
         ("TIENDAS Y USUARIOS", (Store, SubscriptionPlan, NegocioUserProxy)),
         ("INVENTARIO", (Inventory, InventoryMovement, MovementType)),
@@ -135,7 +131,7 @@ class MotopreviewAdminSite(admin.AdminSite):
             "COTIZACIONES Y CONFIGURACIÓN",
             (Quote, QuoteDetail, QuoteStatusHistory, Configuration, ConfigurationDetail),
         ),
-        ("SEGURIDAD Y ACCESOS", (Role, AccessoryToken)),
+        ("SEGURIDAD Y ACCESOS", (Role,)),
         ("RBAC - PERMISOS", (Recurso, Accion, RecursoAccion, RolRecurso, UserRole)),
         ("AUTENTICACIÓN Y AUTORIZACIÓN", (AuthUser, Group)),
     ]
@@ -590,17 +586,10 @@ class NegocioUserAdmin(BaseAdmin):
 admin_site.register(NegocioUserProxy, NegocioUserAdmin)
 
 
-class AccessoryTokenAdmin(BaseAdmin):
-    list_display = ("usuario", "tipo", "expira_en", "usado")
-    readonly_fields = ("id_token", "hash")
-
-
-admin_site.register(AccessoryToken, AccessoryTokenAdmin)
-
 
 class ProductAdmin(BaseAdmin):
     list_display = ("nombre", "es_accesorio", "categoria_producto", "precio")
-    list_filter = ("es_accesorio", "categoria_producto")
+    list_filter = ("es_accesorio", "categoria_producto", "marca")
     search_fields = ("nombre", "codigo_sku")
     readonly_fields = ("id_producto",)
     
@@ -608,9 +597,9 @@ class ProductAdmin(BaseAdmin):
         ("Información básica", {
             "fields": ("nombre", "descripcion", "estado", "categoria_producto", "imagen", "codigo_sku", "precio")
         }),
-        ("Configuración de accesorio", {
-            "fields": ("es_accesorio", "categoria_accesorio", "tipo_accesorio"),
-            "description": "Solo aplicar si el producto es un accesorio",
+        ("Marca y tipos", {
+            "fields": ("marca",),
+            "description": "Marca del producto y tipos (varios). Marcar 'accesorio' en el tipo para que aparezca en el Configurador.",
             "classes": ("collapse",),
         }),
     )
@@ -626,25 +615,20 @@ class ProductAdmin(BaseAdmin):
     def get_form(self, request, obj=None, **kwargs):
         """Hacer campos de accesorio no requeridos y añadir ayuda"""
         form = super().get_form(request, obj, **kwargs)
-        if "categoria_accesorio" in form.base_fields:
-            form.base_fields["categoria_accesorio"].required = False
-            form.base_fields["categoria_accesorio"].help_text = "Solo requerido si es_accesorio=True"
-        if "tipo_accesorio" in form.base_fields:
-            form.base_fields["tipo_accesorio"].required = False
-            form.base_fields["tipo_accesorio"].help_text = "Solo requerido si es_accesorio=True"
+        if "marca" in form.base_fields:
+            form.base_fields["marca"].required = False
         return form
 
 
 # Registro de modelos con admin personalizado
 admin_models = [
-    (AccessoryCategory, BaseAdmin),
+    (Marca, BaseAdmin),
+    (TipoProducto, BaseAdmin),
     (ProductCategory, BaseAdmin),
-    (AccessoryType, BaseAdmin),
     (Product, ProductAdmin),  # Admin personalizado para l�gica condicional
     (MotorcycleBrand, BaseAdmin),
     (MotorcycleModel, BaseAdmin),
     (Motorcycle, BaseAdmin),
-    (AccessoryCompatibility, BaseAdmin),
     (Model3D, BaseAdmin),
     (SubscriptionPlan, BaseAdmin),
     (Inventory, BaseAdmin),

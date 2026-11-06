@@ -15,6 +15,16 @@ export async function crearAccesorio(datos) {
   return respuesta.data;
 }
 
+export async function obtenerTiposProducto() {
+  const respuesta = await api.get('/tipos-producto');
+  return respuesta.data;
+}
+
+export async function obtenerMarcasProducto() {
+  const respuesta = await api.get('/marcas-producto');
+  return respuesta.data;
+}
+
 export async function actualizarAccesorio(id, datos) {
   const respuesta = await api.put(`/accesorios/${id}`, datos);
   return respuesta.data;

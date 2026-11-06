@@ -1,14 +1,12 @@
 from rest_framework import serializers
 
 from .models import (
-    AccessoryCategory,
-    AccessoryCompatibility,
-    AccessoryType,
     Accion,
     Configuration,
     ConfigurationDetail,
     Inventory,
     InventoryMovement,
+    Marca,
     Model3D,
     Motorcycle,
     MotorcycleBrand,
@@ -25,16 +23,11 @@ from .models import (
     RolRecurso,
     Store,
     SubscriptionPlan,
+    TipoProducto,
     User,
 )
 from . import services
 from .security import scopes_validos, validar_concesion
-
-
-class AccessoryCategorySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = AccessoryCategory
-        fields = ("id_categoria", "cat_nombre", "cat_descripcion")
 
 
 class ProductCategorySerializer(serializers.ModelSerializer):
@@ -43,10 +36,18 @@ class ProductCategorySerializer(serializers.ModelSerializer):
         fields = ("id_categoria_producto", "nombre", "descripcion")
 
 
-class AccessoryTypeSerializer(serializers.ModelSerializer):
+class MarcaSerializer(serializers.ModelSerializer):
     class Meta:
-        model = AccessoryType
-        fields = ("id_tipo", "nombre", "descripcion")
+        model = Marca
+        fields = ("id_marca", "nombre", "logo", "activo")
+        read_only_fields = ("id_marca",)
+
+
+class TipoProductoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TipoProducto
+        fields = ("id_tipo_producto", "nombre", "descripcion", "accesorio", "activo")
+        read_only_fields = ("id_tipo_producto",)
 
 
 class ProductSerializer(serializers.ModelSerializer):
@@ -55,6 +56,18 @@ class ProductSerializer(serializers.ModelSerializer):
         queryset=ProductCategory.objects.all(),
         allow_null=True,
         required=False,
+    )
+    id_marca = serializers.PrimaryKeyRelatedField(
+        source="marca",
+        queryset=Marca.objects.all(),
+        allow_null=True,
+        required=False,
+    )
+    id_tipos = serializers.ListField(
+        child=serializers.UUIDField(),
+        required=False,
+        allow_empty=True,
+        write_only=True,
     )
 
     class Meta:
@@ -65,6 +78,8 @@ class ProductSerializer(serializers.ModelSerializer):
             "descripcion",
             "estado",
             "id_categoria_producto",
+            "id_marca",
+            "id_tipos",
             "imagen",
             "codigo_sku",
             "precio",
@@ -74,25 +89,23 @@ class ProductSerializer(serializers.ModelSerializer):
 
 class AccesorioSerializer(serializers.Serializer):
     """Representa una fila de `producto` en la forma plana que consume la
-    vidriera: id_accesorio, acc_nombre, acc_precio y las tres capas de
-    clasificación (categoría de producto, categoría de accesorio y tipo).
+    vidriera: id_accesorio, acc_nombre, acc_precio, marca y tipos.
 
     Sirve igual para accesorios que para productos comunes: `es_accesorio`
     indica cuál de las dos capas aplica.
     """
 
     def to_representation(self, instance):
-        categoria = instance.categoria_accesorio
+        marca = instance.marca
+        tipos = list(instance.tipos.all())
         categoria_producto = instance.categoria_producto
-        tipo = instance.tipo_accesorio
         return {
             "id_accesorio": str(instance.id_producto),
             "es_accesorio": instance.es_accesorio,
-            "id_categoria": str(categoria.id_categoria) if categoria else None,
+            "id_marca": str(marca.id_marca) if marca else None,
             "id_categoria_producto": (
                 str(categoria_producto.id_categoria_producto) if categoria_producto else None
             ),
-            "id_tipo": str(tipo.id_tipo) if tipo else None,
             "acc_nombre": instance.nombre,
             "acc_descripcion": instance.descripcion,
             "acc_precio": str(instance.precio) if instance.precio is not None else None,
@@ -101,6 +114,11 @@ class AccesorioSerializer(serializers.Serializer):
             "peso": str(instance.peso) if instance.peso is not None else None,
             "color": None,
             "codigo_sku": instance.codigo_sku,
+            "marca": (
+                {"id_marca": str(marca.id_marca), "nombre": marca.nombre, "logo": marca.logo}
+                if marca
+                else None
+            ),
             "categoria_producto": (
                 {
                     "id_categoria_producto": str(categoria_producto.id_categoria_producto),
@@ -109,18 +127,7 @@ class AccesorioSerializer(serializers.Serializer):
                 if categoria_producto
                 else None
             ),
-            "categoria_accesorio": (
-                {
-                    "id_categoria": str(categoria.id_categoria),
-                    "cat_nombre": categoria.cat_nombre,
-                    "cat_descripcion": categoria.cat_descripcion,
-                }
-                if categoria
-                else None
-            ),
-            "tipo_accesorio": (
-                {"id_tipo": str(tipo.id_tipo), "nombre": tipo.nombre} if tipo else None
-            ),
+            "tipos": [{"id_tipo_producto": str(t.id_tipo_producto), "nombre": t.nombre, "accesorio": t.accesorio} for t in tipos],
             "producto": ProductSerializer(instance).data,
         }
 
@@ -129,9 +136,9 @@ class AccesorioInputSerializer(serializers.Serializer):
     """Entrada de crear/editar accesorio (forma plana del panel de administración)."""
 
     acc_nombre = serializers.CharField(max_length=100)
-    id_categoria = serializers.PrimaryKeyRelatedField(
-        queryset=AccessoryCategory.objects.all(),
-        source="categoria_accesorio",
+    id_marca = serializers.PrimaryKeyRelatedField(
+        queryset=Marca.objects.all(),
+        source="marca",
         required=False,
         allow_null=True,
     )
@@ -147,6 +154,11 @@ class AccesorioInputSerializer(serializers.Serializer):
     )
     imagen = serializers.URLField(required=False, allow_blank=True, allow_null=True)
     acc_estado = serializers.CharField(max_length=50, required=False, default="disponible")
+    id_tipos = serializers.ListField(
+        child=serializers.UUIDField(),
+        required=False,
+        allow_empty=True,
+    )
 
     def to_fields(self, data):
         """Mapea la entrada plana a campos del modelo Product (parcial-safe)."""
@@ -167,8 +179,11 @@ class AccesorioInputSerializer(serializers.Serializer):
             if campo in ("codigo_sku", "imagen", "descripcion") and valor == "":
                 valor = None
             campos[campo] = valor
-        if "categoria_accesorio" in data:
-            campos["categoria_accesorio"] = data["categoria_accesorio"]
+        if "marca" in data:
+            campos["marca"] = data["marca"]
+        # tipos (M2M) se manejan aparte por la vista
+        if "id_tipos" in data:
+            campos["_tipos"] = data["id_tipos"]
         return campos
 
 
@@ -317,13 +332,7 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class Model3DSerializer(serializers.ModelSerializer):
-    id_accesorio = serializers.PrimaryKeyRelatedField(
-        source="accesorio",
-        queryset=AccessoryCategory.objects.all(),
-        required=False,
-        allow_null=True,
-    )
-    accesorio = AccessoryCategorySerializer(read_only=True)
+    id_accesorio = serializers.UUIDField(source="accesorio_id", read_only=True, allow_null=True)
 
     class Meta:
         model = Model3D
@@ -335,33 +344,8 @@ class Model3DSerializer(serializers.ModelSerializer):
             "estado_visualizacion",
             "modelo3d_fecha",
             "modelo3d_observaciones",
-            "accesorio",
         )
         read_only_fields = ("id_modelo3d", "modelo3d_fecha")
-
-
-class CompatibilitySerializer(serializers.ModelSerializer):
-    id_categoria_accesorio = serializers.PrimaryKeyRelatedField(
-        source="categoria_accesorio",
-        queryset=AccessoryCategory.objects.all(),
-    )
-    id_modelo_moto = serializers.PrimaryKeyRelatedField(
-        source="modelo_moto",
-        queryset=MotorcycleModel.objects.all(),
-    )
-    modelo_moto = MotorcycleModelSerializer(read_only=True)
-
-    class Meta:
-        model = AccessoryCompatibility
-        fields = (
-            "id_compatibilidad",
-            "id_categoria_accesorio",
-            "id_modelo_moto",
-            "anio_desde",
-            "anio_hasta",
-            "modelo_moto",
-        )
-        read_only_fields = ("id_compatibilidad",)
 
 
 class InventorySerializer(serializers.ModelSerializer):
@@ -424,12 +408,7 @@ class MovementTypeSerializer(serializers.ModelSerializer):
 
 class QuoteDetailSerializer(serializers.ModelSerializer):
     id_cotizacion = serializers.UUIDField(source="cotizacion_id", read_only=True, allow_null=True)
-    id_categoria_accesorio = serializers.UUIDField(
-        source="categoria_accesorio_id", read_only=True, allow_null=True
-    )
-    categoria_accesorio = AccessoryCategorySerializer(read_only=True)
-    # Forma plana para el frontend: el ítem de cotización identifica a la
-    # categoría del accesorio; el nombre visible es el de la categoría.
+    # Forma plana para el frontend: el item de cotizacion identifica al accesorio.
     accesorio = serializers.SerializerMethodField()
 
     class Meta:
@@ -437,24 +416,15 @@ class QuoteDetailSerializer(serializers.ModelSerializer):
         fields = (
             "id_detalle_cotizacion",
             "id_cotizacion",
-            "id_categoria_accesorio",
             "cantidad",
             "precio_unitario",
             "subtotal",
-            "categoria_accesorio",
             "accesorio",
         )
+        read_only_fields = ("id_detalle_cotizacion", "id_cotizacion")
 
     def get_accesorio(self, instance):
-        categoria = instance.categoria_accesorio
-        if not categoria:
-            return None
-        return {
-            "id_categoria": str(categoria.id_categoria),
-            "acc_nombre": categoria.cat_nombre,
-            "acc_descripcion": categoria.cat_descripcion,
-        }
-
+        return None
 
 class QuoteSerializer(serializers.ModelSerializer):
     id_tienda = serializers.UUIDField(source="tienda_id", read_only=True, allow_null=True)

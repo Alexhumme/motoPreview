@@ -1152,3 +1152,48 @@
     transform: none;
   }
 }
+/* ==========================================================================
+   SELECTORES EN CASCADA DE MOTO (Configurador)
+   ========================================================================== */
+.moto-selectors {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  margin-bottom: var(--space-16);
+}
+
+.moto-selectors .select-label {
+  margin-bottom: 0;
+  margin-top: var(--space-8);
+}
+
+.moto-selectors .select-label:first-child {
+  margin-top: 0;
+}
+
+.select-wrap__input {
+  width: 100%;
+  padding: var(--space-12) var(--space-16) var(--space-12) var(--space-40);
+  border: 1px solid var(--color-bone);
+  border-radius: var(--radius-inputs);
+  background: var(--surface-canvas);
+  color: var(--color-paper);
+  font-family: var(--font-ui);
+  font-size: var(--text-body);
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.select-wrap__input:focus {
+  border-color: var(--color-signal-mint);
+  box-shadow: 0 0 0 3px rgba(242, 106, 33, 0.15);
+}
+
+.select-search-icon {
+  position: absolute;
+  left: var(--space-12);
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-mist-gray);
+  pointer-events: none;
+}

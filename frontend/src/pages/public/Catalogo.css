@@ -1169,3 +1169,100 @@
     flex-direction: column;
   }
 }
+/* ==========================================================================
+   FILTROS POR MARCA Y TIPO (catálogo completo)
+   ========================================================================== */
+.filter-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-16);
+  margin-bottom: var(--space-16);
+  flex-wrap: wrap;
+}
+
+.filter-row-label {
+  font-family: var(--font-display);
+  font-size: var(--text-caption);
+  font-weight: var(--weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-mist-gray);
+  flex-shrink: 0;
+  min-width: 48px;
+}
+
+.filter-row-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+  flex: 1;
+}
+
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6);
+  padding: var(--space-6) var(--space-12);
+  border: 1px solid var(--color-ink-border);
+  border-radius: var(--radius-pills);
+  background: var(--surface-elevated);
+  font-family: var(--font-ui);
+  font-size: var(--text-caption);
+  font-weight: var(--weight-medium);
+  color: var(--color-mist-gray);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.filter-chip:hover {
+  border-color: var(--color-mist-gray);
+  color: var(--color-paper);
+}
+
+.filter-chip--active {
+  background: var(--color-signal-mint);
+  border-color: var(--color-signal-mint);
+  color: var(--color-obsidian-plum);
+  font-weight: var(--weight-bold);
+}
+
+.filter-chip--reset {
+  background: transparent;
+  border-style: dashed;
+}
+
+.filter-chip--marca {
+  padding: var(--space-4) var(--space-10);
+}
+
+.marca-logo {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+.marca-placeholder {
+  width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  border-radius: 4px;
+  background: var(--color-signal-mint);
+  color: var(--color-obsidian-plum);
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: var(--weight-bold);
+}
+
+@media (max-width: 720px) {
+  .filter-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-8);
+  }
+  .filter-row-label {
+    min-width: 0;
+  }
+}

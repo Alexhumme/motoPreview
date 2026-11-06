@@ -1,13 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowRight, Check, ChevronDown, Layers, Plus, Shapes, Settings2, ShoppingCart, Trash2, X } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { ArrowRight, Check, ChevronDown, Plus, Search, Shapes, Settings2, ShoppingCart, X } from 'lucide-react';
 import { obtenerMotos } from '../../services/motos';
-import { obtenerAccesoriosCompatibles } from '../../services/compatibilidad';
+import { obtenerAccesorios, obtenerTiposProducto } from '../../services/accesorios';
 import { useCart } from '../../context/CartContext';
 import SiteHeader from '../../components/buttons/SiteHeader';
 import ImagenProducto from '../../components/ImagenProducto';
-import FiltroCapa from '../../components/filters/FiltroCapa';
-import { TODAS, agruparOpciones } from '../../utils/filtros';
 import { refrescarMovimiento } from '../../utils/motion';
 import './Configurador.css';
 
@@ -17,28 +15,36 @@ const money = (value) => new Intl.NumberFormat('es-CO', {
   maximumFractionDigits: 0,
 }).format(value);
 
-const categoriaDe = (accesorio) => accesorio.id_categoria;
-const nombreCategoria = (accesorio) => accesorio.categoria_accesorio?.cat_nombre || 'Sin categoría';
-const tipoDe = (accesorio) => accesorio.id_tipo;
-const nombreTipo = (accesorio) => accesorio.tipo_accesorio?.nombre || 'Sin tipo';
-
 export default function Configurador() {
-  const { items, agregarItem, eliminarItem, vaciarCarrito, totalItems, totalPrecio } = useCart();
+  const { items, agregarItem, eliminarItem, totalItems, totalPrecio } = useCart();
+  const navigate = useNavigate();
   const [motos, setMotos] = useState([]);
-  const [idMotoSeleccionada, setIdMotoSeleccionada] = useState('');
-  const [categoriaActiva, setCategoriaActiva] = useState(TODAS);
-  const [tipoActivo, setTipoActivo] = useState(TODAS);
-  const [accesoriosCompatibles, setAccesoriosCompatibles] = useState([]);
+  const [tipos, setTipos] = useState([]);
+  const [accesorios, setAccesorios] = useState([]);
   const [cargando, setCargando] = useState(true);
-  const [cargandoAccesorios, setCargandoAccesorios] = useState(false);
+  const [cargandoAccesorios] = useState(false);
   const [error, setError] = useState('');
+
+  // Selectores en cascada de moto
+  const [marcaMoto, setMarcaMoto] = useState('');
+  const [modeloMoto, setModeloMoto] = useState('');
+  const [anioMoto, setAnioMoto] = useState('');
+  const [busquedaMoto, setBusquedaMoto] = useState('');
+
+  // Tipos seleccionados (multi-select)
+  const [tiposSeleccionados, setTiposSeleccionados] = useState(new Set());
 
   useEffect(() => {
     async function cargarInicial() {
       try {
-        const datosMotos = await obtenerMotos();
+        const [datosMotos, datosTipos, datosAccesorios] = await Promise.all([
+          obtenerMotos(),
+          obtenerTiposProducto(),
+          obtenerAccesorios(),
+        ]);
         setMotos(datosMotos);
-        if (datosMotos.length) setIdMotoSeleccionada(datosMotos[0].id_moto);
+        setTipos(datosTipos.filter((t) => t.accesorio));
+        setAccesorios(datosAccesorios);
       } catch {
         setError('No se pudieron cargar las opciones del configurador.');
       } finally {
@@ -48,82 +54,104 @@ export default function Configurador() {
     cargarInicial();
   }, []);
 
-  useEffect(() => {
-    const moto = motos.find((entry) => entry.id_moto === idMotoSeleccionada);
-    const modeloId = moto?.id_modelo_moto || moto?.modelo_moto?.id_modelo_moto;
-    if (!modeloId) return;
-    async function cargarCompatibles() {
-      setCargandoAccesorios(true);
-      try {
-        setAccesoriosCompatibles(await obtenerAccesoriosCompatibles(modeloId));
-      } catch {
-        setAccesoriosCompatibles([]);
-      } finally {
-        setCargandoAccesorios(false);
-      }
+  // Marcas disponibles (a partir de las motos)
+  const marcasMoto = useMemo(() => {
+    const seen = new Set();
+    const out = [];
+    for (const m of motos) {
+      const id = m.modelo_moto?.marca_moto?.id_marca || m.modelo_moto?.id_marca;
+      const nombre = m.modelo_moto?.marca_moto?.marca_nombre || '';
+      if (id && !seen.has(id)) { seen.add(id); out.push({ id, nombre }); }
     }
-    cargarCompatibles();
-  }, [idMotoSeleccionada, motos]);
+    return out.sort((a, b) => a.nombre.localeCompare(b.nombre));
+  }, [motos]);
 
-  const motoActual = motos.find((moto) => moto.id_moto === idMotoSeleccionada);
-
-  // Capa 1: categorías de accesorio compatibles con la moto.
-  const opcionesCategoria = useMemo(
-    () => agruparOpciones(accesoriosCompatibles, categoriaDe, nombreCategoria),
-    [accesoriosCompatibles]
-  );
-  const porCategoria = useMemo(
-    () =>
-      categoriaActiva === TODAS
-        ? accesoriosCompatibles
-        : accesoriosCompatibles.filter((accesorio) => accesorio.id_categoria === categoriaActiva),
-    [accesoriosCompatibles, categoriaActiva]
-  );
-  // Capa 2: tipos disponibles dentro de la categoría activa.
-  const opcionesTipo = useMemo(
-    () => agruparOpciones(porCategoria, tipoDe, nombreTipo),
-    [porCategoria]
-  );
-  const accesoriosFiltrados = useMemo(
-    () =>
-      tipoActivo === TODAS
-        ? porCategoria
-        : porCategoria.filter((accesorio) => accesorio.id_tipo === tipoActivo),
-    [porCategoria, tipoActivo]
-  );
-
-  // La lista de compatibles cambia de altura al cargar y al filtrar: las posiciones
-  // de ScrollTrigger deben recalcularse o los paneles inferiores entrarán tarde.
-  useEffect(() => {
-    const cuadro = requestAnimationFrame(() => refrescarMovimiento());
-    return () => cancelAnimationFrame(cuadro);
-  }, [cargando, cargandoAccesorios, accesoriosFiltrados]);
-
-  // Al cambiar de moto, la selección anterior puede haber quedado sin resultados.
-  useEffect(() => {
-    if (categoriaActiva !== TODAS && !opcionesCategoria.some((opcion) => opcion.valor === categoriaActiva)) {
-      setCategoriaActiva(TODAS);
+  // Modelos filtrados por marca
+  const modelosMoto = useMemo(() => {
+    const seen = new Set();
+    const out = [];
+    for (const m of motos) {
+      const idMarca = m.modelo_moto?.marca_moto?.id_marca || m.modelo_moto?.id_marca;
+      if (marcaMoto && idMarca !== marcaMoto) continue;
+      const id = m.modelo_moto?.id_modelo_moto;
+      const nombre = m.modelo_moto?.modelo_nombre;
+      if (id && !seen.has(id)) { seen.add(id); out.push({ id, nombre, cilindraje: m.modelo_moto?.cilindraje }); }
     }
-  }, [opcionesCategoria, categoriaActiva]);
+    return out.sort((a, b) => a.nombre.localeCompare(b.nombre));
+  }, [motos, marcaMoto]);
 
-  useEffect(() => {
-    if (tipoActivo !== TODAS && !opcionesTipo.some((opcion) => opcion.valor === tipoActivo)) {
-      setTipoActivo(TODAS);
+  // Años filtrados por modelo
+  const aniosMoto = useMemo(() => {
+    const out = [];
+    for (const m of motos) {
+      const idModelo = m.modelo_moto?.id_modelo_moto;
+      if (modeloMoto && idModelo !== modeloMoto) continue;
+      const idMarca = m.modelo_moto?.marca_moto?.id_marca || m.modelo_moto?.id_marca;
+      if (marcaMoto && idMarca !== marcaMoto) continue;
+      if (!out.includes(m.moto_anio)) out.push(m.moto_anio);
     }
-  }, [opcionesTipo, tipoActivo]);
+    return out.sort((a, b) => b - a);
+  }, [motos, marcaMoto, modeloMoto]);
 
-  const hayFiltrosActivos = categoriaActiva !== TODAS || tipoActivo !== TODAS;
+  // Moto seleccionada (por marca+modelo+año, o la primera que coincida)
+  const motoActual = useMemo(() => {
+    return motos.find((m) => {
+      const idMarca = m.modelo_moto?.marca_moto?.id_marca || m.modelo_moto?.id_marca;
+      const idModelo = m.modelo_moto?.id_modelo_moto;
+      if (marcaMoto && idMarca !== marcaMoto) return false;
+      if (modeloMoto && idModelo !== modeloMoto) return false;
+      if (anioMoto && String(m.moto_anio) !== String(anioMoto)) return false;
+      return true;
+    }) || motos.find((m) => {
+      // fallback: search by text
+      if (!busquedaMoto.trim()) return false;
+      const texto = busquedaMoto.toLowerCase();
+      const nombre = `${m.modelo_moto?.marca_moto?.marca_nombre || ''} ${m.modelo_moto?.modelo_nombre || ''} ${m.moto_anio}`.toLowerCase();
+      return nombre.includes(texto);
+    }) || (motos.length ? motos[0] : null);
+  }, [motos, marcaMoto, modeloMoto, anioMoto, busquedaMoto]);
 
-  const pasos = [
-    { numero: '01', etiqueta: 'Moto', hecho: Boolean(motoActual) },
-    { numero: '02', etiqueta: 'Capas', hecho: hayFiltrosActivos },
-    { numero: '03', etiqueta: 'Piezas', hecho: items.length > 0 },
-  ];
-  const pasoActivo = pasos.findIndex((paso) => !paso.hecho);
+
+  // Reset modelo/año cuando cambia marca
+  useEffect(() => { setModeloMoto(''); setAnioMoto(''); }, [marcaMoto]);
+  useEffect(() => { setAnioMoto(''); }, [modeloMoto]);
 
   const motoNombre = motoActual
     ? `${motoActual.modelo_moto?.marca_moto?.marca_nombre || ''} ${motoActual.modelo_moto?.modelo_nombre || ''}`.trim()
     : 'Selecciona una motocicleta';
+
+  // Accesorios filtrados por tipos seleccionados
+  const accesoriosFiltrados = useMemo(() => {
+    let lista = accesorios;
+    if (tiposSeleccionados.size > 0) {
+      lista = lista.filter((a) => (a.tipos || []).some((t) => tiposSeleccionados.has(t.id_tipo_producto)));
+    }
+    return lista;
+  }, [accesorios, tiposSeleccionados]);
+
+  const hayFiltrosActivos = tiposSeleccionados.size > 0;
+
+  const pasos = [
+    { numero: '01', etiqueta: 'Moto', hecho: Boolean(motoActual) },
+    { numero: '02', etiqueta: 'Tipos', hecho: hayFiltrosActivos },
+    { numero: '03', etiqueta: 'Piezas', hecho: items.length > 0 },
+  ];
+  const pasoActivo = pasos.findIndex((paso) => !paso.hecho);
+
+  // La lista cambia de altura al cargar y al filtrar.
+  useEffect(() => {
+    const cuadro = requestAnimationFrame(() => refrescarMovimiento());
+    return () => cancelAnimationFrame(cuadro);
+  }, [cargando, accesoriosFiltrados]);
+
+  function toggleTipo(id) {
+    setTiposSeleccionados((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
 
   if (cargando) {
     return (
@@ -145,12 +173,9 @@ export default function Configurador() {
       <main className="configurator-main">
         <header className="configurator-header">
           <div className="configurator-copy">
-            <div className="eyebrow">
-              <span className="eyebrow-dot" aria-hidden="true"></span>
-              <span data-scramble="Estudio de compatibilidad">Estudio de compatibilidad</span>
-            </div>
-            <h1 className="configurator-title" data-reveal="lineas">Diseña tu configuración.</h1>
-            <p className="configurator-subtitle" data-reveal="up" data-reveal-delay="0.1">Selecciona tu moto y encuentra accesorios que encajan sin complicaciones.</p>
+            <div className="eyebrow"><span className="eyebrow-dot" aria-hidden="true"></span>Estudio de compatibilidad</div>
+            <h1 className="configurator-title">Diseña tu configuración.</h1>
+            <p className="configurator-subtitle">Selecciona tu moto y encuentra accesorios que encajan sin complicaciones.</p>
           </div>
           <Link to="/carrito" className="btn btn--outline">
             <ShoppingCart size={16} aria-hidden="true" />
@@ -178,20 +203,58 @@ export default function Configurador() {
           {/* Bike preview panel */}
           <section className="bike-preview-panel card" data-reveal="up">
             <div className="panel-topline">
-              <span data-scramble-hover>Tu motocicleta</span>
+              <span>Tu motocicleta</span>
               <span className="live-status"><span className="live-dot" aria-hidden="true"></span> Live preview</span>
             </div>
-            <label className="select-label">Modelo seleccionado</label>
-            <div className="select-wrap">
-              <select value={idMotoSeleccionada} onChange={(e) => setIdMotoSeleccionada(e.target.value)}>
-                {motos.map((moto) => (
-                  <option key={moto.id_moto} value={moto.id_moto}>
-                    {moto.modelo_moto?.marca_moto?.marca_nombre} {moto.modelo_moto?.modelo_nombre} · {moto.moto_anio}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="select-arrow" size={16} aria-hidden="true" />
+
+            {/* Selectores en cascada + búsqueda */}
+            <div className="moto-selectors">
+              <label className="select-label">Buscar moto</label>
+              <div className="select-wrap">
+                <Search size={14} className="select-search-icon" aria-hidden="true" />
+                <input
+                  type="text"
+                  className="select-wrap__input"
+                  value={busquedaMoto}
+                  onChange={(e) => setBusquedaMoto(e.target.value)}
+                  placeholder="Marca, modelo o año..."
+                />
+              </div>
+
+              <label className="select-label">Marca</label>
+              <div className="select-wrap">
+                <select value={marcaMoto} onChange={(e) => setMarcaMoto(e.target.value)}>
+                  <option value="">Todas las marcas</option>
+                  {marcasMoto.map((m) => (
+                    <option key={m.id} value={m.id}>{m.nombre}</option>
+                  ))}
+                </select>
+                <ChevronDown className="select-arrow" size={16} aria-hidden="true" />
+              </div>
+
+              <label className="select-label">Modelo</label>
+              <div className="select-wrap">
+                <select value={modeloMoto} onChange={(e) => setModeloMoto(e.target.value)} disabled={!marcaMoto && marcasMoto.length > 0}>
+                  <option value="">Todos los modelos</option>
+                  {modelosMoto.map((m) => (
+                    <option key={m.id} value={m.id}>{m.nombre} · {m.cilindraje}</option>
+                  ))}
+                </select>
+                <ChevronDown className="select-arrow" size={16} aria-hidden="true" />
+              </div>
+
+              <label className="select-label">Año</label>
+              <div className="select-wrap">
+                <select value={anioMoto} onChange={(e) => setAnioMoto(e.target.value)} disabled={!modeloMoto && modelosMoto.length > 0}>
+                  <option value="">Todos los años</option>
+                  {aniosMoto.map((a) => (
+                    <option key={a} value={a}>{a}</option>
+                  ))}
+                </select>
+                <ChevronDown className="select-arrow" size={16} aria-hidden="true" />
+              </div>
             </div>
+
             <div className="bike-stage">
               <div className="stage-grid" />
               <span className="stage-tag">{motoActual?.moto_version || 'Compatible'}</span>
@@ -220,47 +283,36 @@ export default function Configurador() {
           {/* Compatible accessories panel */}
           <section className="compatible-panel card" data-reveal="up" data-reveal-delay="0.08">
             <div className="panel-topline">
-              <span data-scramble-hover>Accesorios compatibles</span>
+              <span data-scramble-hover>Accesorios disponibles</span>
               <span className="result-count">{accesoriosFiltrados.length} resultados</span>
             </div>
 
-            <div className="compatible-filters">
-              <FiltroCapa
-                etiqueta="Categoría"
-                icono={<Layers size={12} aria-hidden="true" />}
-                opciones={opcionesCategoria}
-                valor={categoriaActiva}
-                onChange={setCategoriaActiva}
-                todasEtiqueta="Todas"
-                ariaLabel="Filtrar accesorios por categoría"
-              />
-
-              {opcionesTipo.length > 0 && (
-                <FiltroCapa
-                  etiqueta="Tipo"
-                  icono={<Shapes size={12} aria-hidden="true" />}
-                  opciones={opcionesTipo}
-                  valor={tipoActivo}
-                  onChange={setTipoActivo}
-                  todasEtiqueta="Todos los tipos"
-                  ariaLabel="Filtrar accesorios por tipo"
-                />
-              )}
-
-              {hayFiltrosActivos && (
-                <button
-                  type="button"
-                  className="compatible-filters-clear"
-                  onClick={() => {
-                    setCategoriaActiva(TODAS);
-                    setTipoActivo(TODAS);
-                  }}
-                >
-                  <X size={12} aria-hidden="true" />
-                  Quitar filtros
-                </button>
-              )}
-            </div>
+            {/* Filtro por tipo (multi-select) */}
+            {tipos.length > 0 && (
+              <div className="compatible-filters">
+                <div className="filtro-capa">
+                  <span className="filtro-capa__label"><Shapes size={12} aria-hidden="true" /> Tipo</span>
+                  <div className="filtro-capa__chips" role="group" aria-label="Filtrar accesorios por tipo">
+                    {tipos.map((t) => (
+                      <button
+                        key={t.id_tipo_producto}
+                        type="button"
+                        className={`filtro-chip${tiposSeleccionados.has(t.id_tipo_producto) ? ' filtro-chip--activa' : ''}`}
+                        onClick={() => toggleTipo(t.id_tipo_producto)}
+                        aria-pressed={tiposSeleccionados.has(t.id_tipo_producto)}
+                      >
+                        {t.nombre}
+                      </button>
+                    ))}
+                    {tiposSeleccionados.size > 0 && (
+                      <button type="button" className="compatible-filters-clear" onClick={() => setTiposSeleccionados(new Set())}>
+                        <X size={12} aria-hidden="true" /> Quitar filtros
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="compatible-list">
               {cargandoAccesorios && (
@@ -270,7 +322,7 @@ export default function Configurador() {
                 </div>
               )}
               {!cargandoAccesorios && accesoriosFiltrados.length === 0 && (
-                <p className="list-state list-empty">No hay accesorios compatibles con esta selección.</p>
+                <p className="list-state list-empty">No hay accesorios con los tipos seleccionados.</p>
               )}
               {!cargandoAccesorios && accesoriosFiltrados.map((item) => {
                 const agregado = items.some((line) => line.accesorio.id_accesorio === item.id_accesorio);
@@ -282,7 +334,7 @@ export default function Configurador() {
                     <div className="compatible-info">
                       <strong>{item.acc_nombre}</strong>
                       <span>
-                        {[item.categoria_accesorio?.cat_nombre, item.tipo_accesorio?.nombre]
+                        {[item.marca?.nombre, ...(item.tipos || []).map((t) => t.nombre)]
                           .filter(Boolean)
                           .join(' · ')}
                         {' · '}
@@ -305,7 +357,6 @@ export default function Configurador() {
         </div>
 
         {/* Configuration bar */}
-        {/* Sin data-reveal: la barra es sticky y el transform inicial del reveal la despegaría de su hueco. */}
         <section className="configuration-bar card">
           <div className="configuration-items">
             <div className="configuration-title">
@@ -318,26 +369,17 @@ export default function Configurador() {
             {items.slice(0, 3).map((line) => (
               <div className="configuration-pill" key={line.accesorio.id_accesorio}>
                 <span>{line.accesorio.acc_nombre}</span>
-                <button onClick={() => eliminarItem(line.accesorio.id_accesorio)} className="btn btn--danger btn--sm" aria-label={`Quitar ${line.accesorio.acc_nombre}`}>
-                  <X size={13} aria-hidden="true" />
-                </button>
+                <button onClick={() => eliminarItem(line.accesorio.id_accesorio)} className="btn btn--danger btn--sm">×</button>
               </div>
             ))}
-            {items.length > 3 && <span className="configuration-pill more-pill">+{items.length - 3} más</span>}
-          </div>
-
-          <div className="configuration-total">
-            <span>
-              <small>Total estimado</small>
-              <strong>{money(totalPrecio)}</strong>
-            </span>
-            {items.length ? (
-              <button className="btn btn--danger" onClick={vaciarCarrito}>
-                <Trash2 size={15} aria-hidden="true" /> Limpiar
-              </button>
-            ) : (
-              <Link to="/" className="btn btn--brand">Explorar piezas <ArrowRight size={16} aria-hidden="true" /></Link>
+            {items.length > 3 && (
+              <span className="configuration-more">+{items.length - 3} más</span>
             )}
+          </div>
+          <div className="configuration-total">
+            <small>Total estimado</small>
+            <strong>{money(totalPrecio)}</strong>
+            <button className="btn btn--primary" onClick={() => navigate('/carrito')}>Ir al carrito <ArrowRight size={14} aria-hidden="true" /></button>
           </div>
         </section>
       </main>

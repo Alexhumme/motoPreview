@@ -1,20 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
-import {
-  Search,
-  Shapes,
-  Layers,
-  ArrowUpDown,
-  RotateCcw,
-  X,
-  ChevronLeft,
-  ChevronRight,
-  SearchX,
-} from 'lucide-react';
-import { obtenerProductos } from '../../services/productos';
+import { Link } from 'react-router-dom';
+import { obtenerAccesorios, obtenerMarcasProducto, obtenerTiposProducto } from '../../services/accesorios';
 import AccesorioCard from '../../components/buttons/AccesorioCard';
-import FiltroCapa from '../../components/filters/FiltroCapa';
-import { TODAS, agruparOpciones } from '../../utils/filtros';
-import { refrescarMovimiento } from '../../utils/motion';
 import SiteHeader from '../../components/buttons/SiteHeader';
 import Footer from '../../components/forms/Footer';
 import './Catalogo.css';
@@ -25,44 +12,13 @@ const COP = new Intl.NumberFormat('es-CO', {
   maximumFractionDigits: 0,
 });
 
-const SIN_CATEGORIA = '__sin_categoria';
-
-const ORDEN_OPCIONES = [
-  { value: 'relevancia', label: 'Relevancia' },
-  { value: 'precio-asc', label: 'Precio: menor a mayor' },
-  { value: 'precio-desc', label: 'Precio: mayor a menor' },
-  { value: 'nombre-asc', label: 'Nombre: A–Z' },
-  { value: 'nombre-desc', label: 'Nombre: Z–A' },
-];
-
-const colador = new Intl.Collator('es', { sensitivity: 'base' });
-
-function ordenarProductos(lista, orden) {
-  const precio = (producto) => Number(producto.acc_precio) || 0;
-  const nombre = (producto) => producto.acc_nombre || '';
-  const comparadores = {
-    'precio-asc': (a, b) => precio(a) - precio(b),
-    'precio-desc': (a, b) => precio(b) - precio(a),
-    'nombre-asc': (a, b) => colador.compare(nombre(a), nombre(b)),
-    'nombre-desc': (a, b) => colador.compare(nombre(b), nombre(a)),
-  };
-  const comparador = comparadores[orden];
-  return comparador ? [...lista].sort(comparador) : lista;
-}
-
-const categoriaDe = (producto) =>
-  producto.categoria_producto?.id_categoria_producto || SIN_CATEGORIA;
-const nombreCategoria = (producto) =>
-  producto.categoria_producto?.nombre || 'Sin categoría';
-const tipoDe = (producto) => (producto.es_accesorio ? producto.id_tipo : null);
-const nombreTipo = (producto) => producto.tipo_accesorio?.nombre || '';
-
 export default function CatalogoCompleto() {
-  const [productos, setProductos] = useState([]);
-  const [categoria, setCategoria] = useState(TODAS);
-  const [tipo, setTipo] = useState(TODAS);
+  const [accesorios, setAccesorios] = useState([]);
+  const [marcas, setMarcas] = useState([]);
+  const [tipos, setTipos] = useState([]);
+  const [marcaSeleccionada, setMarcaSeleccionada] = useState('todas');
+  const [tiposSeleccionados, setTiposSeleccionados] = useState(new Set());
   const [busqueda, setBusqueda] = useState('');
-  const [orden, setOrden] = useState('relevancia');
   const [paginaActual, setPaginaActual] = useState(1);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState('');
@@ -76,7 +32,14 @@ export default function CatalogoCompleto() {
   useEffect(() => {
     async function cargarDatos() {
       try {
-        setProductos(await obtenerProductos());
+        const [datosAccesorios, datosMarcas, datosTipos] = await Promise.all([
+          obtenerAccesorios(),
+          obtenerMarcasProducto(),
+          obtenerTiposProducto(),
+        ]);
+        setAccesorios(datosAccesorios);
+        setMarcas(datosMarcas);
+        setTipos(datosTipos);
       } catch {
         setError('No se pudo cargar el catálogo. Verifica que el servidor esté disponible.');
       } finally {
@@ -86,100 +49,57 @@ export default function CatalogoCompleto() {
     cargarDatos();
   }, []);
 
-  // Calcula los límites de precio una vez cargados los productos.
   const limitesPrecio = useMemo(() => {
-    if (productos.length === 0) return { min: 0, max: 0 };
-    const precios = productos.map((p) => Number(p.acc_precio) || 0);
+    if (accesorios.length === 0) return { min: 0, max: 0 };
+    const precios = accesorios.map((a) => Number(a.acc_precio) || 0);
     return { min: Math.min(...precios), max: Math.max(...precios) };
-  }, [productos]);
+  }, [accesorios]);
 
-  // Inicializa el slider la primera vez que hay datos.
   useEffect(() => {
-    if (productos.length > 0 && !rangoInicializado) {
+    if (accesorios.length > 0 && !rangoInicializado) {
       setPrecioMin(limitesPrecio.min);
       setPrecioMax(limitesPrecio.max);
       setRangoInicializado(true);
     }
-  }, [productos, limitesPrecio, rangoInicializado]);
+  }, [accesorios, limitesPrecio, rangoInicializado]);
 
-  const porTextoPrecio = useMemo(() => {
-    const texto = busqueda.trim().toLowerCase();
-    return productos.filter((producto) => {
-      const precio = Number(producto.acc_precio) || 0;
-      if (precio < precioMin || precio > precioMax) return false;
+  function toggleTipo(id) {
+    setTiposSeleccionados((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  const accesoriosFiltrados = accesorios
+    .filter((a) => marcaSeleccionada === 'todas' || a.id_marca === marcaSeleccionada || a.marca?.id_marca === marcaSeleccionada)
+    .filter((a) => {
+      if (tiposSeleccionados.size === 0) return true;
+      const ids = (a.tipos || []).map((t) => t.id_tipo_producto);
+      return ids.some((id) => tiposSeleccionados.has(id));
+    })
+    .filter((a) => {
+      const precio = Number(a.acc_precio) || 0;
+      return precio >= precioMin && precio <= precioMax;
+    })
+    .filter((a) => {
+      const texto = busqueda.trim().toLowerCase();
       if (!texto) return true;
-      return [producto.acc_nombre, producto.acc_descripcion, producto.codigo_sku]
+      return [a.acc_nombre, a.acc_descripcion, a.codigo_sku]
         .filter(Boolean)
         .some((value) => value.toLowerCase().includes(texto));
     });
-  }, [productos, busqueda, precioMin, precioMax]);
 
-  const opcionesCategoria = useMemo(
-    () => agruparOpciones(porTextoPrecio, categoriaDe, nombreCategoria),
-    [porTextoPrecio]
-  );
-
-  const porCategoria = useMemo(
-    () =>
-      categoria === TODAS
-        ? porTextoPrecio
-        : porTextoPrecio.filter((producto) => categoriaDe(producto) === categoria),
-    [porTextoPrecio, categoria]
-  );
-
-  const opcionesTipo = useMemo(
-    () => agruparOpciones(porCategoria, tipoDe, nombreTipo),
-    [porCategoria]
-  );
-
-  const productosFiltrados = useMemo(() => {
-    const filtrados =
-      tipo === TODAS
-        ? porCategoria
-        : porCategoria.filter((producto) => producto.id_tipo === tipo);
-    return ordenarProductos(filtrados, orden);
-  }, [porCategoria, tipo, orden]);
-
-  // Un tipo solo tiene sentido dentro de su categoría: si la categoría nueva
-  // no lo contiene, el filtro se suelta solo.
-  useEffect(() => {
-    if (tipo !== TODAS && !opcionesTipo.some((opcion) => opcion.valor === tipo)) {
-      setTipo(TODAS);
-    }
-  }, [opcionesTipo, tipo]);
-
-  const hayFiltrosActivos =
-    categoria !== TODAS ||
-    tipo !== TODAS ||
-    busqueda.trim() !== '' ||
-    precioMin !== limitesPrecio.min ||
-    precioMax !== limitesPrecio.max;
-
-  function limpiarFiltros() {
-    setCategoria(TODAS);
-    setTipo(TODAS);
-    setBusqueda('');
-    setPrecioMin(limitesPrecio.min);
-    setPrecioMax(limitesPrecio.max);
-  }
-
-  const totalPaginas = Math.max(1, Math.ceil(productosFiltrados.length / POR_PAGINA));
-  const productosPagina = productosFiltrados.slice(
+  const totalPaginas = Math.max(1, Math.ceil(accesoriosFiltrados.length / POR_PAGINA));
+  const accesoriosPagina = accesoriosFiltrados.slice(
     (paginaActual - 1) * POR_PAGINA,
     paginaActual * POR_PAGINA
   );
 
-  // Reinicia a la página 1 cuando cambian los filtros o el orden.
   useEffect(() => {
     setPaginaActual(1);
-  }, [categoria, tipo, busqueda, precioMin, precioMax, orden]);
-
-  // El grid cambia de altura con filtros y paginación: hay que recalcular las
-  // posiciones de ScrollTrigger para que las tarjetas siguientes no entren tarde.
-  useEffect(() => {
-    const cuadro = requestAnimationFrame(refrescarMovimiento);
-    return () => cancelAnimationFrame(cuadro);
-  }, [cargando, paginaActual, productosFiltrados]);
+  }, [marcaSeleccionada, tiposSeleccionados, busqueda, precioMin, precioMax]);
 
   if (cargando) {
     return (
@@ -211,57 +131,98 @@ export default function CatalogoCompleto() {
     <div className="catalog-page">
       <SiteHeader />
       <main>
+        <section className="catalog-hero catalog-hero--compact">
+          <div className="catalog-hero-grid" />
+          <div className="catalog-hero-copy">
+            <div className="eyebrow eyebrow--light"><span className="eyebrow-dot" aria-hidden="true"></span>Catálogo completo</div>
+            <h1 className="catalog-hero-title">Todas las piezas<br /><em>para tu moto.</em></h1>
+            <p className="catalog-hero-subtitle">Explora el catálogo completo, filtra por marca y tipo, y busca la pieza exacta para tu máquina.</p>
+            <div className="catalog-hero-actions">
+              <Link to="/configurador" className="btn btn--primary">Configurar mi moto <span>→</span></Link>
+              <Link to="/" className="btn btn--ghost catalog-hero-ghost">← Volver al inicio</Link>
+            </div>
+          </div>
+        </section>
 
         <section className="catalog-section" id="catalogo">
           <div className="section-heading">
             <div>
-              <div className="eyebrow eyebrow--light">
-                <span className="eyebrow-dot" aria-hidden="true"></span>
-                <span data-scramble="Curaduría verificada">Curaduría verificada</span>
-              </div>
-              <h2 className="section-title" data-reveal="lineas">Encuentra tu<br /><em>próxima mejora.</em></h2>
+              <div className="eyebrow"><span className="eyebrow-dot" aria-hidden="true"></span>Curaduría MotoPreview</div>
+              <h2 className="section-title">Encuentra tu<br /><em>próxima mejora.</em></h2>
+            </div>
+            <p className="section-subtitle">
+              {accesoriosFiltrados.length} piezas disponibles
+              {marcaSeleccionada !== 'todas' && ' de esta marca'}
+              {busqueda.trim() && ` para "${busqueda.trim()}"`}.
+            </p>
+          </div>
+
+          {/* Fila de marcas (con logo o placeholder) */}
+          <div className="filter-row">
+            <span className="filter-row-label">Marca</span>
+            <div className="filter-row-chips">
+              <button
+                className={`filter-chip${marcaSeleccionada === 'todas' ? ' filter-chip--active' : ''}`}
+                onClick={() => setMarcaSeleccionada('todas')}
+              >
+                Todas
+              </button>
+              {marcas.map((m) => (
+                <button
+                  key={m.id_marca}
+                  className={`filter-chip filter-chip--marca${marcaSeleccionada === m.id_marca ? ' filter-chip--active' : ''}`}
+                  onClick={() => setMarcaSeleccionada(m.id_marca)}
+                  title={m.nombre}
+                >
+                  {m.logo ? (
+                    <img src={m.logo} alt={m.nombre} className="marca-logo" />
+                  ) : (
+                    <span className="marca-placeholder">{m.nombre.charAt(0)}</span>
+                  )}
+                  <span>{m.nombre}</span>
+                </button>
+              ))}
             </div>
           </div>
 
-          <div className="catalog-filters">
-            <div className="catalog-filters-main">
-              <div className="catalog-search">
-                <Search size={17} aria-hidden="true" />
-                <input
-                  type="search"
-                  value={busqueda}
-                  onChange={(e) => setBusqueda(e.target.value)}
-                  placeholder="Buscar por nombre, SKU o descripción…"
-                  aria-label="Buscar productos"
-                />
-                {busqueda && (
-                  <button
-                    type="button"
-                    className="catalog-search-clear"
-                    onClick={() => setBusqueda('')}
-                    aria-label="Limpiar búsqueda"
-                  >
-                    <X size={14} aria-hidden="true" />
-                  </button>
-                )}
+          {/* Fila de tipos (selección múltiple) */}
+          <div className="filter-row">
+            <span className="filter-row-label">Tipo</span>
+            <div className="filter-row-chips">
+              {tipos.map((t) => (
+                <button
+                  key={t.id_tipo_producto}
+                  className={`filter-chip${tiposSeleccionados.has(t.id_tipo_producto) ? ' filter-chip--active' : ''}`}
+                  onClick={() => toggleTipo(t.id_tipo_producto)}
+                >
+                  {t.nombre}
+                </button>
+              ))}
+              {tiposSeleccionados.size > 0 && (
+                <button className="filter-chip filter-chip--reset" onClick={() => setTiposSeleccionados(new Set())}>
+                  Limpiar tipos
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="catalog-toolbar">
+            <label className="search-field">
+              <span>⌕</span>
+              <input value={busqueda} onChange={(e) => setBusqueda(e.target.value)} placeholder="Buscar accesorio..." />
+            </label>
+          </div>
+
+          {/* Slider de rango de precios */}
+          {accesorios.length > 0 && (
+            <div className="price-slider">
+              <div className="price-slider-head">
+                <span className="price-slider-label">Rango de precio</span>
+                <span className="price-slider-value">{COP.format(precioMin)} — {COP.format(precioMax)}</span>
               </div>
-
-              <label className="catalog-control">
-                <span className="catalog-control-label">
-                  <ArrowUpDown size={14} aria-hidden="true" />
-                  Ordenar
-                </span>
-                <select value={orden} onChange={(e) => setOrden(e.target.value)}>
-                  {ORDEN_OPCIONES.map((opcion) => (
-                    <option key={opcion.value} value={opcion.value}>{opcion.label}</option>
-                  ))}
-                </select>
-              </label>
-
-              <div className="price-range">
-                <span className="price-range-title">Precio</span>
-                <label className="price-range-field">
-                  <span>{COP.format(precioMin)}</span>
+              <div className="price-slider-tracks">
+                <label className="price-slider-field">
+                  <span>Mínimo</span>
                   <input
                     type="range"
                     min={limitesPrecio.min}
@@ -269,12 +230,10 @@ export default function CatalogoCompleto() {
                     step={1000}
                     value={precioMin}
                     onChange={(e) => setPrecioMin(Math.min(Number(e.target.value), precioMax))}
-                    aria-label="Precio mínimo"
                   />
                 </label>
-                <span className="price-range-sep" aria-hidden="true">—</span>
-                <label className="price-range-field">
-                  <span>{COP.format(precioMax)}</span>
+                <label className="price-slider-field">
+                  <span>Máximo</span>
                   <input
                     type="range"
                     min={limitesPrecio.min}
@@ -282,69 +241,36 @@ export default function CatalogoCompleto() {
                     step={1000}
                     value={precioMax}
                     onChange={(e) => setPrecioMax(Math.max(Number(e.target.value), precioMin))}
-                    aria-label="Precio máximo"
                   />
                 </label>
               </div>
+              {(precioMin !== limitesPrecio.min || precioMax !== limitesPrecio.max) && (
+                <button
+                  className="price-slider-reset"
+                  onClick={() => { setPrecioMin(limitesPrecio.min); setPrecioMax(limitesPrecio.max); }}
+                >
+                  Limpiar filtro de precio
+                </button>
+              )}
             </div>
+          )}
 
-            <div className="catalog-filters-layers">
-              <div className="catalog-filters-capas">
-                <FiltroCapa
-                  etiqueta="Categoría"
-                  icono={<Layers size={12} aria-hidden="true" />}
-                  opciones={opcionesCategoria}
-                  valor={categoria}
-                  onChange={setCategoria}
-                  todasEtiqueta="Todas"
-                  ariaLabel="Filtrar el catálogo por categoría de producto"
-                />
-
-                {opcionesTipo.length > 0 && (
-                  <FiltroCapa
-                    etiqueta="Tipo"
-                    icono={<Shapes size={12} aria-hidden="true" />}
-                    opciones={opcionesTipo}
-                    valor={tipo}
-                    onChange={setTipo}
-                    todasEtiqueta="Todos los tipos"
-                    ariaLabel="Filtrar el catálogo por tipo de accesorio"
-                  />
-                )}
-              </div>
-
-              <div className="catalog-filters-meta">
-                <span>{productosFiltrados.length} de {productos.length} productos</span>
-                {hayFiltrosActivos && (
-                  <button type="button" className="catalog-filters-clear" onClick={limpiarFiltros}>
-                    <RotateCcw size={13} aria-hidden="true" />
-                    Limpiar filtros
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {productosFiltrados.length === 0 ? (
+          {accesoriosFiltrados.length === 0 ? (
             <div className="empty-state">
-              <SearchX className="empty-icon" size={48} strokeWidth={1.5} aria-hidden="true" />
-              <h3 className="empty-title">No encontramos ese producto</h3>
-              <p className="empty-subtitle">Prueba con otra búsqueda, categoría o rango de precio.</p>
+              <span className="empty-icon" aria-hidden="true">⌕</span>
+              <h3 className="empty-title">No encontramos esa pieza</h3>
+              <p className="empty-subtitle">Prueba con otra búsqueda, marca, tipo o rango de precio.</p>
             </div>
           ) : (
             <>
               <div className="product-grid">
-                {productosPagina.map((producto) => <AccesorioCard key={producto.id_accesorio} accesorio={producto} />)}
+                {accesoriosPagina.map((accesorio) => <AccesorioCard key={accesorio.id_accesorio} accesorio={accesorio} />)}
               </div>
               {totalPaginas > 1 && (
                 <div className="catalog-pagination">
-                  <button disabled={paginaActual === 1} onClick={() => setPaginaActual((p) => p - 1)}>
-                    <ChevronLeft size={15} aria-hidden="true" /> Anterior
-                  </button>
+                  <button disabled={paginaActual === 1} onClick={() => setPaginaActual((p) => p - 1)}>← Anterior</button>
                   <span className="pagination-current">Página {paginaActual} de {totalPaginas}</span>
-                  <button disabled={paginaActual === totalPaginas} onClick={() => setPaginaActual((p) => p + 1)}>
-                    Siguiente <ChevronRight size={15} aria-hidden="true" />
-                  </button>
+                  <button disabled={paginaActual === totalPaginas} onClick={() => setPaginaActual((p) => p + 1)}>Siguiente →</button>
                 </div>
               )}
             </>
