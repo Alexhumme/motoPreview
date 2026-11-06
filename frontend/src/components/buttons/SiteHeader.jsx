@@ -50,24 +50,28 @@ export default function SiteHeader() {
           <Link
             to="/"
             className={`nav-link${location.pathname === '/' ? ' nav-link--active' : ''}`}
+            data-scramble-hover
           >
             Inicio
           </Link>
           <Link
             to="/configurador"
             className={`nav-link${location.pathname === '/configurador' ? ' nav-link--active' : ''}`}
+            data-scramble-hover
           >
             Configurador
           </Link>
           <Link
             to="/catalogo"
             className={`nav-link${location.pathname === '/catalogo' ? ' nav-link--active' : ''}`}
+            data-scramble-hover
           >
             Catálogo
           </Link>
           <Link
             to="/contacto"
             className={`nav-link${location.pathname === '/contacto' ? ' nav-link--active' : ''}`}
+            data-scramble-hover
           >
             Contactanos
           </Link>
@@ -113,11 +117,18 @@ export default function SiteHeader() {
 
             </Link>
           )}
-          <Link to="/carrito" className="cart-button btn ">
-            <ShoppingCart size={16} aria-hidden="true" />
-            <span className="cart-label">Carrito</span>
-            {totalItems > 0 && <span className="cart-badge">{totalItems}</span>}
-          </Link>
+          {/* El badge cuelga del botón, así que vive fuera de su caja recortada. */}
+          <span className="cart-envoltura">
+            <Link
+              to="/carrito"
+              className="cart-button btn"
+              aria-label={totalItems > 0 ? `Carrito (${totalItems})` : 'Carrito'}
+            >
+              <ShoppingCart size={16} aria-hidden="true" />
+              <span className="cart-label">Carrito</span>
+            </Link>
+            {totalItems > 0 && <span className="cart-badge" aria-hidden="true">{totalItems}</span>}
+          </span>
         </div>
       </div>
 

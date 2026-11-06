@@ -65,24 +65,24 @@ export default function MisCotizaciones() {
     <div className="mis-cotizaciones-page">
       <SiteHeader />
       <div className="mis-cotizaciones">
-        <header className="mis-cotizaciones-header">
+        <header className="mis-cotizaciones-header" data-reveal="up">
         <Link to="/" className="btn btn--ghost btn--sm">
           <ArrowLeft size={15} aria-hidden="true" /> Volver al catálogo
         </Link>
-        <h1 className="mis-cotizaciones-title">Mis cotizaciones</h1>
+        <h1 className="mis-cotizaciones-title" data-glitch="Mis cotizaciones">Mis cotizaciones</h1>
       </header>
 
       {cotizaciones.length === 0 && (
-        <div className="cotizaciones-empty">
+        <div className="cotizaciones-empty" data-reveal="scale">
           <FileText className="empty-icon" size={48} strokeWidth={1.5} aria-hidden="true" />
           <h2 className="empty-title">Todavía no has enviado ninguna cotización.</h2>
-          <p className="empty-subtitle">Ve al <Link to="/configurador">configurador</Link> o al <Link to="/">catálogo</Link> para armar una.</p>
+          <p className="empty-subtitle">Ve al <Link to="/configurador" data-scramble-hover>configurador</Link> o al <Link to="/" data-scramble-hover>catálogo</Link> para armar una.</p>
         </div>
       )}
 
-      <section className="mis-cotizaciones-list" aria-label="Mis cotizaciones">
+      <section className="mis-cotizaciones-list" aria-label="Mis cotizaciones" data-reveal="grupo">
         {cotizaciones.map((cot) => (
-          <article key={cot.id_cotizacion} className="cotizacion-card">
+          <article key={cot.id_cotizacion} className="cotizacion-card fx-eleva fx-marcas">
             <header className="cotizacion-header" onClick={() => alternarExpandida(cot.id_cotizacion)}>
               <div className="cotizacion-main">
                 <div className="cotizacion-moto">

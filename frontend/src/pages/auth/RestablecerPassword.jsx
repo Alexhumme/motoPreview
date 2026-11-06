@@ -44,9 +44,9 @@ export default function RestablecerPassword() {
       <SiteHeader />
 
       <main className="auth-main">
-        <div className="auth-card">
+        <div className="auth-card" data-reveal="fade">
           <header className="auth-header">
-            <h1 className="auth-title">Crea una nueva contraseña</h1>
+            <h1 className="auth-title" data-reveal="lineas">Crea una nueva contraseña</h1>
           </header>
 
           {exito ? (
@@ -55,7 +55,7 @@ export default function RestablecerPassword() {
               <p>¡Listo! Tu contraseña fue actualizada. Redirigiendo al inicio de sesión...</p>
             </div>
           ) : (
-            <form className="auth-form" onSubmit={manejarSubmit} noValidate>
+            <form className="auth-form" onSubmit={manejarSubmit} noValidate data-reveal="grupo" data-reveal-delay="0.1">
               <div className="form-field">
                 <label htmlFor="password" className="form-label">Nueva contraseña</label>
                 <input

@@ -1,5 +1,6 @@
 /* ==========================================================================
-   MIS COTIZACIONES — Jam Design System
+   MIS COTIZACIONES — registro de cotizaciones en piel HUD
+   Lista densa: hilo + mono tabular; sólo el bloque vacío usa corte y retícula.
    ========================================================================== */
 
 .mis-cotizaciones-page {
@@ -26,6 +27,8 @@
   justify-content: space-between;
   gap: var(--space-24);
   flex-wrap: wrap;
+  padding-bottom: var(--space-24);
+  border-bottom: var(--linea);
 }
 
 .mis-cotizaciones-title {
@@ -34,12 +37,14 @@
   font-size: var(--text-heading);
   line-height: var(--leading-heading);
   letter-spacing: var(--tracking-heading);
+  text-transform: uppercase;
   color: var(--color-paper);
   margin: 0;
 }
 
-/* Empty state */
+/* Empty state — bloque de instrumento */
 .cotizaciones-empty {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -48,20 +53,42 @@
   padding: var(--space-80) var(--space-24);
   text-align: center;
   background: var(--surface-card);
-  border: 1px solid var(--color-bone);
-  border-radius: var(--radius-cards);
+  border: var(--linea);
+  box-shadow: var(--shadow-card);
+  border-radius: 0;
+  clip-path: var(--clip-esquinas);
+  overflow: hidden;
+}
+
+.cotizaciones-empty::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: var(--rejilla), var(--halo-radial);
+  background-size: var(--rejilla-paso) var(--rejilla-paso), cover;
+  -webkit-mask-image: radial-gradient(70% 70% at 50% 45%, #000, transparent 78%);
+  mask-image: radial-gradient(70% 70% at 50% 45%, #000, transparent 78%);
+  pointer-events: none;
+}
+
+.cotizaciones-empty > * {
+  position: relative;
+  z-index: 1;
 }
 
 .empty-icon {
-  font-size: 48px;
-  color: var(--color-mist-gray);
-  opacity: 0.5;
+  color: var(--color-brand-orange);
+  opacity: 0.55;
+  filter: drop-shadow(0 0 14px rgba(242, 106, 33, 0.35));
 }
 
 .empty-title {
   font-family: var(--font-display);
   font-weight: var(--weight-black);
   font-size: var(--text-heading-sm);
+  line-height: var(--leading-heading-sm);
+  letter-spacing: var(--tracking-heading-sm);
+  text-transform: uppercase;
   color: var(--color-paper);
   margin: 0;
 }
@@ -69,29 +96,41 @@
 .empty-subtitle {
   font-family: var(--font-ui);
   font-size: var(--text-body);
+  line-height: var(--leading-body);
   color: var(--color-mist-gray);
   margin: 0;
   max-width: 400px;
+}
+
+.empty-subtitle a {
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--color-brand-orange);
 }
 
 /* List */
 .mis-cotizaciones-list {
   display: flex;
   flex-direction: column;
-  gap: var(--space-16);
+  gap: var(--space-12);
 }
 
-/* Card */
+/* Card — superficie de datos: radio angular, sin corte */
 .cotizacion-card {
   background: var(--surface-card);
-  border: 1px solid var(--color-bone);
+  border: var(--linea);
   border-radius: var(--radius-cards);
-  overflow: hidden;
-  transition: all 0.2s ease;
+  box-shadow: var(--shadow-card);
+  transition: border-color var(--t-fast) var(--ease-salida),
+              box-shadow var(--t-med) var(--ease-salida),
+              transform var(--t-med) var(--ease-salida);
 }
 
 .cotizacion-card:hover {
-  border-color: var(--color-mist-gray);
+  border-color: rgba(242, 106, 33, 0.45);
+  box-shadow: var(--shadow-card), var(--glow-suave);
 }
 
 /* Header (clickable summary) */
@@ -102,11 +141,17 @@
   gap: var(--space-24);
   padding: var(--space-20) var(--space-24);
   cursor: pointer;
-  transition: background 0.15s ease;
+  transition: box-shadow var(--t-med) var(--ease-salida),
+              color var(--t-fast) var(--ease-salida);
 }
 
+/* Sin baño de color en hover: la barra de acento marca la fila accionable */
 .cotizacion-header:hover {
-  background: var(--surface-elevated);
+  box-shadow: inset 2px 0 0 var(--color-brand-orange);
+}
+
+.cotizacion-header:hover .cotizacion-moto {
+  color: var(--color-brand-orange);
 }
 
 .cotizacion-main {
@@ -121,6 +166,9 @@
   font-family: var(--font-display);
   font-weight: var(--weight-bold);
   font-size: var(--text-body-lg);
+  line-height: var(--leading-heading-sm);
+  letter-spacing: var(--tracking-heading-sm);
+  text-transform: uppercase;
   color: var(--color-paper);
   white-space: nowrap;
   overflow: hidden;
@@ -131,13 +179,17 @@
   display: flex;
   align-items: center;
   gap: var(--space-16);
-  font-family: var(--font-ui);
-  font-size: var(--text-caption);
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  line-height: var(--leading-caption);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
   color: var(--color-mist-gray);
 }
 
 .cotizacion-fecha {
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
 }
 
 .cotizacion-side {
@@ -148,18 +200,21 @@
 }
 
 .cotizacion-total {
-  font-family: var(--font-display);
+  font-family: var(--font-mono);
   font-weight: var(--weight-bold);
   font-size: var(--text-body-lg);
+  font-variant-numeric: tabular-nums;
   color: var(--color-paper);
   white-space: nowrap;
 }
 
 /* Detail (expandable) */
 .cotizacion-detail {
-  padding: 0 var(--space-24) var(--space-24);
-  border-top: 1px solid var(--color-bone);
-  animation: slideDown 0.2s ease;
+  padding: var(--space-20) var(--space-24) var(--space-24);
+  border-top: var(--linea);
+  background: var(--surface-canvas);
+  border-radius: 0 0 var(--radius-cards) var(--radius-cards);
+  animation: slideDown var(--t-med) var(--ease-salida);
 }
 
 @keyframes slideDown {
@@ -170,7 +225,7 @@
 .cotizacion-items {
   display: flex;
   flex-direction: column;
-  gap: var(--space-12);
+  gap: var(--space-8);
   margin: 0 0 var(--space-20);
   padding: 0;
   list-style: none;
@@ -183,11 +238,16 @@
   gap: var(--space-16);
   padding: var(--space-12) var(--space-16);
   background: var(--surface-elevated);
-  border: 1px solid var(--color-bone);
+  border: var(--linea);
   border-radius: var(--radius-inputs);
   font-family: var(--font-ui);
   font-size: var(--text-body);
   color: var(--color-soft-mist);
+  transition: border-color var(--t-fast) var(--ease-salida);
+}
+
+.cotizacion-items li:hover {
+  border-color: rgba(242, 106, 33, 0.45);
 }
 
 .cotizacion-items li span:first-child {
@@ -195,30 +255,33 @@
   font-weight: var(--weight-medium);
 }
 
+/* Cantidad × precio: columna numérica alineada */
 .cotizacion-items li span:last-child {
-  font-family: var(--font-display);
+  font-family: var(--font-mono);
   font-weight: var(--weight-semibold);
-  color: var(--color-paper);
+  font-size: var(--text-caption);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-brand-orange);
   white-space: nowrap;
 }
 
 .cotizacion-observaciones {
   font-family: var(--font-ui);
   font-size: var(--text-body);
-  font-style: italic;
+  line-height: var(--leading-body);
   color: var(--color-mist-gray);
-  margin: 0 0 var(--space-20);
+  margin: 0;
   padding: var(--space-16);
-  background: var(--surface-canvas);
-  border: 1px solid var(--color-bone);
-  border-radius: var(--radius-inputs);
-  border-left: 3px solid var(--color-brand-orange-soft);
+  background: var(--surface-card);
+  border: var(--linea);
+  border-left: 2px solid var(--color-brand-orange);
+  border-radius: 0 var(--radius-inputs) var(--radius-inputs) 0;
 }
 
 /* Responsive */
 @media (max-width: 720px) {
   .mis-cotizaciones-title {
-    font-size: var(--text-heading-lg);
+    font-size: var(--text-heading);
   }
 
   .mis-cotizaciones-header {
@@ -235,5 +298,15 @@
   .cotizacion-side {
     width: 100%;
     justify-content: space-between;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cotizacion-detail {
+    animation: none;
+  }
+
+  .cotizacion-card:hover {
+    transform: none;
   }
 }

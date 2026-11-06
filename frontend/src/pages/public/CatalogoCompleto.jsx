@@ -14,6 +14,7 @@ import { obtenerProductos } from '../../services/productos';
 import AccesorioCard from '../../components/buttons/AccesorioCard';
 import FiltroCapa from '../../components/filters/FiltroCapa';
 import { TODAS, agruparOpciones } from '../../utils/filtros';
+import { refrescarMovimiento } from '../../utils/motion';
 import SiteHeader from '../../components/buttons/SiteHeader';
 import Footer from '../../components/forms/Footer';
 import './Catalogo.css';
@@ -173,6 +174,13 @@ export default function CatalogoCompleto() {
     setPaginaActual(1);
   }, [categoria, tipo, busqueda, precioMin, precioMax, orden]);
 
+  // El grid cambia de altura con filtros y paginación: hay que recalcular las
+  // posiciones de ScrollTrigger para que las tarjetas siguientes no entren tarde.
+  useEffect(() => {
+    const cuadro = requestAnimationFrame(refrescarMovimiento);
+    return () => cancelAnimationFrame(cuadro);
+  }, [cargando, paginaActual, productosFiltrados]);
+
   if (cargando) {
     return (
       <div className="catalog-page">
@@ -207,7 +215,11 @@ export default function CatalogoCompleto() {
         <section className="catalog-section" id="catalogo">
           <div className="section-heading">
             <div>
-              <h2 className="section-title">Encuentra tu<br /><em>próxima mejora.</em></h2>
+              <div className="eyebrow eyebrow--light">
+                <span className="eyebrow-dot" aria-hidden="true"></span>
+                <span data-scramble="Curaduría verificada">Curaduría verificada</span>
+              </div>
+              <h2 className="section-title" data-reveal="lineas">Encuentra tu<br /><em>próxima mejora.</em></h2>
             </div>
           </div>
 

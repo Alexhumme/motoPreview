@@ -1,5 +1,5 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { Suspense, lazy } from 'react';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { Suspense, lazy, useEffect } from 'react';
 import Login from './pages/auth/Login';
 import Catalogo from './pages/public/Catalogo';
 import CatalogoCompleto from './pages/public/CatalogoCompleto';
@@ -12,6 +12,7 @@ import MisCotizaciones from './pages/public/MisCotizaciones';
 import NoEncontrado from './pages/public/NoEncontrado';
 import VerificarCorreo from './pages/auth/VerificarCorreo';
 import BannerConexion from './components/menus/BannerConexion';
+import { iniciarMovimiento, refrescarMovimiento } from './utils/motion';
 import RecuperarPassword from './pages/auth/RecuperarPassword';
 import RestablecerPassword from './pages/auth/RestablecerPassword';
 import Registro from './pages/auth/Registro';
@@ -48,7 +49,27 @@ function LazyWrapper({ Component }) {
   );
 }
 
+// El panel (fase 2) conserva su scroll nativo: las stickies y tablas del
+// admin se pelearían con Lenis, así que el motor solo arranca fuera de /admin.
+const esRutaPanel = (pathname) => pathname === '/admin' || pathname.startsWith('/admin/');
+
+function useMovimientoSitio() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    if (esRutaPanel(pathname)) return undefined;
+    const liberar = iniciarMovimiento();
+    // Las rutas lazy pintan después: se refresca en el siguiente frame.
+    const cuadro = requestAnimationFrame(() => refrescarMovimiento());
+    return () => {
+      cancelAnimationFrame(cuadro);
+      liberar();
+    };
+  }, [pathname]);
+}
+
 function App() {
+  useMovimientoSitio();
   return (
     <>
       <BannerConexion />

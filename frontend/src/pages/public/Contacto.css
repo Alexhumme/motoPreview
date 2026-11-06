@@ -1,5 +1,6 @@
 /* ==========================================================================
-   CONTACTO — Jam Design System
+   CONTACTO — HUD de soporte
+   Héroe con retícula + scanlines, paneles de hilo, etiquetas mono.
    ========================================================================== */
 
 .contacto-page {
@@ -14,13 +15,44 @@
   padding: var(--space-48) var(--space-32) var(--space-80);
 }
 
+/* Héroe: la textura vive en capas propias, nunca bajo el cuerpo de texto */
 .contacto-hero {
+  position: relative;
   text-align: center;
   margin-bottom: var(--space-48);
+  padding: var(--space-48) var(--space-24);
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: var(--space-12);
+  overflow: hidden;
+  border: var(--linea);
+  border-radius: var(--radius-cards);
+}
+
+.contacto-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: var(--rejilla), var(--halo-radial);
+  background-size: var(--rejilla-paso) var(--rejilla-paso), cover;
+  -webkit-mask-image: radial-gradient(75% 90% at 50% 0%, #000, transparent 80%);
+  mask-image: radial-gradient(75% 90% at 50% 0%, #000, transparent 80%);
+  pointer-events: none;
+}
+
+.contacto-hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--scanline);
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.contacto-hero > * {
+  position: relative;
+  z-index: 1;
 }
 
 .contacto-title {
@@ -28,6 +60,8 @@
   font-weight: var(--weight-black);
   font-size: var(--text-heading);
   line-height: var(--leading-heading);
+  letter-spacing: var(--tracking-heading);
+  text-transform: uppercase;
   color: var(--color-paper);
   margin: 0;
 }
@@ -48,18 +82,35 @@
   align-items: start;
 }
 
-.contacto-info,
+/* Panel de datos = instrumento (corte en esquinas) */
+.contacto-info {
+  padding: var(--card-padding);
+  border: var(--linea-fuerte);
+  border-radius: 0;
+  clip-path: var(--clip-esquinas);
+  box-shadow: var(--shadow-card);
+}
+
+/* Panel de formulario = superficie limpia, sin corte para no recortar el foco */
 .contacto-form-card {
   padding: var(--card-padding);
+  border: var(--linea);
+  border-radius: var(--radius-cards);
+  box-shadow: var(--shadow-card);
 }
 
 .contacto-info-title,
 .contacto-form-title {
   font-family: var(--font-display);
-  font-weight: var(--weight-bold);
+  font-weight: var(--weight-black);
   font-size: var(--text-heading-sm);
+  line-height: var(--leading-heading-sm);
+  letter-spacing: var(--tracking-heading-sm);
+  text-transform: uppercase;
   color: var(--color-paper);
   margin: 0 0 var(--space-24);
+  padding-bottom: var(--space-12);
+  border-bottom: var(--linea);
 }
 
 .contacto-lista {
@@ -77,50 +128,78 @@
   gap: var(--space-16);
 }
 
+/* Icono: rombo de circuito, acento de marca (el token signal-mint ya no existe) */
 .contacto-icono {
   width: 36px;
   height: 36px;
   display: grid;
   place-items: center;
   background: var(--surface-elevated);
-  border: 1px solid var(--color-ink-border);
-  border-radius: var(--radius-nav);
-  color: var(--color-signal-mint);
+  border: var(--linea);
+  border-radius: 0;
+  clip-path: var(--clip-esquina-sup);
+  color: var(--color-brand-orange);
   font-size: 16px;
   flex-shrink: 0;
+  transition: color var(--t-fast) var(--ease-salida),
+              box-shadow var(--t-med) var(--ease-salida);
+}
+
+.contacto-lista li:hover .contacto-icono {
+  color: var(--color-brand-orange-soft);
+  box-shadow: var(--sombra-neon);
 }
 
 .contacto-lista strong {
   display: block;
-  font-family: var(--font-display);
-  font-size: var(--text-body);
-  color: var(--color-paper);
-  margin-bottom: var(--space-2);
+  font-family: var(--font-mono);
+  font-weight: var(--weight-medium);
+  font-size: var(--text-label);
+  line-height: var(--leading-caption);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--color-mist-gray);
+  margin-bottom: var(--space-4);
 }
 
 .contacto-lista a,
 .contacto-lista span {
   font-family: var(--font-ui);
   font-size: var(--text-body);
-  color: var(--color-mist-gray);
+  line-height: var(--leading-body);
+  color: var(--color-paper);
   text-decoration: none;
+  transition: color var(--t-fast) var(--ease-salida),
+              text-shadow var(--t-med) var(--ease-salida);
+}
+
+.contacto-lista a {
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-brand-orange);
 }
 
 .contacto-lista a:hover {
-  color: var(--color-signal-mint);
+  color: var(--color-brand-orange-soft);
+  text-shadow: 0 0 14px rgba(242, 106, 33, 0.45);
 }
 
 .contacto-ayuda {
-  border-top: 1px solid var(--color-ink-border);
+  border-top: var(--linea);
   padding-top: var(--space-20);
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   gap: var(--space-12);
 }
 
 .contacto-ayuda p {
-  font-family: var(--font-ui);
-  font-size: var(--text-body);
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
   color: var(--color-mist-gray);
   margin: 0;
 }
@@ -136,41 +215,61 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-8);
-  font-family: var(--font-ui);
-  font-size: var(--text-caption);
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
   font-weight: var(--weight-medium);
-  color: var(--color-mist-gray);
+  line-height: var(--leading-caption);
+  color: var(--color-soft-mist);
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: var(--tracking-label);
 }
 
 .contacto-label input,
 .contacto-label textarea {
   padding: var(--space-12) var(--space-16);
-  border: 1px solid var(--color-bone);
+  border: var(--linea-fuerte);
   border-radius: var(--radius-inputs);
   background: var(--surface-canvas);
   color: var(--color-paper);
   font-family: var(--font-ui);
   font-size: var(--text-body);
+  line-height: var(--leading-body);
   outline: none;
   resize: vertical;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: border-color var(--t-fast) var(--ease-salida),
+              box-shadow var(--t-med) var(--ease-salida),
+              background var(--t-fast) var(--ease-salida);
 }
 
+.contacto-label input::placeholder,
+.contacto-label textarea::placeholder {
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  color: var(--color-mist-gray);
+  opacity: 0.6;
+}
+
+.contacto-label input:hover:not(:focus),
+.contacto-label textarea:hover:not(:focus) {
+  border-color: var(--color-mist-gray);
+}
+
+/* Foco = circuito encendido */
 .contacto-label input:focus,
 .contacto-label textarea:focus {
-  border-color: var(--color-signal-mint);
-  box-shadow: 0 0 0 3px rgba(242, 106, 33, 0.15);
+  border-color: var(--color-brand-orange);
+  background: rgba(242, 106, 33, 0.04);
+  box-shadow: 0 0 0 1px rgba(242, 106, 33, 0.45), var(--glow-suave);
 }
 
 .contacto-error {
   font-family: var(--font-ui);
-  font-size: var(--text-body);
+  font-size: var(--text-caption);
+  line-height: var(--leading-caption);
   color: var(--color-jam-pink);
   background: rgba(229, 72, 77, 0.1);
-  border: 1px solid rgba(229, 72, 77, 0.2);
-  border-radius: var(--radius-inputs);
+  border: 1px solid rgba(229, 72, 77, 0.32);
+  border-radius: var(--radius-chips);
   padding: var(--space-10) var(--space-16);
   margin: 0;
 }
@@ -190,17 +289,23 @@
   height: 56px;
   display: grid;
   place-items: center;
-  border-radius: 50%;
+  border-radius: 0;
+  clip-path: var(--clip-esquinas);
   background: rgba(242, 106, 33, 0.15);
-  color: var(--color-signal-mint);
+  border: 1px solid rgba(242, 106, 33, 0.45);
+  color: var(--color-brand-orange);
   font-size: 24px;
   font-weight: var(--weight-bold);
+  box-shadow: var(--glow-acento);
 }
 
 .contacto-exito h2 {
   font-family: var(--font-display);
   font-weight: var(--weight-black);
   font-size: var(--text-heading-sm);
+  line-height: var(--leading-heading-sm);
+  letter-spacing: var(--tracking-heading-sm);
+  text-transform: uppercase;
   color: var(--color-paper);
   margin: 0;
 }
@@ -208,6 +313,7 @@
 .contacto-exito p {
   font-family: var(--font-ui);
   font-size: var(--text-body);
+  line-height: var(--leading-body);
   color: var(--color-mist-gray);
   margin: 0 0 var(--space-8);
   max-width: 420px;
@@ -224,7 +330,18 @@
   .contacto-main {
     padding: var(--space-32) var(--space-16) var(--space-48);
   }
+
+  .contacto-hero {
+    padding: var(--space-40) var(--space-16);
+  }
+
   .contacto-title {
-    font-size: var(--text-heading-lg);
+    font-size: var(--text-heading);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .contacto-hero::after {
+    display: none;
   }
 }

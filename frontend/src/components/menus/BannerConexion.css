@@ -11,9 +11,11 @@
   color: var(--color-paper);
   text-align: center;
   padding: var(--space-12) var(--space-24);
-  font-family: var(--font-ui);
-  font-size: var(--text-body);
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
   font-weight: var(--weight-medium);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
   z-index: 1000;
   display: flex;
   align-items: center;
@@ -21,10 +23,12 @@
   gap: var(--space-12);
 }
 
+/* Punto de alerta como rombo de HUD, no como círculo suave */
 .banner-conexion__punto {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
+  width: 8px;
+  height: 8px;
+  border-radius: 1px;
+  transform: rotate(45deg);
   background: var(--color-paper);
   animation: banner-conexion-pulso 1.4s infinite;
   flex-shrink: 0;

@@ -1,5 +1,7 @@
 /* ==========================================================================
-   CARRITO — Jam Design System
+   CARRITO — panel de cotización con piel HUD
+   Estructura y paleta intactas; todo se consume de los tokens de
+   styles/index.css (líneas, cortes, glow y tipografía).
    ========================================================================== */
 
 .cart-page {
@@ -27,6 +29,8 @@
   gap: var(--space-16);
   flex-wrap: wrap;
   margin-bottom: var(--space-32);
+  padding-bottom: var(--space-24);
+  border-bottom: var(--linea);
 }
 
 .page-heading > div {
@@ -42,19 +46,33 @@
   font-size: var(--text-heading);
   line-height: var(--leading-heading);
   letter-spacing: var(--tracking-heading);
+  text-transform: uppercase;
   color: var(--color-paper);
   margin: 0;
 }
 
+/* Contador de líneas: se lee como lectura de instrumento */
 .cart-count-badge {
-  font-family: var(--font-display);
-  font-weight: var(--weight-black);
-  font-size: var(--text-body-lg);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6);
+  padding: var(--space-4) var(--space-10);
+  font-family: var(--font-mono);
+  font-weight: var(--weight-medium);
+  font-size: var(--text-label);
+  line-height: 1.4;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  font-variant-numeric: tabular-nums;
   color: var(--color-brand-orange);
+  background: rgba(242, 106, 33, 0.12);
+  border: 1px solid rgba(242, 106, 33, 0.38);
+  border-radius: var(--radius-chips);
 }
 
-/* Empty state */
+/* Empty state — bloque de instrumento: corte + retícula, nunca textura sobre texto */
 .cart-empty {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -63,20 +81,42 @@
   padding: var(--space-80) var(--space-24);
   text-align: center;
   background: var(--surface-card);
-  border: 1px solid var(--color-bone);
-  border-radius: var(--radius-cards);
+  border: var(--linea);
+  box-shadow: var(--shadow-card);
+  border-radius: 0;
+  clip-path: var(--clip-esquinas);
+  overflow: hidden;
+}
+
+.cart-empty::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: var(--rejilla);
+  background-size: var(--rejilla-paso) var(--rejilla-paso);
+  -webkit-mask-image: radial-gradient(70% 70% at 50% 40%, #000, transparent 78%);
+  mask-image: radial-gradient(70% 70% at 50% 40%, #000, transparent 78%);
+  pointer-events: none;
+}
+
+.cart-empty > * {
+  position: relative;
+  z-index: 1;
 }
 
 .empty-icon {
-  font-size: 48px;
-  color: var(--color-mist-gray);
-  opacity: 0.5;
+  color: var(--color-brand-orange);
+  opacity: 0.55;
+  filter: drop-shadow(0 0 14px rgba(242, 106, 33, 0.35));
 }
 
 .cart-empty-title {
   font-family: var(--font-display);
   font-weight: var(--weight-black);
   font-size: var(--text-heading-sm);
+  line-height: var(--leading-heading-sm);
+  letter-spacing: var(--tracking-heading-sm);
+  text-transform: uppercase;
   color: var(--color-paper);
   margin: 0;
 }
@@ -95,13 +135,14 @@
   display: grid;
   grid-template-columns: 1fr 380px;
   gap: var(--space-32);
+  align-items: start;
 }
 
-/* Cart lines */
+/* Cart lines — lista densa: hilo + radio angular, sin cortes */
 .cart-lines {
   display: flex;
   flex-direction: column;
-  gap: var(--space-16);
+  gap: var(--space-12);
 }
 
 .cart-line {
@@ -110,13 +151,17 @@
   gap: var(--space-16);
   padding: var(--space-20);
   background: var(--surface-card);
-  border: 1px solid var(--color-bone);
-  border-radius: var(--radius-inputs);
-  transition: all 0.15s ease;
+  border: var(--linea);
+  border-radius: var(--radius-cards);
+  transition: border-color var(--t-fast) var(--ease-salida),
+              box-shadow var(--t-med) var(--ease-salida),
+              transform var(--t-med) var(--ease-salida);
 }
 
 .cart-line:hover {
-  border-color: var(--color-mist-gray);
+  border-color: rgba(242, 106, 33, 0.45);
+  box-shadow: var(--glow-suave);
+  transform: translateY(-2px);
 }
 
 .mini-art {
@@ -124,7 +169,7 @@
   height: 72px;
   border-radius: var(--radius-inputs);
   background: var(--surface-canvas);
-  border: 1px solid var(--color-bone);
+  border: var(--linea);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -139,10 +184,14 @@
 }
 
 .mini-fallback {
-  font-family: var(--font-display);
+  font-family: var(--font-mono);
   font-weight: var(--weight-bold);
-  font-size: 20px;
+  font-size: var(--text-label);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  background: var(--color-brand-orange);
   color: var(--color-obsidian-plum);
+  padding: var(--space-4) var(--space-6);
 }
 
 .cart-line-info {
@@ -150,22 +199,27 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--space-6);
 }
 
+/* Categoría = etiqueta mono */
 .cart-line-info span {
-  font-family: var(--font-display);
-  font-weight: var(--weight-regular);
-  font-size: var(--text-caption);
+  font-family: var(--font-mono);
+  font-weight: var(--weight-medium);
+  font-size: var(--text-label);
+  line-height: var(--leading-caption);
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: var(--tracking-label);
   color: var(--color-mist-gray);
 }
 
 .cart-line-name {
-  font-family: var(--font-ui);
-  font-weight: var(--weight-semibold);
+  font-family: var(--font-display);
+  font-weight: var(--weight-bold);
   font-size: var(--text-body-lg);
+  line-height: var(--leading-heading-sm);
+  letter-spacing: var(--tracking-heading-sm);
+  text-transform: uppercase;
   color: var(--color-paper);
   margin: 0;
   white-space: nowrap;
@@ -173,41 +227,66 @@
   text-overflow: ellipsis;
 }
 
+/* Control de cantidad: botones globales + lectura numérica alineada */
 .quantity-control {
   display: flex;
   align-items: center;
   gap: var(--space-8);
 }
 
+.quantity-control b {
+  min-width: 3ch;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-weight: var(--weight-semibold);
+  font-size: var(--text-caption);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--tracking-label);
+  color: var(--color-paper);
+  padding: var(--space-4) 0;
+  border-top: var(--linea);
+  border-bottom: var(--linea);
+}
+
 .cart-line-price {
-  font-family: var(--font-display);
+  font-family: var(--font-mono);
   font-weight: var(--weight-bold);
   font-size: var(--text-body-lg);
+  font-variant-numeric: tabular-nums;
   color: var(--color-paper);
   white-space: nowrap;
 }
 
-/* Summary card */
+/* Summary card — panel de instrumento: corte en una esquina + retícula tenue */
 .summary-card {
+  position: relative;
   padding: var(--card-padding);
   height: fit-content;
+  border: var(--linea-fuerte);
+  border-radius: 0;
+  clip-path: var(--clip-esquina-inf);
+  box-shadow: var(--shadow-card);
 }
 
 .summary-kicker {
-  font-family: var(--font-display);
-  font-weight: var(--weight-regular);
-  font-size: var(--text-caption);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--color-mist-gray);
   display: block;
-  margin-bottom: var(--space-8);
+  font-family: var(--font-mono);
+  font-weight: var(--weight-medium);
+  font-size: var(--text-label);
+  line-height: var(--leading-caption);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-eyebrow);
+  color: var(--color-brand-orange);
+  margin-bottom: var(--space-10);
 }
 
 .summary-title {
   font-family: var(--font-display);
   font-weight: var(--weight-black);
   font-size: var(--text-heading-sm);
+  line-height: var(--leading-heading-sm);
+  letter-spacing: var(--tracking-heading-sm);
+  text-transform: uppercase;
   color: var(--color-paper);
   margin: 0 0 var(--space-24);
 }
@@ -215,33 +294,48 @@
 .summary-row {
   display: flex;
   justify-content: space-between;
+  align-items: baseline;
   gap: var(--space-16);
   padding: var(--space-12) 0;
-  border-bottom: 1px solid var(--color-bone);
-  font-family: var(--font-ui);
-  font-size: var(--text-body);
-  color: var(--color-soft-mist);
+  border-bottom: var(--linea);
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--color-mist-gray);
 }
 
 .summary-row strong {
-  color: var(--color-paper);
+  font-size: var(--text-caption);
   font-weight: var(--weight-semibold);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  color: var(--color-paper);
+  text-align: right;
 }
 
 .summary-total {
   display: flex;
   justify-content: space-between;
+  align-items: baseline;
   gap: var(--space-16);
   padding: var(--space-16) 0;
-  border-top: 1px solid var(--color-bone);
-  font-family: var(--font-display);
-  font-weight: var(--weight-bold);
-  font-size: var(--text-body-lg);
-  color: var(--color-paper);
+  border-bottom: var(--linea);
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--color-mist-gray);
 }
 
 .summary-total strong {
+  font-family: var(--font-mono);
+  font-weight: var(--weight-bold);
+  font-size: var(--text-body-lg);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
   color: var(--color-brand-orange);
+  text-shadow: 0 0 18px rgba(242, 106, 33, 0.35);
 }
 
 .quote-form {
@@ -252,10 +346,12 @@
 }
 
 .form-optional {
+  font-family: var(--font-mono);
   font-weight: var(--weight-regular);
+  font-size: var(--text-label);
   color: var(--color-mist-gray);
-  text-transform: none;
-  letter-spacing: normal;
+  text-transform: lowercase;
+  letter-spacing: var(--tracking-label);
 }
 
 .form-hint {
@@ -264,21 +360,25 @@
   font-size: var(--text-caption);
   line-height: var(--leading-body);
   color: var(--color-mist-gray);
+  opacity: 0.85;
 }
 
 .summary-note {
   display: flex;
   align-items: center;
   gap: var(--space-6);
-  font-family: var(--font-ui);
-  font-size: var(--text-caption);
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  line-height: var(--leading-caption);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
   color: var(--color-mist-gray);
   margin: 0;
-  opacity: 0.8;
 }
 
 .summary-note svg {
   flex-shrink: 0;
+  color: var(--color-brand-orange);
 }
 
 /* Responsive */
@@ -298,7 +398,7 @@
   }
 
   .cart-title {
-    font-size: var(--text-heading-lg);
+    font-size: var(--text-heading);
   }
 
   .page-heading {
@@ -334,5 +434,12 @@
   .remove-button {
     align-self: flex-start;
     margin-top: var(--space-8);
+  }
+}
+
+/* Con movimiento reducido la elevación no desplaza: sólo cambia el hilo */
+@media (prefers-reduced-motion: reduce) {
+  .cart-line:hover {
+    transform: none;
   }
 }

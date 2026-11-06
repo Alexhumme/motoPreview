@@ -30,9 +30,9 @@ export default function RecuperarPassword() {
       <SiteHeader />
 
       <main className="auth-main">
-        <div className="auth-card">
+        <div className="auth-card" data-reveal="fade">
           <header className="auth-header">
-            <h1 className="auth-title">Recupera tu contraseña</h1>
+            <h1 className="auth-title" data-reveal="lineas">Recupera tu contraseña</h1>
             <p className="auth-subtitle">Te enviaremos un enlace a tu correo para crear una nueva.</p>
           </header>
 
@@ -45,7 +45,7 @@ export default function RecuperarPassword() {
               </p>
             </div>
           ) : (
-            <form className="auth-form" onSubmit={manejarSubmit} noValidate>
+            <form className="auth-form" onSubmit={manejarSubmit} noValidate data-reveal="grupo" data-reveal-delay="0.1">
               <div className="form-field">
                 <label htmlFor="email" className="form-label">Correo electrónico</label>
                 <input

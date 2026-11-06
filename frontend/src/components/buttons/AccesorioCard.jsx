@@ -14,7 +14,7 @@ export default function AccesorioCard({ accesorio }) {
   const disponible = accesorio.acc_estado === 'disponible';
 
   return (
-    <article className="product-card">
+    <article className="product-card fx-eleva" data-reveal="up">
       <Link to={`/visualizador/${accesorio.id_accesorio}`} className="product-link" aria-label={`Ver ${accesorio.acc_nombre}`}>
         {/* Área de imagen - usa ImagenProducto con fallback automático */}
         <ImagenProducto
@@ -22,7 +22,8 @@ export default function AccesorioCard({ accesorio }) {
           alt={accesorio.acc_nombre}
           className="product-image"
         />
-        <div className="product-shine" />
+        <div className="product-shine" aria-hidden="true" />
+        <span className="product-escaneo" aria-hidden="true" />
       </Link>
 
       <div className="product-content">
@@ -45,7 +46,9 @@ export default function AccesorioCard({ accesorio }) {
           )}
         </div>
 
-        <h3 className="product-title">{accesorio.acc_nombre}</h3>
+        <h3 className="product-title" data-glitch={accesorio.acc_nombre}>
+          {accesorio.acc_nombre}
+        </h3>
 
         <p className="product-description">{accesorio.acc_descripcion || 'Pieza verificada para personalizar tu motocicleta.'}</p>
 

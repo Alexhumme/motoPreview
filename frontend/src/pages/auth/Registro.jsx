@@ -36,14 +36,14 @@ export default function Registro() {
       <SiteHeader />
 
       <main className="auth-main">
-        <div className="auth-card">
+        <div className="auth-card" data-reveal="fade">
           <header className="auth-header">
             <p className="eyebrow"><span className="eyebrow-dot" aria-hidden="true"></span>Área personal</p>
-            <h1 className="auth-title">Crea tu cuenta.</h1>
+            <h1 className="auth-title" data-reveal="lineas">Crea tu cuenta.</h1>
             <p className="auth-subtitle">Guarda tus ideas y vuelve a ellas cuando quieras.</p>
           </header>
 
-          <form className="auth-form" onSubmit={manejarSubmit} noValidate>
+          <form className="auth-form" onSubmit={manejarSubmit} noValidate data-reveal="grupo" data-reveal-delay="0.1">
             <div className="form-field">
               <label htmlFor="nombre" className="form-label">Nombre completo</label>
               <input

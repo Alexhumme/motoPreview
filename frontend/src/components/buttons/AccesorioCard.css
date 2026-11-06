@@ -1,25 +1,20 @@
 /* ==========================================================================
-   ACCESORIO CARD — Jam Design System (rediseñado)
+   ACCESORIO CARD — piel futurista (hairline + corte + escaneo)
    ========================================================================== */
 
 .product-card {
+  position: relative;
   background: var(--surface-card);
+  border: var(--linea);
   border-radius: var(--radius-cards);
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  /*height: 100%; */
-  transition: all 0.2s ease;
 }
 
 /* Altura consistente para todas las tarjetas en grid */
 .product-card.minima {
   min-height: 380px;
-}
-
-.product-card:hover {
-  border-color: var(--color-mist-gray);
-  transform: translateY(-4px);
 }
 
 /* -------------------------------------------------------
@@ -29,13 +24,29 @@
   position: relative;
   display: block;
   overflow: hidden;
+  /* La media usa siempre la misma razón de aspecto: el grid se lee como
+     una lámina técnica, no como una lista de alturas sueltas. */
+  aspect-ratio: var(--razon-media);
   text-decoration: none;
   color: inherit;
+  background: var(--surface-elevated);
+}
+
+.product-link::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: var(--rejilla);
+  background-size: 24px 24px;
+  opacity: 0.5;
+  pointer-events: none;
+  z-index: 1;
 }
 
 /* Altura responsiva del área de imagen */
 .product-link img {
   width: 100%;
+  height: 100%;
   display: block;
 }
 
@@ -44,14 +55,16 @@
    ------------------------------------------------------- */
 .product-image {
   width: 100%;
-  height: 200px; /* Altura fija consistente */
+  height: 100%;
   object-fit: cover;
-  transition: transform 0.3s ease;
+  transition: transform var(--t-slow) var(--ease-salida),
+              filter var(--t-med) var(--ease-salida);
   /* La imagen nunca debe tener texto incrustado; el alt es solo descriptivo */
 }
 
 .product-card:hover .product-image {
-  transform: scale(1.05);
+  transform: scale(1.06);
+  filter: saturate(1.1) contrast(1.04);
 }
 
 /* -------------------------------------------------------
@@ -68,6 +81,8 @@
   font-family: var(--font-display);
   font-weight: var(--weight-bold);
   font-size: 32px;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
   /* Este fallback se usa solo cuando no hay imagen real;
      el texto "Foto pendiente" se muestra como elemento HTML
      fuera del área de imagen en el contenido de la tarjeta. */
@@ -85,6 +100,33 @@
   pointer-events: none;
 }
 
+/* Línea de escaneo que cruza la media en hover (GUI de 3D escaneando la pieza) */
+.product-escaneo {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--color-brand-orange), transparent);
+  box-shadow: var(--sombra-neon);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.product-card:hover .product-escaneo {
+  animation: escanea-media 1.1s var(--ease-fluido);
+}
+
+/* Se anima `top` (porcentaje del contenedor) porque un translateY del propio
+   elemento solo lo movería 2px: la línea debe recorrer toda la media. */
+@keyframes escanea-media {
+  0% { opacity: 0; top: -2px; }
+  12% { opacity: 1; }
+  88% { opacity: 1; }
+  100% { opacity: 0; top: 100%; }
+}
+
 /* -------------------------------------------------------
    ETIQUETAS Y DATOS (FUERA DEL ÁREA DE IMÁGEN)
    ------------------------------------------------------- */
@@ -95,22 +137,19 @@
   display: inline-flex;
   align-items: center;
   gap: var(--space-4);
-  font-family: var(--font-ui);
-  font-size: var(--text-caption);
-  font-weight: var(--weight-medium);
-  /* Badge "Disponible" - solo cuando el accesorio esté disponible */
   z-index: 10;
 }
 
 .product-code {
   display: inline-block;
   font-family: var(--font-mono);
-  font-size: var(--text-caption);
+  font-size: var(--text-label);
+  letter-spacing: var(--tracking-label);
   color: var(--color-mist-gray);
   background: var(--surface-elevated);
   padding: var(--space-4) var(--space-8);
-  border-radius: var(--radius-nav);
-  border: 1px solid var(--color-ink-border);
+  border-radius: var(--radius-chips);
+  border: var(--linea);
   white-space: nowrap;
   max-width: 100%;
   overflow: hidden;
@@ -121,11 +160,20 @@
   display: inline-flex;
   align-items: center;
   gap: var(--space-4);
-  font-family: var(--font-display);
-  font-size: var(--text-caption);
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
   font-weight: var(--weight-medium);
-  color: var(--color-brand-orange-soft);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-eyebrow);
+  color: var(--color-brand-orange);
   z-index: 10;
+  transition: gap var(--t-med) var(--ease-salida),
+              text-shadow var(--t-med) var(--ease-salida);
+}
+
+.product-card:hover .product-view {
+  gap: var(--space-10);
+  text-shadow: 0 0 12px rgba(242, 106, 33, 0.5);
 }
 
 /* Contenedor de contenido - empuja todo hacia abajo */
@@ -145,12 +193,12 @@
   align-items: center;
   gap: var(--space-8);
   flex-wrap: wrap;
-  font-family: var(--font-display);
-  font-size: var(--text-caption);
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
   font-weight: var(--weight-medium);
   color: var(--color-mist-gray);
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: var(--tracking-label);
 }
 
 /* Subcapa: categoría de accesorio del producto, cuando aplica */
@@ -160,12 +208,13 @@
   height: 20px;
   padding: 0 var(--space-8);
   background: var(--surface-elevated);
-  border: 1px solid var(--color-ink-border);
-  border-radius: var(--radius-pills);
+  border: var(--linea);
+  border-radius: var(--radius-chips);
   color: var(--color-text-accent);
+  font-family: var(--font-mono);
   font-size: 10px;
   font-weight: var(--weight-semibold);
-  letter-spacing: 0.06em;
+  letter-spacing: var(--tracking-label);
 }
 
 /* Título principal */
@@ -175,6 +224,7 @@
   font-size: var(--text-heading-sm);
   line-height: var(--leading-heading-sm);
   letter-spacing: var(--tracking-heading-sm);
+  text-transform: uppercase;
   color: var(--color-paper);
   margin: 0;
   /* Limitar largo si es necesario */
@@ -206,7 +256,7 @@
   justify-content: space-between;
   margin-top: var(--space-4);
   padding-top: var(--space-16);
-  border-top: 1px solid var(--color-bone);
+  border-top: var(--linea);
 }
 
 .product-price {
@@ -216,16 +266,27 @@
 }
 
 .product-price small {
-  font-family: var(--font-ui);
-  font-size: var(--text-caption);
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
   color: var(--color-mist-gray);
 }
 
 .product-price strong {
-  font-family: var(--font-display);
+  font-family: var(--font-mono);
   font-weight: var(--weight-bold);
   font-size: var(--text-body-lg);
+  font-variant-numeric: tabular-nums;
   color: var(--color-paper);
+}
+
+/* Botón de ícono: cuadrado exacto para que el + quede centrado en la retícula */
+.add-product {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  flex-shrink: 0;
 }
 
 /* -------------------------------------------------------
@@ -233,11 +294,7 @@
    ------------------------------------------------------- */
 @media (max-width: 720px) {
   .product-link {
-    height: 180px;
-  }
-
-  .product-image {
-    height: 180px;
+    aspect-ratio: var(--razon-card);
   }
 
   .product-content {
@@ -264,20 +321,5 @@
     right: auto;
     bottom: auto;
     top: auto;
-  }
-}
-
-/* -------------------------------------------------------
-   Tema claro/oscuro ajustes
-   ------------------------------------------------------- */
-@media (prefers-color-scheme: dark) {
-  .product-card {
-    border-color: var(--color-bone-dark, var(--color-bone));
-  }
-}
-
-@media (prefers-color-scheme: light) {
-  .product-card {
-    border-color: var(--color-bone-light, var(--color-bone));
   }
 }

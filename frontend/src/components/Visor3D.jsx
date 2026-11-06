@@ -49,15 +49,24 @@ function ModeloConFallback({ url }) {
 export default function Visor3D({ url, nombreAccesorio }) {
   return (
     <div className="visor3d">
-      <Canvas camera={{ position: [3, 2, 3], fov: 45 }}>
-        <ambientLight intensity={0.7} />
-        <directionalLight position={[5, 5, 5]} intensity={1.1} />
-        <directionalLight position={[-4, 3, -2]} intensity={0.4} />
-        <Suspense fallback={null}>
-          <ModeloConFallback url={url} />
-        </Suspense>
-        <OrbitControls enablePan={false} minDistance={2} maxDistance={8} />
-      </Canvas>
+      {/* El zoom de OrbitControls vive de la rueda: sin este atributo Lenis se la queda. */}
+      <div className="visor3d__marco fx-marcas" data-lenis-prevent>
+        <span className="visor3d__rejilla" aria-hidden="true" />
+        <Canvas camera={{ position: [3, 2, 3], fov: 45 }}>
+          <ambientLight intensity={0.7} />
+          <directionalLight position={[5, 5, 5]} intensity={1.1} />
+          <directionalLight position={[-4, 3, -2]} intensity={0.4} />
+          <Suspense fallback={null}>
+            <ModeloConFallback url={url} />
+          </Suspense>
+          <OrbitControls enablePan={false} minDistance={2} maxDistance={8} />
+        </Canvas>
+        <span className="visor3d__estado">
+          <span className="visor3d__estado-punto" aria-hidden="true" />
+          {url ? 'Malla real' : 'Vista de referencia'}
+        </span>
+        <span className="visor3d__mandos" aria-hidden="true">arrastrar · girar — rueda · acercar</span>
+      </div>
       {!url && (
         <p className="visor3d__aviso">
           {nombreAccesorio} aún no tiene un modelo 3D real cargado — mostrando vista de referencia.

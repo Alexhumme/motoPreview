@@ -9,9 +9,9 @@ export default function NoEncontrado() {
         <ArrowLeft size={15} aria-hidden="true" /> Volver al catálogo
       </Link>
 
-      <div className="not-found">
-        <span className="not-found-code">404</span>
-        <h1 className="not-found-title">Esta página no existe</h1>
+      <div className="not-found" data-reveal="up">
+        <span className="not-found-code" data-scramble="404">404</span>
+        <h1 className="not-found-title" data-glitch="Esta página no existe">Esta página no existe</h1>
         <p className="not-found-text">
           Puede que el enlace esté roto o que hayas escrito mal la dirección.
         </p>

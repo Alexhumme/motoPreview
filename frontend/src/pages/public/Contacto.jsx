@@ -34,15 +34,15 @@ export default function Contacto() {
       <main className="contacto-main">
         <section className="contacto-hero">
           <div className="eyebrow eyebrow--light"><span className="eyebrow-dot" aria-hidden="true"></span>Estamos para ayudarte</div>
-          <h1 className="contacto-title">Contacto</h1>
-          <p className="contacto-subtitle">
+          <h1 className="contacto-title" data-reveal="lineas">Contacto</h1>
+          <p className="contacto-subtitle" data-reveal="up" data-reveal-delay="0.2">
             ¿Tienes dudas sobre compatibilidad, cotizaciones o tu pedido? Escríbenos y te respondemos en menos de 24 horas.
           </p>
         </section>
 
-        <section className="contacto-grid">
-          <article className="card contacto-info">
-            <h2 className="contacto-info-title">Hablemos</h2>
+        <section className="contacto-grid" data-reveal="grupo">
+          <article className="card contacto-info fx-eleva">
+            <h2 className="contacto-info-title" data-glitch="Hablemos">Hablemos</h2>
             <ul className="contacto-lista">
               <li>
                 <span className="contacto-icono" aria-hidden="true"><Mail size={18} /></span>
@@ -79,11 +79,11 @@ export default function Contacto() {
             </div>
           </article>
 
-          <article className="card contacto-form-card">
+          <article className="card contacto-form-card fx-marcas">
             {enviado ? (
               <div className="contacto-exito">
                 <span className="contacto-exito-icono" aria-hidden="true"><CheckCircle2 size={26} /></span>
-                <h2>¡Mensaje enviado!</h2>
+                <h2 data-glitch="¡Mensaje enviado!">¡Mensaje enviado!</h2>
                 <p>Gracias por escribirnos, {form.nombre}. Te responderemos pronto a {form.email}.</p>
                 <button className="btn btn--ghost" onClick={() => { setEnviado(false); setForm({ nombre: '', email: '', mensaje: '' }); }}>
                   Enviar otro mensaje

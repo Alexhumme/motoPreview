@@ -11,42 +11,264 @@
 }
 
 /* ==========================================================================
-   HERO
+   HERO — el tajo diagonal
    ========================================================================== */
 
+/* Un solo ángulo manda sobre todo el corte: la cuña oscura, el haz, la regla de
+   marcas y el recorte del título eco comparten estos polígonos. La cota
+   --tajo-y NO es un porcentaje a ojo: se deriva del propio título
+   (relleno de arriba + eyebrow + 1.5 × cuerpo de la fuente), así que la línea
+   siempre parte "Tu firma." a la mitad de sus mayúsculas sea cual sea el ancho
+   de la ventana, sin rozar la línea de arriba.
+   --tajo-pendiente es la tangente del ángulo (0.058 ≈ 3.3°). */
 .catalog-hero {
+  --titulo-cuerpo: clamp(56px, 10.4vw, 148px);
+  --tajo-pad: var(--space-48);
+  --tajo-entrada: calc(18px + var(--space-16));
+  --tajo-y: calc(var(--tajo-pad) + var(--tajo-entrada) + var(--titulo-cuerpo) * 1.5);
+  --tajo-pendiente: 0.058;
+  --tajo-caida: calc(100vw * var(--tajo-pendiente));
+  --tajo-y-der: calc(var(--tajo-y) - var(--tajo-caida));
+  --tajo-grueso: 3px;
+  --tajo-clip: polygon(0 var(--tajo-y), 100% var(--tajo-y-der), 100% 100%, 0 100%);
+  --tajo-haz: polygon(
+    0 var(--tajo-y),
+    100% var(--tajo-y-der),
+    100% calc(var(--tajo-y-der) + var(--tajo-grueso)),
+    0 calc(var(--tajo-y) + var(--tajo-grueso))
+  );
+  /* La forma usa la tinta del texto y el texto de encima usa el color del
+     fondo: el contraste se invierte solo y funciona igual en los dos temas. */
+  --tajo-fondo: var(--color-paper);
+  --tajo-tinta: var(--surface-canvas);
+  --tajo-copy: color-mix(in srgb, var(--tajo-tinta) 78%, transparent);
+
   position: relative;
-  padding: var(--space-96) var(--space-32) var(--space-80);
-  max-width: var(--page-max-width);
-  margin: 0 auto;
+  overflow: hidden;
+}
+
+/* En modo oscuro la inversión deja la cuña en blanco puro, que deslumbra sobre
+   el canvas casi negro. Se baja a papel: mismo contraste, sin el fogonazo. */
+:root[data-tema='oscuro'] .catalog-hero {
+  --tajo-fondo: #f4f5f7;
+}
+
+/* escenario: la textura va en una capa propia para poder desvanecerse */
+.catalog-hero-fondo {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-image: var(--rejilla);
+  background-size: var(--rejilla-paso) var(--rejilla-paso);
+  -webkit-mask-image: radial-gradient(72% 78% at 24% 10%, #000 0%, transparent 72%);
+  mask-image: radial-gradient(72% 78% at 24% 10%, #000 0%, transparent 72%);
+  pointer-events: none;
+}
+
+.catalog-hero-fondo::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--halo-radial);
+}
+
+.catalog-hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  background: var(--scanline);
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* El motorista sale por detrás de la forma: vive un piso más abajo que el tajo. */
+.catalog-hero-motorista {
+  position: absolute;
+  z-index: 4;
+  right: -2%;
+  bottom: -4%;
+  height: 104%;
+  width: auto;
+  max-width: 60%;
+  object-fit: contain;
+  pointer-events: none;
+  filter: drop-shadow(0 26px 54px color-mix(in srgb, var(--tajo-fondo) 34%, transparent));
+}
+
+/* la cuña oscura */
+.catalog-hero-tajo {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  clip-path: var(--tajo-clip);
+  background:
+    radial-gradient(110% 60% at 74% 0%, color-mix(in srgb, var(--color-brand-orange) 15%, transparent) 0%, transparent 62%),
+    var(--tajo-fondo);
+}
+
+.catalog-hero-tajo::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(to right, color-mix(in srgb, var(--tajo-tinta) 7%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in srgb, var(--tajo-tinta) 7%, transparent) 1px, transparent 1px);
+  background-size: var(--rejilla-paso) var(--rejilla-paso);
+  -webkit-mask-image: linear-gradient(to bottom, #000, transparent 68%);
+  mask-image: linear-gradient(to bottom, #000, transparent 68%);
+}
+
+/* el corte decorado: haz, hairline, regla de marcas, nodo y cota */
+.catalog-hero-linea {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.catalog-hero-haz {
+  position: absolute;
+  inset: 0;
+  clip-path: var(--tajo-haz);
+  background: linear-gradient(90deg,
+    transparent 0%,
+    var(--color-brand-orange) 9%,
+    var(--color-brand-orange-soft) 46%,
+    var(--color-brand-orange) 82%,
+    transparent 100%);
+  filter: drop-shadow(0 0 16px color-mix(in srgb, var(--color-brand-orange) 55%, transparent));
+}
+
+.catalog-hero-haz--fino {
+  --tajo-haz: polygon(
+    0 calc(var(--tajo-y) + 11px),
+    100% calc(var(--tajo-y-der) + 11px),
+    100% calc(var(--tajo-y-der) + 12px),
+    0 calc(var(--tajo-y) + 12px)
+  );
+  background: color-mix(in srgb, var(--tajo-tinta) 34%, transparent);
+  filter: none;
+}
+
+.catalog-hero-regla {
+  position: absolute;
+  inset: 0;
+  clip-path: polygon(
+    0 calc(var(--tajo-y) + 18px),
+    100% calc(var(--tajo-y-der) + 18px),
+    100% calc(var(--tajo-y-der) + 27px),
+    0 calc(var(--tajo-y) + 27px)
+  );
+  background: repeating-linear-gradient(90deg,
+    color-mix(in srgb, var(--tajo-tinta) 38%, transparent) 0 1px,
+    transparent 1px 64px);
+}
+
+.catalog-hero-nodo {
+  position: absolute;
+  left: var(--space-32);
+  top: calc(var(--tajo-y) + 16px);
+  width: 9px;
+  height: 9px;
+  background: var(--color-brand-orange);
+  clip-path: var(--clip-esquina-sup);
+  box-shadow: var(--sombra-neon);
+}
+
+.catalog-hero-cota {
+  position: absolute;
+  right: var(--space-48);
+  top: calc(var(--tajo-y-der) + 22px);
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--color-brand-orange);
+  opacity: 0.85;
+}
+
+.catalog-hero-dientes {
+  position: absolute;
+  right: var(--space-64);
+  bottom: var(--space-48);
+  width: 104px;
+  height: 13px;
+  background: repeating-linear-gradient(90deg, var(--color-brand-orange) 0 22px, transparent 22px 40px);
+  transform: skewX(-26deg);
+  opacity: 0.8;
 }
 
 .catalog-hero-grid {
+  position: relative;
+  z-index: 4;
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-64);
-  align-items: center;
+  grid-template-columns: 1fr;
+  align-items: start;
+  max-width: var(--page-max-width);
+  margin: 0 auto;
+  min-height: clamp(560px, 78svh, 760px);
+  padding: var(--tajo-pad) var(--space-32) var(--space-96);
+}
+
+/* El eyebrow se fija a 18px + 16px de aire: es el tramo que --tajo-y suma
+   para llegar al título, así que tiene que medir siempre lo mismo. */
+.catalog-hero .eyebrow {
+  height: 18px;
+  margin-bottom: var(--space-16);
 }
 
 .catalog-hero-copy {
-  max-width: 600px;
+  /* Suficiente para que "TU FIRMA." no quiebre: el corte pierde sentido si la
+     segunda línea se parte en dos renglones. */
+  max-width: min(100%, 780px);
 }
 
 .catalog-hero-title {
   font-family: var(--font-display);
   font-weight: var(--weight-black);
-  font-size: var(--text-display);
+  font-size: var(--titulo-cuerpo);
   line-height: var(--leading-display);
   letter-spacing: var(--tracking-display);
+  text-transform: uppercase;
   color: var(--color-paper);
   margin: 0 0 var(--space-24);
+}
+
+/* -------------------------------------------------------
+   LA ECO DEL TÍTULO
+   Misma caja, misma tipografía, tinta de la zona oscura, recortada por el
+   mismo polígono que la cuña: "Tu firma." se parte justo donde se parte el
+   fondo. Se duplica el eyebrow por visibilidad, no por lectura: sin esa
+   altura el título caería unos píxeles más arriba y el corte no cuadraría.
+   ------------------------------------------------------- */
+.catalog-hero-eco {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  clip-path: var(--tajo-clip);
+  pointer-events: none;
+}
+
+.catalog-hero-eco .catalog-hero-title {
+  color: var(--tajo-tinta);
+}
+
+.catalog-hero-eco .catalog-hero-title em {
+  color: var(--tajo-tinta);
+  /* El trazo del propio color tapa el filo naranja del original sin engordar la letra. */
+  -webkit-text-stroke: 1px var(--tajo-tinta);
+}
+
+.catalog-hero-ciego {
+  visibility: hidden;
 }
 
 .catalog-hero-subtitle {
   font-family: var(--font-ui);
   font-size: var(--text-body-lg);
   line-height: var(--leading-body);
-  color: var(--color-mist-gray);
+  color: var(--tajo-copy);
   margin: 0 0 var(--space-32);
 }
 
@@ -59,12 +281,13 @@
 .catalog-hero-ghost {
   background: var(--surface-elevated);
   color: var(--color-paper);
-  border: 1px solid var(--color-bone);
+  border: var(--linea-fuerte);
 }
 
 .catalog-hero-ghost:hover {
-  background: var(--color-smoke-plum);
-  border-color: var(--color-mist-gray);
+  background: rgba(242, 106, 33, 0.1);
+  border-color: rgba(242, 106, 33, 0.55);
+  box-shadow: var(--glow-suave);
 }
 
 .catalog-hero-proof {
@@ -74,13 +297,21 @@
   gap: var(--space-12);
   font-family: var(--font-ui);
   font-size: var(--text-body);
-  color: var(--color-mist-gray);
+  color: var(--tajo-copy);
 }
 
 .catalog-hero-proof span {
-  font-family: var(--font-display);
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  clip-path: var(--clip-esquina-sup);
+  background: var(--surface-elevated);
+  border: var(--linea);
+  font-family: var(--font-mono);
   font-weight: var(--weight-bold);
-  font-size: var(--text-body-lg);
+  font-size: var(--text-label);
+  letter-spacing: 0;
   color: var(--color-brand-orange);
 }
 
@@ -88,81 +319,48 @@
   color: var(--color-paper);
 }
 
-.catalog-hero-orbit {
-  position: absolute;
-  border-radius: 50%;
-  border: 1px solid var(--color-ink-border);
-  opacity: 0.4;
+/* -------------------------------------------------------
+   LO QUE CAE BAJO EL CORTE
+   Subtítulo, acciones y prueba social aterrizan sobre la cuña oscura a
+   cualquier ancho, porque el corte siempre parte el título: invierten la tinta.
+   ------------------------------------------------------- */
+.catalog-hero .catalog-hero-ghost {
+  background: transparent;
+  border-color: color-mix(in srgb, var(--tajo-tinta) 40%, transparent);
+  color: var(--tajo-tinta);
 }
 
-.catalog-hero-orbit--one {
-  width: 280px;
-  height: 280px;
-  top: -40px;
-  left: -60px;
-  animation: orbit-one 20s linear infinite;
+.catalog-hero .catalog-hero-ghost:hover {
+  background: color-mix(in srgb, var(--color-brand-orange) 16%, transparent);
+  border-color: var(--color-brand-orange);
+  color: var(--color-brand-orange);
 }
 
-.catalog-hero-orbit--two {
-  width: 160px;
-  height: 160px;
-  bottom: -40px;
-  right: -60px;
-  animation: orbit-two 15s linear infinite reverse;
+.catalog-hero .catalog-hero-proof span {
+  background: color-mix(in srgb, var(--tajo-tinta) 10%, transparent);
+  border-color: color-mix(in srgb, var(--tajo-tinta) 26%, transparent);
 }
 
-@keyframes orbit-one {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+.catalog-hero .catalog-hero-proof b {
+  color: var(--tajo-tinta);
 }
 
-@keyframes orbit-two {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(-360deg); }
-}
+@media (prefers-reduced-motion: no-preference) {
+  /* El haz respira: un barrido lento que recorre el corte de izquierda a derecha. */
+  .catalog-hero-haz::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent 0%, color-mix(in srgb, var(--tajo-tinta) 90%, transparent) 48%, transparent 100%);
+    background-size: 32% 100%;
+    background-repeat: no-repeat;
+    animation: haz-recorriente 7.5s var(--ease-fluido) infinite;
+  }
 
-.catalog-hero-image {
-  max-width: 100%;
-  height: auto;
-  border-radius: var(--radius-cards);
-  box-shadow: var(--shadow-card);
-  z-index: 2;
-}
-
-.catalog-hero-fallback {
-  position: absolute;
-  width: 120px;
-  height: 120px;
-  background: var(--color-paper);
-  border-radius: var(--radius-cards);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-display);
-  font-weight: var(--weight-black);
-  font-size: 36px;
-  color: var(--color-obsidian-plum);
-  z-index: 1;
-}
-
-.catalog-hero-label {
-  position: absolute;
-  font-family: var(--font-display);
-  font-weight: var(--weight-bold);
-  color: var(--color-paper);
-  line-height: 1.2;
-}
-
-.catalog-hero-label--top {
-  top: 60px;
-  left: 40px;
-  font-size: 20px;
-}
-
-.catalog-hero-label--bottom {
-  bottom: 60px;
-  right: 40px;
-  font-size: 20px;
+  @keyframes haz-recorriente {
+    from { background-position: -40% 0; }
+    to { background-position: 140% 0; }
+  }
 }
 
 /* ==========================================================================
@@ -172,7 +370,11 @@
 .intro-section {
   max-width: var(--page-max-width);
   margin: 0 auto var(--space-80);
-  padding: 0 var(--space-32);
+  padding: 
+    var(--space-32) 
+    var(--space-32) 
+    0 
+    var(--space-32);
 }
 
 .intro-section .section-heading {
@@ -191,13 +393,16 @@
   gap: var(--space-12);
   padding: var(--space-32);
   background: var(--surface-card);
-  border: 1px solid var(--color-bone);
+  border: var(--linea);
   border-radius: var(--radius-cards);
-  transition: all 0.2s ease;
+  transition: border-color var(--t-med) var(--ease-salida),
+              box-shadow var(--t-slow) var(--ease-salida),
+              transform var(--t-med) var(--ease-salida);
 }
 
 .intro-card:hover {
-  border-color: var(--color-mist-gray);
+  border-color: rgba(242, 106, 33, 0.45);
+  box-shadow: var(--shadow-card), var(--glow-suave);
   transform: translateY(-4px);
 }
 
@@ -207,7 +412,7 @@
   justify-content: center;
   width: 48px;
   height: 48px;
-  border-radius: var(--radius-nav);
+  clip-path: var(--clip-esquina-sup);
   background: rgba(242, 106, 33, 0.15);
   color: var(--color-brand-orange);
   font-size: 20px;
@@ -217,6 +422,8 @@
   font-family: var(--font-display);
   font-weight: var(--weight-bold);
   font-size: var(--text-body-lg);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
   color: var(--color-paper);
   margin: 0;
 }
@@ -236,30 +443,54 @@
 .stats-row {
   max-width: var(--page-max-width);
   margin: 0 auto var(--space-80);
-  padding: 0 var(--space-32);
+  padding: var(--space-40) var(--space-32);
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: var(--space-40);
   text-align: center;
+  border-block: var(--linea);
+  background: var(--surface-card);
 }
 
 .stat-item {
+  position: relative;
   font-family: var(--font-ui);
 }
 
+/* Separador vertical tipo instrumental entre métricas */
+.stat-item + .stat-item::before {
+  content: '';
+  position: absolute;
+  left: calc(var(--space-20) * -1);
+  top: 15%;
+  bottom: 15%;
+  width: 1px;
+  background: var(--color-ink-border);
+}
+
 .stat-item strong {
-  font-family: var(--font-display);
-  font-weight: var(--weight-black);
+  display: flex;
+  font-family: var(--font-mono);
+  font-weight: var(--weight-bold);
   font-size: var(--text-heading-lg);
+  line-height: 1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
   color: var(--color-brand-orange);
-  display: block;
+  text-shadow: 0 0 26px rgba(242, 106, 33, 0.35);
 }
 
 .stat-item span {
-  font-size: var(--text-caption);
+  display: block;
+  margin-top: var(--space-8);
+  font-family: var(--font-mono);
   color: var(--color-mist-gray);
   text-transform: uppercase;
-  letter-spacing: 0.1em;
+  letter-spacing: var(--tracking-eyebrow);
+}
+
+.stat-item stron span {
+  font-size: var(--text-heading);
 }
 
 /* ==========================================================================
@@ -309,7 +540,7 @@
   margin-bottom: var(--space-32);
   padding: var(--space-16);
   background: var(--surface-card);
-  border: 1px solid var(--color-ink-border);
+  border: var(--linea);
   border-radius: var(--radius-cards);
 }
 
@@ -327,15 +558,16 @@
   height: 40px;
   padding: 0 var(--space-12);
   background: var(--surface-elevated);
-  border: 1px solid var(--color-ink-border);
+  border: var(--linea-fuerte);
   border-radius: var(--radius-inputs);
   color: var(--color-mist-gray);
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: border-color var(--t-fast) var(--ease-salida),
+              box-shadow var(--t-med) var(--ease-salida);
 }
 
 .catalog-search:focus-within {
   border-color: var(--color-brand-orange);
-  box-shadow: 0 0 0 3px rgba(242, 106, 33, 0.15);
+  box-shadow: 0 0 0 1px rgba(242, 106, 33, 0.45), var(--glow-suave);
 }
 
 .catalog-search > svg {
@@ -350,12 +582,17 @@
   border: none;
   outline: none;
   color: var(--color-paper);
-  font-family: var(--font-ui);
-  font-size: var(--text-body);
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  letter-spacing: var(--tracking-caption);
 }
 
 .catalog-search input::placeholder {
   color: var(--color-mist-gray);
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
 }
 
 /* Oculta la "x" nativa de input[type=search]; usamos la nuestra. */
@@ -371,11 +608,13 @@
   height: 24px;
   padding: 0;
   background: var(--surface-canvas);
-  border: none;
-  border-radius: 50%;
+  border: var(--linea);
+  border-radius: var(--radius-chips);
   color: var(--color-mist-gray);
   cursor: pointer;
-  transition: color 0.15s ease, background 0.15s ease;
+  transition: color var(--t-fast) var(--ease-salida),
+              background var(--t-fast) var(--ease-salida),
+              border-color var(--t-fast) var(--ease-salida);
 }
 
 .catalog-search-clear:hover {
@@ -394,11 +633,11 @@
   display: inline-flex;
   align-items: center;
   gap: var(--space-6);
-  font-family: var(--font-display);
-  font-size: var(--text-caption);
-  font-weight: var(--weight-semibold);
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  font-weight: var(--weight-medium);
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: var(--tracking-label);
   color: var(--color-mist-gray);
 }
 
@@ -411,17 +650,18 @@
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5l5-5' fill='none' stroke='%238b94a3' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right var(--space-16) center;
-  border: 1px solid var(--color-ink-border);
+  border: var(--linea-fuerte);
   border-radius: var(--radius-inputs);
   color: var(--color-paper);
   font-family: var(--font-ui);
   font-size: var(--text-body);
   cursor: pointer;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: border-color var(--t-fast) var(--ease-salida),
+              box-shadow var(--t-med) var(--ease-salida);
 }
 
 .catalog-control select:hover {
-  border-color: var(--color-mist-gray);
+  border-color: rgba(242, 106, 33, 0.5);
 }
 
 .catalog-control select option {
@@ -432,7 +672,7 @@
 .catalog-control select:focus {
   outline: none;
   border-color: var(--color-brand-orange);
-  box-shadow: 0 0 0 3px rgba(242, 106, 33, 0.15);
+  box-shadow: 0 0 0 1px rgba(242, 106, 33, 0.45), var(--glow-suave);
 }
 
 /* Capas de filtrado: categoría de producto → tipo de accesorio */
@@ -443,7 +683,7 @@
   gap: var(--space-16);
   flex-wrap: wrap;
   padding-top: var(--space-12);
-  border-top: 1px solid var(--color-ink-border);
+  border-top: var(--linea);
 }
 
 .catalog-filters-capas {
@@ -461,16 +701,16 @@
   height: 40px;
   padding: 0 var(--space-12);
   background: var(--surface-elevated);
-  border: 1px solid var(--color-ink-border);
+  border: var(--linea);
   border-radius: var(--radius-inputs);
 }
 
 .price-range-title {
-  font-family: var(--font-display);
-  font-size: 11px;
-  font-weight: var(--weight-semibold);
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  font-weight: var(--weight-medium);
   text-transform: uppercase;
-  letter-spacing: 0.1em;
+  letter-spacing: var(--tracking-label);
   color: var(--color-mist-gray);
 }
 
@@ -478,9 +718,9 @@
   display: flex;
   align-items: center;
   gap: var(--space-6);
-  font-family: var(--font-display);
+  font-family: var(--font-mono);
   font-size: var(--text-caption);
-  font-weight: var(--weight-semibold);
+  font-weight: var(--weight-medium);
   color: var(--color-paper);
   font-variant-numeric: tabular-nums;
 }
@@ -506,8 +746,10 @@
   align-items: center;
   gap: var(--space-10);
   height: 28px;
-  font-family: var(--font-ui);
-  font-size: var(--text-caption);
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
   color: var(--color-mist-gray);
   white-space: nowrap;
 }
@@ -518,18 +760,23 @@
   gap: var(--space-6);
   padding: var(--space-6) var(--space-12);
   background: none;
-  border: 1px solid var(--color-ink-border);
-  border-radius: var(--radius-pills);
+  border: var(--linea);
+  border-radius: var(--radius-chips);
   color: var(--color-mist-gray);
-  font-family: var(--font-ui);
-  font-size: var(--text-caption);
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
   cursor: pointer;
-  transition: color 0.15s ease, border-color 0.15s ease;
+  transition: color var(--t-fast) var(--ease-salida),
+              border-color var(--t-fast) var(--ease-salida),
+              box-shadow var(--t-med) var(--ease-salida);
 }
 
 .catalog-filters-clear:hover {
   color: var(--color-brand-orange);
-  border-color: var(--color-brand-orange);
+  border-color: rgba(242, 106, 33, 0.55);
+  box-shadow: var(--glow-suave);
 }
 
 /* Empty state */
@@ -542,13 +789,13 @@
   padding: var(--space-80) var(--space-24);
   text-align: center;
   background: var(--surface-card);
-  border: 1px solid var(--color-bone);
-  border-radius: var(--radius-cards);
+  border: var(--linea);
+  clip-path: var(--clip-esquinas);
 }
 
 .empty-icon {
   font-size: 48px;
-  color: var(--color-mist-gray);
+  color: var(--color-brand-orange);
   opacity: 0.5;
 }
 
@@ -556,6 +803,8 @@
   font-family: var(--font-display);
   font-weight: var(--weight-black);
   font-size: var(--text-heading-sm);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-heading-sm);
   color: var(--color-paper);
   margin: 0;
 }
@@ -587,19 +836,25 @@
   align-items: center;
   gap: var(--space-6);
   padding: var(--space-10) var(--space-20);
-  border: 1px solid var(--color-bone);
+  border: var(--linea-fuerte);
   border-radius: var(--radius-buttons);
   background: var(--surface-elevated);
   color: var(--color-paper);
-  font-family: var(--font-ui);
-  font-size: var(--text-body);
+  font-family: var(--font-display);
+  font-size: var(--text-label);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: border-color var(--t-fast) var(--ease-salida),
+              background var(--t-fast) var(--ease-salida),
+              box-shadow var(--t-med) var(--ease-salida);
 }
 
 .catalog-pagination button:hover:not(:disabled) {
-  border-color: var(--color-mist-gray);
-  background: var(--color-smoke-plum);
+  border-color: rgba(242, 106, 33, 0.55);
+  background: rgba(242, 106, 33, 0.1);
+  box-shadow: var(--glow-suave);
 }
 
 .catalog-pagination button:disabled {
@@ -608,8 +863,10 @@
 }
 
 .pagination-current {
-  font-family: var(--font-ui);
-  font-size: var(--text-body);
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
   color: var(--color-mist-gray);
 }
 
@@ -626,6 +883,7 @@
 .how-intro {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: var(--space-16);
   margin-bottom: var(--space-48);
   text-align: center;
@@ -649,26 +907,38 @@
 }
 
 .step {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: var(--space-16);
   padding: var(--space-32);
   background: var(--surface-card);
-  border: 1px solid var(--color-bone);
+  border: var(--linea);
   border-radius: var(--radius-cards);
+  transition: border-color var(--t-med) var(--ease-salida),
+              box-shadow var(--t-slow) var(--ease-salida);
+}
+
+.step:hover {
+  border-color: rgba(242, 106, 33, 0.45);
+  box-shadow: var(--glow-suave);
 }
 
 .step-number {
-  font-family: var(--font-display);
-  font-weight: var(--weight-black);
+  font-family: var(--font-mono);
+  font-weight: var(--weight-bold);
   font-size: var(--text-heading-sm);
-  color: var(--color-brand-orange);
+  letter-spacing: var(--tracking-label);
+  color: transparent;
+  -webkit-text-stroke: 1px var(--color-brand-orange);
 }
 
 .step-title {
   font-family: var(--font-display);
   font-weight: var(--weight-bold);
   font-size: var(--text-body-lg);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
   color: var(--color-paper);
   margin: 0;
 }
@@ -683,16 +953,38 @@
 
 /* CTA del catálogo (landing) */
 .catalog-cta {
+  position: relative;
   display: grid;
   grid-template-columns: 1.4fr 1fr;
   gap: var(--space-48);
   align-items: center;
   padding: var(--space-48) var(--space-32);
-  background: var(--surface-card);
-  border: 1px solid var(--color-ink-border);
-  border-radius: var(--radius-cards);
-  margin: var(--space-32) auto;
   max-width: var(--page-max-width);
+  margin: var(--space-32) auto;
+  background:
+    var(--halo-radial),
+    var(--surface-card);
+  border: var(--linea);
+  border-radius: var(--radius-cards);
+  overflow: hidden;
+}
+
+.catalog-cta::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: var(--rejilla);
+  background-size: var(--rejilla-paso) var(--rejilla-paso);
+  opacity: 0.45;
+  -webkit-mask-image: linear-gradient(105deg, transparent 40%, #000 100%);
+  mask-image: linear-gradient(105deg, transparent 40%, #000 100%);
+  pointer-events: none;
+}
+
+.catalog-cta-copy,
+.catalog-cta-visual {
+  position: relative;
+  z-index: 1;
 }
 
 .catalog-cta-copy {
@@ -713,27 +1005,31 @@
   gap: var(--space-8);
   padding: var(--space-32);
   background: var(--surface-elevated);
-  border: 1px solid var(--color-ink-border);
-  border-radius: var(--radius-cards);
+  border: var(--linea-fuerte);
+  clip-path: var(--clip-esquinas);
   text-align: center;
   min-width: 220px;
 }
 
 .catalog-cta-icon {
   font-size: 32px;
-  color: var(--color-signal-mint);
+  color: var(--color-brand-orange);
+  filter: drop-shadow(0 0 12px rgba(242, 106, 33, 0.55));
 }
 
 .catalog-cta-card strong {
   font-family: var(--font-display);
   font-weight: var(--weight-bold);
   font-size: var(--text-body-lg);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
   color: var(--color-paper);
 }
 
 .catalog-cta-card small {
-  font-family: var(--font-ui);
-  font-size: var(--text-caption);
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  letter-spacing: var(--tracking-caption);
   color: var(--color-mist-gray);
 }
 
@@ -749,9 +1045,23 @@
 
 /* Responsive */
 @media (max-width: 1024px) {
+  /* Menos ancho, menos aire arriba: --tajo-pad manda sobre la cota del corte,
+     así que el corte sigue cruzando el título sin tocar nada más. */
+  .catalog-hero {
+    --tajo-pad: var(--space-40);
+  }
+
   .catalog-hero-grid {
-    grid-template-columns: 1fr;
-    gap: var(--space-40);
+    min-height: clamp(480px, 66svh, 640px);
+    padding-right: var(--space-24);
+    padding-left: var(--space-24);
+    padding-bottom: var(--space-64);
+  }
+
+  .catalog-hero-motorista {
+    height: 100%;
+    right: -6%;
+    max-width: 76%;
   }
 
   .intro-grid {
@@ -764,6 +1074,10 @@
 
   .stats-row {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .stat-item + .stat-item::before {
+    display: none;
   }
 
   .catalog-filters-main {
@@ -785,12 +1099,30 @@
     padding-top: 0;
   }
 
+  /* El corte sigue partiendo el título también en móvil: la geometría se deriva
+     del cuerpo de la fuente, así que no hay que tocar nada más. */
   .catalog-hero {
-    padding: var(--space-64) var(--space-20) var(--space-48);
+    --tajo-pad: var(--space-32);
   }
 
-  .catalog-hero-title {
-    font-size: var(--text-heading-lg);
+  .catalog-hero-grid {
+    min-height: 0;
+    padding-right: var(--space-20);
+    padding-left: var(--space-20);
+    padding-bottom: var(--space-80);
+  }
+
+  .catalog-hero-motorista {
+    right: 0;
+    bottom: 0;
+    height: 44%;
+    max-width: 94%;
+  }
+
+  .catalog-hero-regla,
+  .catalog-hero-nodo,
+  .catalog-hero-haz--fino {
+    display: none;
   }
 
   .catalog-hero-actions {
@@ -804,6 +1136,7 @@
   .stats-row {
     grid-template-columns: 1fr;
     gap: var(--space-24);
+    padding: var(--space-32) var(--space-20);
   }
 
   .catalog-filters {

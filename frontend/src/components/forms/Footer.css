@@ -3,14 +3,50 @@
    ========================================================================== */
 
 .site-footer {
-  padding: var(--space-80) var(--space-32) var(--space-40);
+  position: relative;
+  --footer-gancho: var(--space-32);
+  padding: 0 var(--footer-gancho) var(--space-40);
   background: var(--surface-canvas);
-  border-top: 1px solid var(--color-ink-border);
+  border-top: var(--linea);
+}
+
+/* Cinta de palabras clave: banda a sangre completa, misma geometría del CTA */
+.footer-cinta {
+  border-block: var(--linea);
+  background: var(--surface-card);
+  padding: var(--space-12) 0;
+  margin: 0 calc(-1 * var(--footer-gancho));
+}
+
+.footer-cinta__elemento {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-16);
+  font-family: var(--font-display);
+  font-size: var(--text-body);
+  font-weight: var(--weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--color-mist-gray);
+}
+
+.footer-cinta__elemento::after {
+  content: '';
+  width: 6px;
+  height: 6px;
+  transform: rotate(45deg);
+  background: var(--color-brand-orange);
+  box-shadow: var(--sombra-neon);
+}
+
+.footer-cinta__elemento--marca {
+  color: var(--color-brand-orange);
 }
 
 .site-footer-main {
   max-width: var(--page-max-width);
   margin: 0 auto;
+  padding-top: var(--space-80);
   display: grid;
   grid-template-columns: 1fr 1.6fr;
   gap: var(--space-80);
@@ -42,6 +78,7 @@
   background-size: 104%;
   background-position: center;
   background-repeat: no-repeat;
+  clip-path: var(--clip-esquina-sup);
   border-radius: var(--radius-nav);
   font-size: 0;
   color: transparent;
@@ -50,8 +87,9 @@
 .footer-brand .brand-text {
   font-family: var(--font-display);
   font-weight: var(--weight-black);
-  font-size: 18px;
-  letter-spacing: -0.02em;
+  font-size: 17px;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
   color: var(--color-paper);
 }
 
@@ -83,21 +121,44 @@
 
 .footer-label {
   font-family: var(--font-mono);
-  font-size: var(--text-caption);
+  font-size: var(--text-label);
   text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--color-mist-gray);
+  letter-spacing: var(--tracking-eyebrow);
+  color: var(--color-brand-orange);
 }
 
 .footer-link {
+  position: relative;
+  display: inline-block;
+  width: fit-content;
   font-family: var(--font-ui);
   font-size: var(--text-body);
   color: var(--color-soft-mist);
-  transition: color 0.15s ease;
+  transition: color var(--t-fast) var(--ease-salida),
+              padding-left var(--t-med) var(--ease-salida);
+}
+
+/* Marcas de acento a la izquierda: el enlace "se enciende" en hover */
+.footer-link::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 0;
+  height: 1px;
+  background: var(--color-brand-orange);
+  box-shadow: var(--sombra-neon);
+  transform: translateY(-50%);
+  transition: width var(--t-med) var(--ease-salida);
 }
 
 .footer-link:hover {
-  color: var(--color-brand-orange);
+  color: var(--color-paper);
+  padding-left: var(--space-16);
+}
+
+.footer-link:hover::before {
+  width: var(--space-12);
 }
 
 /* Bottom bar */
@@ -105,23 +166,30 @@
   max-width: var(--page-max-width);
   margin: var(--space-80) auto 0;
   padding-top: var(--space-32);
-  border-top: 1px solid var(--color-ink-border);
+  border-top: var(--linea);
   display: flex;
   justify-content: space-between;
   align-items: center;
   font-family: var(--font-mono);
-  font-size: var(--text-caption);
+  font-size: var(--text-label);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
   color: var(--color-mist-gray);
-  opacity: 0.6;
 }
 
 /* Responsive */
 @media (max-width: 720px) {
   .site-footer {
-    padding: var(--space-48) var(--space-20) var(--space-32);
+    --footer-gancho: var(--space-20);
+    padding: 0 var(--footer-gancho) var(--space-32);
+  }
+
+  .footer-cinta {
+    margin: 0 calc(-1 * var(--footer-gancho));
   }
 
   .site-footer-main {
+    padding-top: var(--space-48);
     grid-template-columns: 1fr;
     gap: var(--space-48);
   }

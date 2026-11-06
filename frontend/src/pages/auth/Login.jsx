@@ -63,14 +63,14 @@ export default function Login() {
       <SiteHeader/>
 
       <main className="auth-main">
-        <div className="auth-card">
+        <div className="auth-card" data-reveal="fade">
           <header className="auth-header">
             <p className="eyebrow"><span className="eyebrow-dot" aria-hidden="true"></span>Área personal</p>
-            <h1 className="auth-title">Bienvenido de vuelta.</h1>
+            <h1 className="auth-title" data-reveal="lineas">Bienvenido de vuelta.</h1>
             <p className="auth-subtitle">Accede para ver tus configuraciones y cotizaciones.</p>
           </header>
 
-          <form className="auth-form" onSubmit={manejarSubmit} noValidate>
+          <form className="auth-form" onSubmit={manejarSubmit} noValidate data-reveal="grupo" data-reveal-delay="0.1">
             <div className="form-field">
               <label htmlFor="email" className="form-label">Correo electrónico</label>
               <input
@@ -108,7 +108,7 @@ export default function Login() {
                 <input type="checkbox" className="checkbox-input" />
                 <span className="checkbox-text">Recordarme</span>
               </label>
-              <Link to="/recuperar" className="link link--forgot">¿La olvidaste?</Link>
+              <Link to="/recuperar" className="link link--forgot" data-scramble-hover>¿La olvidaste?</Link>
             </div>
 
             <div className="form-field">

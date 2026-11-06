@@ -20,9 +20,9 @@ export default function VerificarCorreo() {
       <SiteHeader />
 
       <main className="auth-main">
-        <div className="auth-card">
+        <div className="auth-card" data-reveal="fade">
           <header className="auth-header">
-            <h1 className="auth-title">Verificación de correo</h1>
+            <h1 className="auth-title" data-reveal="lineas">Verificación de correo</h1>
           </header>
 
           {estado === 'verificando' && (

@@ -1,8 +1,7 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
-
 /* ==========================================================================
    JAM DESIGN SYSTEM — Global Tokens & Base Styles
    Dark theme: Carbon Slate canvas, Moto Orange accent (paleta del logo)
+   Las fuentes se cargan desde index.html (Chakra Petch / Inter / JetBrains Mono)
    ========================================================================== */
 
 :root {
@@ -33,39 +32,42 @@
 
   /* ===== TYPOGRAPHY ===== */
   /* Font Families */
-  --font-display: 'Space Grotesk', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-display: 'Chakra Petch', 'Space Grotesk', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-ui: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-mono: 'DM Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --font-mono: 'JetBrains Mono', 'DM Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
-  /* Type Scale */
+  /* Type Scale — fluida: títulos y display escalan con el viewport */
   --text-caption: 12px;
   --text-body: 14px;
   --text-body-lg: 15px;
-  --text-heading-sm: 24px;
-  --text-heading: 48px;
-  --text-heading-lg: 66px;
-  --text-display: 116px;
+  --text-label: 11px;
+  --text-heading-sm: clamp(20px, 2.2vw, 30px);
+  --text-heading: clamp(32px, 5vw, 68px);
+  --text-heading-lg: clamp(42px, 7.2vw, 96px);
+  --text-display: clamp(54px, 11vw, 150px);
 
   /* Line Heights */
   --leading-caption: 1.43;
-  --leading-body: 1.5;
-  --leading-heading-sm: 1.33;
-  --leading-heading: 1.1;
-  --leading-display: 1.0;
+  --leading-body: 1.55;
+  --leading-heading-sm: 1.25;
+  --leading-heading: 1.04;
+  --leading-display: 0.9;
 
   /* Letter Spacing */
-  --tracking-caption: -0.28px;
-  --tracking-body: -0.025em;
-  --tracking-heading-sm: -0.6px;
-  --tracking-heading: 0;
-  --tracking-display: 0;
+  --tracking-caption: 0.04em;
+  --tracking-body: -0.011em;
+  --tracking-heading-sm: 0.005em;
+  --tracking-heading: 0.01em;
+  --tracking-display: 0.02em;
+  --tracking-label: 0.12em;
+  --tracking-eyebrow: 0.26em;
 
-  /* Weights */
+  /* Weights — Chakra Petch e Inter llegan a 700: nada de negritas sintéticas */
   --weight-regular: 400;
   --weight-medium: 500;
   --weight-semibold: 600;
   --weight-bold: 700;
-  --weight-black: 900;
+  --weight-black: 700;
 
   /* ===== SPACING (4px base unit) ===== */
   --space-2: 2px;
@@ -93,22 +95,63 @@
   --card-padding: 40px;
   --element-gap: 16px;
 
-  /* ===== BORDER RADIUS ===== */
-  --radius-nav: 8px;
-  --radius-cards: 24px;
+  /* ===== GEOMETRÍA ===== */
+  /* Piel futurista: casi sin radio y esquinas cortadas en diagonal.
+     El corte vive en una sola variable para que escale con el breakpoint. */
+  --corte: 18px;
+  --corte-sm: 10px;
+  --clip-esquina-inf: polygon(0 0, 100% 0, 100% calc(100% - var(--corte)), calc(100% - var(--corte)) 100%, 0 100%);
+  --clip-esquina-sup: polygon(var(--corte) 0, 100% 0, 100% 100%, 0 100%, 0 var(--corte));
+  --clip-esquinas: polygon(var(--corte-sm) 0, 100% 0, 100% calc(100% - var(--corte-sm)), calc(100% - var(--corte-sm)) 100%, 0 100%, 0 var(--corte-sm));
+
+  --radius-nav: 2px;
+  --radius-cards: 4px;
   --radius-pills: 9999px;
-  --radius-inputs: 12px;
-  --radius-buttons: 12px;
+  --radius-chips: 2px;
+  --radius-inputs: 2px;
+  --radius-buttons: 2px;
+
+  /* ===== LÍNEAS ===== */
+  --linea: 1px solid var(--color-ink-border);
+  --linea-fuerte: 1px solid var(--color-bone);
+  --linea-acento: 1px solid rgba(242, 106, 33, 0.55);
+
+  /* ===== GLOW / NEÓN ===== */
+  --glow-acento: 0 0 0 1px rgba(242, 106, 33, 0.32), 0 0 26px -8px rgba(242, 106, 33, 0.55);
+  --glow-fuerte: 0 0 0 1px rgba(242, 106, 33, 0.5), 0 0 42px -10px rgba(242, 106, 33, 0.75);
+  --glow-suave: 0 0 20px -12px rgba(242, 106, 33, 0.6);
+  --sombra-neon: 0 0 12px rgba(242, 106, 33, 0.5);
+  /* Split RGB del glitch en títulos: cian frío + naranja de marca */
+  --glitch-frio: rgba(0, 226, 255, 0.7);
+  --glitch-calido: rgba(242, 106, 33, 0.8);
+
+  /* ===== TEXTURA ===== */
+  --rejilla: linear-gradient(to right, rgba(139, 148, 163, 0.09) 1px, transparent 1px),
+             linear-gradient(to bottom, rgba(139, 148, 163, 0.09) 1px, transparent 1px);
+  --rejilla-paso: 48px;
+  --scanline: repeating-linear-gradient(to bottom, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 4px);
+  --halo-radial: radial-gradient(60% 60% at 78% 18%, rgba(242, 106, 33, 0.22) 0%, transparent 62%);
+
+  /* ===== MOTION ===== */
+  --ease-salida: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-entrada: cubic-bezier(0.7, 0, 0.84, 0);
+  --ease-fluido: cubic-bezier(0.65, 0, 0.35, 1);
+  --t-fast: 0.16s;
+  --t-med: 0.32s;
+  --t-slow: 0.7s;
+
+  /* ===== RAZÓN DE ASPECTO ===== */
+  --razon-card: 4 / 5;
+  --razon-media: 16 / 10;
 
   /* ===== SHADOWS ===== */
   --shadow-mint-glow: rgba(23, 27, 34, 0.1) 0px 0px 0px 2px,
-                       rgba(242, 106, 33, 0.2) 0px 20px 25px -5px,
-                       rgba(242, 106, 33, 0.2) 0px 8px 10px -6px;
-  --shadow-mint-glow-hover: rgba(23, 27, 34, 0.1) 0px 0px 0px 2px,
-                             rgba(242, 106, 33, 0.3) 0px 25px 30px -5px,
-                             rgba(242, 106, 33, 0.3) 0px 10px 12px -6px;
-  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.3);
-  --shadow-subtle-2: rgb(255, 217, 190) 0px 1px 1px 0px inset;
+                      var(--glow-suave);
+  --shadow-mint-glow-hover: rgba(23, 27, 34, 0.12) 0px 0px 0px 2px,
+                            0 0 34px -10px rgba(242, 106, 33, 0.85);
+  --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.03) inset,
+                 0 18px 40px -28px rgba(0, 0, 0, 0.9);
+  --shadow-subtle-2: rgba(255, 217, 190, 0.14) 0px 1px 1px 0px inset;
 
   /* ===== SURFACES ===== */
   --surface-canvas: var(--color-obsidian-plum);
@@ -153,7 +196,21 @@
 
   --color-bone: #dfe3ea;
 
-  --shadow-card: 0 2px 10px rgba(23, 27, 34, 0.08), 0 0 0 1px var(--color-bone);
+  --shadow-card: 0 1px 0 rgba(23, 27, 34, 0.02) inset, 0 14px 32px -24px rgba(23, 27, 34, 0.28), 0 0 0 1px var(--color-bone);
+
+  /* En claro el neón y las texturas bajan de intensidad: sobre papel
+     blanco las scanlines y el glow de color se leen como suciedad. */
+  --glow-acento: 0 0 0 1px rgba(179, 92, 29, 0.28), 0 0 22px -12px rgba(179, 92, 29, 0.4);
+  --glow-fuerte: 0 0 0 1px rgba(179, 92, 29, 0.4), 0 0 30px -14px rgba(179, 92, 29, 0.5);
+  --glow-suave: 0 0 18px -14px rgba(179, 92, 29, 0.45);
+  --sombra-neon: 0 0 10px rgba(179, 92, 29, 0.3);
+  --glitch-frio: rgba(0, 140, 175, 0.55);
+  --glitch-calido: rgba(179, 92, 29, 0.7);
+  --rejilla: linear-gradient(to right, rgba(23, 27, 34, 0.07) 1px, transparent 1px),
+             linear-gradient(to bottom, rgba(23, 27, 34, 0.07) 1px, transparent 1px);
+  --scanline: repeating-linear-gradient(to bottom, rgba(23, 27, 34, 0.035) 0 1px, transparent 1px 4px);
+  --halo-radial: radial-gradient(60% 60% at 78% 18%, rgba(242, 106, 33, 0.16) 0%, transparent 62%);
+  --linea-acento: 1px solid rgba(179, 92, 29, 0.5);
 
   /* Marca clara: casco del logo anterior sobre chip blanco */
   --marca-imagen: url('/motopreview_icono.png?v=3');
@@ -181,11 +238,15 @@
   line-height: 1;
   cursor: pointer;
   flex-shrink: 0;
+  transition: border-color var(--t-fast) var(--ease-salida),
+              color var(--t-fast) var(--ease-salida),
+              box-shadow var(--t-med) var(--ease-salida);
 }
 
 .btn-tema:hover {
-  border-color: var(--color-mist-gray);
+  border-color: var(--color-brand-orange);
   color: var(--color-brand-orange);
+  box-shadow: var(--glow-suave);
 }
 
 /* ==========================================================================
@@ -193,7 +254,11 @@
    ========================================================================== */
 
 * { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
+/* Lenis lleva el scroll suave (utils/motion.js); scroll-behavior propio lo
+   pelearía, así que queda en auto y las anclas se resuelven por Lenis. */
+html { scroll-behavior: auto; }
+html.lenis, html.lenis body { height: auto; }
+.lenis.lenis-smooth { scroll-behavior: auto !important; }
 
 body {
   margin: 0;
@@ -228,7 +293,7 @@ img { max-width: 100%; height: auto; display: block; }
 
 :focus-visible {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(242, 106, 33, 0.4);
+  box-shadow: 0 0 0 2px var(--surface-canvas), 0 0 0 3px rgba(242, 106, 33, 0.75), var(--glow-suave);
   border-radius: var(--radius-inputs);
 }
 
@@ -254,8 +319,8 @@ img { max-width: 100%; height: auto; display: block; }
    ========================================================================== */
 
 ::selection {
-  background: rgba(242, 106, 33, 0.3);
-  color: var(--color-paper);
+  background: var(--color-brand-orange);
+  color: #000;
 }
 
 /* ==========================================================================
@@ -329,6 +394,15 @@ img { max-width: 100%; height: auto; display: block; }
   line-height: 1.5;
 }
 
+/* Los títulos usan <em> como acento, no como cursiva: Chakra Petch no tiene
+   itálica real y el navegador la sintetizaría torcida. */
+h1 em,
+h2 em,
+h3 em {
+  font-style: normal;
+  color: var(--color-brand-orange);
+}
+
 /* ==========================================================================
    GRADIENT TEXT UTILITIES
    ========================================================================== */
@@ -354,22 +428,34 @@ img { max-width: 100%; height: auto; display: block; }
 .eyebrow {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-8);
-  font-family: var(--font-display);
-  font-weight: var(--weight-regular);
-  font-size: var(--text-caption);
+  gap: var(--space-10);
+  font-family: var(--font-mono);
+  font-weight: var(--weight-medium);
+  font-size: var(--text-label);
   line-height: var(--leading-caption);
   text-transform: uppercase;
-  letter-spacing: 0.1em;
+  letter-spacing: var(--tracking-eyebrow);
   color: var(--color-brand-orange);
 }
 
+/* El punto pasa a rombo con halo: mismo rol decorativo, lectura de HUD */
 .eyebrow-dot {
   width: 6px;
   height: 6px;
   background: var(--color-brand-orange);
-  border-radius: 50%;
+  border-radius: 1px;
+  transform: rotate(45deg);
+  box-shadow: var(--sombra-neon);
   flex-shrink: 0;
+}
+
+@keyframes latido-neon {
+  0%, 100% { opacity: 1; box-shadow: var(--sombra-neon); }
+  50% { opacity: 0.45; box-shadow: 0 0 4px rgba(242, 106, 33, 0.25); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .eyebrow-dot { animation: latido-neon 2.6s var(--ease-fluido) infinite; }
 }
 
 /* ==========================================================================
@@ -377,19 +463,41 @@ img { max-width: 100%; height: auto; display: block; }
    ========================================================================== */
 
 .btn {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: var(--space-8);
   padding: var(--space-12) var(--space-24);
   border-radius: var(--radius-buttons);
-  font-family: var(--font-ui);
+  font-family: var(--font-display);
   font-size: var(--text-body);
   font-weight: var(--weight-semibold);
   line-height: 1;
-  letter-spacing: var(--tracking-body);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
   white-space: nowrap;
-  transition: all 0.15s ease;
+  overflow: hidden;
+  transition: background var(--t-fast) var(--ease-salida),
+              color var(--t-fast) var(--ease-salida),
+              border-color var(--t-fast) var(--ease-salida),
+              box-shadow var(--t-med) var(--ease-salida),
+              transform var(--t-fast) var(--ease-salida);
+}
+
+/* Barrido de luz al pasar el cursor (se recorta con el clip-path del botón) */
+.btn::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  background: linear-gradient(105deg, transparent 38%, rgba(255, 255, 255, 0.22) 50%, transparent 62%);
+  transform: translateX(-130%);
+  pointer-events: none;
+}
+
+.btn:hover:not(:disabled)::after {
+  transform: translateX(130%);
+  transition: transform 0.62s var(--ease-fluido);
 }
 
 .btn:disabled {
@@ -398,7 +506,7 @@ img { max-width: 100%; height: auto; display: block; }
   transform: none !important;
 }
 
-/* Primary CTA — Signal Mint with 3-layer glow */
+/* Primary CTA — naranja de marca con glow; el hover sube el neón, no el fondo */
 .btn--primary {
   background: var(--color-brand-orange);
   color: var(--color-obsidian-plum);
@@ -406,27 +514,30 @@ img { max-width: 100%; height: auto; display: block; }
 }
 
 .btn--primary:hover:not(:disabled) {
-  background: var(--color-mint-halo);
-  box-shadow: var(--shadow-mint-glow-hover);
-  transform: translateY(-1px);
+  background: var(--color-brand-orange);
+  box-shadow: var(--glow-fuerte);
+  transform: translateY(-2px);
 }
 
 .btn--primary:active:not(:disabled) {
   transform: translateY(0);
+  box-shadow: var(--glow-acento);
 }
 
 /* Ghost — Transparent with bone border */
 .btn--ghost {
   background: transparent;
   color: var(--color-paper);
-  border: 1px solid var(--color-bone);
+  border: var(--linea-fuerte);
   padding: var(--space-8) var(--space-16);
   font-size: var(--text-body);
 }
 
 .btn--ghost:hover:not(:disabled) {
-  background: var(--color-smoke-plum);
-  border-color: var(--color-mist-gray);
+  background: rgba(242, 106, 33, 0.1);
+  border-color: rgba(242, 106, 33, 0.55);
+  color: var(--color-paper);
+  box-shadow: var(--glow-suave);
 }
 
 /* Header CTA — Moto Orange (marca del logo) */
@@ -438,36 +549,88 @@ img { max-width: 100%; height: auto; display: block; }
 }
 
 .btn--brand:hover:not(:disabled) {
-  background: var(--color-mint-halo);
-  transform: translateY(-1px);
+  box-shadow: var(--glow-fuerte);
+  transform: translateY(-2px);
 }
 
-/* Outline — Secondary actions */
+/* Outline — Secondary actions: relleno total en hover */
 .btn--outline {
   background: transparent;
   color: var(--color-brand-orange);
-  border: 1px solid var(--color-brand-orange);
+  border: var(--linea-acento);
 }
 
 .btn--outline:hover:not(:disabled) {
-  background: rgba(242, 106, 33, 0.1);
-  color: var(--color-mint-halo);
+  background: var(--color-brand-orange);
+  color: var(--color-obsidian-plum);
+  box-shadow: var(--glow-acento);
 }
 
 /* Danger — Destructive actions */
 .btn--danger {
   background: transparent;
   color: var(--color-jam-pink);
-  border: 1px solid var(--color-jam-pink);
+  border: 1px solid rgba(229, 72, 77, 0.6);
 }
 
 .btn--danger:hover:not(:disabled) {
-  background: rgba(229, 72, 77, 0.1);
-  color: var(--color-jam-pink);
+  background: var(--color-jam-pink);
+  color: #fff;
+  box-shadow: 0 0 0 1px rgba(229, 72, 77, 0.5), 0 0 26px -8px rgba(229, 72, 77, 0.65);
 }
 
 /* Width utility */
 .btn--full { width: 100%; }
+
+/* -------------------------------------------------------
+   LA MUESCA, SOLO DONDE NO ROMPE EL BORDE
+   clip-path sierra lo que atraviesa: en un botón de hilo dejaría la diagonal
+   sin borde. Así que recortamos solo los rellenos y los de hilo insinúan la
+   misma esquina (abajo-derecha) con una L de acento que sigue el currentColor.
+   ------------------------------------------------------- */
+.btn--primary,
+.btn--brand {
+  clip-path: var(--clip-esquina-inf);
+}
+
+.btn--outline::before,
+.btn--ghost::before,
+.btn--danger::before,
+.cart-button::before {
+  content: '';
+  position: absolute;
+  right: 3px;
+  bottom: 3px;
+  width: 8px;
+  height: 8px;
+  border-right: 1px solid currentColor;
+  border-bottom: 1px solid currentColor;
+  opacity: 0.45;
+  pointer-events: none;
+  transition: opacity var(--t-fast) var(--ease-salida);
+}
+
+.btn--outline:hover:not(:disabled)::before,
+.btn--ghost:hover:not(:disabled)::before,
+.btn--danger:hover:not(:disabled)::before,
+.cart-button:hover::before {
+  opacity: 0.9;
+}
+
+/* Foco de los botones: el clip-path recorta cualquier box-shadow, así que se
+   dibuja con drop-shadow, que traza la silueta (muesca incluida). */
+.btn:focus-visible {
+  box-shadow: none;
+  filter: drop-shadow(0 0 1px var(--color-brand-orange))
+          drop-shadow(0 0 7px rgba(242, 106, 33, 0.6));
+}
+
+/* Variante compacta: misma piel, menos aire. Se define aquí (y no solo en las
+   hojas de panel/auth) porque la usan tarjetas de producto del sitio público. */
+.btn--sm {
+  padding: var(--space-8) var(--space-12);
+  font-size: var(--text-caption);
+}
 
 /* ==========================================================================
    FORM ELEMENTS
@@ -480,19 +643,19 @@ img { max-width: 100%; height: auto; display: block; }
 }
 
 .form-label {
-  font-family: var(--font-display);
-  font-weight: var(--weight-regular);
-  font-size: var(--text-caption);
+  font-family: var(--font-mono);
+  font-weight: var(--weight-medium);
+  font-size: var(--text-label);
   line-height: var(--leading-caption);
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: var(--tracking-label);
   color: var(--color-soft-mist);
 }
 
 .form-input {
   width: 100%;
   padding: var(--space-12) var(--space-16);
-  border: 1px solid var(--color-bone);
+  border: var(--linea-fuerte);
   border-radius: var(--radius-inputs);
   background: var(--surface-canvas);
   color: var(--color-paper);
@@ -502,21 +665,28 @@ img { max-width: 100%; height: auto; display: block; }
   line-height: var(--leading-body);
   letter-spacing: var(--tracking-body);
   outline: none;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: border-color var(--t-fast) var(--ease-salida),
+              box-shadow var(--t-med) var(--ease-salida),
+              background var(--t-fast) var(--ease-salida);
 }
 
 .form-input::placeholder {
   color: var(--color-mist-gray);
   opacity: 0.6;
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  letter-spacing: 0.04em;
 }
 
 .form-input:hover:not(:disabled):not([aria-describedby]) {
   border-color: var(--color-mist-gray);
 }
 
+/* Foco = circuito encendido: hairline naranja + halo, sin relleno */
 .form-input:focus {
   border-color: var(--color-brand-orange);
-  box-shadow: 0 0 0 3px rgba(242, 106, 33, 0.15);
+  background: rgba(242, 106, 33, 0.04);
+  box-shadow: 0 0 0 1px rgba(242, 106, 33, 0.45), var(--glow-suave);
 }
 
 .form-input:disabled {
@@ -566,17 +736,20 @@ img { max-width: 100%; height: auto; display: block; }
   width: 18px;
   height: 18px;
   border: 1.5px solid var(--color-bone);
-  border-radius: 4px;
+  border-radius: var(--radius-chips);
   background: var(--surface-canvas);
   appearance: none;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background var(--t-fast) var(--ease-salida),
+              border-color var(--t-fast) var(--ease-salida),
+              box-shadow var(--t-med) var(--ease-salida);
   flex-shrink: 0;
 }
 
 .checkbox-input:checked {
   background: var(--color-brand-orange);
   border-color: var(--color-brand-orange);
+  box-shadow: var(--glow-suave);
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%23171b22'%3E%3Cpath d='M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z'/%3E%3C/svg%3E");
   background-position: center;
   background-repeat: no-repeat;
@@ -598,17 +771,26 @@ img { max-width: 100%; height: auto; display: block; }
    ========================================================================== */
 
 .card {
+  position: relative;
   background: var(--surface-card);
+  border: var(--linea);
   border-radius: var(--radius-cards);
   padding: var(--card-padding);
   box-shadow: var(--shadow-card);
 }
 
 .card-elevated {
+  position: relative;
   background: var(--surface-elevated);
-  border: 1px solid var(--color-bone);
+  border: var(--linea-fuerte);
   border-radius: var(--radius-cards);
   padding: var(--card-padding);
+}
+
+/* Variante cortada: la tarjeta habla el mismo idioma geométrico que los botones */
+.card--corte {
+  border-radius: 0;
+  clip-path: var(--clip-esquinas);
 }
 
 /* ==========================================================================
@@ -620,9 +802,10 @@ img { max-width: 100%; height: auto; display: block; }
   align-items: center;
   gap: var(--space-16);
   color: var(--color-mist-gray);
-  font-size: var(--text-caption);
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
   text-transform: uppercase;
-  letter-spacing: 0.1em;
+  letter-spacing: var(--tracking-label);
 }
 
 .divider::before,
@@ -630,7 +813,7 @@ img { max-width: 100%; height: auto; display: block; }
   content: '';
   flex: 1;
   height: 1px;
-  background: var(--color-bone);
+  background: linear-gradient(90deg, transparent, var(--color-bone), transparent);
 }
 
 /* ==========================================================================
@@ -638,17 +821,37 @@ img { max-width: 100%; height: auto; display: block; }
    ========================================================================== */
 
 .link {
+  position: relative;
   font-family: var(--font-ui);
   font-size: var(--text-body);
   font-weight: var(--weight-medium);
   color: var(--color-brand-orange);
   text-decoration: none;
-  transition: color 0.15s ease;
+  transition: color var(--t-fast) var(--ease-salida),
+              text-shadow var(--t-med) var(--ease-salida);
+}
+
+/* Subrayado que se dibuja desde la izquierda + halo al hover */
+.link::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  width: 100%;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform var(--t-med) var(--ease-salida);
+}
+
+.link:hover::after {
+  transform: scaleX(1);
 }
 
 .link:hover {
-  color: var(--color-mint-halo);
-  text-decoration: underline;
+  color: var(--color-brand-orange-soft);
+  text-shadow: 0 0 14px rgba(242, 106, 33, 0.45);
 }
 
 .link--muted {
@@ -667,37 +870,39 @@ img { max-width: 100%; height: auto; display: block; }
   display: inline-flex;
   align-items: center;
   gap: var(--space-6);
-  padding: var(--space-4) var(--space-12);
-  border-radius: var(--radius-pills);
-  font-family: var(--font-ui);
-  font-size: var(--text-caption);
+  padding: var(--space-4) var(--space-10);
+  border-radius: var(--radius-chips);
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
   font-weight: var(--weight-medium);
-  line-height: 1;
+  line-height: 1.4;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
   white-space: nowrap;
 }
 
 .badge--mint {
-  background: rgba(242, 106, 33, 0.15);
+  background: rgba(242, 106, 33, 0.12);
   color: var(--color-brand-orange);
-  border: 1px solid rgba(242, 106, 33, 0.3);
+  border: 1px solid rgba(242, 106, 33, 0.38);
 }
 
 .badge--violet {
-  background: rgba(242, 106, 33, 0.15);
+  background: rgba(242, 106, 33, 0.12);
   color: var(--color-brand-orange-soft);
-  border: 1px solid rgba(242, 106, 33, 0.3);
+  border: 1px solid rgba(242, 106, 33, 0.38);
 }
 
 .badge--pink {
-  background: rgba(229, 72, 77, 0.15);
+  background: rgba(229, 72, 77, 0.12);
   color: var(--color-jam-pink);
-  border: 1px solid rgba(229, 72, 77, 0.3);
+  border: 1px solid rgba(229, 72, 77, 0.38);
 }
 
 .badge--gray {
   background: var(--color-smoke-plum);
   color: var(--color-soft-mist);
-  border: 1px solid var(--color-bone);
+  border: var(--linea);
 }
 
 /* Feature Pill — used in feature rows */
@@ -706,24 +911,35 @@ img { max-width: 100%; height: auto; display: block; }
   align-items: center;
   gap: var(--space-10);
   padding: var(--space-12) var(--space-20);
-  border-radius: var(--radius-pills);
+  border-radius: var(--radius-chips);
   background: var(--surface-card);
-  border: 1px solid var(--color-bone);
+  border: var(--linea);
+  transition: border-color var(--t-med) var(--ease-salida),
+              box-shadow var(--t-med) var(--ease-salida),
+              transform var(--t-med) var(--ease-salida);
+}
+
+.feature-pill:hover {
+  border-color: rgba(242, 106, 33, 0.5);
+  box-shadow: var(--glow-suave);
+  transform: translateY(-2px);
 }
 
 .feature-pill__icon {
   display: inline-flex;
   width: 20px;
   height: 20px;
-  color: var(--color-brand-orange-soft);
+  color: var(--color-brand-orange);
   stroke-width: 1.5;
   flex-shrink: 0;
 }
 
 .feature-pill__label {
-  font-family: var(--font-ui);
-  font-size: var(--text-body);
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
   font-weight: var(--weight-medium);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
   color: var(--color-paper);
 }
 
@@ -734,7 +950,7 @@ img { max-width: 100%; height: auto; display: block; }
 .table-wrap {
   overflow-x: auto;
   border-radius: var(--radius-cards);
-  border: 1px solid var(--color-bone);
+  border: var(--linea);
   background: var(--surface-card);
 }
 
@@ -753,11 +969,11 @@ img { max-width: 100%; height: auto; display: block; }
 }
 
 .table th {
-  font-family: var(--font-display);
-  font-weight: var(--weight-regular);
-  font-size: var(--text-caption);
+  font-family: var(--font-mono);
+  font-weight: var(--weight-medium);
+  font-size: var(--text-label);
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: var(--tracking-label);
   color: var(--color-mist-gray);
   background: var(--surface-canvas);
   white-space: nowrap;
@@ -769,8 +985,13 @@ img { max-width: 100%; height: auto; display: block; }
 
 .table tbody tr:last-child td { border-bottom: none; }
 
+/* Hover de fila: hairline de acento a la izquierda, no banda completa de relleno */
 .table tbody tr:hover td {
   background: var(--surface-elevated);
+}
+
+.table tbody tr:hover td:first-child {
+  box-shadow: inset 2px 0 0 var(--color-brand-orange);
 }
 
 /* ==========================================================================
@@ -780,25 +1001,25 @@ img { max-width: 100%; height: auto; display: block; }
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(23, 27, 34, 0.8);
-  backdrop-filter: blur(4px);
+  background: rgba(9, 10, 14, 0.82);
+  backdrop-filter: blur(6px);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: var(--space-24);
   z-index: 1000;
-  animation: fadeIn 0.15s ease;
+  animation: fadeIn 0.15s var(--ease-salida);
 }
 
 .modal {
   width: 100%;
   max-width: 480px;
   background: var(--surface-card);
-  border: 1px solid var(--color-bone);
+  border: var(--linea-fuerte);
   border-radius: var(--radius-cards);
   padding: var(--card-padding);
-  box-shadow: var(--shadow-card);
-  animation: slideUp 0.2s ease;
+  box-shadow: var(--shadow-card), var(--glow-suave);
+  animation: slideUp 0.28s var(--ease-salida);
 }
 
 .modal-header {
@@ -812,6 +1033,9 @@ img { max-width: 100%; height: auto; display: block; }
   font-family: var(--font-display);
   font-weight: var(--weight-black);
   font-size: var(--text-heading-sm);
+  line-height: var(--leading-heading-sm);
+  letter-spacing: var(--tracking-heading-sm);
+  text-transform: uppercase;
   color: var(--color-paper);
   margin: 0;
 }
@@ -823,16 +1047,20 @@ img { max-width: 100%; height: auto; display: block; }
   align-items: center;
   justify-content: center;
   background: transparent;
-  border: 1px solid var(--color-bone);
+  border: var(--linea);
   border-radius: var(--radius-nav);
   color: var(--color-mist-gray);
-  transition: all 0.15s ease;
+  transition: background var(--t-fast) var(--ease-salida),
+              border-color var(--t-fast) var(--ease-salida),
+              color var(--t-fast) var(--ease-salida),
+              box-shadow var(--t-med) var(--ease-salida);
 }
 
 .modal-close:hover {
-  background: var(--color-smoke-plum);
-  border-color: var(--color-mist-gray);
+  background: rgba(242, 106, 33, 0.12);
+  border-color: rgba(242, 106, 33, 0.55);
   color: var(--color-paper);
+  box-shadow: var(--glow-suave);
 }
 
 @keyframes fadeIn {
@@ -850,20 +1078,246 @@ img { max-width: 100%; height: auto; display: block; }
    ========================================================================== */
 
 .skeleton {
-  background: linear-gradient(
-    90deg,
-    var(--color-smoke-plum) 25%,
-    var(--color-ink-border) 50%,
-    var(--color-smoke-plum) 75%
-  );
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
-  border-radius: var(--radius-inputs);
+  position: relative;
+  overflow: hidden;
+  background: var(--color-smoke-plum);
+  border-radius: 2px;
 }
 
-@keyframes shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(242, 106, 33, 0.14), transparent);
+  transform: translateX(-100%);
+  animation: barrido-skeleton 1.5s var(--ease-fluido) infinite;
+}
+
+@keyframes barrido-skeleton {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* ==========================================================================
+   FX · HERRAMIENTAS DE MOVIMIENTO Y TEXTURA
+   Utilidades opt-in: las activan motion.js o las vistas concretas.
+   ========================================================================== */
+
+/* Los revelados solo parten ocultos si el JS de movimiento está activo
+   (html.js-motion). Sin él, el contenido queda visible: nada de páginas en blanco. */
+.fx-reveal,
+.fx-linea,
+.fx-marquee__pista,
+.fx-contado {
+  /* valores iniciales los fija GSAP; aquí solo se declara el intención */
+  will-change: transform, opacity;
+}
+
+html.js-motion .fx-hidden {
+  visibility: hidden;
+}
+
+/* Rejilla técnica de fondo: solo en heroes y secciones de contexto */
+.fx-grid {
+  position: relative;
+  background-image: var(--rejilla);
+  background-size: var(--rejilla-paso) var(--rejilla-paso);
+}
+
+.fx-grid::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--halo-radial);
+  pointer-events: none;
+}
+
+/* Scanlines: textura CRT, se mantiene por debajo del contraste de lectura */
+.fx-scan::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--scanline);
+  opacity: 0.35;
+  mix-blend-mode: overlay;
+  pointer-events: none;
+}
+
+.fx-noise::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+  opacity: 0.05;
+  pointer-events: none;
+}
+
+/* Marcas de esquina tipo retícula de encuadre */
+.fx-marcas {
+  position: relative;
+}
+
+.fx-marcas::before,
+.fx-marcas::after {
+  content: '';
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border: 1px solid rgba(242, 106, 33, 0.55);
+  pointer-events: none;
+  transition: width var(--t-med) var(--ease-salida),
+              height var(--t-med) var(--ease-salida),
+              border-color var(--t-med) var(--ease-salida);
+}
+
+.fx-marcas::before {
+  top: -1px;
+  left: -1px;
+  border-right: 0;
+  border-bottom: 0;
+}
+
+.fx-marcas::after {
+  bottom: -1px;
+  right: -1px;
+  border-left: 0;
+  border-top: 0;
+}
+
+.fx-marcas:hover::before,
+.fx-marcas:hover::after {
+  width: 26px;
+  height: 26px;
+  border-color: var(--color-brand-orange);
+}
+
+/* Marquesina horizontal (cinta de texto infinita) */
+.fx-marquee {
+  display: flex;
+  overflow: hidden;
+  user-select: none;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+}
+
+.fx-marquee__pista {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--space-24);
+  /* El relleno derecho equivale al separador: así las dos pistas encajan sin
+     salto al reiniciar el ciclo (translateX(-100%) es sobre su propio ancho). */
+  padding-right: var(--space-24);
+  white-space: nowrap;
+  animation: fx-marquee 28s linear infinite;
+}
+
+.fx-marquee:hover .fx-marquee__pista {
+  animation-play-state: paused;
+}
+
+@keyframes fx-marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-100%); }
+}
+
+/* Glitch RGB: se activa con data-glitch en títulos. Sin JS, el hover sigue
+   funcionando porque las dos sombras van en ::before/::after del propio texto. */
+[data-glitch] {
+  position: relative;
+  display: inline-block;
+}
+
+[data-glitch]::before,
+[data-glitch]::after {
+  content: attr(data-glitch);
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  clip-path: inset(0 0 0 0);
+}
+
+[data-glitch]:hover::before,
+[data-glitch]:hover::after {
+  opacity: 0.85;
+}
+
+[data-glitch]:hover::before {
+  color: var(--glitch-frio);
+  animation: fx-glitch-a 0.42s steps(2, jump-none) 2;
+}
+
+[data-glitch]:hover::after {
+  color: var(--glitch-calido);
+  animation: fx-glitch-b 0.42s steps(2, jump-none) 2;
+}
+
+@keyframes fx-glitch-a {
+  0%   { transform: translate(-2px, 1px); clip-path: inset(12% 0 58% 0); }
+  25%  { transform: translate(2px, -1px); clip-path: inset(48% 0 18% 0); }
+  50%  { transform: translate(-3px, 0);   clip-path: inset(72% 0 6% 0); }
+  75%  { transform: translate(1px, 2px);  clip-path: inset(28% 0 44% 0); }
+  100% { transform: translate(-1px, 0);   clip-path: inset(58% 0 22% 0); }
+}
+
+@keyframes fx-glitch-b {
+  0%   { transform: translate(2px, -1px);  clip-path: inset(38% 0 34% 0); }
+  25%  { transform: translate(-2px, 1px);  clip-path: inset(8% 0 66% 0); }
+  50%  { transform: translate(3px, 0);     clip-path: inset(62% 0 12% 0); }
+  75%  { transform: translate(-1px, -2px); clip-path: inset(22% 0 52% 0); }
+  100% { transform: translate(1px, 0);     clip-path: inset(48% 0 28% 0); }
+}
+
+/* Retícula de puntero: solo en punteros finos y con movimiento permitido */
+.fx-reticula {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 26px;
+  height: 26px;
+  margin: -13px 0 0 -13px;
+  border: 1px solid rgba(242, 106, 33, 0.75);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0;
+  transition: opacity var(--t-med) var(--ease-salida),
+              transform var(--t-med) var(--ease-salida),
+              border-color var(--t-med) var(--ease-salida);
+}
+
+.fx-reticula::after {
+  content: '';
+  position: absolute;
+  inset: 50% auto auto 50%;
+  width: 2px;
+  height: 2px;
+  margin: -1px 0 0 -1px;
+  background: var(--color-brand-orange);
+}
+
+.fx-reticula--activo {
+  opacity: 1;
+}
+
+/* El scale lo gobierna GSAP (transform inline), así que aquí solo se pinta */
+.fx-reticula--fuerte {
+  border-color: var(--color-brand-orange);
+  box-shadow: var(--glow-acento);
+}
+
+/* Elevación en hover para tarjetas de producto / paneles */
+.fx-eleva {
+  transition: transform var(--t-med) var(--ease-salida),
+              border-color var(--t-med) var(--ease-salida),
+              box-shadow var(--t-slow) var(--ease-salida);
+}
+
+.fx-eleva:hover {
+  transform: translateY(-4px);
+  border-color: rgba(242, 106, 33, 0.45);
+  box-shadow: var(--shadow-card), var(--glow-suave);
 }
 
 /* ==========================================================================
@@ -872,8 +1326,10 @@ img { max-width: 100%; height: auto; display: block; }
 
 @media (max-width: 720px) {
   :root {
-    --text-heading: 36px;
-    --text-heading-lg: 48px;
+    /* El corte de esquina se reduce: en pantallas pequeñas el mismo valor
+       se comería media tarjeta y los radios fluidos ya escalan solos. */
+    --corte: 11px;
+    --corte-sm: 7px;
     --card-padding: 32px;
     --card-width: 100%;
   }
@@ -884,13 +1340,29 @@ img { max-width: 100%; height: auto; display: block; }
   }
 
   .card { padding: var(--space-24); }
-}/* ==========================================================================
+}
+
+/* ==========================================================================
    REDUCED MOTION
+   La puerta de acceso: motion.js no se inicializa con esta preferencia, así
+   que aquí se anulan además las animaciones puramente CSS y los estados
+   iniciales que GSAP habría dejado sin resolver.
    ========================================================================== */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
+
+  html.js-motion .fx-hidden { visibility: visible; }
+
+  .fx-marquee__pista { animation: none !important; }
+  .fx-scan::after { display: none; }
+  .fx-reticula { display: none; }
+  [data-glitch]::before,
+  [data-glitch]::after { display: none; }
+  .fx-eleva:hover,
+  .feature-pill:hover { transform: none; }
 }

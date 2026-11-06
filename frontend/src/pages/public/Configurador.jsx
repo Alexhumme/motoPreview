@@ -8,6 +8,7 @@ import SiteHeader from '../../components/buttons/SiteHeader';
 import ImagenProducto from '../../components/ImagenProducto';
 import FiltroCapa from '../../components/filters/FiltroCapa';
 import { TODAS, agruparOpciones } from '../../utils/filtros';
+import { refrescarMovimiento } from '../../utils/motion';
 import './Configurador.css';
 
 const money = (value) => new Intl.NumberFormat('es-CO', {
@@ -91,6 +92,13 @@ export default function Configurador() {
     [porCategoria, tipoActivo]
   );
 
+  // La lista de compatibles cambia de altura al cargar y al filtrar: las posiciones
+  // de ScrollTrigger deben recalcularse o los paneles inferiores entrarán tarde.
+  useEffect(() => {
+    const cuadro = requestAnimationFrame(() => refrescarMovimiento());
+    return () => cancelAnimationFrame(cuadro);
+  }, [cargando, cargandoAccesorios, accesoriosFiltrados]);
+
   // Al cambiar de moto, la selección anterior puede haber quedado sin resultados.
   useEffect(() => {
     if (categoriaActiva !== TODAS && !opcionesCategoria.some((opcion) => opcion.valor === categoriaActiva)) {
@@ -105,6 +113,13 @@ export default function Configurador() {
   }, [opcionesTipo, tipoActivo]);
 
   const hayFiltrosActivos = categoriaActiva !== TODAS || tipoActivo !== TODAS;
+
+  const pasos = [
+    { numero: '01', etiqueta: 'Moto', hecho: Boolean(motoActual) },
+    { numero: '02', etiqueta: 'Capas', hecho: hayFiltrosActivos },
+    { numero: '03', etiqueta: 'Piezas', hecho: items.length > 0 },
+  ];
+  const pasoActivo = pasos.findIndex((paso) => !paso.hecho);
 
   const motoNombre = motoActual
     ? `${motoActual.modelo_moto?.marca_moto?.marca_nombre || ''} ${motoActual.modelo_moto?.modelo_nombre || ''}`.trim()
@@ -130,9 +145,12 @@ export default function Configurador() {
       <main className="configurator-main">
         <header className="configurator-header">
           <div className="configurator-copy">
-            <div className="eyebrow"><span className="eyebrow-dot" aria-hidden="true"></span>Estudio de compatibilidad</div>
-            <h1 className="configurator-title">Diseña tu configuración.</h1>
-            <p className="configurator-subtitle">Selecciona tu moto y encuentra accesorios que encajan sin complicaciones.</p>
+            <div className="eyebrow">
+              <span className="eyebrow-dot" aria-hidden="true"></span>
+              <span data-scramble="Estudio de compatibilidad">Estudio de compatibilidad</span>
+            </div>
+            <h1 className="configurator-title" data-reveal="lineas">Diseña tu configuración.</h1>
+            <p className="configurator-subtitle" data-reveal="up" data-reveal-delay="0.1">Selecciona tu moto y encuentra accesorios que encajan sin complicaciones.</p>
           </div>
           <Link to="/carrito" className="btn btn--outline">
             <ShoppingCart size={16} aria-hidden="true" />
@@ -142,11 +160,25 @@ export default function Configurador() {
 
         {error && <p className="configurator-error" role="alert">{error}</p>}
 
+        <ol className="config-pasos">
+          {pasos.map((paso, indice) => {
+            const clases = ['config-paso'];
+            if (paso.hecho) clases.push('config-paso--hecha');
+            if (indice === pasoActivo) clases.push('config-paso--activa');
+            return (
+              <li key={paso.numero} className={clases.join(' ')}>
+                <span className="config-paso__num">{paso.numero}</span>
+                <span className="config-paso__etq">{paso.etiqueta}</span>
+              </li>
+            );
+          })}
+        </ol>
+
         <div className="configurator-layout">
           {/* Bike preview panel */}
-          <section className="bike-preview-panel card">
+          <section className="bike-preview-panel card" data-reveal="up">
             <div className="panel-topline">
-              <span>Tu motocicleta</span>
+              <span data-scramble-hover>Tu motocicleta</span>
               <span className="live-status"><span className="live-dot" aria-hidden="true"></span> Live preview</span>
             </div>
             <label className="select-label">Modelo seleccionado</label>
@@ -186,9 +218,9 @@ export default function Configurador() {
           </section>
 
           {/* Compatible accessories panel */}
-          <section className="compatible-panel card">
+          <section className="compatible-panel card" data-reveal="up" data-reveal-delay="0.08">
             <div className="panel-topline">
-              <span>Accesorios compatibles</span>
+              <span data-scramble-hover>Accesorios compatibles</span>
               <span className="result-count">{accesoriosFiltrados.length} resultados</span>
             </div>
 
@@ -273,12 +305,13 @@ export default function Configurador() {
         </div>
 
         {/* Configuration bar */}
+        {/* Sin data-reveal: la barra es sticky y el transform inicial del reveal la despegaría de su hueco. */}
         <section className="configuration-bar card">
           <div className="configuration-items">
             <div className="configuration-title">
               <span><Settings2 size={18} aria-hidden="true" /></span>
               <span>
-                <strong>Tu configuración</strong>
+                <strong data-scramble-hover>Tu configuración</strong>
                 <small>{totalItems ? `${totalItems} accesorios seleccionados` : 'Aún no has agregado accesorios'}</small>
               </span>
             </div>

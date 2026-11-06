@@ -73,24 +73,24 @@ export default function Carrito() {
         </Link>
 
         {exito ? (
-          <div className="cart-empty">
+          <div className="cart-empty" data-reveal="scale">
             <CheckCircle2 className="empty-icon" size={48} strokeWidth={1.5} aria-hidden="true" />
-            <h1 className="cart-empty-title">¡Cotización enviada!</h1>
+            <h1 className="cart-empty-title" data-glitch="¡Cotización enviada!">¡Cotización enviada!</h1>
             <p className="cart-empty-subtitle">La tienda va a revisar tu solicitud pronto.</p>
             <Link to="/" className="btn btn--primary">Volver al catálogo <ArrowRight size={16} aria-hidden="true" /></Link>
           </div>
         ) : (
           <>
-            <header className="page-heading">
+            <header className="page-heading" data-reveal="up">
               <div>
                 <div className="eyebrow"><span className="eyebrow-dot" aria-hidden="true"></span>Tu selección</div>
-                <h1 className="cart-title">Carrito de productos.</h1>
+                <h1 className="cart-title" data-glitch="Carrito de productos.">Carrito de productos.</h1>
               </div>
               <span className="cart-count-badge">{totalItems} {totalItems === 1 ? 'pieza' : 'piezas'}</span>
             </header>
 
             {items.length === 0 ? (
-              <div className="cart-empty">
+              <div className="cart-empty" data-reveal="scale">
                 <ShoppingCart className="empty-icon" size={48} strokeWidth={1.5} aria-hidden="true" />
                 <h1 className="cart-empty-title">Tu carrito está esperando una buena idea.</h1>
                 <p className="cart-empty-subtitle">Explora las piezas disponibles y empieza a construir una configuración a tu medida.</p>
@@ -98,9 +98,9 @@ export default function Carrito() {
               </div>
             ) : (
               <div className="cart-layout">
-                <section className="cart-lines">
+                <section className="cart-lines" data-reveal="grupo">
                   {items.map((item) => (
-                    <article key={item.accesorio.id_accesorio} className="cart-line">
+                    <article key={item.accesorio.id_accesorio} className="cart-line fx-eleva">
                       <div className="mini-art">
                         <ImagenProducto src={item.accesorio.imagen} />
                       </div>
@@ -138,7 +138,7 @@ export default function Carrito() {
                   ))}
                 </section>
 
-                <aside className="summary-card card">
+                <aside className="summary-card card" data-reveal="up" data-reveal-delay="0.15">
                   <span className="summary-kicker">Resumen de cotización</span>
                   <h2 className="summary-title">Lista para rodar.</h2>
 
