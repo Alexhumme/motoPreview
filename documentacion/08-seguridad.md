@@ -169,11 +169,11 @@ CORS_EXPOSE_HEADERS  = ["Content-Language"]
 
 ## 9. Admin de Django (`/admin/`)
 
-- `django.contrib.admin` está habilitado para inspeccionar y corregir las tablas (`managed=False`); **no** gestiona los usuarios de la aplicación.
+- `django.contrib.admin` está habilitado para inspeccionar y corregir las tablas (`managed=False`). La sección **Usuarios de la plataforma** gestiona `usuario` y `usuario_rol`; el resto de la app sigue usando JWT+bcrypt.
 - El superusuario vive en `auth_user` (tabla de Django) y es **independiente** de `usuario`; se crea con `manage.py createsuperuser`. Los JWT de la app **no** autentican en `/admin/`.
 - `manage.py migrate` solo crea `auth_*`, `django_content_type`, `django_session` y `django_admin_log`; nunca toca las 21 tablas del negocio.
-- En el admin no se exponen `password_hash`, `reset_token`, `verificacion_token` ni el `hash` de los tokens.
-- `usuario_rol` no se registra porque el admin no admite claves primarias compuestas; los roles se asignan con `manage.py asignar_rol`.
+- En el admin no se exponen `password_hash`, `reset_token`, `verificacion_token` ni el `hash` de los tokens. La contraseña de un usuario de la plataforma se escribe en un campo de solo entrada y se guarda como hash bcrypt.
+- `usuario_rol` tiene una vista de **solo lectura** en el admin (Django no permite ficha de cambio para claves primarias compuestas). El rol se asigna desde el formulario del usuario de la plataforma o con `manage.py asignar_rol`.
 - **Idioma:** el panel se ve en **español** e **inglés**. Cambia con el selector *Idioma / Language* o añade `?lang=en` a la URL; la preferencia se guarda en la cookie `mp_lang`.
 - **Sesiones del panel:** usan la tabla `django_session` y exigen CSRF; los estáticos los sirve WhiteNoise (funciona con `DEBUG=false` y gunicorn).
 - **Redirects:** `/admin` → `/admin/` explícito (`APPEND_SLASH=False` desactiva el redirect de Django); entrar directo a `/admin/login/` vuelve a `/admin/` (`LOGIN_URL`/`LOGIN_REDIRECT_URL` en `settings.py`, antes caía en `/accounts/profile/` → 404).
