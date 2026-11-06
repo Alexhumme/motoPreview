@@ -75,14 +75,18 @@
   gap: var(--space-16);
   padding: var(--space-24);
   background: var(--surface-card);
-  border: 1px solid var(--color-bone);
-  border-radius: var(--radius-cards);
-  transition: all 0.2s ease;
+  border: var(--linea);
+  border-radius: 0;
+  clip-path: var(--clip-esquina-inf);
+  transition: transform var(--t-fast) var(--ease-salida),
+              border-color var(--t-fast) var(--ease-salida),
+              filter var(--t-med) var(--ease-salida);
 }
 
 .kpi:hover {
-  border-color: var(--color-mist-gray);
+  border-color: rgba(242, 106, 33, 0.5);
   transform: translateY(-2px);
+  filter: drop-shadow(0 8px 20px rgba(242, 106, 33, 0.16));
 }
 
 .kpi--alert {
@@ -96,7 +100,8 @@
   justify-content: center;
   width: 48px;
   height: 48px;
-  border-radius: var(--radius-nav);
+  border-radius: 0;
+  clip-path: var(--clip-esquina-inf);
   font-size: 22px;
   background: rgba(242, 106, 33, 0.15);
   color: var(--color-brand-orange);
@@ -139,9 +144,10 @@
 }
 
 .kpi-content strong {
-  font-family: var(--font-display);
-  font-weight: var(--weight-black);
+  font-family: var(--font-mono);
+  font-weight: var(--weight-bold);
   font-size: var(--text-heading-sm);
+  letter-spacing: -0.02em;
   line-height: var(--leading-heading-sm);
   color: var(--color-paper);
 }
@@ -255,13 +261,13 @@
   gap: var(--space-12);
   padding: var(--space-12) var(--space-16);
   background: var(--surface-elevated);
-  border: 1px solid var(--color-bone);
-  border-radius: var(--radius-inputs);
-  transition: all 0.15s ease;
+  border: var(--linea);
+  border-radius: 0;
+  transition: border-color var(--t-fast) var(--ease-salida);
 }
 
 .activity-row:hover {
-  border-color: var(--color-mist-gray);
+  border-color: rgba(242, 106, 33, 0.45);
 }
 
 .activity-row--empty {
@@ -283,8 +289,9 @@
   justify-content: center;
   width: 36px;
   height: 36px;
-  border-radius: var(--radius-pills);
-  font-family: var(--font-display);
+  border-radius: 0;
+  clip-path: var(--clip-esquina-inf);
+  font-family: var(--font-mono);
   font-weight: var(--weight-bold);
   font-size: 13px;
   background: rgba(242, 106, 33, 0.15);

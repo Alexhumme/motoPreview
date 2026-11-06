@@ -587,3 +587,233 @@
     padding: var(--space-24) var(--space-16) var(--space-40);
   }
 }
+
+/* ==========================================================================
+   PIEL FUTURISTA DEL PANEL
+   Mismo idioma que el sitio público (esquinas cortadas, etiquetas mono,
+   hairlines naranjas) pero sin motor de motion: Lenis/GSAP quedan fuera de
+   /admin para no pelear con las barras sticky, así que aquí todo es CSS.
+   ========================================================================== */
+
+.admin-header {
+  border-bottom: var(--linea-fuerte);
+  box-shadow: 0 1px 0 0 rgba(242, 106, 33, 0.12);
+}
+
+.admin-brand,
+.admin-header .brand-text {
+  letter-spacing: 0.02em;
+}
+
+/* Rejilla de fondo solo en el arranque del contenido: textura de backdrop,
+   nunca detrás de las filas de las tablas. Va en z-index negativo para no
+   crear contextos de apilado en las vistas: un contexto nuevo dejaría los
+   modales por debajo del header sticky. */
+.admin-body .admin-main {
+  position: relative;
+}
+
+.admin-body .admin-main::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 240px;
+  background-image: var(--rejilla);
+  background-size: var(--rejilla-paso) var(--rejilla-paso);
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.55), transparent);
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.55), transparent);
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Marca de sección: un dado naranja cortado delante de cada título de página. */
+.admin-main h1 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+}
+
+.admin-main h1::before {
+  content: '';
+  width: 10px;
+  height: 10px;
+  flex-shrink: 0;
+  background: var(--color-brand-orange);
+  clip-path: var(--clip-esquina-sup);
+  box-shadow: var(--sombra-neon);
+}
+
+/* --- Riel de categorías ------------------------------------------------- */
+
+.admin-sidebar {
+  border-right: var(--linea);
+}
+
+.sidebar-cat {
+  position: relative;
+  border-radius: 0;
+  transition: background var(--t-fast) var(--ease-salida),
+              color var(--t-fast) var(--ease-salida),
+              box-shadow var(--t-fast) var(--ease-salida);
+}
+
+.sidebar-cat__label {
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+.sidebar-cat:hover {
+  color: var(--color-brand-orange);
+  background: rgba(242, 106, 33, 0.07);
+}
+
+.sidebar-cat--activa {
+  color: var(--color-brand-orange);
+  background: rgba(242, 106, 33, 0.12);
+  clip-path: var(--clip-esquina-inf);
+  box-shadow: inset 2px 0 0 var(--color-brand-orange);
+}
+
+.sidebar-cat--activa .sidebar-cat__icon {
+  filter: drop-shadow(0 0 6px rgba(242, 106, 33, 0.6));
+}
+
+.sidebar-profile,
+.sidebar-toggle {
+  border-radius: 0;
+}
+
+.sidebar-profile {
+  border: var(--linea);
+}
+
+.sidebar-profile:hover {
+  border-color: var(--color-brand-orange);
+  color: var(--color-brand-orange);
+}
+
+.sidebar-profile__role {
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  letter-spacing: var(--tracking-label);
+}
+
+.sidebar-toggle {
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+/* --- Segunda barra ------------------------------------------------------ */
+
+.admin-subsidebar {
+  border-right: var(--linea);
+}
+
+.subsidebar-header {
+  border-bottom: var(--linea);
+}
+
+.subsidebar-title {
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+}
+
+.sidebar-link {
+  position: relative;
+  border-radius: 0;
+  border: 1px solid transparent;
+  transition: background var(--t-fast) var(--ease-salida),
+              color var(--t-fast) var(--ease-salida),
+              border-color var(--t-fast) var(--ease-salida),
+              transform var(--t-fast) var(--ease-salida);
+}
+
+.sidebar-link__label {
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+.sidebar-link:hover {
+  background: rgba(242, 106, 33, 0.07);
+  color: var(--color-brand-orange);
+  transform: translateX(2px);
+}
+
+.sidebar-link--active {
+  color: var(--color-brand-orange);
+  background: rgba(242, 106, 33, 0.12);
+  border-color: rgba(242, 106, 33, 0.35);
+  clip-path: var(--clip-esquina-inf);
+  font-weight: var(--weight-bold);
+  box-shadow: inset 2px 0 0 var(--color-brand-orange);
+}
+
+.sidebar-link--active:hover {
+  transform: none;
+}
+
+/* --- Paneles, tarjetas y modales del panel ------------------------------ */
+
+.admin-shell .card,
+.admin-shell .table-wrap,
+.admin-shell .card-elevated {
+  border-radius: 0;
+  border: var(--linea);
+}
+
+.admin-shell .card--corte {
+  clip-path: var(--clip-esquina-inf);
+}
+
+.admin-shell .table-wrap {
+  clip-path: var(--clip-esquina-inf);
+}
+
+.admin-shell .card-head {
+  border-bottom: var(--linea);
+}
+
+.admin-shell .card-head small,
+.admin-shell .kpi-content small {
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  letter-spacing: var(--tracking-eyebrow);
+}
+
+.admin-shell .modal,
+.admin-shell .ra-modal {
+  border-radius: 0;
+  clip-path: var(--clip-esquina-inf);
+  border: var(--linea-fuerte);
+}
+
+.admin-shell .modal-close {
+  border-radius: 0;
+}
+
+.admin-shell .form-input,
+.admin-shell .ra-campo input,
+.admin-shell .ra-campo select,
+.admin-shell .ra-campo textarea {
+  border-radius: 0;
+}
+
+.admin-shell .badge {
+  border-radius: 0;
+}
+
+.admin-footer {
+  border-top: var(--linea);
+  font-size: var(--text-label);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}

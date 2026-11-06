@@ -26,46 +26,7 @@
   margin: 0;
 }
 
-/* Tabla */
-.accesorios-admin__card {
-  padding: 0;
-  overflow: hidden;
-}
-
-.accesorios-admin__tabla {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.accesorios-admin__tabla th {
-  text-align: left;
-  font-family: var(--font-display);
-  font-weight: var(--weight-regular);
-  font-size: var(--text-caption);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--color-mist-gray);
-  padding: var(--space-16);
-  background: var(--surface-elevated);
-  border-bottom: 1px solid var(--color-bone);
-}
-
-.accesorios-admin__tabla td {
-  padding: var(--space-16);
-  font-family: var(--font-ui);
-  font-size: var(--text-body);
-  color: var(--color-soft-mist);
-  border-bottom: 1px solid var(--color-bone);
-}
-
-.accesorios-admin__tabla tbody tr:last-child td {
-  border-bottom: none;
-}
-
-.accesorios-admin__tabla tbody tr:hover td {
-  background: var(--surface-elevated);
-  color: var(--color-paper);
-}
+/* La tabla la dibuja DataTable: búsqueda, orden, filtros y paginación. */
 
 .accesorios-admin__sku {
   font-family: var(--font-mono);
@@ -90,8 +51,8 @@
   overflow-y: auto;
   padding: var(--space-12);
   background: var(--surface-elevated);
-  border: 1px solid var(--color-bone);
-  border-radius: var(--radius-inputs);
+  border: var(--linea);
+  border-radius: 0;
 }
 
 .accesorios-admin__checkbox {
@@ -120,13 +81,5 @@
 @media (max-width: 720px) {
   .accesorios-admin__fila {
     grid-template-columns: 1fr;
-  }
-
-  .accesorios-admin__card {
-    overflow-x: auto;
-  }
-
-  .accesorios-admin__tabla {
-    min-width: 640px;
   }
 }

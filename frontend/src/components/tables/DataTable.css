@@ -1,12 +1,15 @@
 /* ==========================================================================
-   DATA TABLE — Jam Design System
+   DATA TABLE — piel futurista: esquinas cortadas, etiquetas mono y hairlines
+   de acento. La búsqueda, el orden y la paginación viven en DataTable.jsx.
    ========================================================================== */
 
 .dt {
   background: var(--surface-card);
-  border: 1px solid var(--color-bone);
-  border-radius: var(--radius-cards);
+  border: var(--linea);
+  border-radius: 0;
+  clip-path: var(--clip-esquina-inf);
   overflow: hidden;
+  box-shadow: var(--shadow-card);
 }
 
 .dt-barra {
@@ -15,34 +18,61 @@
   gap: var(--space-10);
   align-items: center;
   padding: var(--space-16);
-  border-bottom: 1px solid var(--color-bone);
+  border-bottom: var(--linea);
+  background: color-mix(in srgb, var(--surface-canvas) 55%, transparent);
 }
 
 .dt-busqueda {
   flex: 1 1 220px;
   min-width: 0;
   padding: var(--space-10) var(--space-12);
-  border: 1px solid var(--color-bone);
-  border-radius: var(--radius-inputs);
+  border: var(--linea);
+  border-radius: 0;
   background: var(--surface-canvas);
   color: var(--color-paper);
   font: inherit;
   font-family: var(--font-ui);
   font-size: var(--text-body);
+  transition: border-color var(--t-fast) var(--ease-salida),
+              box-shadow var(--t-med) var(--ease-salida);
+}
+
+.dt-busqueda::placeholder {
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  letter-spacing: 0.04em;
+  color: var(--color-mist-gray);
+}
+
+.dt-busqueda:hover {
+  border-color: var(--color-mist-gray);
+}
+
+.dt-busqueda:focus {
+  outline: none;
+  border-color: var(--color-brand-orange);
+  box-shadow: 0 0 0 1px rgba(242, 106, 33, 0.45), var(--glow-suave);
 }
 
 .dt-select {
   padding: var(--space-8) var(--space-10);
-  border: 1px solid var(--color-bone);
-  border-radius: var(--radius-inputs);
+  border: var(--linea);
+  border-radius: 0;
   background: var(--surface-canvas);
   color: var(--color-paper);
   font: inherit;
-  font-family: var(--font-ui);
-  font-size: var(--text-caption);
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: border-color var(--t-fast) var(--ease-salida);
 }
 
-.dt-busqueda:focus-visible,
+.dt-select:hover {
+  border-color: var(--color-brand-orange);
+}
+
 .dt-select:focus-visible,
 .dt-boton:focus-visible,
 .dt-orden:focus-visible {
@@ -52,37 +82,46 @@
 
 .dt-boton {
   padding: var(--space-8) var(--space-14, 14px);
-  border: 0;
-  border-radius: var(--radius-buttons);
+  border: 1px solid transparent;
+  border-radius: 0;
+  clip-path: var(--clip-esquina-inf);
   color: var(--color-obsidian-plum);
   background: var(--color-brand-orange);
   font: inherit;
-  font-family: var(--font-ui);
-  font-size: var(--text-caption);
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
   font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background var(--t-fast) var(--ease-salida),
+              color var(--t-fast) var(--ease-salida),
+              border-color var(--t-fast) var(--ease-salida),
+              filter var(--t-fast) var(--ease-salida);
 }
 
 .dt-boton:hover:not(:disabled) {
-  background: var(--color-mint-halo);
-  box-shadow: var(--shadow-mint-glow-hover);
+  filter: drop-shadow(0 0 8px rgba(242, 106, 33, 0.55));
 }
 
 .dt-boton:disabled {
-  opacity: 0.45;
+  opacity: 0.35;
   cursor: not-allowed;
 }
 
+/* Sin clip en los botones de borde: el corte se llevaría la hairline de la
+   diagonal, así que estos se quedan rectos y el acento lo pone el hover. */
 .dt-boton--suave {
+  clip-path: none;
   color: var(--color-paper);
-  background: var(--surface-elevated);
-  border: 1px solid var(--color-bone);
+  background: transparent;
+  border: var(--linea);
 }
 
 .dt-boton--suave:hover:not(:disabled) {
-  background: var(--color-smoke-plum);
-  border-color: var(--color-mist-gray);
+  color: var(--color-brand-orange);
+  border-color: var(--color-brand-orange);
+  background: rgba(242, 106, 33, 0.08);
 }
 
 .dt-scroll { overflow-x: auto; }
@@ -96,13 +135,13 @@
   padding: var(--space-12) var(--space-16);
   text-align: left;
   color: var(--color-mist-gray);
-  background: var(--surface-elevated);
-  border-bottom: 1px solid var(--color-bone);
-  font-family: var(--font-display);
-  font-weight: var(--weight-regular);
-  font-size: var(--text-caption);
+  background: var(--surface-canvas);
+  border-bottom: var(--linea-fuerte);
+  font-family: var(--font-mono);
+  font-weight: var(--weight-medium);
+  font-size: var(--text-label);
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: var(--tracking-label);
   white-space: nowrap;
 }
 
@@ -113,25 +152,57 @@
   font-size: var(--text-body);
   color: var(--color-soft-mist);
   vertical-align: middle;
+  transition: background var(--t-fast) var(--ease-salida),
+              box-shadow var(--t-fast) var(--ease-salida);
+}
+
+.dt-tabla td strong {
+  color: var(--color-paper);
+  font-weight: var(--weight-semibold);
+}
+
+.dt-tabla td code {
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  color: var(--color-paper);
 }
 
 .dt-tabla tbody tr:last-child td {
   border-bottom: none;
 }
 
+/* Hover de fila: hairline naranja a la izquierda, no banda de relleno dura */
 .dt-tabla tbody tr:hover td {
   background: var(--surface-elevated);
   color: var(--color-paper);
 }
 
+.dt-tabla tbody tr:hover td:first-child {
+  box-shadow: inset 2px 0 0 var(--color-brand-orange);
+}
+
 .dt-orden {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6);
   padding: 0;
   color: inherit;
   background: transparent;
   border: 0;
   font: inherit;
-  font-weight: var(--weight-bold);
+  letter-spacing: inherit;
+  text-transform: inherit;
   cursor: pointer;
+  transition: color var(--t-fast) var(--ease-salida);
+}
+
+.dt-orden:hover {
+  color: var(--color-brand-orange);
+}
+
+.dt-orden span[aria-hidden='true'] {
+  color: var(--color-brand-orange);
+  font-size: 9px;
 }
 
 .dt-acciones {
@@ -143,7 +214,7 @@
 .dt-skeleton td span {
   display: block;
   height: 12px;
-  border-radius: var(--radius-nav);
+  border-radius: 0;
   background: linear-gradient(90deg, var(--color-smoke-plum), var(--surface-elevated), var(--color-smoke-plum));
   background-size: 200% 100%;
   animation: dt-brillo 1.2s infinite;
@@ -171,7 +242,7 @@
   color: var(--color-jam-pink);
   background: rgba(229, 72, 77, 0.08);
   border: 1px solid rgba(229, 72, 77, 0.2);
-  border-radius: var(--radius-inputs);
+  border-radius: 0;
 }
 
 .dt-pie {
@@ -182,13 +253,56 @@
   justify-content: space-between;
   padding: var(--space-12) var(--space-16);
   color: var(--color-mist-gray);
-  font-family: var(--font-ui);
-  font-size: var(--text-caption);
-  border-top: 1px solid var(--color-bone);
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  border-top: var(--linea);
+  background: color-mix(in srgb, var(--surface-canvas) 55%, transparent);
+}
+
+.dt-pie label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
 }
 
 .dt-paginas {
   display: flex;
   align-items: center;
   gap: var(--space-10);
+}
+
+.dt-paginas > span {
+  color: var(--color-paper);
+  min-width: 5ch;
+  text-align: center;
+}
+
+/* La tabla puede ir dentro de una tarjeta con encabezado propio: el shell
+   sobra, solo quedan la barra de herramientas, las filas y el pie. */
+.card .dt {
+  border: 0;
+  clip-path: none;
+  box-shadow: none;
+  background: transparent;
+}
+
+.card .dt-barra {
+  padding-left: 0;
+  padding-right: 0;
+  background: transparent;
+}
+
+.card .dt-pie {
+  padding-left: 0;
+  padding-right: 0;
+  background: transparent;
+}
+
+@media (max-width: 720px) {
+  .dt-pie {
+    justify-content: center;
+    text-align: center;
+  }
 }

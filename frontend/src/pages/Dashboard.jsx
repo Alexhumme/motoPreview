@@ -5,6 +5,7 @@ import { usePermiso } from '../context/usePermiso';
 import { obtenerInventario } from '../services/inventario';
 import { obtenerCotizaciones } from '../services/cotizaciones';
 import { obtenerResumenDia } from '../services/reportes';
+import DataTable from '../components/tables/DataTable';
 import './Dashboard.css';
 
 const formatoCOP = (valor) =>
@@ -290,42 +291,36 @@ function PanelGlobal({ resumen, nombre }) {
             <strong>Resumen de hoy</strong>
           </span>
         </header>
-        <div className="table-wrap">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Tienda</th>
-                <th>Ventas del día</th>
-                <th>Por cobrar</th>
-                <th>Pendientes</th>
-                <th style={{ width: '140px' }}></th>
-              </tr>
-            </thead>
-            <tbody>
-              {tiendas.length === 0 ? (
-                <tr>
-                  <td colSpan={5} style={{ textAlign: 'center', padding: 'var(--space-40)', color: 'var(--color-mist-gray)' }}>
-                    No hay tiendas activas.
-                  </td>
-                </tr>
-              ) : (
-                tiendas.map((t) => (
-                  <tr key={t.id_tienda}>
-                    <td><strong>{t.nombre}</strong></td>
-                    <td>{formatoCOP(t.ventas_dia.total)}</td>
-                    <td>{formatoCOP(t.por_cobrar.total)}</td>
-                    <td>{t.pedidos_pendientes.cantidad}</td>
-                    <td>
-                      <Link className="btn btn--outline btn--sm" to={`/admin/tiendas/${t.id_tienda}`}>
-                        Ver resumen
-                      </Link>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+        <DataTable
+          columnas={[
+            { clave: 'nombre', etiqueta: 'Tienda', render: (t) => <strong>{t.nombre}</strong> },
+            {
+              clave: 'ventas',
+              etiqueta: 'Ventas del día',
+              valor: (t) => t.ventas_dia.total,
+              render: (t) => formatoCOP(t.ventas_dia.total),
+            },
+            {
+              clave: 'por_cobrar',
+              etiqueta: 'Por cobrar',
+              valor: (t) => t.por_cobrar.total,
+              render: (t) => formatoCOP(t.por_cobrar.total),
+            },
+            {
+              clave: 'pendientes',
+              etiqueta: 'Pendientes',
+              valor: (t) => t.pedidos_pendientes.cantidad,
+            },
+          ]}
+          filas={tiendas}
+          claveFila="id_tienda"
+          vacio="No hay tiendas activas."
+          acciones={(t) => (
+            <Link className="btn btn--outline btn--sm" to={`/admin/tiendas/${t.id_tienda}`}>
+              Ver resumen
+            </Link>
+          )}
+        />
       </section>
     </div>
   );

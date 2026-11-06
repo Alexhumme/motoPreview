@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '../context/authContexto';
 import ModalConfirmacion from '../components/forms/ModalConfirmacion';
+import DataTable from '../components/tables/DataTable';
 import { obtenerUsuarios, registrarUsuario, actualizarUsuario, desactivarUsuario } from '../services/usuarios';
 import { obtenerRoles } from '../services/roles';
 import { obtenerTiendas } from '../services/tiendas';
@@ -116,14 +117,32 @@ export default function Usuarios() {
     await cargar();
   }
 
-  if (cargando) {
-    return (
-      <div className="usuarios" role="status" aria-live="polite">
-        <div className="skeleton" style={{ height: '56px', width: '280px', marginBottom: 'var(--space-32)' }} />
-        <div className="skeleton" style={{ height: '400px' }} />
-      </div>
-    );
+  function nombreRol(u) {
+    return roles.find((r) => r.id_rol === u.id_rol)?.nombre_rol || String(u.id_rol);
   }
+
+  const columnas = [
+    { clave: 'usu_nombre', etiqueta: 'Nombre', render: (u) => <strong>{u.usu_nombre}</strong> },
+    { clave: 'usu_email', etiqueta: 'Email' },
+    {
+      clave: 'rol',
+      etiqueta: 'Rol',
+      filtrable: true,
+      valor: nombreRol,
+      render: (u) => <span className="badge badge--violet">{nombreRol(u)}</span>,
+    },
+    {
+      clave: 'estado_usuario',
+      etiqueta: 'Estado',
+      filtrable: true,
+      valor: (u) => estadoLabels[u.estado_usuario] || u.estado_usuario,
+      render: (u) => (
+        <span className={`badge badge--${estadoBadge[u.estado_usuario] || 'gray'}`}>
+          {estadoLabels[u.estado_usuario] || u.estado_usuario}
+        </span>
+      ),
+    },
+  ];
 
   return (
     <div className="usuarios">
@@ -136,59 +155,27 @@ export default function Usuarios() {
         </ConPermiso>
       </header>
 
-      <section className="table-wrap" aria-label="Listado de usuarios">
-        <table className="table">
-          <thead>
-            <tr>
-              <th>Nombre</th>
-              <th>Email</th>
-              <th>Rol</th>
-              <th>Estado</th>
-              <th style={{ width: '200px' }}></th>
-            </tr>
-          </thead>
-          <tbody>
-            {usuarios.length === 0 ? (
-              <tr>
-                <td colSpan={5} style={{ textAlign: 'center', padding: 'var(--space-64)', color: 'var(--color-mist-gray)' }}>
-                  No hay usuarios registrados.
-                </td>
-              </tr>
-            ) : (
-              usuarios.map((u) => (
-                <tr key={u.id_usuario}>
-                  <td>
-                    <strong>{u.usu_nombre}</strong>
-                  </td>
-                  <td>{u.usu_email}</td>
-                  <td>
-                    <span className="badge badge--violet">{roles.find((r) => r.id_rol === u.id_rol)?.nombre_rol || u.id_rol}</span>
-                  </td>
-                  <td>
-                    <span className={`badge badge--${estadoBadge[u.estado_usuario] || 'gray'}`}>
-                      {estadoLabels[u.estado_usuario] || u.estado_usuario}
-                    </span>
-                  </td>
-                  <td>
-                    <div className="acciones">
-                      <ConPermiso recurso="usuarios" accion="actualizar" fallback={null}>
-                        <button className="btn btn--ghost btn--sm" onClick={() => abrirEdicion(u)}>Editar</button>
-                      </ConPermiso>
-                      {u.estado_usuario !== 'bloqueado' && u.id_usuario !== usuario.id_usuario && (
-                        <ConPermiso recurso="usuarios" accion="eliminar" fallback={null}>
-                          <button className="btn btn--danger btn--sm" onClick={() => pedirConfirmacionDesactivar(u)}>
-                            Desactivar
-                          </button>
-                        </ConPermiso>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))
+      <DataTable
+        columnas={columnas}
+        filas={usuarios}
+        claveFila="id_usuario"
+        cargando={cargando}
+        vacio="No hay usuarios registrados."
+        acciones={(u) => (
+          <>
+            <ConPermiso recurso="usuarios" accion="actualizar" fallback={null}>
+              <button className="btn btn--ghost btn--sm" onClick={() => abrirEdicion(u)}>Editar</button>
+            </ConPermiso>
+            {u.estado_usuario !== 'bloqueado' && u.id_usuario !== usuario.id_usuario && (
+              <ConPermiso recurso="usuarios" accion="eliminar" fallback={null}>
+                <button className="btn btn--danger btn--sm" onClick={() => pedirConfirmacionDesactivar(u)}>
+                  Desactivar
+                </button>
+              </ConPermiso>
             )}
-          </tbody>
-        </table>
-      </section>
+          </>
+        )}
+      />
 
       {/* Modal */}
       {modalAbierto && (

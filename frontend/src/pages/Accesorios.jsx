@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { obtenerAccesorios, obtenerCategorias, crearAccesorio, actualizarAccesorio } from '../services/accesorios';
 import { obtenerModelosCompatibles, marcarCompatible, quitarCompatible } from '../services/compatibilidad';
 import { obtenerMotos } from '../services/motos';
+import DataTable from '../components/tables/DataTable';
 import './Accesorios.css';
 
 const VACIO = {
@@ -146,14 +147,31 @@ export default function Accesorios() {
     }
   }
 
-  if (cargando) {
-    return (
-      <div className="accesorios-admin" role="status" aria-live="polite">
-        <div className="skeleton" style={{ height: '56px', width: '200px', marginBottom: 'var(--space-32)' }} />
-        <div className="skeleton" style={{ height: '400px' }} />
-      </div>
-    );
-  }
+  const columnas = [
+    { clave: 'acc_nombre', etiqueta: 'Nombre', render: (acc) => <strong>{acc.acc_nombre}</strong> },
+    {
+      clave: 'categoria',
+      etiqueta: 'Categoría',
+      filtrable: true,
+      valor: (acc) => acc.categoria_accesorio?.cat_nombre || '',
+    },
+    {
+      clave: 'codigo_sku',
+      etiqueta: 'SKU',
+      render: (acc) => <span className="accesorios-admin__sku">{acc.codigo_sku}</span>,
+    },
+    {
+      clave: 'acc_precio',
+      etiqueta: 'Precio',
+      render: (acc) => `$${Number(acc.acc_precio).toLocaleString('es-CO')}`,
+    },
+    {
+      clave: 'acc_estado',
+      etiqueta: 'Estado',
+      filtrable: true,
+      render: (acc) => <span className={`badge badge--${estadoBadge[acc.acc_estado] || 'gray'}`}>{acc.acc_estado}</span>,
+    },
+  ];
 
   return (
     <div className="accesorios-admin">
@@ -162,36 +180,16 @@ export default function Accesorios() {
         <button className="btn btn--primary" onClick={abrirNuevo}>+ Nuevo accesorio</button>
       </header>
 
-      <div className="card accesorios-admin__card">
-        <table className="accesorios-admin__tabla">
-          <thead>
-            <tr>
-              <th>Nombre</th>
-              <th>Categoría</th>
-              <th>SKU</th>
-              <th>Precio</th>
-              <th>Estado</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {accesorios.map((acc) => (
-              <tr key={acc.id_accesorio}>
-                <td>{acc.acc_nombre}</td>
-                <td>{acc.categoria_accesorio?.cat_nombre}</td>
-                <td><span className="accesorios-admin__sku">{acc.codigo_sku}</span></td>
-                <td>${Number(acc.acc_precio).toLocaleString('es-CO')}</td>
-                <td>
-                  <span className={`badge badge--${estadoBadge[acc.acc_estado] || 'gray'}`}>{acc.acc_estado}</span>
-                </td>
-                <td>
-                  <button className="btn btn--ghost btn--sm" onClick={() => abrirEdicion(acc)}>Editar</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <DataTable
+        columnas={columnas}
+        filas={accesorios}
+        claveFila="id_accesorio"
+        cargando={cargando}
+        vacio="No hay accesorios registrados."
+        acciones={(acc) => (
+          <button className="btn btn--ghost btn--sm" onClick={() => abrirEdicion(acc)}>Editar</button>
+        )}
+      />
 
       {modalAbierto && (
         <div className="modal-overlay" onClick={cerrarModal}>

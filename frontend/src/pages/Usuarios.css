@@ -27,31 +27,7 @@
   margin: 0;
 }
 
-/* Table */
-.usuarios .table-wrap {
-  border-radius: var(--radius-cards);
-  border: 1px solid var(--color-bone);
-  background: var(--surface-card);
-  overflow: hidden;
-}
-
-.usuarios .table th,
-.usuarios .table td {
-  padding: var(--space-16) var(--space-20);
-}
-
-.usuarios .table th {
-  font-size: var(--text-caption);
-}
-
-.usuarios .table td {
-  font-size: var(--text-body);
-}
-
-.acciones {
-  display: flex;
-  gap: var(--space-8);
-}
+/* La tabla la dibuja DataTable: búsqueda, orden, filtros y paginación. */
 
 /* Modal Form */
 .modal-form {
@@ -73,21 +49,6 @@
 @media (max-width: 720px) {
   .usuarios-title {
     font-size: var(--text-heading-lg);
-  }
-
-  .usuarios .table-wrap {
-    border-radius: 0;
-    border-left: none;
-    border-right: none;
-  }
-
-  .usuarios .table th,
-  .usuarios .table td {
-    padding: var(--space-12) var(--space-16);
-  }
-
-  .acciones {
-    flex-direction: column;
   }
 
   .modal {

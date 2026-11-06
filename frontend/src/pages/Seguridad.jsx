@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { usePermiso } from '../context/usePermiso';
 import ModalConfirmacion from '../components/forms/ModalConfirmacion';
+import DataTable from '../components/tables/DataTable';
 import { ConPermiso } from '../components/menus/ConPermiso';
 import {
   obtenerRoles,
@@ -338,69 +339,58 @@ export default function Seguridad() {
           </ConPermiso>
         </div>
 
-        <div className="table-wrap">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Nombre</th>
-                <th>Estado</th>
-                <th>Tipo</th>
-                <th style={{ width: '240px' }}></th>
-              </tr>
-            </thead>
-            <tbody>
-              {roles.length === 0 ? (
-                <tr>
-                  <td colSpan={4} style={{ textAlign: 'center', padding: 'var(--space-64)', color: 'var(--color-mist-gray)' }}>
-                    {cargando ? 'Cargando roles...' : 'No hay roles definidos.'}
-                  </td>
-                </tr>
-              ) : (
-                roles.map((r) => (
-                  <tr key={r.id_rol}>
-                    <td>
-                      <strong>{r.nombre_rol}</strong>
-                    </td>
-                    <td>
-                      <span className={`badge badge--${r.activo ? 'mint' : 'gray'}`}>
-                        {r.activo ? 'Activo' : 'Inactivo'}
-                      </span>
-                    </td>
-                    <td>
-                      <span className={`badge badge--${esRolSistema(r.id_rol) ? 'violet' : 'gray'}`}>
-                        {esRolSistema(r.id_rol) ? 'Sistema' : 'Personalizado'}
-                      </span>
-                    </td>
-                    <td>
-                      <div className="acciones">
-                        {puedeEditarMatriz && (
-                          <button
-                            className="btn btn--outline btn--sm"
-                            onClick={() => irAMatriz(r.id_rol)}
-                          >
-                             Permisos
-                          </button>
-                        )}
-                        <ConPermiso recurso="roles" accion="actualizar" fallback={null}>
-                          <button className="btn btn--ghost btn--sm" onClick={() => abrirEdicion(r)}>
-                            Editar
-                          </button>
-                        </ConPermiso>
-                        {!esRolSistema(r.id_rol) && (
-                          <ConPermiso recurso="roles" accion="eliminar" fallback={null}>
-                            <button className="btn btn--danger btn--sm" onClick={() => setRolAEliminar(r)}>
-                              Eliminar
-                            </button>
-                          </ConPermiso>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))
+        <DataTable
+          columnas={[
+            { clave: 'nombre_rol', etiqueta: 'Nombre', render: (r) => <strong>{r.nombre_rol}</strong> },
+            {
+              clave: 'estado',
+              etiqueta: 'Estado',
+              filtrable: true,
+              valor: (r) => (r.activo ? 'Activo' : 'Inactivo'),
+              render: (r) => (
+                <span className={`badge badge--${r.activo ? 'mint' : 'gray'}`}>
+                  {r.activo ? 'Activo' : 'Inactivo'}
+                </span>
+              ),
+            },
+            {
+              clave: 'tipo',
+              etiqueta: 'Tipo',
+              filtrable: true,
+              valor: (r) => (esRolSistema(r.id_rol) ? 'Sistema' : 'Personalizado'),
+              render: (r) => (
+                <span className={`badge badge--${esRolSistema(r.id_rol) ? 'violet' : 'gray'}`}>
+                  {esRolSistema(r.id_rol) ? 'Sistema' : 'Personalizado'}
+                </span>
+              ),
+            },
+          ]}
+          filas={roles}
+          claveFila="id_rol"
+          cargando={cargando}
+          vacio="No hay roles definidos."
+          acciones={(r) => (
+            <>
+              {puedeEditarMatriz && (
+                <button className="btn btn--outline btn--sm" onClick={() => irAMatriz(r.id_rol)}>
+                  Permisos
+                </button>
               )}
-            </tbody>
-          </table>
-        </div>
+              <ConPermiso recurso="roles" accion="actualizar" fallback={null}>
+                <button className="btn btn--ghost btn--sm" onClick={() => abrirEdicion(r)}>
+                  Editar
+                </button>
+              </ConPermiso>
+              {!esRolSistema(r.id_rol) && (
+                <ConPermiso recurso="roles" accion="eliminar" fallback={null}>
+                  <button className="btn btn--danger btn--sm" onClick={() => setRolAEliminar(r)}>
+                    Eliminar
+                  </button>
+                </ConPermiso>
+              )}
+            </>
+          )}
+        />
       </section>
 
       {/* ====================== MATRIZ DE PERMISOS ====================== */}

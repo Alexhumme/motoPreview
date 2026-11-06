@@ -26,34 +26,7 @@
   margin: 0;
 }
 
-/* Table */
-.inventario .table-wrap {
-  border-radius: var(--radius-cards);
-  border: 1px solid var(--color-bone);
-  background: var(--surface-card);
-  overflow: hidden;
-}
-
-.inventario .table th,
-.inventario .table td {
-  padding: var(--space-16) var(--space-20);
-}
-
-.inventario .table th {
-  font-size: var(--text-caption);
-  padding-bottom: var(--space-12);
-  padding-top: var(--space-12);
-}
-
-.inventario .table td {
-  font-size: var(--text-body);
-}
-
-.item-name strong {
-  font-family: var(--font-ui);
-  font-weight: var(--weight-semibold);
-  color: var(--color-paper);
-}
+/* La tabla la dibuja DataTable: búsqueda, orden, filtros y paginación. */
 
 .item-sku {
   font-family: var(--font-mono);
@@ -61,13 +34,13 @@
   color: var(--color-mist-gray);
   background: var(--surface-canvas);
   padding: var(--space-4) var(--space-8);
-  border-radius: var(--radius-nav);
+  border-radius: 0;
 }
 
 .stock-value,
 .stock-min {
-  font-family: var(--font-display);
-  font-weight: var(--weight-semibold);
+  font-family: var(--font-mono);
+  font-weight: var(--weight-bold);
   font-size: var(--text-body);
   color: var(--color-paper);
 }
@@ -91,12 +64,12 @@
   margin: 0;
   padding: var(--space-12) var(--space-16);
   background: var(--surface-canvas);
-  border: 1px solid var(--color-bone);
-  border-radius: var(--radius-inputs);
+  border: var(--linea);
+  border-radius: 0;
 }
 
 .stock-actual strong {
-  font-family: var(--font-display);
+  font-family: var(--font-mono);
   font-weight: var(--weight-bold);
   font-size: var(--text-body-lg);
   color: var(--color-paper);
@@ -115,17 +88,6 @@
 @media (max-width: 720px) {
   .inventario-title {
     font-size: var(--text-heading-lg);
-  }
-
-  .inventario .table-wrap {
-    border-radius: 0;
-    border-left: none;
-    border-right: none;
-  }
-
-  .inventario .table th,
-  .inventario .table td {
-    padding: var(--space-12) var(--space-16);
   }
 
   .modal {
