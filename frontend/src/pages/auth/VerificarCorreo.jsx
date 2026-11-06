@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import { CheckCircle2, XCircle } from 'lucide-react';
 import { verificarCorreo } from '../../services/auth';
 import './Auth.css';
+import SiteHeader from '../../components/buttons/SiteHeader';
 
 export default function VerificarCorreo() {
   const { token } = useParams();
@@ -15,12 +17,7 @@ export default function VerificarCorreo() {
 
   return (
     <div className="auth-page">
-      <header className="auth-nav">
-        <Link to="/" className="brand" aria-label="MotoPreview home">
-          <span className="brand-mark">↗</span>
-          <span className="brand-text">Moto<span>Preview</span></span>
-        </Link>
-      </header>
+      <SiteHeader />
 
       <main className="auth-main">
         <div className="auth-card">
@@ -37,14 +34,14 @@ export default function VerificarCorreo() {
 
           {estado === 'exito' && (
             <div className="auth-success">
-              <span className="success-icon" aria-hidden="true">✓</span>
+              <span className="success-icon" aria-hidden="true"><CheckCircle2 size={26} /></span>
               <p>¡Tu correo quedó verificado! Ya puedes iniciar sesión con normalidad.</p>
             </div>
           )}
 
           {estado === 'error' && (
             <div className="auth-error-state">
-              <span className="error-icon" aria-hidden="true">✕</span>
+              <span className="error-icon" aria-hidden="true"><XCircle size={26} /></span>
               <p>Este enlace no es válido o ya fue usado.</p>
             </div>
           )}

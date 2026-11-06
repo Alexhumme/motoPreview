@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
+import { ArrowLeft, CheckCircle2, KeyRound } from 'lucide-react';
 import { restablecerPassword } from '../../services/auth';
 import './Auth.css';
+import SiteHeader from '../../components/buttons/SiteHeader';
 
 export default function RestablecerPassword() {
   const { token } = useParams();
@@ -39,12 +41,7 @@ export default function RestablecerPassword() {
 
   return (
     <div className="auth-page">
-      <header className="auth-nav">
-        <Link to="/" className="brand" aria-label="MotoPreview home">
-          <span className="brand-mark">↗</span>
-          <span className="brand-text">Moto<span>Preview</span></span>
-        </Link>
-      </header>
+      <SiteHeader />
 
       <main className="auth-main">
         <div className="auth-card">
@@ -54,7 +51,7 @@ export default function RestablecerPassword() {
 
           {exito ? (
             <div className="auth-success">
-              <span className="success-icon" aria-hidden="true">✓</span>
+              <span className="success-icon" aria-hidden="true"><CheckCircle2 size={26} /></span>
               <p>¡Listo! Tu contraseña fue actualizada. Redirigiendo al inicio de sesión...</p>
             </div>
           ) : (
@@ -99,13 +96,17 @@ export default function RestablecerPassword() {
                 className="btn btn--primary btn--full"
                 disabled={enviando}
               >
-                {enviando ? 'Guardando...' : 'Restablecer contraseña'}
+                {enviando
+                  ? 'Guardando...'
+                  : <><KeyRound size={16} aria-hidden="true" /> Restablecer contraseña</>}
               </button>
             </form>
           )}
 
           <p className="auth-footer-link">
-            <Link to="/login" className="link link--muted">← Volver a iniciar sesión</Link>
+            <Link to="/login" className="link link--muted">
+              <ArrowLeft size={14} aria-hidden="true" /> Volver a iniciar sesión
+            </Link>
           </p>
         </div>
       </main>

@@ -134,7 +134,7 @@ flowchart TB
 | Componente | Propósito | Props / notas |
 |---|---|---|
 | `SiteHeader` | Cabecera pública: nav, sesión, contador del carrito | Acceso a "Panel" solo para ADMIN/VENDEDOR |
-| `Footer` | Pie con columnas Explora / Cuenta / Ayuda | Ancla `/#como-funciona` |
+| `Footer` | Pie con columnas Explora / Cuenta / Ayuda | Ancla |
 | `AdminLayout` | Shell del panel: sidebar por rol, perfil con iniciales, logout, `<Outlet />` | Añade Accesorios/Usuarios/Tienda si es admin |
 | `RutaProtegida` | Guard de rutas | `children`, `rolesPermitidos?: UUID[]` |
 | `Visor3D` | Visor 3D three.js | `url`, `nombreAccesorio`; incluye `ErrorBoundary3D` y fallback |

@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { ShieldCheck, UserPlus } from 'lucide-react';
 import { useAuth } from '../../context/authContexto';
 import { registrarCliente } from '../../services/auth';
 import { ROL_CLIENTE, TIENDA_PRINCIPAL } from '../../utils/constants/roles';
 import './Auth.css';
+import SiteHeader from '../../components/buttons/SiteHeader';
 
 export default function Registro() {
   const [usu_nombre, setNombre] = useState('');
@@ -31,12 +33,7 @@ export default function Registro() {
 
   return (
     <div className="auth-page">
-      <header className="auth-nav">
-        <Link to="/" className="brand" aria-label="MotoPreview home">
-          <span className="brand-mark">↗</span>
-          <span className="brand-text">Moto<span>Preview</span></span>
-        </Link>
-      </header>
+      <SiteHeader />
 
       <main className="auth-main">
         <div className="auth-card">
@@ -105,7 +102,9 @@ export default function Registro() {
               className="btn btn--primary btn--full"
               disabled={enviando}
             >
-              {enviando ? 'Creando cuenta...' : 'Crear cuenta →'}
+              {enviando
+                ? 'Creando cuenta...'
+                : <><UserPlus size={16} aria-hidden="true" /> Crear cuenta</>}
             </button>
           </form>
 
@@ -117,7 +116,9 @@ export default function Registro() {
             Ya tengo una cuenta
           </Link>
 
-          <p className="auth-note">✓ Tus datos están protegidos.</p>
+          <p className="auth-note">
+            <ShieldCheck size={14} aria-hidden="true" /> Tus datos están protegidos.
+          </p>
         </div>
       </main>
 

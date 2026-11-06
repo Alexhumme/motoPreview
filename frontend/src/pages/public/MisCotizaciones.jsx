@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { ArrowLeft, FileText } from 'lucide-react';
 import { useAuth } from '../../context/authContexto';
 import { obtenerCotizaciones } from '../../services/cotizaciones';
 import SiteHeader from '../../components/buttons/SiteHeader';
@@ -65,13 +66,15 @@ export default function MisCotizaciones() {
       <SiteHeader />
       <div className="mis-cotizaciones">
         <header className="mis-cotizaciones-header">
-        <Link to="/" className="btn btn--ghost btn--sm">← Volver al catálogo</Link>
+        <Link to="/" className="btn btn--ghost btn--sm">
+          <ArrowLeft size={15} aria-hidden="true" /> Volver al catálogo
+        </Link>
         <h1 className="mis-cotizaciones-title">Mis cotizaciones</h1>
       </header>
 
       {cotizaciones.length === 0 && (
         <div className="cotizaciones-empty">
-          <span className="empty-icon" aria-hidden="true">▣</span>
+          <FileText className="empty-icon" size={48} strokeWidth={1.5} aria-hidden="true" />
           <h2 className="empty-title">Todavía no has enviado ninguna cotización.</h2>
           <p className="empty-subtitle">Ve al <Link to="/configurador">configurador</Link> o al <Link to="/">catálogo</Link> para armar una.</p>
         </div>
@@ -83,7 +86,9 @@ export default function MisCotizaciones() {
             <header className="cotizacion-header" onClick={() => alternarExpandida(cot.id_cotizacion)}>
               <div className="cotizacion-main">
                 <div className="cotizacion-moto">
-                  {cot.moto?.modelo_moto?.marca_moto?.marca_nombre} {cot.moto?.modelo_moto?.modelo_nombre}
+                  {cot.moto
+                    ? `${cot.moto.modelo_moto?.marca_moto?.marca_nombre || ''} ${cot.moto.modelo_moto?.modelo_nombre || ''}`.trim()
+                    : 'Sin moto específica'}
                 </div>
                 <div className="cotizacion-meta">
                   <span className="cotizacion-fecha">

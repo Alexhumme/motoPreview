@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { ArrowLeft, ArrowRight, SearchX, ShoppingCart } from 'lucide-react';
 import api from '../../services/api';
 import { obtenerModelo3dPorAccesorio } from '../../services/modelos3d';
 import Visor3D from '../../components/Visor3D';
@@ -42,12 +43,14 @@ export default function Visualizador() {
   if (!accesorio) {
     return (
       <div className="visualizador-page">
-        <Link to="/" className="btn btn--ghost btn--sm">← Volver al catálogo</Link>
+        <Link to="/" className="btn btn--ghost btn--sm">
+          <ArrowLeft size={15} aria-hidden="true" /> Volver al catálogo
+        </Link>
         <div className="visualizador-empty">
-          <span className="empty-icon" aria-hidden="true">⌕</span>
+          <SearchX className="empty-icon" size={48} strokeWidth={1.5} aria-hidden="true" />
           <h1 className="empty-title">Accesorio no encontrado</h1>
           <p className="empty-subtitle">La pieza que buscas no existe o ha sido eliminada.</p>
-          <Link to="/" className="btn btn--primary">Volver al catálogo →</Link>
+          <Link to="/" className="btn btn--primary">Volver al catálogo <ArrowRight size={16} aria-hidden="true" /></Link>
         </div>
       </div>
     );
@@ -62,7 +65,9 @@ export default function Visualizador() {
   return (
     <div className="visualizador-page">
       <SiteHeader />
-      <Link to="/" className="btn btn--ghost btn--sm visualizador-back">← Volver al catálogo</Link>
+      <Link to="/" className="btn btn--ghost btn--sm visualizador-back">
+        <ArrowLeft size={15} aria-hidden="true" /> Volver al catálogo
+      </Link>
 
       <div className="visualizador-layout">
         <Visor3D url={modelo3d?.url_modelo3d} nombreAccesorio={accesorio.acc_nombre} />
@@ -77,7 +82,9 @@ export default function Visualizador() {
           </div>
           <span className="visualizador-price">{precioFormateado}</span>
 
-          <button className="btn btn--primary btn--full">Agregar al carrito</button>
+          <button className="btn btn--primary btn--full">
+            <ShoppingCart size={16} aria-hidden="true" /> Agregar al carrito
+          </button>
         </div>
       </div>
     </div>

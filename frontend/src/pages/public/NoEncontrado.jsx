@@ -1,10 +1,13 @@
 import { Link } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
 import './NoEncontrado.css';
 
 export default function NoEncontrado() {
   return (
     <div className="no-encontrado-page">
-      <Link to="/" className="btn btn--ghost btn--sm">← Volver al catálogo</Link>
+      <Link to="/" className="btn btn--ghost btn--sm">
+        <ArrowLeft size={15} aria-hidden="true" /> Volver al catálogo
+      </Link>
 
       <div className="not-found">
         <span className="not-found-code">404</span>

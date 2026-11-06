@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { LogIn, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../../context/authContexto';
 import { ROL_ADMIN, ROL_SUPERADMIN, ROL_VENDEDOR } from '../../utils/constants/roles';
 import './Auth.css';
@@ -137,7 +138,9 @@ export default function Login() {
               className="btn btn--primary btn--full"
               disabled={enviando}
             >
-              {enviando ? 'Ingresando...' : 'Iniciar sesión →'}
+              {enviando
+                ? 'Ingresando...'
+                : <><LogIn size={16} aria-hidden="true" /> Iniciar sesión</>}
             </button>
           </form>
 
@@ -149,7 +152,9 @@ export default function Login() {
             Crear una cuenta gratis
           </Link>
 
-          <p className="auth-note">✓ Tus datos están protegidos.</p>
+          <p className="auth-note">
+            <ShieldCheck size={14} aria-hidden="true" /> Tus datos están protegidos.
+          </p>
         </div>
       </main>
 

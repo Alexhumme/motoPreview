@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { ArrowRight, CheckCircle2, Clock, Mail, MapPin, Phone, Send } from 'lucide-react';
 import SiteHeader from '../../components/buttons/SiteHeader';
 import Footer from '../../components/forms/Footer';
 import './Contacto.css';
@@ -44,28 +45,28 @@ export default function Contacto() {
             <h2 className="contacto-info-title">Hablemos</h2>
             <ul className="contacto-lista">
               <li>
-                <span className="contacto-icono" aria-hidden="true">✉</span>
+                <span className="contacto-icono" aria-hidden="true"><Mail size={18} /></span>
                 <div>
                   <strong>Correo</strong>
                   <a href="mailto:contacto@motopreview.com">contacto@motopreview.com</a>
                 </div>
               </li>
               <li>
-                <span className="contacto-icono" aria-hidden="true">☎</span>
+                <span className="contacto-icono" aria-hidden="true"><Phone size={18} /></span>
                 <div>
                   <strong>Teléfono / WhatsApp</strong>
                   <a href="tel:+573000000000">+57 300 000 0000</a>
                 </div>
               </li>
               <li>
-                <span className="contacto-icono" aria-hidden="true">⌂</span>
+                <span className="contacto-icono" aria-hidden="true"><Clock size={18} /></span>
                 <div>
                   <strong>Horario</strong>
                   <span>Lunes a sábado, 8:00 a.m. – 6:00 p.m.</span>
                 </div>
               </li>
               <li>
-                <span className="contacto-icono" aria-hidden="true">⌂</span>
+                <span className="contacto-icono" aria-hidden="true"><MapPin size={18} /></span>
                 <div>
                   <strong>Cobertura</strong>
                   <span>Envíos a toda Colombia. Tiendas asociadas en Medellín, Bogotá y Cali.</span>
@@ -74,14 +75,14 @@ export default function Contacto() {
             </ul>
             <div className="contacto-ayuda">
               <p>¿Buscas una pieza específica?</p>
-              <Link to="/catalogo" className="btn btn--primary">Explorar el catálogo →</Link>
+              <Link to="/catalogo" className="btn btn--primary">Explorar el catálogo <ArrowRight size={16} aria-hidden="true" /></Link>
             </div>
           </article>
 
           <article className="card contacto-form-card">
             {enviado ? (
               <div className="contacto-exito">
-                <span className="contacto-exito-icono" aria-hidden="true">✓</span>
+                <span className="contacto-exito-icono" aria-hidden="true"><CheckCircle2 size={26} /></span>
                 <h2>¡Mensaje enviado!</h2>
                 <p>Gracias por escribirnos, {form.nombre}. Te responderemos pronto a {form.email}.</p>
                 <button className="btn btn--ghost" onClick={() => { setEnviado(false); setForm({ nombre: '', email: '', mensaje: '' }); }}>
@@ -122,7 +123,9 @@ export default function Contacto() {
                     required
                   />
                 </label>
-                <button type="submit" className="btn btn--primary btn--full">Enviar mensaje</button>
+                <button type="submit" className="btn btn--primary btn--full">
+                  Enviar mensaje <Send size={16} aria-hidden="true" />
+                </button>
               </form>
             )}
           </article>
