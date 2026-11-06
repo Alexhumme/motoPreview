@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { ArrowUpRight, Plus, Rotate3d, Sparkles } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 import ImagenProducto from '../ImagenProducto';
 import './AccesorioCard.css';
@@ -27,16 +28,18 @@ export default function AccesorioCard({ accesorio }) {
       <div className="product-content">
         {/* Badge "Disponible" - posición absoluta dentro del contenido */}
         {disponible && (
-          <span className="product-badge badge--mint">✦ Disponible</span>
+          <span className="product-badge badge--mint">
+            <Sparkles size={11} aria-hidden="true" /> Disponible
+          </span>
         )}
 
-        <span className="product-code">{accesorio.codigo_sku || 'Sin SKU'}</span>
-
-        <span className="product-view">Vista 3D →</span>
+        <span className="product-view">
+          <Rotate3d size={13} aria-hidden="true" /> Vista 3D
+          <ArrowUpRight size={13} aria-hidden="true" />
+        </span>
 
         <div className="product-meta">
           <span>{accesorio.categoria_accesorio?.cat_nombre || 'Accesorios'}</span>
-          <span>● Compatible</span>
         </div>
 
         <h3 className="product-title">{accesorio.acc_nombre}</h3>
@@ -54,7 +57,7 @@ export default function AccesorioCard({ accesorio }) {
             onClick={() => agregarItem(accesorio)}
             aria-label={`Agregar ${accesorio.acc_nombre} al carrito`}
           >
-            +
+            <Plus size={15} aria-hidden="true" />
           </button>
         </div>
       </div>

@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { Menu, X, Sun, Moon } from 'lucide-react';
+import { Menu, X, Sun, Moon, ShoppingCart, UserCog, LogIn } from 'lucide-react';
 import { useAuth } from '../../context/authContexto';
 import { usePermiso } from '../../context/usePermiso';
 import { useCart } from '../../context/CartContext';
@@ -42,7 +42,7 @@ export default function SiteHeader() {
     <header className="site-header">
       <div className="site-header-inner">
         <Link to="/" className="brand" aria-label="MotoPreview home">
-          <span className="brand-mark">↗</span>
+          <span className="brand-mark" aria-hidden="true" />
           <span className="brand-text">Moto<span>Preview</span></span>
         </Link>
 
@@ -93,24 +93,28 @@ export default function SiteHeader() {
           {usuario ? (
             <div className="header-account">
               {/* El personal va a su panel; los clientes, a sus cotizaciones */}
-              <Link
-                to={esSuperAdmin() ? '/admin/permisos' : esStaff ? '/admin' : '/mis-cotizaciones'}
-              >
-                {usuario.usu_nombre?.split(' ')[0]}
-              </Link>
+
               {mostrarPanel &&
                 (esSuperAdmin() ? (
-                  <Link to="/admin/permisos">Seguridad</Link>
+                  <Link to={esSuperAdmin() ? '/admin/permisos' : esStaff ? '/admin' : '/mis-cotizaciones'}
+                    className='btn btn--ghost'>
+                    <UserCog size={16} aria-hidden="true" />
+                    <span className="cart-label">Panel {usuario.usu_nombre?.split(' ')[0]}</span>
+                  </Link>
                 ) : (
                   <Link to="/admin">Panel</Link>
                 ))}
-              <button onClick={logout} className="btn btn--ghost btn--sm">Salir</button>
+              <button onClick={logout} className="btn btn--ghost">Salir</button>
             </div>
           ) : (
-            <Link to="/login" className="btn btn--brand btn--sm">Ingresar</Link>
+            <Link to="/login" className="btn btn--brand ">
+              <LogIn size={16} aria-hidden="true" />
+              <span className="cart-label">Ingresar</span>
+
+            </Link>
           )}
-          <Link to="/carrito" className="btn cart-button">
-            <span>▣</span>
+          <Link to="/carrito" className="cart-button btn ">
+            <ShoppingCart size={16} aria-hidden="true" />
             <span className="cart-label">Carrito</span>
             {totalItems > 0 && <span className="cart-badge">{totalItems}</span>}
           </Link>
@@ -124,20 +128,8 @@ export default function SiteHeader() {
             <Link to="/catalogo" className={`mobile-nav-link${location.pathname === '/catalogo' ? ' mobile-nav-link--active' : ''}`}>Catálogo</Link>
             <Link to="/configurador" className={`mobile-nav-link${location.pathname === '/configurador' ? ' mobile-nav-link--active' : ''}`}>Configurador</Link>
             <Link to="/contacto" className={`mobile-nav-link${location.pathname === '/contacto' ? ' mobile-nav-link--active' : ''}`}>Contactanos</Link>
-            <a href="/#como-funciona" className="mobile-nav-link">Cómo funciona</a>
-            <Link to="/carrito" className="mobile-nav-link">Carrito {totalItems > 0 && `(${totalItems})`}</Link>
             {usuario ? (
-              <>
-                <Link to={esSuperAdmin() ? '/admin/permisos' : esStaff ? '/admin' : '/mis-cotizaciones'} className="mobile-nav-link">
-                  {usuario.usu_nombre?.split(' ')[0]}
-                </Link>
-                {mostrarPanel && (esSuperAdmin() ? (
-                  <Link to="/admin/permisos" className="mobile-nav-link">Seguridad</Link>
-                ) : (
-                  <Link to="/admin" className="mobile-nav-link">Panel</Link>
-                ))}
-                <button onClick={logout} className="mobile-nav-link mobile-nav-link--button">Salir</button>
-              </>
+              <button onClick={logout} className="mobile-nav-link mobile-nav-link--button">Salir</button>
             ) : (
               <Link to="/login" className="mobile-nav-link mobile-nav-link--brand">Ingresar</Link>
             )}

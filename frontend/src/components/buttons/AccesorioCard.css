@@ -4,7 +4,6 @@
 
 .product-card {
   background: var(--surface-card);
-  border: 1px solid var(--color-bone);
   border-radius: var(--radius-cards);
   display: flex;
   flex-direction: column;
@@ -93,6 +92,9 @@
   position: absolute;
   top: var(--space-12);
   left: var(--space-12);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
   font-family: var(--font-ui);
   font-size: var(--text-caption);
   font-weight: var(--weight-medium);
@@ -116,6 +118,9 @@
 }
 
 .product-view {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
   font-family: var(--font-display);
   font-size: var(--text-caption);
   font-weight: var(--weight-medium);

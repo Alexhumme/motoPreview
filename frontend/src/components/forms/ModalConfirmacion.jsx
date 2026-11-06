@@ -1,3 +1,4 @@
+import { X } from 'lucide-react';
 import './ModalConfirmacion.css';
 
 export default function ModalConfirmacion({
@@ -17,7 +18,9 @@ export default function ModalConfirmacion({
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <header className="modal-header">
           <h2 id="modal-confirm-titulo" className="modal-title">{titulo}</h2>
-          <button className="modal-close" onClick={onCancelar} aria-label="Cerrar">✕</button>
+          <button className="modal-close" onClick={onCancelar} aria-label="Cerrar">
+            <X size={16} aria-hidden="true" />
+          </button>
         </header>
 
         <p className="modal-text">{mensaje}</p>

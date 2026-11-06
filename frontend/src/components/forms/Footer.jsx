@@ -7,7 +7,7 @@ export default function Footer() {
       <div className="site-footer-main">
         <div className="footer-brand">
           <Link to="/" className="brand" aria-label="MotoPreview home">
-            <span className="brand-mark">↗</span>
+            <span className="brand-mark" aria-hidden="true" />
             <span className="brand-text">Moto<span>Preview</span></span>
           </Link>
           <p className="footer-desc">
@@ -29,7 +29,6 @@ export default function Footer() {
           </div>
           <div className="footer-link-group">
             <small className="footer-label">Ayuda</small>
-            <a href="/#como-funciona" className="footer-link">Cómo funciona</a>
             <Link to="/carrito" className="footer-link">Cotización</Link>
           </div>
         </div>
