@@ -23,8 +23,8 @@ flowchart LR
     classDef uc fill:#ecfdf5,stroke:#059669,stroke-width:1.5px,color:#111
 
     subgraph Sistema["Sistema MotoPreview"]
-        UC1(["UC-01 Explorar catálogo<br/>de accesorios"])
-        UC2(["UC-02 Buscar y filtrar<br/>accesorios"])
+        UC1(["UC-01 Explorar catálogo<br/>de productos"])
+        UC2(["UC-02 Buscar y filtrar<br/>productos por capas"])
         UC3(["UC-03 Visualizar accesorio<br/>en 3D"])
         UC4(["UC-04 Configurar moto y ver<br/>accesorios compatibles"])
         UC5(["UC-05 Gestionar carrito<br/>local"])
@@ -85,17 +85,18 @@ flowchart LR
 |---|---|
 | **Actor** | Cliente anónimo / registrado |
 | **Precondición** | Ninguna |
-| **Flujo principal** | Visita `/` → se cargan `GET /accesorios` y `GET /categorias` → se muestra el grid (8 por página) con `AccesorioCard` |
+| **Flujo principal** | Visita `/` (portada) y entra a `/catalogo` → se carga `GET /productos` (todos los productos, accesorios o no, en forma plana) → se muestra el grid (12 por página) con `AccesorioCard` |
 | **Flujo alternativo** | Error de API → se muestra mensaje de error en la página |
 | **Postcondición** | El usuario conoce el catálogo disponible |
-| **Caso relacionado** | `Catalogo.jsx` |
+| **Caso relacionado** | `CatalogoCompleto.jsx` (grid) y `Catalogo.jsx` (portada) |
 
-### UC-02 — Buscar y filtrar accesorios
+### UC-02 — Buscar y filtrar productos
 | | |
 |---|---|
 | **Actor** | Cliente |
 | **Precondición** | UC-01 cargado |
-| **Flujo principal** | Seleccionar pestaña de categoría **o** escribir en el buscador → filtrado client-side sobre `acc_nombre`, `acc_descripcion`, `codigo_sku` → paginación Anterior/Siguiente |
+| **Flujo principal** | Elegir **categoría de producto** y, dentro de ella, el **tipo de accesorio** (chips con contador) **o** escribir en el buscador / ajustar el rango de precio / cambiar el orden → filtrado client-side sobre `acc_nombre`, `acc_descripcion`, `codigo_sku` → paginación Anterior/Siguiente |
+| **Flujo alternativo** | La categoría elegida no tiene accesorios con tipo → la capa "Tipo" se oculta y el filtro de tipo se suelta solo |
 | **Postcondición** | Lista acotada de resultados |
 
 ### UC-03 — Visualizar accesorio en 3D
@@ -113,7 +114,7 @@ flowchart LR
 |---|---|
 | **Actor** | Cliente |
 | **Precondición** | Existencia de motos y compatibilidades en BD |
-| **Flujo principal** | `/configurador` → seleccionar moto → `GET /compatibilidad/modelo/:id` → lista filtrada por chips de categoría → botón **+** agrega al carrito → barra inferior con total y enlace a `/carrito` |
+| **Flujo principal** | `/configurador` → seleccionar moto → `GET /compatibilidad/modelo/:id` → lista filtrada por dos capas (categoría de accesorio → tipo de accesorio, ambas con contador) → botón **+** agrega al carrito → barra inferior con total y enlace a `/carrito` |
 | **Postcondición** | Carrito con accesorios compatibles con la moto elegida |
 
 ### UC-05 — Gestionar carrito local

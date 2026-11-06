@@ -44,9 +44,9 @@ describe('AccesorioCard', () => {
     expect(screen.queryByText(/Disponible/)).not.toBeInTheDocument();
   });
 
-  it('muestra el código SKU', () => {
+  it('no muestra el código SKU en la tarjeta', () => {
     render(<AccesorioCard accesorio={accesorio} />, { wrapper: Wrapper });
-    expect(screen.getByText('SKU-001')).toBeInTheDocument();
+    expect(screen.queryByText('SKU-001')).not.toBeInTheDocument();
   });
 
   it('al hacer clic en el botón de agregar, el carrito recibe el item', () => {

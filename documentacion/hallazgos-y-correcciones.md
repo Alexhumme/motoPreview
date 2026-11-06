@@ -83,3 +83,13 @@ si la base no está configurada o no conecta.
 | Cada ruta salía dos veces en el schema (con y sin `/`). | Helper `_api()` con una sola `re_path` de slash opcional en `motopreview/urls.py` (53 paths en vez de 103). |
 | Entrar directo a `/admin/login/` redirigía a `/accounts/profile/` → 404; `/admin` sin barra también era 404. | `LOGIN_URL`/`LOGIN_REDIRECT_URL = "/admin/"` y redirect explícito `/admin` → `/admin/` (con `APPEND_SLASH=False`). |
 | El enlace de recuperación usaba `?token=` pero el frontend espera path params. | Enlaces estilo `PASSWORD_RESET_URL/<token>` (igual que `/verificar/:token` y `/restablecer/:token`). |
+
+## Capas de clasificación del catálogo y del configurador (sesión actual)
+
+| Hallazgo | Corrección |
+| --- | --- |
+| El catálogo (`/catalogo`) listaba **categorías de accesorio** como si fueran categorías de producto: leía `GET /accesorios` (solo `es_accesorio=True`) y alimentaba sus tabs con `GET /categorias`. Cualquier producto que no es accesorio quedaba invisible. | La vidriera ahora consume `GET /api/productos`, que devuelve **todos** los productos en la forma plana de `AccesorioSerializer`, y la capa principal del filtro usa `categoria_producto`. Ver §4-bis de [04-api-rest.md](04-api-rest.md) y §3.1 de [07-vistas-frontend.md](07-vistas-frontend.md). |
+| El configurador solo exponía la capa de `categoria_accesorio`; el API devolvía `id_tipo` sin nombre, así que la capa de **tipo de accesorio** era inutilizable en la interfaz. | `AccesorioSerializer` expone las tres capas anidadas (`categoria_producto`, `categoria_accesorio`, `tipo_accesorio`) con sus ids y nombres; el configurador filtra por categoría → tipo sobre los accesorios compatibles. |
+| Cada filtro ofrecía opciones fijas aunque no tuvieran resultados (chips que llevaban a listas vacías) y las capas no se reseteaban al cambiar de contexto. | Las opciones se derivan de los datos ya cargados con `agruparOpciones` (`frontend/src/utils/filtros.js`), siempre con conteo; la capa específica se calcula sobre la general y se suelta sola cuando desaparece de las opciones. Se eliminó la petición a `/categorias` en ambas vistas. |
+| `AccesorioDetail` (`/api/accesorios/<uuid>`) filtraba `es_accesorio=True`, por lo que `/visualizador/:id` fallaba con 404 en productos comunes. | El detalle ya no filtra por `es_accesorio`: la ficha plana es la misma para accesorios y no accesorios. |
+| Filtros de catálogo y configurador duplicados en CSS y JSX, con chips de gran tamaño. | Componente compartido `components/filters/FiltroCapa.jsx` (píldoras de 28 px, etiqueta con divisor, contador tabular, scroller con máscara en móvil) usado por ambas vistas. |

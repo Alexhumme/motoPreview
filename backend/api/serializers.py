@@ -73,16 +73,26 @@ class ProductSerializer(serializers.ModelSerializer):
 
 
 class AccesorioSerializer(serializers.Serializer):
-    """Representa un accesorio (fila de Product con accesorio=TRUE) en la
-    forma plana que consume el frontend: id_accesorio, acc_nombre, acc_precio,
-    id_categoria y la categoría anidada."""
+    """Representa una fila de `producto` en la forma plana que consume la
+    vidriera: id_accesorio, acc_nombre, acc_precio y las tres capas de
+    clasificación (categoría de producto, categoría de accesorio y tipo).
+
+    Sirve igual para accesorios que para productos comunes: `es_accesorio`
+    indica cuál de las dos capas aplica.
+    """
 
     def to_representation(self, instance):
         categoria = instance.categoria_accesorio
+        categoria_producto = instance.categoria_producto
+        tipo = instance.tipo_accesorio
         return {
             "id_accesorio": str(instance.id_producto),
-            "id_categoria": str(instance.categoria_accesorio_id) if instance.categoria_accesorio_id else None,
-            "id_tipo": str(instance.tipo_accesorio_id) if instance.tipo_accesorio_id else None,
+            "es_accesorio": instance.es_accesorio,
+            "id_categoria": str(categoria.id_categoria) if categoria else None,
+            "id_categoria_producto": (
+                str(categoria_producto.id_categoria_producto) if categoria_producto else None
+            ),
+            "id_tipo": str(tipo.id_tipo) if tipo else None,
             "acc_nombre": instance.nombre,
             "acc_descripcion": instance.descripcion,
             "acc_precio": str(instance.precio) if instance.precio is not None else None,
@@ -91,6 +101,14 @@ class AccesorioSerializer(serializers.Serializer):
             "peso": str(instance.peso) if instance.peso is not None else None,
             "color": None,
             "codigo_sku": instance.codigo_sku,
+            "categoria_producto": (
+                {
+                    "id_categoria_producto": str(categoria_producto.id_categoria_producto),
+                    "nombre": categoria_producto.nombre,
+                }
+                if categoria_producto
+                else None
+            ),
             "categoria_accesorio": (
                 {
                     "id_categoria": str(categoria.id_categoria),
@@ -99,6 +117,9 @@ class AccesorioSerializer(serializers.Serializer):
                 }
                 if categoria
                 else None
+            ),
+            "tipo_accesorio": (
+                {"id_tipo": str(tipo.id_tipo), "nombre": tipo.nombre} if tipo else None
             ),
             "producto": ProductSerializer(instance).data,
         }

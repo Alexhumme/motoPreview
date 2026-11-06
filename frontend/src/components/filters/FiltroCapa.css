@@ -1,0 +1,116 @@
+/* ==========================================================================
+   FILTRO POR CAPAS — chips compactos reutilizados por catálogo y configurador
+   ========================================================================== */
+
+.filtro-capa {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  min-width: 0;
+}
+
+.filtro-capa__label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6);
+  flex-shrink: 0;
+  min-width: 92px;
+  padding-right: var(--space-12);
+  border-right: 1px solid var(--color-ink-border);
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: var(--weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-mist-gray);
+}
+
+.filtro-capa__chips {
+    display: flex;
+    overflow-x: auto;
+    width: 100%;
+    gap: var(--space-8);
+    padding-bottom: var(--space-4);
+    scrollbar-width: none;
+    mask-image: linear-gradient(to right, black calc(100% - 32px), transparent);
+}
+
+.filtro-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6);
+  height: 28px;
+  padding: 0 var(--space-10);
+  background: var(--surface-elevated);
+  border: 1px solid transparent;
+  border-radius: var(--radius-pills);
+  color: var(--color-mist-gray);
+  font-family: var(--font-ui);
+  font-size: var(--text-caption);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-body);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+
+.filtro-chip:hover {
+  color: var(--color-paper);
+  border-color: var(--color-bone);
+  transform: translateY(-1px);
+}
+
+.filtro-chip:focus-visible {
+  outline: none;
+  border-color: var(--color-brand-orange);
+  box-shadow: 0 0 0 3px rgba(242, 106, 33, 0.18);
+}
+
+.filtro-chip--activa {
+  background: var(--color-brand-orange);
+  border-color: var(--color-brand-orange);
+  color: var(--color-obsidian-plum);
+  font-weight: var(--weight-semibold);
+  box-shadow: 0 4px 14px rgba(242, 106, 33, 0.24);
+}
+
+.filtro-chip__count {
+  font-style: normal;
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0;
+  opacity: 0.6;
+  font-variant-numeric: tabular-nums;
+}
+
+.filtro-chip--activa .filtro-chip__count {
+  opacity: 0.75;
+}
+
+@media (max-width: 720px) {
+  .filtro-capa {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-8);
+  }
+
+  .filtro-capa__label {
+    min-width: 0;
+    padding-right: 0;
+    border-right: none;
+  }
+
+  .filtro-capa__chips {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    width: 100%;
+    padding-bottom: var(--space-4);
+    scrollbar-width: none;
+    mask-image: linear-gradient(to right, black calc(100% - 32px), transparent);
+  }
+
+  .filtro-capa__chips::-webkit-scrollbar {
+    display: none;
+  }
+}

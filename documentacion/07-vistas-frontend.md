@@ -13,12 +13,14 @@ flowchart TB
     classDef admin fill:#fef2f2,stroke:#dc2626,color:#111
     classDef guard fill:#fffbeb,stroke:#d97706,color:#111
 
-    ROOT(["/  ·  Catálogo (Catálogo.jsx)<br/>hero + filtros + grid + paginación<br/>sección #como-funciona"]):::pub
+    ROOT(["/  ·  Portada (Catálogo.jsx)<br/>hero + estadísticas + CTA + #como-funciona"]):::pub
 
     ROOT --> H1["SiteHeader / Footer"]:::pub
+    ROOT --> CAT["/catalogo<br/>CatalogoCompleto.jsx<br/>filtros por capas + grid + paginación"]:::pub
     ROOT --> VIS["/visualizador/:id<br/>Visualizador.jsx + Visor3D"]:::pub
     ROOT --> CONF["/configurador<br/>Configurador.jsx"]:::pub
     ROOT --> CART["/carrito<br/>Carrito.jsx"]:::pub
+    ROOT --> CON["/contacto<br/>Contacto.jsx"]:::pub
     ROOT --> NOT["* → NoEncontrado.jsx (404)"]:::pub
 
     LOGIN["/login<br/>Login.jsx"]:::auth
@@ -58,9 +60,11 @@ flowchart TB
 
 | Ruta | Página | Archivo | Protección |
 |---|---|---|---|
-| `/` | Catálogo | `pages/public/Catalogo.jsx` | Pública |
+| `/` | Portada | `pages/public/Catalogo.jsx` | Pública |
+| `/catalogo` | Catálogo completo | `pages/public/CatalogoCompleto.jsx` | Pública |
 | `/carrito` | Carrito | `pages/public/Carrito.jsx` | Pública (el envío exige sesión) |
 | `/configurador` | Configurador | `pages/public/Configurador.jsx` | Pública |
+| `/contacto` | Contacto | `pages/public/Contacto.jsx` | Pública |
 | `/visualizador/:id` | Visualizador 3D | `pages/public/Visualizador.jsx` | Pública |
 | `/mis-cotizaciones` | Mis cotizaciones | `pages/public/MisCotizaciones.jsx` | Sesión |
 | `/login` | Login | `pages/auth/Login.jsx` | Pública |
@@ -98,12 +102,35 @@ flowchart TB
 
 | Página | Datos que carga | Interacciones principales |
 |---|---|---|
-| **Catálogo** `/` | `GET /accesorios`, `GET /categorias` | Tabs de categoría, buscador (nombre/descripción/SKU), paginación 8/pp, grid de `AccesorioCard`, hero con CTA a `/configurador`, sección `#como-funciona` |
+| **Portada** `/` | — (página estática) | `SiteHeader`, hero con CTA a `/configurador` y ancla `#catalogo`, estadísticas, bloque de llamada a `/catalogo`, sección `#como-funciona`, `Footer` |
+| **Catálogo completo** `/catalogo` | `GET /productos` (todos los productos, accesorios o no) | Filtros por capas (`Categoría` de producto + `Tipo` de accesorio), buscador (nombre/descripción/SKU), orden (relevancia/precio/nombre), rango de precio, grid de `AccesorioCard`, paginación 12/pp |
 | **Carrito** `/carrito` | `GET /motos` | Cantidades −/+, eliminar línea, subtotal/total en COP (`Intl` es-CO), selector de moto, botón **Enviar** → `POST /cotizaciones` → `vaciarCarrito()` |
-| **Configurador** `/configurador` | `GET /motos`, `GET /categorias`, `GET /compatibilidad/modelo/:id` | Select de moto, panel de preview (imagen/datos/badge "✓ Compatible"), chips de categoría (`useMemo`), lista con botones `+`/`✓`, barra inferior con píldoras del carrito y total |
-| **Visualizador** `/visualizador/:id` | `GET /accesorios/:id`, `GET /modelos-3d/accesorio/:id` | `Visor3D` (three.js) + ficha técnica; tolera ausencia de modelo 3D |
+| **Configurador** `/configurador` | `GET /motos`, `GET /compatibilidad/modelo/:id` | Select de moto, panel de preview (imagen/datos/badge "✓ Compatible"), **dos capas de filtro** (categoría de accesorio → tipo) derivadas de la lista compatible, lista con botones `+`/`✓`, barra inferior con píldoras del carrito y total |
+| **Visualizador** `/visualizador/:id` | `GET /accesorios/:id`, `GET /modelos-3d/accesorio/:id` | `Visor3D` (three.js) + ficha técnica; tolera ausencia de modelo 3D y abre productos que no son accesorio |
+| **Contacto** `/contacto` | — (formulario local) | Nombre, correo y mensaje con estado de envío |
 | **Mis cotizaciones** `/mis-cotizaciones` | `GET /cotizaciones` (filtro por `id_usuario` en cliente) | Tarjetas expandibles con estado, moto, fecha, total, detalle y observaciones |
 | **404** `*` | — | Botón "Volver al catálogo" |
+
+#### Filtros por capas del catálogo y del configurador
+
+Ambas vistas usan el mismo mecanismo, derivado **de los datos ya cargados** (ninguna
+petición extra a `/categorias` o `/tipos-accesorio`):
+
+| Pieza | Rol |
+|---|---|
+| `components/filters/FiltroCapa.jsx` (+ su `.css`) | Una capa de filtrado: etiqueta + píldoras compactas con contador, chip **Todas** y `aria-pressed`; se oculta sola cuando no tiene opciones |
+| `utils/filtros.js` | `TODAS` (centinela) y `agruparOpciones(lista, claveDe, etiquetaDe)` → `[{valor, etiqueta, conteo}]` ordenado por etiqueta, descartando grupos vacíos |
+| `CatalogoCompleto.jsx` | `Categoría` = `categoria_producto` · `Tipo` = `tipo_accesorio` (esta segunda capa solo aparece si la categoría elegida trae accesorios con tipo) |
+| `Configurador.jsx` | `Categoría` = `categoria_accesorio` · `Tipo` = `tipo_accesorio`, sobre los accesorios compatibles de la moto |
+
+- **Encadenado:** la capa específica se calcula sobre el resultado de la general, así que
+  ningún chip lleva a una lista vacía; si la combinación deja de existir, el filtro
+  específico se suelta solo (`useEffect` → `TODAS`).
+- **Conteos en vivo:** cada píldora muestra cuántos productos hay con ese valor después
+  de aplicar búsqueda, precio y capas previas.
+- **Estética:** píldoras de 28 px con divisor capilar por capa, activo en naranja de marca
+  y contador en cifras tabulares; en ≤720 px la etiqueta sube y las píldoras se deslizan
+  en horizontal con máscara de desvanecido.
 
 ### 3.2 Páginas de autenticación
 
@@ -140,7 +167,8 @@ flowchart TB
 | `Visor3D` | Visor 3D three.js | `url`, `nombreAccesorio`; incluye `ErrorBoundary3D` y fallback |
 | `BannerConexion` | Banner fijo "sin conexión al servidor" | Se muestra si `conectado === false` |
 | `ModalConfirmacion` | Modal genérico de confirmación | `abierto`, `titulo`, `mensaje`, `peligroso`, `onConfirmar`, `onCancelar` |
-| `AccesorioCard` | Tarjeta de producto | Enlaza a `/visualizador/:id`; botón `+` deshabilitado si `acc_estado !== 'disponible'` |
+| `AccesorioCard` | Tarjeta de producto (accesorio o no) | Enlaza a `/visualizador/:id`; `+` deshabilitado si `acc_estado !== 'disponible'`; muestra `categoria_producto` y, si `es_accesorio`, la etiqueta de `categoria_accesorio` (el SKU no se pinta en la tarjeta: solo alimenta la búsqueda) |
+| `FiltroCapa` | Una capa del filtro por capas (catálogo y configurador) | `etiqueta`, `icono`, `opciones` (`[{valor, etiqueta, conteo}]`), `valor`, `onChange`, `todasEtiqueta`, `ariaLabel`; devuelve `null` si no hay opciones. Las opciones se construyen con `agruparOpciones` de `utils/filtros.js` |
 
 ---
 
@@ -172,6 +200,7 @@ Orden de providers en `main.jsx`:
 | `motos.js` | `obtenerMotos` |
 | `modelos3d.js` | `obtenerModelo3dPorAccesorio` |
 | `accesorios.js` | `obtenerAccesorios`, `obtenerCategorias`, `crearAccesorio`, `actualizarAccesorio` |
+| `productos.js` | `obtenerProductos` (vidriera: todos los productos, en forma plana) |
 | `compatibilidad.js` | `obtenerAccesoriosCompatibles`, `obtenerModelosCompatibles`, `marcarCompatible`, `quitarCompatible` |
 | `inventario.js` | `obtenerInventario`, `registrarMovimiento` |
 | `cotizaciones.js` | `obtenerCotizaciones`, `crearCotizacion`, `cambiarEstadoCotizacion` |

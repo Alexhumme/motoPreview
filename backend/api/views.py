@@ -1009,7 +1009,7 @@ class CompatibilityByModelo(DatabaseGuardMixin):
             Product.objects.filter(
                 es_accesorio=True, categoria_accesorio_id__in=list(categorias)
             )
-            .select_related("categoria_accesorio", "tipo_accesorio")
+            .select_related("categoria_producto", "categoria_accesorio", "tipo_accesorio")
             .order_by("nombre")
         )
         return Response(AccesorioSerializer(productos, many=True).data)
@@ -1719,7 +1719,15 @@ class ProductCollection(ResourceCollection):
     lectura_sin_matriz = True
 
     def get_queryset(self):
-        return Product.objects.select_related("categoria_producto").all()
+        return Product.objects.select_related(
+            "categoria_producto", "categoria_accesorio", "tipo_accesorio"
+        ).all()
+
+    def get(self, request):
+        # La vidriera lista TODOS los productos (accesorio o no) en la forma plana
+        # que consumen tarjeta, carrito y cotización; la escritura sigue el
+        # contrato de ProductSerializer.
+        return paginate_response(request, self.get_queryset(), AccesorioSerializer)
 
 
 class ProductDetail(ResourceDetail):
@@ -1727,8 +1735,15 @@ class ProductDetail(ResourceDetail):
     serializer_class = ProductSerializer
     permiso_recurso = "productos"
     not_found_message = "Producto no encontrado."
-    queryset_relaciones = ("categoria_producto",)
+    queryset_relaciones = ("categoria_producto", "categoria_accesorio", "tipo_accesorio")
     lectura_sin_matriz = True
+
+    def get(self, request, pk):
+        try:
+            instance = self.get_object(pk)
+        except Product.DoesNotExist:
+            return Response({"error": self.not_found_message}, status=status.HTTP_404_NOT_FOUND)
+        return Response(AccesorioSerializer(instance).data)
 
 
 class ProductCategoryCollection(ResourceCollection):
@@ -1804,9 +1819,11 @@ class AccesorioDetail(DatabaseGuardMixin):
     lectura_sin_matriz = True
 
     def get_object(self, pk):
+        # Sin filtro por `es_accesorio`: el visualizador abre cualquier producto
+        # del catálogo, y la ficha plana es la misma para accesorios y no accesorios.
         return Product.objects.select_related(
             "categoria_producto", "categoria_accesorio", "tipo_accesorio"
-        ).get(pk=pk, es_accesorio=True)
+        ).get(pk=pk)
 
     def get(self, request, pk):
         try:

@@ -5,18 +5,16 @@ erDiagram
     SUBSCRIPTION_PLAN ||--o{ STORE : "define"
 
     PRODUCT_CATEGORY ||--o{ PRODUCT : "agrupa"
-    PRODUCT ||--o{ ACCESSORY : "materializa"
-    ACCESSORY_CATEGORY ||--o{ ACCESSORY : "clasifica"
-    ACCESSORY_TYPE ||--o{ ACCESSORY : "tipifica"
-    ACCESSORY ||--o{ MODEL_3D : "posee"
-    ACCESSORY ||--o{ INVENTORY : "se stockea"
+    ACCESSORY_CATEGORY ||--o{ PRODUCT : "clasifica"
+    ACCESSORY_TYPE ||--o{ PRODUCT : "tipifica"
     PRODUCT ||--o{ INVENTORY : "se stockea"
     STORE ||--o{ INVENTORY : "posee"
 
     MOTORCYCLE_BRAND ||--o{ MOTORCYCLE_MODEL : "tiene"
     MOTORCYCLE_MODEL ||--o{ MOTORCYCLE : "genera"
     MOTORCYCLE_MODEL ||--o{ ACCESSORY_COMPATIBILITY : "acepta"
-    ACCESSORY ||--o{ ACCESSORY_COMPATIBILITY : "encaja en"
+    ACCESSORY_CATEGORY ||--o{ ACCESSORY_COMPATIBILITY : "encaja en"
+    ACCESSORY_CATEGORY ||--o{ MODEL_3D : "modela"
 
     MOVEMENT_TYPE ||--o{ INVENTORY_MOVEMENT : "clasifica"
     INVENTORY ||--o{ INVENTORY_MOVEMENT : "registra"
@@ -26,14 +24,14 @@ erDiagram
     USER ||--o{ QUOTE : "solicita"
     MOTORCYCLE ||--o{ QUOTE : "refiere"
     QUOTE ||--o{ QUOTE_DETAIL : "detalla"
-    ACCESSORY ||--o{ QUOTE_DETAIL : "incluye"
+    ACCESSORY_CATEGORY ||--o{ QUOTE_DETAIL : "incluye"
     QUOTE ||--o{ QUOTE_STATUS_HISTORY : "historial"
     USER ||--o{ QUOTE_STATUS_HISTORY : "audita"
 
     USER ||--o{ CONFIGURATION : "guarda"
     MOTORCYCLE ||--o{ CONFIGURATION : "configura"
     CONFIGURATION ||--o{ CONFIGURATION_DETAIL : "detalla"
-    ACCESSORY ||--o{ CONFIGURATION_DETAIL : "añade"
+    ACCESSORY_CATEGORY ||--o{ CONFIGURATION_DETAIL : "añade"
 
     USER ||--o{ TOKEN : "recibe"
 
@@ -92,6 +90,10 @@ erDiagram
         text imagen
         text codigo_sku UK
         decimal precio
+        bool accesorio "es_accesorio"
+        uuid id_categoria_accesorio FK
+        uuid id_tipo_accesorio FK
+        decimal peso
     }
     ACCESSORY_CATEGORY {
         uuid id_categoria PK
@@ -103,17 +105,9 @@ erDiagram
         text nombre
         text descripcion
     }
-    ACCESSORY {
-        uuid id_accesorio PK
-        uuid id_categoria FK
-        uuid id_producto FK
-        uuid id_tipo FK
-        decimal peso
-        text color
-    }
     MODEL_3D {
         uuid id_modelo3d PK
-        uuid id_accesorio FK
+        uuid id_accesorio FK "id de categoria_accesorio"
         text url_modelo3d
         text formato_archivo
         text estado_visualizacion
@@ -141,7 +135,7 @@ erDiagram
     }
     ACCESSORY_COMPATIBILITY {
         uuid id_compatibilidad PK
-        uuid id_accesorio FK "unique"
+        uuid id_categoria_accesorio FK "unique"
         uuid id_modelo_moto FK "unique"
         int anio_desde
         int anio_hasta
@@ -150,7 +144,6 @@ erDiagram
         uuid id_inventario PK
         uuid id_tienda FK "unique+producto"
         uuid id_producto FK
-        uuid id_accesorio FK
         int stock_actual
         int stock_minimo
         enum estado_inventario "normal | bajo | agotado"
@@ -185,7 +178,7 @@ erDiagram
     QUOTE_DETAIL {
         uuid id_detalle_cotizacion PK
         uuid id_cotizacion FK
-        uuid id_accesorio FK
+        uuid id_categoria_accesorio FK
         int cantidad
         decimal precio_unitario
         decimal subtotal
@@ -206,7 +199,7 @@ erDiagram
     CONFIGURATION_DETAIL {
         uuid id_detalle PK
         uuid id_configuracion FK
-        uuid id_accesorio FK
+        uuid id_categoria_accesorio FK
         int cantidad
     }
     TOKEN {

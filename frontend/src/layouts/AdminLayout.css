@@ -298,7 +298,6 @@
 }
 
 .admin-sidebar {
-  width: 232px;
   flex-shrink: 0;
   padding: var(--space-20) var(--space-12);
   border-right: 1px solid var(--color-ink-border);

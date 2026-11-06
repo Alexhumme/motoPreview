@@ -84,7 +84,7 @@ export default function Carrito() {
             <header className="page-heading">
               <div>
                 <div className="eyebrow"><span className="eyebrow-dot" aria-hidden="true"></span>Tu selección</div>
-                <h1 className="cart-title">Carrito de accesorios.</h1>
+                <h1 className="cart-title">Carrito de productos.</h1>
               </div>
               <span className="cart-count-badge">{totalItems} {totalItems === 1 ? 'pieza' : 'piezas'}</span>
             </header>
@@ -105,9 +105,8 @@ export default function Carrito() {
                         <ImagenProducto src={item.accesorio.imagen} />
                       </div>
                       <div className="cart-line-info">
-                        <span>{item.accesorio.categoria_accesorio?.cat_nombre || 'Accesorio'}</span>
+                        <span>{item.accesorio.categoria_producto?.nombre || item.accesorio.categoria_accesorio?.cat_nombre || 'Producto'}</span>
                         <h3 className="cart-line-name">{item.accesorio.acc_nombre}</h3>
-                        <small className="cart-line-sku">{item.accesorio.codigo_sku}</small>
                       </div>
                       <div className="quantity-control">
                         <button

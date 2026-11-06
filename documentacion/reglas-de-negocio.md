@@ -35,9 +35,10 @@ QUOTE_TRANSITIONS = {
 
 ## Cotizaciones (calc_quote)
 
-`services.calc_quote(items, accessories, max_items=100)`:
+`services.calc_quote(items, productos, max_items=100)`:
 
-- Precio unitario desde `accesorio.producto.precio`.
+- El `id_accesorio` de cada ítem **es** el `id_producto` (no existe tabla `accesorio`).
+- Precio unitario desde `producto.precio`.
 - Subtotal = precio × cantidad, total = suma de subtotales.
 - Lanza `BusinessError` si un accesorio no tiene precio configurado o si el
   número de líneas supera `QUOTE_MAX_ITEMS` (por defecto 100).

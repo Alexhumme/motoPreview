@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Check, ChevronDown, Plus, Settings2, ShoppingCart, Trash2, X } from 'lucide-react';
+import { ArrowRight, Check, ChevronDown, Layers, Plus, Shapes, Settings2, ShoppingCart, Trash2, X } from 'lucide-react';
 import { obtenerMotos } from '../../services/motos';
 import { obtenerAccesoriosCompatibles } from '../../services/compatibilidad';
-import { obtenerCategorias } from '../../services/accesorios';
 import { useCart } from '../../context/CartContext';
 import SiteHeader from '../../components/buttons/SiteHeader';
 import ImagenProducto from '../../components/ImagenProducto';
+import FiltroCapa from '../../components/filters/FiltroCapa';
+import { TODAS, agruparOpciones } from '../../utils/filtros';
 import './Configurador.css';
 
 const money = (value) => new Intl.NumberFormat('es-CO', {
@@ -15,12 +16,17 @@ const money = (value) => new Intl.NumberFormat('es-CO', {
   maximumFractionDigits: 0,
 }).format(value);
 
+const categoriaDe = (accesorio) => accesorio.id_categoria;
+const nombreCategoria = (accesorio) => accesorio.categoria_accesorio?.cat_nombre || 'Sin categoría';
+const tipoDe = (accesorio) => accesorio.id_tipo;
+const nombreTipo = (accesorio) => accesorio.tipo_accesorio?.nombre || 'Sin tipo';
+
 export default function Configurador() {
   const { items, agregarItem, eliminarItem, vaciarCarrito, totalItems, totalPrecio } = useCart();
   const [motos, setMotos] = useState([]);
   const [idMotoSeleccionada, setIdMotoSeleccionada] = useState('');
-  const [categorias, setCategorias] = useState([]);
-  const [categoriaActiva, setCategoriaActiva] = useState('todas');
+  const [categoriaActiva, setCategoriaActiva] = useState(TODAS);
+  const [tipoActivo, setTipoActivo] = useState(TODAS);
   const [accesoriosCompatibles, setAccesoriosCompatibles] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [cargandoAccesorios, setCargandoAccesorios] = useState(false);
@@ -29,9 +35,8 @@ export default function Configurador() {
   useEffect(() => {
     async function cargarInicial() {
       try {
-        const [datosMotos, datosCategorias] = await Promise.all([obtenerMotos(), obtenerCategorias()]);
+        const datosMotos = await obtenerMotos();
         setMotos(datosMotos);
-        setCategorias(datosCategorias);
         if (datosMotos.length) setIdMotoSeleccionada(datosMotos[0].id_moto);
       } catch {
         setError('No se pudieron cargar las opciones del configurador.');
@@ -60,12 +65,47 @@ export default function Configurador() {
   }, [idMotoSeleccionada, motos]);
 
   const motoActual = motos.find((moto) => moto.id_moto === idMotoSeleccionada);
-  const accesoriosFiltrados = useMemo(
-    () => categoriaActiva === 'todas'
-      ? accesoriosCompatibles
-      : accesoriosCompatibles.filter((item) => item.id_categoria === categoriaActiva),
+
+  // Capa 1: categorías de accesorio compatibles con la moto.
+  const opcionesCategoria = useMemo(
+    () => agruparOpciones(accesoriosCompatibles, categoriaDe, nombreCategoria),
+    [accesoriosCompatibles]
+  );
+  const porCategoria = useMemo(
+    () =>
+      categoriaActiva === TODAS
+        ? accesoriosCompatibles
+        : accesoriosCompatibles.filter((accesorio) => accesorio.id_categoria === categoriaActiva),
     [accesoriosCompatibles, categoriaActiva]
   );
+  // Capa 2: tipos disponibles dentro de la categoría activa.
+  const opcionesTipo = useMemo(
+    () => agruparOpciones(porCategoria, tipoDe, nombreTipo),
+    [porCategoria]
+  );
+  const accesoriosFiltrados = useMemo(
+    () =>
+      tipoActivo === TODAS
+        ? porCategoria
+        : porCategoria.filter((accesorio) => accesorio.id_tipo === tipoActivo),
+    [porCategoria, tipoActivo]
+  );
+
+  // Al cambiar de moto, la selección anterior puede haber quedado sin resultados.
+  useEffect(() => {
+    if (categoriaActiva !== TODAS && !opcionesCategoria.some((opcion) => opcion.valor === categoriaActiva)) {
+      setCategoriaActiva(TODAS);
+    }
+  }, [opcionesCategoria, categoriaActiva]);
+
+  useEffect(() => {
+    if (tipoActivo !== TODAS && !opcionesTipo.some((opcion) => opcion.valor === tipoActivo)) {
+      setTipoActivo(TODAS);
+    }
+  }, [opcionesTipo, tipoActivo]);
+
+  const hayFiltrosActivos = categoriaActiva !== TODAS || tipoActivo !== TODAS;
+
   const motoNombre = motoActual
     ? `${motoActual.modelo_moto?.marca_moto?.marca_nombre || ''} ${motoActual.modelo_moto?.modelo_nombre || ''}`.trim()
     : 'Selecciona una motocicleta';
@@ -152,19 +192,42 @@ export default function Configurador() {
               <span className="result-count">{accesoriosFiltrados.length} resultados</span>
             </div>
 
-            <div className="filter-scroll">
-              <button className={`filter-chip${categoriaActiva === 'todas' ? ' filter-chip--active' : ''}`} onClick={() => setCategoriaActiva('todas')}>
-                Todos
-              </button>
-              {categorias.map((categoria) => (
+            <div className="compatible-filters">
+              <FiltroCapa
+                etiqueta="Categoría"
+                icono={<Layers size={12} aria-hidden="true" />}
+                opciones={opcionesCategoria}
+                valor={categoriaActiva}
+                onChange={setCategoriaActiva}
+                todasEtiqueta="Todas"
+                ariaLabel="Filtrar accesorios por categoría"
+              />
+
+              {opcionesTipo.length > 0 && (
+                <FiltroCapa
+                  etiqueta="Tipo"
+                  icono={<Shapes size={12} aria-hidden="true" />}
+                  opciones={opcionesTipo}
+                  valor={tipoActivo}
+                  onChange={setTipoActivo}
+                  todasEtiqueta="Todos los tipos"
+                  ariaLabel="Filtrar accesorios por tipo"
+                />
+              )}
+
+              {hayFiltrosActivos && (
                 <button
-                  key={categoria.id_categoria}
-                  className={`filter-chip${categoriaActiva === categoria.id_categoria ? ' filter-chip--active' : ''}`}
-                  onClick={() => setCategoriaActiva(categoria.id_categoria)}
+                  type="button"
+                  className="compatible-filters-clear"
+                  onClick={() => {
+                    setCategoriaActiva(TODAS);
+                    setTipoActivo(TODAS);
+                  }}
                 >
-                  {categoria.cat_nombre}
+                  <X size={12} aria-hidden="true" />
+                  Quitar filtros
                 </button>
-              ))}
+              )}
             </div>
 
             <div className="compatible-list">
@@ -175,7 +238,7 @@ export default function Configurador() {
                 </div>
               )}
               {!cargandoAccesorios && accesoriosFiltrados.length === 0 && (
-                <p className="list-state list-empty">No hay accesorios compatibles en esta categoría.</p>
+                <p className="list-state list-empty">No hay accesorios compatibles con esta selección.</p>
               )}
               {!cargandoAccesorios && accesoriosFiltrados.map((item) => {
                 const agregado = items.some((line) => line.accesorio.id_accesorio === item.id_accesorio);
@@ -186,7 +249,13 @@ export default function Configurador() {
                     </div>
                     <div className="compatible-info">
                       <strong>{item.acc_nombre}</strong>
-                      <span>{item.categoria_accesorio?.cat_nombre} · {money(item.acc_precio)}</span>
+                      <span>
+                        {[item.categoria_accesorio?.cat_nombre, item.tipo_accesorio?.nombre]
+                          .filter(Boolean)
+                          .join(' · ')}
+                        {' · '}
+                        {money(item.acc_precio)}
+                      </span>
                     </div>
                     <button
                       className={`btn btn--sm ${agregado ? 'btn--primary' : 'btn--outline'}`}

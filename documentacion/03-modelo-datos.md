@@ -1,6 +1,6 @@
 # 03 — Modelo de Datos (Tablas)
 
-La base de datos es **PostgreSQL (Neon)** y su esquema **no está gestionado por Django**: los 21 modelos heredan de `DatabaseModel` (abstracta con `managed = False`), por lo que Django **no genera ni ejecuta migraciones**. Las tablas se crean/modifican con SQL directo.
+La base de datos es **PostgreSQL (Neon)** y su esquema **no está gestionado por Django**: los 27 modelos heredan de `DatabaseModel` (abstracta con `managed = False`), por lo que Django **no genera ni ejecuta migraciones**. Las tablas se crean/modifican con SQL directo.
 
 **Convenciones:**
 - Claves primarias: `UUID` (`uuid.uuid4`) salvo la intermedia `usuario_rol` (PK compuesta).
@@ -19,17 +19,15 @@ erDiagram
     STORE ||--o{ USER : "emplea"
     SUBSCRIPTION_PLAN ||--o{ STORE : "define"
     PRODUCT_CATEGORY ||--o{ PRODUCT : "agrupa"
-    PRODUCT ||--o{ ACCESSORY : "materializa"
-    ACCESSORY_CATEGORY ||--o{ ACCESSORY : "clasifica"
-    ACCESSORY_TYPE ||--o{ ACCESSORY : "tipifica"
-    ACCESSORY ||--o{ MODEL_3D : "posee"
-    ACCESSORY ||--o{ INVENTORY : "se stockea"
+    ACCESSORY_CATEGORY ||--o{ PRODUCT : "clasifica"
+    ACCESSORY_TYPE ||--o{ PRODUCT : "tipifica"
     PRODUCT ||--o{ INVENTORY : "se stockea"
     STORE ||--o{ INVENTORY : "posee"
     MOTORCYCLE_BRAND ||--o{ MOTORCYCLE_MODEL : "tiene"
     MOTORCYCLE_MODEL ||--o{ MOTORCYCLE : "genera"
     MOTORCYCLE_MODEL ||--o{ ACCESSORY_COMPATIBILITY : "acepta"
-    ACCESSORY ||--o{ ACCESSORY_COMPATIBILITY : "encaja en"
+    ACCESSORY_CATEGORY ||--o{ ACCESSORY_COMPATIBILITY : "encaja en"
+    ACCESSORY_CATEGORY ||--o{ MODEL_3D : "modela"
     MOVEMENT_TYPE ||--o{ INVENTORY_MOVEMENT : "clasifica"
     INVENTORY ||--o{ INVENTORY_MOVEMENT : "registra"
     USER ||--o{ INVENTORY_MOVEMENT : "ejecuta"
@@ -37,13 +35,13 @@ erDiagram
     USER ||--o{ QUOTE : "solicita"
     MOTORCYCLE ||--o{ QUOTE : "refiere"
     QUOTE ||--o{ QUOTE_DETAIL : "detalla"
-    ACCESSORY ||--o{ QUOTE_DETAIL : "incluye"
+    ACCESSORY_CATEGORY ||--o{ QUOTE_DETAIL : "incluye"
     QUOTE ||--o{ QUOTE_STATUS_HISTORY : "historial"
     USER ||--o{ QUOTE_STATUS_HISTORY : "audita"
     USER ||--o{ CONFIGURATION : "guarda"
     MOTORCYCLE ||--o{ CONFIGURATION : "configura"
     CONFIGURATION ||--o{ CONFIGURATION_DETAIL : "detalla"
-    ACCESSORY ||--o{ CONFIGURATION_DETAIL : "añade"
+    ACCESSORY_CATEGORY ||--o{ CONFIGURATION_DETAIL : "añade"
     USER ||--o{ TOKEN : "recibe"
 ```
 
@@ -111,37 +109,41 @@ Semilla del frontend: `Entrada` (`cccc...0001`), `Salida` (`cccc...0002`), `Ajus
 
 ---
 
-## 3. Tablas de productos y accesorios
+## 3. Tabla de productos (accesorios y no accesorios)
 
 ### `producto`
 | Columna | Tipo | Restricción / nota |
 |---|---|---|
 | `id_producto` | UUID | PK |
-| `nombre` | Text | **Nombre visible del accesorio** |
+| `nombre` | Text | **Nombre visible del producto** (lo lee la vidriera como `acc_nombre`) |
 | `descripcion` | Text | null |
 | `estado` | Char(50) | default `disponible` |
-| `id_categoria_producto` | UUID | FK → `categoria_producto` |
+| `id_categoria_producto` | UUID | FK → `categoria_producto`; **capa de categoría del catálogo** |
 | `imagen` | Text | null |
 | `codigo_sku` | Text | **UNIQUE**, null |
-| `precio` | Decimal(10,2) | null; **debe existir** para poder cotizar el accesorio |
-
-### `accesorio`
-| Columna | Tipo | Restricción / nota |
-|---|---|---|
-| `id_accesorio` | UUID | PK |
-| `id_categoria` | UUID | FK → `categoria_accesorio` |
-| `id_producto` | UUID | FK → `producto` (**nombre, precio, SKU e imagen se derivan de aquí**) |
-| `id_tipo` | UUID | FK → `tipo_accesorio` |
+| `precio` | Decimal(10,2) | null; **debe existir** para poder cotizar el producto |
+| `accesorio` | Bool | default `False`; expuesto como `es_accesorio` — dice si el producto es un accesorio de moto |
+| `id_categoria_accesorio` | UUID | FK → `categoria_accesorio`; **capa que gobierna la compatibilidad** (solo accesorios) |
+| `id_tipo_accesorio` | UUID | FK → `tipo_accesorio`; **capa de tipo** dentro de la categoría (solo accesorios) |
 | `peso` | Decimal(6,2) | null (kg) |
-| `color` | Text | null |
 
-> Patrón importante: `AccessorySerializer` sincroniza `accesorio` **y** `producto` en `create`/`update`; en lectura expone `acc_nombre`, `acc_precio`, `codigo_sku`, `imagen`, `acc_estado` provenientes de `producto`.
+> **Una sola tabla para todo el catálogo.** La antigua tabla `accesorio` fue eliminada: sus
+> campos (`peso`, tipo y categoría) viven ahora en `producto`, y `es_accesorio` decide si
+> aplican las capas de accesorio. Por eso el catálogo puede listar **todos** los productos
+> y filtrar por categorías de producto, mientras el configurador combina categoría
+> de accesorio + tipo (ver [07 — Vistas del frontend](07-vistas-frontend.md)).
+>
+> **Compatibilidad por categoría**, no por pieza: `accesorio_modelo_moto` enlaza
+> `categoria_accesorio` ↔ `modelo_moto`, así que un accesorio es compatible con una moto
+> cuando su `id_categoria_accesorio` está marcado como compatible con ese modelo.
+> `Model3DByAccessory` y `CompatibilityCollection` traducen el `id_accesorio` (id de
+> producto) que envía el frontend al id de su categoría.
 
 ### `modelo_3d`
 | Columna | Tipo | Nota |
 |---|---|---|
 | `id_modelo3d` | UUID | PK |
-| `id_accesorio` | UUID | FK → `accesorio` |
+| `id_accesorio` | UUID | FK → `categoria_accesorio` (el nombre de la columna es histórico; apunta a la categoría) |
 | `url_modelo3d` | Text | URL del archivo **GLTF/GLB** |
 | `formato_archivo` | Text | null |
 | `estado_visualizacion` | Text | null |
@@ -174,12 +176,12 @@ Semilla del frontend: `Entrada` (`cccc...0001`), `Salida` (`cccc...0002`), `Ajus
 | Columna | Tipo | Restricción |
 |---|---|---|
 | `id_compatibilidad` | UUID | PK |
-| `id_accesorio` | UUID | FK → `accesorio`, NOT NULL |
+| `id_categoria_accesorio` | UUID | FK → `categoria_accesorio`, null (la categoría que hace compatible al accesorio) |
 | `id_modelo_moto` | UUID | FK → `modelo_moto`, NOT NULL |
 | `anio_desde` | Int | null (rango de años) |
 | `anio_hasta` | Int | null |
 
-**`UNIQUE (id_accesorio, id_modelo_moto)`** → un `POST /api/compatibilidad` duplicado devuelve **409**.
+**`UNIQUE (id_categoria_accesorio, id_modelo_moto)`** → un `POST /api/compatibilidad` duplicado devuelve **409**. El panel sigue enviando `id_accesorio` (id de producto); la vista lo traduce a la categoría del producto antes de crear el registro.
 
 ---
 
@@ -232,8 +234,7 @@ En la práctica **un rol por usuario**: `update_user_role()` ejecuta `DELETE` + 
 |---|---|---|
 | `id_inventario` | UUID | PK |
 | `id_tienda` | UUID | FK → `tienda` |
-| `id_producto` | UUID | FK → `producto` |
-| `id_accesorio` | UUID | FK → `accesorio` (resuelto desde el producto) |
+| `id_producto` | UUID | FK → `producto` (accesorio o no; `es_accesorio` se lee del producto) |
 | `stock_actual` | Int | default 0 |
 | `stock_minimo` | Int | default 0 |
 | `estado_inventario` | `inventario_estado_enum` | `normal` \| `bajo` \| `agotado` (recalculado) |
@@ -276,7 +277,7 @@ Regla de estado: `agotado` si `stock_actual ≤ 0`; `bajo` si `≤ stock_minimo`
 |---|---|---|
 | `id_detalle_cotizacion` | UUID | PK |
 | `id_cotizacion` | UUID | FK → `cotizacion` |
-| `id_accesorio` | UUID | FK → `accesorio` |
+| `id_categoria_accesorio` | UUID | FK → `categoria_accesorio` (categoría del producto cotizado) |
 | `cantidad` | Int | ≥ 1 |
 | `precio_unitario` | Decimal(10,2) | tomado de `producto.precio` al crear |
 | `subtotal` | Decimal(10,2) | `cantidad × precio_unitario` |
@@ -309,7 +310,7 @@ Estas tablas existen en los modelos pero **no tienen serializer ni ruta** en la 
 |---|---|
 | `id_detalle` | UUID (PK) |
 | `id_configuracion` | FK → `configuracion` |
-| `id_accesorio` | FK → `accesorio` |
+| `id_categoria_accesorio` | FK → `categoria_accesorio` |
 | `cantidad` | Int (default 1) |
 
 ### `token`
@@ -330,14 +331,14 @@ Estas tablas existen en los modelos pero **no tienen serializer ni ruta** en la 
 |---|---|
 | Seguridad / acceso | `usuario`, `rol`, `usuario_rol` |
 | Suscripciones | `tienda`, `plan_subscripcion` |
-| Catálogo de accesorios | `producto`, `categoria_producto`, `accesorio`, `categoria_accesorio`, `tipo_accesorio` |
+| Catálogo de productos | `producto`, `categoria_producto`, `categoria_accesorio`, `tipo_accesorio` |
 | Visualización 3D | `modelo_3d` |
 | Motos y compatibilidad | `marca_moto`, `modelo_moto`, `moto`, `accesorio_modelo_moto` |
 | Inventario | `inventario`, `movimiento_inventario`, `tipo_movimiento` |
 | Cotizaciones | `cotizacion`, `detalle_cotizacion`, `cotizacion_estado_hist` |
 | Reservas (sin API) | `configuracion`, `configuracion_detalle`, `token` |
 
-**Total: 21 tablas.**
+**Total: 23 tablas de dominio + 4 de la matriz RBAC (`recurso`, `accion`, `recurso_accion`, `rol_recurso`, ver [08 — Seguridad](08-seguridad.md)) = 27 modelos.**
 
 ---
 

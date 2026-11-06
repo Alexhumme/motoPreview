@@ -39,7 +39,10 @@ export default function AccesorioCard({ accesorio }) {
         </span>
 
         <div className="product-meta">
-          <span>{accesorio.categoria_accesorio?.cat_nombre || 'Accesorios'}</span>
+          <span>{accesorio.categoria_producto?.nombre || 'Sin categoría'}</span>
+          {accesorio.es_accesorio && (
+            <span className="product-tag">{accesorio.categoria_accesorio?.cat_nombre || 'Accesorio'}</span>
+          )}
         </div>
 
         <h3 className="product-title">{accesorio.acc_nombre}</h3>

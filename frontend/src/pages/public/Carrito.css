@@ -173,13 +173,6 @@
   text-overflow: ellipsis;
 }
 
-.cart-line-sku {
-  font-family: var(--font-mono);
-  font-size: var(--text-caption);
-  color: var(--color-brand-orange-soft);
-  margin: 0;
-}
-
 .quantity-control {
   display: flex;
   align-items: center;

@@ -111,10 +111,10 @@
 | Roles | `GET/POST /api/roles` · `.../roles/<uuid>` | — |
 | Tiendas | `GET/POST /api/tiendas` · `.../tiendas/<uuid>` | — |
 | Modelos 3D | `GET/POST /api/modelos-3d` · `.../modelos-3d/<uuid>` | — |
-| Accesorios | `GET/POST /api/accesorios` · `.../accesorios/<uuid>` | — |
-| Productos | `GET/POST /api/productos` · `.../productos/<uuid>` | — |
-| Categorías de producto | `GET/POST /api/categorias-producto` · `.../categorias-producto/<uuid>` | — |
-| Tipos de accesorio | `GET/POST /api/tipos-accesorio` · `.../tipos-accesorio/<uuid>` | — |
+| Accesorios | `GET/POST /api/accesorios` · `.../accesorios/<uuid>` | solo `es_accesorio=True` |
+| **Productos (vidriera)** | `GET/POST /api/productos` · `.../productos/<uuid>` | todos los productos; lectura en forma plana (ver §4-bis) |
+| Categorías de producto | `GET/POST /api/categorias-producto` · `.../categorias-producto/<uuid>` | capa usada por el catálogo |
+| Tipos de accesorio | `GET/POST /api/tipos-accesorio` · `.../tipos-accesorio/<uuid>` | capa usada por el catálogo y el configurador |
 | Tipos de movimiento | `GET/POST /api/tipos-movimiento` · `.../tipos-movimiento/<uuid>` | — |
 | Planes de suscripción | `GET/POST /api/planes-suscripcion` · `.../planes-suscripcion/<uuid>` | — |
 
@@ -126,19 +126,57 @@
 
 | Método | Ruta | Permiso | Descripción | Códigos |
 |---|---|---|---|---|
-| GET | `/api/accesorios` | 🌐 | Lista accesorios (datos combinados de `producto`) | 200 |
-| POST | `/api/accesorios` | 🛡️ | Crea `producto` + `accesorio`; exige `acc_nombre` y `acc_precio` | 201, 400, 409 |
-| GET/PUT/PATCH/DELETE | `/api/accesorios/<uuid>` | GET 🌐 / esc. 🛡️ | Detalle y actualización (sincroniza `producto`) | 200, 400, 404, 409 |
-| GET | `/api/modelos-3d/accesorio/<uuid>` | 🌐 | Primer `modelo_3d` del accesorio | 200, 404 |
-| GET | `/api/compatibilidad/modelo/<uuid>` | 🌐 | **Accesorios compatibles con un modelo de moto** (usado por el configurador) | 200 |
-| GET | `/api/compatibilidad/accesorio/<uuid>` | 🌐 | Modelos compatibles con un accesorio | 200 |
-| POST | `/api/compatibilidad` | 🛡️ | Crea compatibilidad | 201, 400, **409** (par duplicado) |
+| GET | `/api/accesorios` | 🌐 | Solo accesorios (`es_accesorio=True`), en la forma plana de §4-bis | 200 |
+| POST | `/api/accesorios` | 🛡️ | Crea `producto` con `es_accesorio=True`; exige `acc_nombre` y `acc_precio` | 201, 400, 409 |
+| GET/PUT/PATCH/DELETE | `/api/accesorios/<uuid>` | GET 🌐 / esc. 🛡️ | Detalle y actualización. El `GET` **no filtra por `es_accesorio`**: abre cualquier producto (lo usa `/visualizador/:id`) | 200, 400, 404, 409 |
+| GET | `/api/modelos-3d/accesorio/<uuid>` | 🌐 | Primer `modelo_3d` de la **categoría de accesorio** del producto (resuelve el id del producto a su categoría; si no, intenta el id directo) | 200, 404 |
+| GET | `/api/compatibilidad/modelo/<uuid>` | 🌐 | **Accesorios compatibles con un modelo de moto** (accesorios de las categorías marcadas como compatibles; alimenta el configurador) | 200 |
+| GET | `/api/compatibilidad/accesorio/<uuid>` | 🌐 | Modelos compatibles con la categoría de un accesorio | 200 |
+| POST | `/api/compatibilidad` | 🛡️ | Crea compatibilidad; acepta `id_categoria_accesorio` o `id_accesorio` (lo traduce a su categoría) | 201, 400, **409** (par duplicado) |
 | DELETE | `/api/compatibilidad/<uuid>` | 🛡️ | Elimina compatibilidad | 200, 404 |
 
 ```json
 // POST /api/compatibilidad
-{ "id_accesorio": "<uuid>", "id_modelo_moto": "<uuid>", "anio_desde": 2020, "anio_hasta": 2025 }
+{ "id_accesorio": "<uuid del producto>", "id_modelo_moto": "<uuid>", "anio_desde": 2020, "anio_hasta": 2025 }
 ```
+
+---
+
+## 4-bis. Forma plana del catálogo y sus capas de filtrado
+
+`GET /api/productos` devuelve **todos** los productos del catálogo —sean o no
+accesorios— serializados con `AccesorioSerializer`, que es la forma que consumen la
+tarjeta (`AccesorioCard`), el carrito, la cotización y el visualizador:
+
+```json
+// GET /api/productos (elemento de la lista)
+{
+  "id_accesorio": "<id_producto>",          // id histórico del "accesorio" = id de producto
+  "es_accesorio": true,
+  "acc_nombre": "Escape Slip-On", "acc_descripcion": "...",
+  "acc_precio": "450000.00", "acc_estado": "disponible",
+  "imagen": "https://...", "codigo_sku": "ESC-001", "peso": "2.50", "color": null,
+  "id_categoria": "<categoria_accesorio>",  "id_categoria_producto": "<...>",  "id_tipo": "<...>",
+  "categoria_producto":   { "id_categoria_producto": "...", "nombre": "Escapes" },
+  "categoria_accesorio":  { "id_categoria": "...", "cat_nombre": "Escapes", "cat_descripcion": "..." },
+  "tipo_accesorio":       { "id_tipo": "...", "nombre": "Slip-on" },
+  "producto": { /* representación completa de `producto` (ProductSerializer) */ }
+}
+```
+
+- **Tres capas de clasificación** conviven en la misma fila; cada vista usa las que necesita:
+  - **Catálogo (`/catalogo`)** → `categoria_producto` como capa principal y `tipo_accesorio`
+    como subcapa (solo aparece cuando la categoría seleccionada tiene accesorios).
+  - **Configurador (`/configurador`)** → `categoria_accesorio` (capa amplia) +
+    `tipo_accesorio` (capa específica), sobre la lista de accesorios compatibles.
+- Cada capa vale `null` cuando el producto no la tiene asignada (`categoria_producto` sin
+  categoría, o `categoria_accesorio`/`tipo_accesorio` y sus ids correspondientes). El
+  catálogo usa `tipo_accesorio` **solo** si `es_accesorio` es `true`, y `color` siempre es
+  `null` (campo histórico de la tabla `accesorio` ya eliminada).
+- Las claves `acc_*` se conservan por compatibilidad con el carrito, la cotización y el
+  visualizador; **no** cambia el contrato de escritura: `POST/PUT /api/productos` siguen
+  usando `ProductSerializer` (campos reales de `producto`).
+- Paginación opcional igual que el resto de catálogos: `?pagina=&por_pagina=` (máx. 100).
 
 ---
 
@@ -249,6 +287,7 @@
 | `modelos3d.js` | `obtenerModelo3dPorAccesorio` | GET | `/modelos-3d/accesorio/{id}` |
 | `accesorios.js` | `obtenerAccesorios` / `obtenerCategorias` | GET | `/accesorios` · `/categorias` |
 | | `crearAccesorio` / `actualizarAccesorio` | POST/PUT | `/accesorios` · `/accesorios/{id}` |
+| `productos.js` | `obtenerProductos` (vidriera del catálogo) | GET | `/productos` |
 | `compatibilidad.js` | `obtenerAccesoriosCompatibles` | GET | `/compatibilidad/modelo/{id}` |
 | | `obtenerModelosCompatibles` | GET | `/compatibilidad/accesorio/{id}` |
 | | `marcarCompatible` / `quitarCompatible` | POST/DELETE | `/compatibilidad` · `/compatibilidad/{id}` |
@@ -260,7 +299,7 @@
 | | `registrarUsuario` | POST | `/auth/register` |
 | | `actualizarUsuario` / `desactivarUsuario` | PUT/DELETE | `/usuarios/{id}` |
 | `tiendas.js` | `obtenerTienda` / `actualizarTienda` | GET/PUT | `/tiendas/{id}` |
-| (directo en `Visualizador.jsx`) | detalle del accesorio | GET | `/accesorios/{id}` |
+| (directo en `Visualizador.jsx`) | ficha plana del producto (sea o no accesorio) | GET | `/accesorios/{id}` |
 | (`ConnectionContext`) | sondeo de salud | GET | `/health` |
 
 ---
@@ -269,7 +308,7 @@
 
 1. **Escritura de catálogos restringida (resuelto):** `POST/PUT/DELETE` de catálogos exigen ahora `IsStoreAdmin` (401 sin sesión, 403 para clientes y vendedores). Probado en `backend/api/test_endpoints.py`.
 2. **Filtrado en cliente:** varias páginas admin reciben listados y filtran por `id_tienda` en el navegador; conviene filtrar en el servidor (rendimiento y seguridad).
-3. **Paginación de servidor (añadida, opcional):** sin parámetros la respuesta sigue siendo el array plano histórico; con `?pagina=<n>&por_pagina=<1-100>` (20 por defecto) devuelve `{"count", "pagina", "por_pagina", "total_paginas", "resultados"}`. Aplica a los catálogos, `/api/usuarios`, `/api/inventario` y `/api/cotizaciones`. El catálogo público sigue paginando en el cliente (8 por página).
+3. **Paginación de servidor (añadida, opcional):** sin parámetros la respuesta sigue siendo el array plano histórico; con `?pagina=<n>&por_pagina=<1-100>` (20 por defecto) devuelve `{"count", "pagina", "por_pagina", "total_paginas", "resultados"}`. Aplica a los catálogos, `/api/usuarios`, `/api/inventario` y `/api/cotizaciones`. El catálogo público (`/catalogo`) la ignora: carga el listado completo y pagina en el cliente (12 por página).
 4. **`DELETE /api/tiendas/<uuid>`** y otros DELETE genéricos pueden borrar registros con datos hijos (responden 409, pero conviene revisar la política).
 5. **Versionado:** la API no tiene prefijo de versión (`/api/v1`).
 

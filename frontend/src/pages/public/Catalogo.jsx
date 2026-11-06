@@ -75,7 +75,7 @@ export default function Catalogo() {
           <div className="catalog-cta-copy">
             <div className="eyebrow eyebrow--light"><span className="eyebrow-dot" aria-hidden="true"></span>Curaduría MotoPreview</div>
             <h2 className="section-title">Encuentra tu<br /><em>próxima mejora.</em></h2>
-            <p className="section-subtitle">Explora el catálogo completo de accesorios verificados, filtrados por categoría y compatibilidad con tu moto.</p>
+            <p className="section-subtitle">Explora el catálogo completo de productos y accesorios verificados, filtrados por categoría y compatibilidad con tu moto.</p>
             <div className="catalog-hero-actions">
               <Link to="/catalogo" className="btn btn--primary">Ver catálogo completo <ArrowRight size={16} aria-hidden="true" /></Link>
               <Link to="/configurador" className="btn btn--ghost catalog-hero-ghost">Configurar mi moto</Link>

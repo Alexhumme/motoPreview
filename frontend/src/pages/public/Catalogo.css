@@ -305,9 +305,9 @@
 .catalog-filters {
   display: flex;
   flex-direction: column;
-  gap: var(--space-16);
+  gap: var(--space-12);
   margin-bottom: var(--space-32);
-  padding: var(--space-20);
+  padding: var(--space-16);
   background: var(--surface-card);
   border: 1px solid var(--color-ink-border);
   border-radius: var(--radius-cards);
@@ -315,7 +315,7 @@
 
 .catalog-filters-main {
   display: grid;
-  grid-template-columns: minmax(240px, 1fr) minmax(170px, 210px) minmax(170px, 210px);
+  grid-template-columns: minmax(220px, 1fr) minmax(170px, 210px) auto;
   gap: var(--space-12);
   align-items: end;
 }
@@ -324,8 +324,8 @@
   display: flex;
   align-items: center;
   gap: var(--space-10);
-  height: 44px;
-  padding: 0 var(--space-16);
+  height: 40px;
+  padding: 0 var(--space-12);
   background: var(--surface-elevated);
   border: 1px solid var(--color-ink-border);
   border-radius: var(--radius-inputs);
@@ -404,8 +404,8 @@
 
 .catalog-control select {
   width: 100%;
-  height: 44px;
-  padding: 0 var(--space-40) 0 var(--space-16);
+  height: 40px;
+  padding: 0 var(--space-40) 0 var(--space-12);
   appearance: none;
   background-color: var(--surface-elevated);
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5l5-5' fill='none' stroke='%238b94a3' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
@@ -435,36 +435,49 @@
   box-shadow: 0 0 0 3px rgba(242, 106, 33, 0.15);
 }
 
-.catalog-filters-sub {
+/* Capas de filtrado: categoría de producto → tipo de accesorio */
+.catalog-filters-layers {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: var(--space-16);
   flex-wrap: wrap;
-  padding-top: var(--space-16);
+  padding-top: var(--space-12);
   border-top: 1px solid var(--color-ink-border);
+}
+
+.catalog-filters-capas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  flex: 1;
+  min-width: 0;
 }
 
 .price-range {
   display: flex;
   align-items: center;
-  gap: var(--space-12);
-  flex-wrap: wrap;
+  gap: var(--space-10);
+  height: 40px;
+  padding: 0 var(--space-12);
+  background: var(--surface-elevated);
+  border: 1px solid var(--color-ink-border);
+  border-radius: var(--radius-inputs);
 }
 
 .price-range-title {
   font-family: var(--font-display);
-  font-size: var(--text-caption);
+  font-size: 11px;
   font-weight: var(--weight-semibold);
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   color: var(--color-mist-gray);
 }
 
 .price-range-field {
   display: flex;
   align-items: center;
-  gap: var(--space-8);
+  gap: var(--space-6);
   font-family: var(--font-display);
   font-size: var(--text-caption);
   font-weight: var(--weight-semibold);
@@ -473,12 +486,12 @@
 }
 
 .price-range-field span {
-  min-width: 78px;
+  min-width: 62px;
   text-align: right;
 }
 
 .price-range-field input[type="range"] {
-  width: 120px;
+  width: 88px;
   height: 4px;
   accent-color: var(--color-brand-orange);
   cursor: pointer;
@@ -491,10 +504,12 @@
 .catalog-filters-meta {
   display: flex;
   align-items: center;
-  gap: var(--space-12);
+  gap: var(--space-10);
+  height: 28px;
   font-family: var(--font-ui);
   font-size: var(--text-caption);
   color: var(--color-mist-gray);
+  white-space: nowrap;
 }
 
 .catalog-filters-clear {
@@ -751,6 +766,15 @@
     grid-template-columns: repeat(2, 1fr);
   }
 
+  .catalog-filters-main {
+    grid-template-columns: minmax(220px, 1fr) minmax(180px, 220px);
+  }
+
+  .price-range {
+    grid-column: 1 / -1;
+    justify-content: space-between;
+  }
+
   .steps {
     grid-template-columns: 1fr;
   }
@@ -791,7 +815,7 @@
     grid-template-columns: 1fr;
   }
 
-  .catalog-filters-sub {
+  .catalog-filters-layers {
     flex-direction: column;
     align-items: stretch;
   }

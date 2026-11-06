@@ -28,7 +28,7 @@ flowchart LR
     end
 
     subgraph Datos["Datos — Neon (AWS us-east-2)"]
-        P[("PostgreSQL<br/>21 tablas")]
+        P[("PostgreSQL<br/>27 tablas")]
     end
 
     SMTP[(Servidor SMTP)]
@@ -111,7 +111,7 @@ flowchart TB
     end
 
     subgraph DB[("PostgreSQL — Neon")]
-        MODELS["api/models.py<br/>21 modelos · managed=False"]
+        MODELS["api/models.py<br/>27 modelos · managed=False"]
     end
 
     API -->|"HTTPS JSON"| URLS

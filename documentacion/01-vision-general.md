@@ -91,7 +91,7 @@ motoPreview/
 │   ├── motopreview/           # Proyecto Django (settings, urls, wsgi, asgi)
 │   ├── templates/admin/       # base_site.html (selector de idioma del admin)
 │   └── api/                   # Única app
-│       ├── models.py          # 21 modelos (mapeo a BD existente, managed=False)
+│       ├── models.py          # 27 modelos (mapeo a BD existente, managed=False)
 │       ├── views.py           # ~1116 líneas: endpoints REST
 │       ├── serializers.py     # Serializers de salida y de entrada
 │       ├── authentication.py  # JWTAuthentication (Bearer)
@@ -125,8 +125,9 @@ motoPreview/
 
 | Término | Definición |
 |---|---|
-| **Accesorio** | Registro `Accessory` que *envuelve* un `Product` (nombre, precio, SKU e imagen viven en `producto`) |
-| **Compatibilidad** | Relación N:M entre un accesorio y un `MotorcycleModel`, opcionalmente con rango de años (`anio_desde`–`anio_hasta`) |
+| **Producto** | Único registro de catálogo (`producto`); puede ser accesorio (`es_accesorio=True`) o no |
+| **Accesorio** | Producto con `es_accesorio=True`; clasificado además por `categoria_accesorio` y `tipo_accesorio` |
+| **Compatibilidad** | Relación N:M entre una `categoria_accesorio` y un `MotorcycleModel`, opcionalmente con rango de años (`anio_desde`–`anio_hasta`) |
 | **Cotización** | Solicitud de compra de accesorios para una moto; tiene detalle (líneas), total e historial de estados |
 | **Movimiento de inventario** | Registro de entrada o salida de stock que actualiza `stock_actual` de forma transaccional |
 | **Plan de suscripción** | Define límites (`limite_productos`, `limite_usuarios`) aplicados al dar de alta productos e usuarios |
