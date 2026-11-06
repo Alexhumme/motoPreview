@@ -1708,8 +1708,8 @@ class AccesoriosCollection(ResourceCollection):
 
     def get_queryset(self):
         return Product.objects.select_related(
-            "categoria_producto", "categoria_accesorio", "tipo_accesorio"
-        ).filter(es_accesorio=True)
+            "categoria_producto", "marca"
+        ).prefetch_related("tipos").filter(es_accesorio=True)
 
     def get(self, request):
         return paginate_response(request, self.get_queryset(), AccesorioSerializer)
