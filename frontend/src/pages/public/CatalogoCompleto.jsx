@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Search, SlidersHorizontal, ArrowUpDown, RotateCcw, X, ChevronLeft, ChevronRight, SearchX } from 'lucide-react';
 import { obtenerAccesorios, obtenerCategorias } from '../../services/accesorios';
 import AccesorioCard from '../../components/buttons/AccesorioCard';
 import SiteHeader from '../../components/buttons/SiteHeader';
@@ -12,11 +12,35 @@ const COP = new Intl.NumberFormat('es-CO', {
   maximumFractionDigits: 0,
 });
 
+const ORDEN_OPCIONES = [
+  { value: 'relevancia', label: 'Relevancia' },
+  { value: 'precio-asc', label: 'Precio: menor a mayor' },
+  { value: 'precio-desc', label: 'Precio: mayor a menor' },
+  { value: 'nombre-asc', label: 'Nombre: A–Z' },
+  { value: 'nombre-desc', label: 'Nombre: Z–A' },
+];
+
+const colador = new Intl.Collator('es', { sensitivity: 'base' });
+
+function ordenarAccesorios(lista, orden) {
+  const precio = (accesorio) => Number(accesorio.acc_precio) || 0;
+  const nombre = (accesorio) => accesorio.acc_nombre || '';
+  const comparadores = {
+    'precio-asc': (a, b) => precio(a) - precio(b),
+    'precio-desc': (a, b) => precio(b) - precio(a),
+    'nombre-asc': (a, b) => colador.compare(nombre(a), nombre(b)),
+    'nombre-desc': (a, b) => colador.compare(nombre(b), nombre(a)),
+  };
+  const comparador = comparadores[orden];
+  return comparador ? [...lista].sort(comparador) : lista;
+}
+
 export default function CatalogoCompleto() {
   const [accesorios, setAccesorios] = useState([]);
   const [categorias, setCategorias] = useState([]);
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState('todas');
   const [busqueda, setBusqueda] = useState('');
+  const [orden, setOrden] = useState('relevancia');
   const [paginaActual, setPaginaActual] = useState(1);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState('');
@@ -61,19 +85,34 @@ export default function CatalogoCompleto() {
     }
   }, [accesorios, limitesPrecio, rangoInicializado]);
 
-  const accesoriosFiltrados = accesorios
-    .filter((a) => categoriaSeleccionada === 'todas' || a.id_categoria === categoriaSeleccionada)
-    .filter((a) => {
-      const precio = Number(a.acc_precio) || 0;
-      return precio >= precioMin && precio <= precioMax;
-    })
-    .filter((a) => {
-      const texto = busqueda.trim().toLowerCase();
+  const accesoriosFiltrados = useMemo(() => {
+    const texto = busqueda.trim().toLowerCase();
+    const filtrados = accesorios.filter((accesorio) => {
+      if (categoriaSeleccionada !== 'todas' && accesorio.id_categoria !== categoriaSeleccionada) {
+        return false;
+      }
+      const precio = Number(accesorio.acc_precio) || 0;
+      if (precio < precioMin || precio > precioMax) return false;
       if (!texto) return true;
-      return [a.acc_nombre, a.acc_descripcion, a.codigo_sku]
+      return [accesorio.acc_nombre, accesorio.acc_descripcion, accesorio.codigo_sku]
         .filter(Boolean)
         .some((value) => value.toLowerCase().includes(texto));
     });
+    return ordenarAccesorios(filtrados, orden);
+  }, [accesorios, categoriaSeleccionada, busqueda, precioMin, precioMax, orden]);
+
+  const hayFiltrosActivos =
+    categoriaSeleccionada !== 'todas' ||
+    busqueda.trim() !== '' ||
+    precioMin !== limitesPrecio.min ||
+    precioMax !== limitesPrecio.max;
+
+  function limpiarFiltros() {
+    setCategoriaSeleccionada('todas');
+    setBusqueda('');
+    setPrecioMin(limitesPrecio.min);
+    setPrecioMax(limitesPrecio.max);
+  }
 
   const totalPaginas = Math.max(1, Math.ceil(accesoriosFiltrados.length / POR_PAGINA));
   const accesoriosPagina = accesoriosFiltrados.slice(
@@ -81,10 +120,10 @@ export default function CatalogoCompleto() {
     paginaActual * POR_PAGINA
   );
 
-  // Reinicia a la página 1 cuando cambian los filtros.
+  // Reinicia a la página 1 cuando cambian los filtros o el orden.
   useEffect(() => {
     setPaginaActual(1);
-  }, [categoriaSeleccionada, busqueda, precioMin, precioMax]);
+  }, [categoriaSeleccionada, busqueda, precioMin, precioMax, orden]);
 
   if (cargando) {
     return (
@@ -116,98 +155,112 @@ export default function CatalogoCompleto() {
     <div className="catalog-page">
       <SiteHeader />
       <main>
-        <section className="catalog-hero catalog-hero--compact">
-          <div className="catalog-hero-grid" />
-          <div className="catalog-hero-copy">
-            <div className="eyebrow eyebrow--light"><span className="eyebrow-dot" aria-hidden="true"></span>Catálogo completo</div>
-            <h1 className="catalog-hero-title">Todas las piezas<br /><em>para tu moto.</em></h1>
-            <p className="catalog-hero-subtitle">Explora el catálogo completo, filtra por categoría y busca la pieza exacta para tu máquina.</p>
-            <div className="catalog-hero-actions">
-              <Link to="/configurador" className="btn btn--primary">Configurar mi moto <span>→</span></Link>
-              <Link to="/" className="btn btn--ghost catalog-hero-ghost">← Volver al inicio</Link>
-            </div>
-          </div>
-        </section>
 
         <section className="catalog-section" id="catalogo">
           <div className="section-heading">
             <div>
-              <div className="eyebrow"><span className="eyebrow-dot" aria-hidden="true"></span>Curaduría MotoPreview</div>
               <h2 className="section-title">Encuentra tu<br /><em>próxima mejora.</em></h2>
             </div>
-            <p className="section-subtitle">
-              {accesoriosFiltrados.length} piezas disponibles
-              {categoriaSeleccionada !== 'todas' && ' en esta categoría'}
-              {busqueda.trim() && ` para "${busqueda.trim()}"`}.
-            </p>
           </div>
 
-          <div className="catalog-toolbar">
-            <div className="category-tabs">
-              <button className={`category-tab${categoriaSeleccionada === 'todas' ? ' category-tab--active' : ''}`} onClick={() => setCategoriaSeleccionada('todas')}>
-                Todos
-              </button>
-              {categorias.map((categoria) => (
-                <button
-                  key={categoria.id_categoria}
-                  className={`category-tab${categoriaSeleccionada === categoria.id_categoria ? ' category-tab--active' : ''}`}
-                  onClick={() => setCategoriaSeleccionada(categoria.id_categoria)}
-                >
-                  {categoria.cat_nombre}
-                </button>
-              ))}
-            </div>
-            <label className="search-field">
-              <span>⌕</span>
-              <input value={busqueda} onChange={(e) => setBusqueda(e.target.value)} placeholder="Buscar accesorio..." />
-            </label>
-          </div>
+          <div className="catalog-filters">
+            <div className="catalog-filters-main">
+              <div className="catalog-search">
+                <Search size={17} aria-hidden="true" />
+                <input
+                  type="search"
+                  value={busqueda}
+                  onChange={(e) => setBusqueda(e.target.value)}
+                  placeholder="Buscar por nombre, SKU o descripción…"
+                  aria-label="Buscar accesorios"
+                />
+                {busqueda && (
+                  <button
+                    type="button"
+                    className="catalog-search-clear"
+                    onClick={() => setBusqueda('')}
+                    aria-label="Limpiar búsqueda"
+                  >
+                    <X size={14} aria-hidden="true" />
+                  </button>
+                )}
+              </div>
 
-          {/* Slider de rango de precios */}
-          {accesorios.length > 0 && (
-            <div className="price-slider">
-              <div className="price-slider-head">
-                <span className="price-slider-label">Rango de precio</span>
-                <span className="price-slider-value">{COP.format(precioMin)} — {COP.format(precioMax)}</span>
-              </div>
-              <div className="price-slider-tracks">
-                <label className="price-slider-field">
-                  <span>Mínimo</span>
-                  <input
-                    type="range"
-                    min={limitesPrecio.min}
-                    max={limitesPrecio.max}
-                    step={1000}
-                    value={precioMin}
-                    onChange={(e) => setPrecioMin(Math.min(Number(e.target.value), precioMax))}
-                  />
-                </label>
-                <label className="price-slider-field">
-                  <span>Máximo</span>
-                  <input
-                    type="range"
-                    min={limitesPrecio.min}
-                    max={limitesPrecio.max}
-                    step={1000}
-                    value={precioMax}
-                    onChange={(e) => setPrecioMax(Math.max(Number(e.target.value), precioMin))}
-                  />
-                </label>
-              </div>
-              {(precioMin !== limitesPrecio.min || precioMax !== limitesPrecio.max) && (
-                <button
-                  className="price-slider-reset"
-                  onClick={() => { setPrecioMin(limitesPrecio.min); setPrecioMax(limitesPrecio.max); }}
-                >
-                  Limpiar filtro de precio
-                </button>
-              )}
+              <label className="catalog-control">
+                <span className="catalog-control-label">
+                  <SlidersHorizontal size={14} aria-hidden="true" />
+                  Categoría
+                </span>
+                <select value={categoriaSeleccionada} onChange={(e) => setCategoriaSeleccionada(e.target.value)}>
+                  <option value="todas">Todas las categorías</option>
+                  {categorias.map((categoria) => (
+                    <option key={categoria.id_categoria} value={categoria.id_categoria}>
+                      {categoria.cat_nombre}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="catalog-control">
+                <span className="catalog-control-label">
+                  <ArrowUpDown size={14} aria-hidden="true" />
+                  Ordenar por
+                </span>
+                <select value={orden} onChange={(e) => setOrden(e.target.value)}>
+                  {ORDEN_OPCIONES.map((opcion) => (
+                    <option key={opcion.value} value={opcion.value}>{opcion.label}</option>
+                  ))}
+                </select>
+              </label>
             </div>
-          )}
+
+            {accesorios.length > 0 && (
+              <div className="catalog-filters-sub">
+                <div className="price-range">
+                  <span className="price-range-title">Precio</span>
+                  <label className="price-range-field">
+                    <span>{COP.format(precioMin)}</span>
+                    <input
+                      type="range"
+                      min={limitesPrecio.min}
+                      max={limitesPrecio.max}
+                      step={1000}
+                      value={precioMin}
+                      onChange={(e) => setPrecioMin(Math.min(Number(e.target.value), precioMax))}
+                      aria-label="Precio mínimo"
+                    />
+                  </label>
+                  <span className="price-range-sep" aria-hidden="true">—</span>
+                  <label className="price-range-field">
+                    <span>{COP.format(precioMax)}</span>
+                    <input
+                      type="range"
+                      min={limitesPrecio.min}
+                      max={limitesPrecio.max}
+                      step={1000}
+                      value={precioMax}
+                      onChange={(e) => setPrecioMax(Math.max(Number(e.target.value), precioMin))}
+                      aria-label="Precio máximo"
+                    />
+                  </label>
+                </div>
+
+                <div className="catalog-filters-meta">
+                  <span>{accesoriosFiltrados.length} de {accesorios.length} piezas</span>
+                  {hayFiltrosActivos && (
+                    <button type="button" className="catalog-filters-clear" onClick={limpiarFiltros}>
+                      <RotateCcw size={13} aria-hidden="true" />
+                      Limpiar filtros
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
 
           {accesoriosFiltrados.length === 0 ? (
             <div className="empty-state">
-              <span className="empty-icon" aria-hidden="true">⌕</span>
+              <SearchX className="empty-icon" size={48} strokeWidth={1.5} aria-hidden="true" />
               <h3 className="empty-title">No encontramos esa pieza</h3>
               <p className="empty-subtitle">Prueba con otra búsqueda, categoría o rango de precio.</p>
             </div>
@@ -218,9 +271,13 @@ export default function CatalogoCompleto() {
               </div>
               {totalPaginas > 1 && (
                 <div className="catalog-pagination">
-                  <button disabled={paginaActual === 1} onClick={() => setPaginaActual((p) => p - 1)}>← Anterior</button>
+                  <button disabled={paginaActual === 1} onClick={() => setPaginaActual((p) => p - 1)}>
+                    <ChevronLeft size={15} aria-hidden="true" /> Anterior
+                  </button>
                   <span className="pagination-current">Página {paginaActual} de {totalPaginas}</span>
-                  <button disabled={paginaActual === totalPaginas} onClick={() => setPaginaActual((p) => p + 1)}>Siguiente →</button>
+                  <button disabled={paginaActual === totalPaginas} onClick={() => setPaginaActual((p) => p + 1)}>
+                    Siguiente <ChevronRight size={15} aria-hidden="true" />
+                  </button>
                 </div>
               )}
             </>

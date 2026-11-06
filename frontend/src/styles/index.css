@@ -29,7 +29,7 @@
   --color-jam-pink: #e5484d;       /* Error state, danger buttons */
 
   /* Borders */
-  --color-bone: #e5e7eb;           /* Hairline borders — connective tissue */
+  --color-bone: #475164;           /* Hairline borders — connective tissue */
 
   /* ===== TYPOGRAPHY ===== */
   /* Font Families */
@@ -107,7 +107,7 @@
   --shadow-mint-glow-hover: rgba(23, 27, 34, 0.1) 0px 0px 0px 2px,
                              rgba(242, 106, 33, 0.3) 0px 25px 30px -5px,
                              rgba(242, 106, 33, 0.3) 0px 10px 12px -6px;
-  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.3), 0 0 0 1px var(--color-bone);
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.3);
   --shadow-subtle-2: rgb(255, 217, 190) 0px 1px 1px 0px inset;
 
   /* ===== SURFACES ===== */
@@ -599,7 +599,6 @@ img { max-width: 100%; height: auto; display: block; }
 
 .card {
   background: var(--surface-card);
-  border: 1px solid var(--color-bone);
   border-radius: var(--radius-cards);
   padding: var(--card-padding);
   box-shadow: var(--shadow-card);
