@@ -1266,3 +1266,22 @@
     min-width: 0;
   }
 }
+.filtro-chip__logo {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  border-radius: 3px;
+}
+
+.filtro-chip__inicial {
+  width: 16px;
+  height: 16px;
+  display: grid;
+  place-items: center;
+  border-radius: 3px;
+  background: var(--color-signal-mint);
+  color: var(--color-obsidian-plum);
+  font-family: var(--font-display);
+  font-size: 9px;
+  font-weight: var(--weight-bold);
+}

@@ -24,7 +24,6 @@ export default function CatalogoCompleto() {
   const [error, setError] = useState('');
   const POR_PAGINA = 12;
 
-  // Rango de precios (slider)
   const [precioMin, setPrecioMin] = useState(0);
   const [precioMax, setPrecioMax] = useState(0);
   const [rangoInicializado, setRangoInicializado] = useState(false);
@@ -131,19 +130,6 @@ export default function CatalogoCompleto() {
     <div className="catalog-page">
       <SiteHeader />
       <main>
-        <section className="catalog-hero catalog-hero--compact">
-          <div className="catalog-hero-grid" />
-          <div className="catalog-hero-copy">
-            <div className="eyebrow eyebrow--light"><span className="eyebrow-dot" aria-hidden="true"></span>Catálogo completo</div>
-            <h1 className="catalog-hero-title">Todas las piezas<br /><em>para tu moto.</em></h1>
-            <p className="catalog-hero-subtitle">Explora el catálogo completo, filtra por marca y tipo, y busca la pieza exacta para tu máquina.</p>
-            <div className="catalog-hero-actions">
-              <Link to="/configurador" className="btn btn--primary">Configurar mi moto <span>→</span></Link>
-              <Link to="/" className="btn btn--ghost catalog-hero-ghost">← Volver al inicio</Link>
-            </div>
-          </div>
-        </section>
-
         <section className="catalog-section" id="catalogo">
           <div className="section-heading">
             <div>
@@ -158,26 +144,30 @@ export default function CatalogoCompleto() {
           </div>
 
           {/* Fila de marcas (con logo o placeholder) */}
-          <div className="filter-row">
-            <span className="filter-row-label">Marca</span>
-            <div className="filter-row-chips">
+          <div className="filtro-capa">
+            <span className="filtro-capa__label">Marca</span>
+            <div className="filtro-capa__chips" role="group" aria-label="Filtrar por marca">
               <button
-                className={`filter-chip${marcaSeleccionada === 'todas' ? ' filter-chip--active' : ''}`}
+                type="button"
+                className={`filtro-chip${marcaSeleccionada === 'todas' ? ' filtro-chip--activa' : ''}`}
                 onClick={() => setMarcaSeleccionada('todas')}
+                aria-pressed={marcaSeleccionada === 'todas'}
               >
                 Todas
               </button>
               {marcas.map((m) => (
                 <button
                   key={m.id_marca}
-                  className={`filter-chip filter-chip--marca${marcaSeleccionada === m.id_marca ? ' filter-chip--active' : ''}`}
+                  type="button"
+                  className={`filtro-chip${marcaSeleccionada === m.id_marca ? ' filtro-chip--activa' : ''}`}
                   onClick={() => setMarcaSeleccionada(m.id_marca)}
                   title={m.nombre}
+                  aria-pressed={marcaSeleccionada === m.id_marca}
                 >
                   {m.logo ? (
-                    <img src={m.logo} alt={m.nombre} className="marca-logo" />
+                    <img src={m.logo} alt={m.nombre} className="filtro-chip__logo" />
                   ) : (
-                    <span className="marca-placeholder">{m.nombre.charAt(0)}</span>
+                    <span className="filtro-chip__inicial">{m.nombre.charAt(0)}</span>
                   )}
                   <span>{m.nombre}</span>
                 </button>
@@ -186,20 +176,22 @@ export default function CatalogoCompleto() {
           </div>
 
           {/* Fila de tipos (selección múltiple) */}
-          <div className="filter-row">
-            <span className="filter-row-label">Tipo</span>
-            <div className="filter-row-chips">
+          <div className="filtro-capa">
+            <span className="filtro-capa__label">Tipo</span>
+            <div className="filtro-capa__chips" role="group" aria-label="Filtrar por tipo">
               {tipos.map((t) => (
                 <button
                   key={t.id_tipo_producto}
-                  className={`filter-chip${tiposSeleccionados.has(t.id_tipo_producto) ? ' filter-chip--active' : ''}`}
+                  type="button"
+                  className={`filtro-chip${tiposSeleccionados.has(t.id_tipo_producto) ? ' filtro-chip--activa' : ''}`}
                   onClick={() => toggleTipo(t.id_tipo_producto)}
+                  aria-pressed={tiposSeleccionados.has(t.id_tipo_producto)}
                 >
                   {t.nombre}
                 </button>
               ))}
               {tiposSeleccionados.size > 0 && (
-                <button className="filter-chip filter-chip--reset" onClick={() => setTiposSeleccionados(new Set())}>
+                <button type="button" className="filtro-chip" onClick={() => setTiposSeleccionados(new Set())}>
                   Limpiar tipos
                 </button>
               )}
