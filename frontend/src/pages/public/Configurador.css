@@ -1185,7 +1185,7 @@
 }
 
 .select-wrap__input:focus {
-  border-color: var(--color-signal-mint);
+  border-color: var(--color-brand-orange);
   box-shadow: 0 0 0 3px rgba(242, 106, 33, 0.15);
 }
 

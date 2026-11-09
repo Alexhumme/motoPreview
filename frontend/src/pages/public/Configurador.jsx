@@ -7,6 +7,7 @@ import { useCart } from '../../context/CartContext';
 import SiteHeader from '../../components/buttons/SiteHeader';
 import ImagenProducto from '../../components/ImagenProducto';
 import { refrescarMovimiento } from '../../utils/motion';
+import '../../components/filters/FiltroCapa.css';
 import './Configurador.css';
 
 const money = (value) => new Intl.NumberFormat('es-CO', {

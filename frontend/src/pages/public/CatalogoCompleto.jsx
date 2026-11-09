@@ -1,9 +1,10 @@
 import { useEffect, useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Search, Shapes, X } from 'lucide-react';
 import { obtenerAccesorios, obtenerMarcasProducto, obtenerTiposProducto } from '../../services/accesorios';
 import AccesorioCard from '../../components/buttons/AccesorioCard';
 import SiteHeader from '../../components/buttons/SiteHeader';
 import Footer from '../../components/forms/Footer';
+import '../../components/filters/FiltroCapa.css';
 import './Catalogo.css';
 
 const COP = new Intl.NumberFormat('es-CO', {
@@ -126,6 +127,21 @@ export default function CatalogoCompleto() {
     );
   }
 
+  const hayFiltros =
+    marcaSeleccionada !== 'todas' ||
+    tiposSeleccionados.size > 0 ||
+    busqueda.trim() !== '' ||
+    precioMin !== limitesPrecio.min ||
+    precioMax !== limitesPrecio.max;
+
+  function limpiarFiltros() {
+    setMarcaSeleccionada('todas');
+    setTiposSeleccionados(new Set());
+    setBusqueda('');
+    setPrecioMin(limitesPrecio.min);
+    setPrecioMax(limitesPrecio.max);
+  }
+
   return (
     <div className="catalog-page">
       <SiteHeader />
@@ -143,78 +159,33 @@ export default function CatalogoCompleto() {
             </p>
           </div>
 
-          {/* Fila de marcas (con logo o placeholder) */}
-          <div className="filtro-capa">
-            <span className="filtro-capa__label">Marca</span>
-            <div className="filtro-capa__chips" role="group" aria-label="Filtrar por marca">
-              <button
-                type="button"
-                className={`filtro-chip${marcaSeleccionada === 'todas' ? ' filtro-chip--activa' : ''}`}
-                onClick={() => setMarcaSeleccionada('todas')}
-                aria-pressed={marcaSeleccionada === 'todas'}
-              >
-                Todas
-              </button>
-              {marcas.map((m) => (
-                <button
-                  key={m.id_marca}
-                  type="button"
-                  className={`filtro-chip${marcaSeleccionada === m.id_marca ? ' filtro-chip--activa' : ''}`}
-                  onClick={() => setMarcaSeleccionada(m.id_marca)}
-                  title={m.nombre}
-                  aria-pressed={marcaSeleccionada === m.id_marca}
-                >
-                  {m.logo ? (
-                    <img src={m.logo} alt={m.nombre} className="filtro-chip__logo" />
-                  ) : (
-                    <span className="filtro-chip__inicial">{m.nombre.charAt(0)}</span>
-                  )}
-                  <span>{m.nombre}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Fila de tipos (selección múltiple) */}
-          <div className="filtro-capa">
-            <span className="filtro-capa__label">Tipo</span>
-            <div className="filtro-capa__chips" role="group" aria-label="Filtrar por tipo">
-              {tipos.map((t) => (
-                <button
-                  key={t.id_tipo_producto}
-                  type="button"
-                  className={`filtro-chip${tiposSeleccionados.has(t.id_tipo_producto) ? ' filtro-chip--activa' : ''}`}
-                  onClick={() => toggleTipo(t.id_tipo_producto)}
-                  aria-pressed={tiposSeleccionados.has(t.id_tipo_producto)}
-                >
-                  {t.nombre}
-                </button>
-              ))}
-              {tiposSeleccionados.size > 0 && (
-                <button type="button" className="filtro-chip" onClick={() => setTiposSeleccionados(new Set())}>
-                  Limpiar tipos
-                </button>
-              )}
-            </div>
-          </div>
-
-          <div className="catalog-toolbar">
-            <label className="search-field">
-              <span>⌕</span>
-              <input value={busqueda} onChange={(e) => setBusqueda(e.target.value)} placeholder="Buscar accesorio..." />
-            </label>
-          </div>
-
-          {/* Slider de rango de precios */}
-          {accesorios.length > 0 && (
-            <div className="price-slider">
-              <div className="price-slider-head">
-                <span className="price-slider-label">Rango de precio</span>
-                <span className="price-slider-value">{COP.format(precioMin)} — {COP.format(precioMax)}</span>
+          <div className="catalog-filters">
+            <div className="catalog-filters-main">
+              <div className="catalog-search">
+                <Search size={17} aria-hidden="true" />
+                <input
+                  type="search"
+                  value={busqueda}
+                  onChange={(e) => setBusqueda(e.target.value)}
+                  placeholder="Buscar por nombre, SKU o descripción…"
+                  aria-label="Buscar productos"
+                />
+                {busqueda && (
+                  <button
+                    type="button"
+                    className="catalog-search-clear"
+                    onClick={() => setBusqueda('')}
+                    aria-label="Limpiar búsqueda"
+                  >
+                    <X size={14} aria-hidden="true" />
+                  </button>
+                )}
               </div>
-              <div className="price-slider-tracks">
-                <label className="price-slider-field">
-                  <span>Mínimo</span>
+
+              <div className="price-range">
+                <span className="price-range-title">Precio</span>
+                <label className="price-range-field">
+                  <span>{COP.format(precioMin)}</span>
                   <input
                     type="range"
                     min={limitesPrecio.min}
@@ -222,10 +193,12 @@ export default function CatalogoCompleto() {
                     step={1000}
                     value={precioMin}
                     onChange={(e) => setPrecioMin(Math.min(Number(e.target.value), precioMax))}
+                    aria-label="Precio mínimo"
                   />
                 </label>
-                <label className="price-slider-field">
-                  <span>Máximo</span>
+                <span className="price-range-sep" aria-hidden="true">—</span>
+                <label className="price-range-field">
+                  <span>{COP.format(precioMax)}</span>
                   <input
                     type="range"
                     min={limitesPrecio.min}
@@ -233,19 +206,79 @@ export default function CatalogoCompleto() {
                     step={1000}
                     value={precioMax}
                     onChange={(e) => setPrecioMax(Math.max(Number(e.target.value), precioMin))}
+                    aria-label="Precio máximo"
                   />
                 </label>
               </div>
-              {(precioMin !== limitesPrecio.min || precioMax !== limitesPrecio.max) && (
-                <button
-                  className="price-slider-reset"
-                  onClick={() => { setPrecioMin(limitesPrecio.min); setPrecioMax(limitesPrecio.max); }}
-                >
-                  Limpiar filtro de precio
+
+              {hayFiltros && (
+                <button type="button" className="catalog-filters-clear" onClick={limpiarFiltros}>
+                  <X size={14} aria-hidden="true" /> Limpiar filtros
                 </button>
               )}
             </div>
-          )}
+
+            <div className="catalog-filters-layers">
+              <div className="catalog-filters-capas">
+                {/* Capa de marcas (con logo o inicial) */}
+                <div className="filtro-capa">
+                  <span className="filtro-capa__label">Marca</span>
+                  <div className="filtro-capa__chips" role="group" aria-label="Filtrar por marca">
+                    <button
+                      type="button"
+                      className={`filtro-chip${marcaSeleccionada === 'todas' ? ' filtro-chip--activa' : ''}`}
+                      onClick={() => setMarcaSeleccionada('todas')}
+                      aria-pressed={marcaSeleccionada === 'todas'}
+                    >
+                      Todas
+                    </button>
+                    {marcas.map((m) => (
+                      <button
+                        key={m.id_marca}
+                        type="button"
+                        className={`filtro-chip${marcaSeleccionada === m.id_marca ? ' filtro-chip--activa' : ''}`}
+                        onClick={() => setMarcaSeleccionada(m.id_marca)}
+                        title={m.nombre}
+                        aria-pressed={marcaSeleccionada === m.id_marca}
+                      >
+                        {m.logo ? (
+                          <img src={m.logo} alt={m.nombre} className="filtro-chip__logo" />
+                        ) : (
+                          <span className="filtro-chip__inicial">{m.nombre.charAt(0)}</span>
+                        )}
+                        <span>{m.nombre}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Capa de tipos (selección múltiple) */}
+                <div className="filtro-capa">
+                  <span className="filtro-capa__label"><Shapes size={12} aria-hidden="true" /> Tipo</span>
+                  <div className="filtro-capa__chips" role="group" aria-label="Filtrar por tipo">
+                    {tipos.map((t) => (
+                      <button
+                        key={t.id_tipo_producto}
+                        type="button"
+                        className={`filtro-chip${tiposSeleccionados.has(t.id_tipo_producto) ? ' filtro-chip--activa' : ''}`}
+                        onClick={() => toggleTipo(t.id_tipo_producto)}
+                        aria-pressed={tiposSeleccionados.has(t.id_tipo_producto)}
+                      >
+                        {t.nombre}
+                      </button>
+                    ))}
+                    {tiposSeleccionados.size > 0 && (
+                      <button type="button" className="filtro-chip" onClick={() => setTiposSeleccionados(new Set())}>
+                        Limpiar tipos
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="catalog-filters-meta">{accesoriosFiltrados.length} piezas</div>
+            </div>
+          </div>
 
           {accesoriosFiltrados.length === 0 ? (
             <div className="empty-state">
