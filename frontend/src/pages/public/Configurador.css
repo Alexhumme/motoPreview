@@ -529,6 +529,35 @@
   box-shadow: var(--shadow-card);
 }
 
+/* Destino de las piezas: deja claro que el + no toca el carrito */
+.compatible-destino {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  margin: 0;
+  padding: var(--space-8) var(--space-12);
+  background: var(--surface-canvas);
+  border: var(--linea);
+  border-left: 2px solid var(--color-brand-orange);
+  border-radius: var(--radius-chips);
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  line-height: var(--leading-caption);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--color-mist-gray);
+}
+
+.compatible-destino svg {
+  flex-shrink: 0;
+  color: var(--color-brand-orange);
+}
+
+.compatible-destino strong {
+  font-weight: var(--weight-bold);
+  color: var(--color-paper);
+}
+
 /* Filtrado por capas (categoría → tipo) dentro del panel de compatibles */
 .compatible-filters {
   display: flex;
@@ -637,6 +666,16 @@
   border-color: rgba(242, 106, 33, 0.45);
   box-shadow: var(--glow-suave);
   transform: translateY(-2px);
+}
+
+/* Ya está en la configuración activa: riel de acento en el borde izquierdo */
+.compatible-item--elegida {
+  border-color: rgba(242, 106, 33, 0.45);
+  box-shadow: inset 2px 0 0 var(--color-brand-orange);
+}
+
+.compatible-item--elegida:hover {
+  box-shadow: inset 2px 0 0 var(--color-brand-orange), var(--glow-suave);
 }
 
 /* Media de la fila: rombo cortado, retícula propia, sin corte en la lista */
@@ -765,7 +804,7 @@
   margin-bottom: var(--space-16);
 }
 
-.configuration-title span:first-child {
+.configuration-title__icono {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -778,11 +817,26 @@
   color: var(--color-brand-orange);
 }
 
-.configuration-title span:last-child {
+.configuration-title__texto {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
+  flex: 1;
   min-width: 0;
+}
+
+.configuration-title__indice {
+  flex-shrink: 0;
+  align-self: flex-start;
+  padding: var(--space-2) var(--space-8);
+  background: var(--surface-canvas);
+  border: var(--linea);
+  border-radius: var(--radius-chips);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: var(--tracking-label);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-mist-gray);
 }
 
 .configuration-title strong {
@@ -803,6 +857,58 @@
   letter-spacing: var(--tracking-label);
   font-variant-numeric: tabular-nums;
   color: var(--color-mist-gray);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Piezas de la configuración activa: envuelven y scrollean sin comerse la vista */
+.configuration-piezas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+  max-height: 108px;
+  overflow-y: auto;
+  padding-right: var(--space-4);
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-ink-border) transparent;
+}
+
+.configuration-piezas::-webkit-scrollbar {
+  width: 4px;
+}
+
+.configuration-piezas::-webkit-scrollbar-track {
+  background: var(--surface-canvas);
+}
+
+.configuration-piezas::-webkit-scrollbar-thumb {
+  background: var(--color-ink-border);
+}
+
+.configuration-piezas::-webkit-scrollbar-thumb:hover {
+  background: var(--color-brand-orange);
+}
+
+.configuration-vacia {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  margin: 0;
+  padding: var(--space-10) var(--space-12);
+  border: 1px dashed rgba(139, 148, 163, 0.3);
+  border-radius: var(--radius-chips);
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  line-height: var(--leading-caption);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--color-mist-gray);
+}
+
+.configuration-vacia svg {
+  flex-shrink: 0;
+  color: var(--color-brand-orange);
 }
 
 /* Píldora de línea: chip de instrumento (radio angular, hilo, mono) */
@@ -820,8 +926,6 @@
   text-transform: uppercase;
   letter-spacing: var(--tracking-label);
   color: var(--color-paper);
-  margin-bottom: var(--space-8);
-  margin-right: var(--space-8);
   max-width: 100%;
   transition: border-color var(--t-fast) var(--ease-salida),
               box-shadow var(--t-med) var(--ease-salida);
@@ -865,12 +969,6 @@
   box-shadow: 0 0 0 1px rgba(229, 72, 77, 0.5);
 }
 
-.more-pill {
-  color: var(--color-mist-gray);
-  border-style: dashed;
-  font-variant-numeric: tabular-nums;
-}
-
 .configuration-total {
   display: flex;
   align-items: center;
@@ -906,42 +1004,183 @@
   text-shadow: 0 0 26px rgba(242, 106, 33, 0.35);
 }
 
+/* Aviso del traslado (y del borrado de un tab): confirma, enlace y deshacer */
+.configuration-aviso {
+  display: flex;
+  align-items: center;
+  gap: var(--space-10);
+  margin-top: var(--space-16);
+  padding: var(--space-10) var(--space-12);
+  border: 1px solid rgba(242, 106, 33, 0.38);
+  border-radius: var(--radius-chips);
+  background: rgba(242, 106, 33, 0.1);
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  line-height: var(--leading-caption);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--color-brand-orange);
+}
+
+.configuration-aviso > svg {
+  flex-shrink: 0;
+}
+
+.configuration-aviso--aviso {
+  border-color: rgba(229, 72, 77, 0.4);
+  background: rgba(229, 72, 77, 0.1);
+  color: var(--color-jam-pink);
+}
+
+.configuration-aviso__texto {
+  flex: 1;
+  min-width: 0;
+  color: var(--color-soft-mist);
+}
+
+.configuration-aviso__enlace,
+.configuration-aviso__accion {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6);
+  flex-shrink: 0;
+  padding: var(--space-4) var(--space-8);
+  background: none;
+  border: var(--linea);
+  border-radius: var(--radius-chips);
+  font-family: inherit;
+  font-size: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color var(--t-fast) var(--ease-salida),
+              border-color var(--t-fast) var(--ease-salida),
+              box-shadow var(--t-med) var(--ease-salida);
+}
+
+.configuration-aviso__enlace {
+  border-color: rgba(242, 106, 33, 0.45);
+  color: var(--color-brand-orange);
+}
+
+.configuration-aviso__enlace:hover {
+  background: var(--color-brand-orange);
+  border-color: var(--color-brand-orange);
+  color: var(--color-obsidian-plum);
+  box-shadow: var(--glow-suave);
+}
+
+.configuration-aviso__accion {
+  color: var(--color-mist-gray);
+}
+
+.configuration-aviso__accion:hover {
+  color: var(--color-paper);
+  border-color: var(--color-mist-gray);
+}
+
+.configuration-aviso__enlace:focus-visible,
+.configuration-aviso__accion:focus-visible,
+.configuration-aviso__cerrar:focus-visible {
+  outline: none;
+  border-color: var(--color-brand-orange);
+  box-shadow: 0 0 0 2px rgba(242, 106, 33, 0.3);
+}
+
+.configuration-aviso__cerrar {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  padding: 0;
+  background: none;
+  border: var(--linea);
+  border-radius: var(--radius-chips);
+  color: var(--color-mist-gray);
+  cursor: pointer;
+  transition: color var(--t-fast) var(--ease-salida),
+              border-color var(--t-fast) var(--ease-salida);
+}
+
+.configuration-aviso__cerrar:hover {
+  color: var(--color-paper);
+  border-color: var(--color-mist-gray);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .configuration-aviso {
+    animation: aviso-entra var(--t-med) var(--ease-salida) both;
+  }
+
+  @keyframes aviso-entra {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: none; }
+  }
+}
+
 /* ==========================================================================
-   PISTA DE PASOS (HUD) — estado real derivado del flujo moto → capas → piezas.
-   Un segmento se enciende cuando está hecho y el primero pendiente queda activo.
+   TABS DE CONFIGURACIÓN (HUD) — cada tab es un armado independiente con su
+   moto, sus capas y sus piezas. Crece para llenar la barra; con muchas, scrollea.
    ========================================================================== */
 
-.config-pasos {
+.config-tabs {
   display: flex;
   align-items: stretch;
-  list-style: none;
   margin: 0 0 var(--space-32);
-  padding: 0;
   background: var(--surface-card);
   border: var(--linea);
   border-radius: 0;
   clip-path: var(--clip-esquinas);
 }
 
-.config-paso {
-  position: relative;
+.config-tabs__lista {
   display: flex;
-  align-items: center;
-  gap: var(--space-10);
+  align-items: stretch;
   flex: 1;
   min-width: 0;
-  padding: var(--space-12) var(--space-16);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-ink-border) transparent;
+}
+
+.config-tabs__lista::-webkit-scrollbar {
+  height: 4px;
+}
+
+.config-tabs__lista::-webkit-scrollbar-track {
+  background: var(--surface-canvas);
+}
+
+.config-tabs__lista::-webkit-scrollbar-thumb {
+  background: var(--color-ink-border);
+  border-radius: 0;
+}
+
+.config-tabs__lista::-webkit-scrollbar-thumb:hover {
+  background: var(--color-brand-orange);
+}
+
+.config-tab {
+  position: relative;
+  display: flex;
+  flex: 1 0 172px;
+  min-width: 0;
   border-right: var(--linea);
-  transition: background var(--t-fast) var(--ease-salida),
-              box-shadow var(--t-med) var(--ease-salida);
+  transition: background var(--t-fast) var(--ease-salida);
 }
 
-.config-paso:last-child {
-  border-right: none;
+.config-tab:hover {
+  background: rgba(242, 106, 33, 0.05);
 }
 
-/* Conector: el hilo inferior es la pista que se enciende por segmento */
-.config-paso::after {
+/* Hilo inferior: encendido a medias cuando el tab ya tiene piezas */
+.config-tab::after {
   content: '';
   position: absolute;
   left: var(--space-16);
@@ -949,15 +1188,46 @@
   bottom: 0;
   height: 1px;
   background: var(--color-ink-border);
+  pointer-events: none;
   transition: background var(--t-med) var(--ease-salida),
               box-shadow var(--t-med) var(--ease-salida);
 }
 
-.config-paso--hecha::after {
+.config-tab--conpiezas::after {
   background: rgba(242, 106, 33, 0.55);
 }
 
-.config-paso__num {
+.config-tab--activa {
+  background: rgba(242, 106, 33, 0.12);
+  box-shadow: inset 0 -2px 0 var(--color-brand-orange);
+}
+
+.config-tab--activa::after {
+  background: var(--color-brand-orange);
+  box-shadow: var(--sombra-neon);
+}
+
+.config-tab__sel {
+  display: flex;
+  align-items: center;
+  gap: var(--space-10);
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-12) var(--space-52) var(--space-12) var(--space-16);
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+/* El corte del contenedor se comería un anillo exterior: el foco va dentro */
+.config-tab__sel:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px rgba(242, 106, 33, 0.65);
+}
+
+.config-tab__num {
+  flex-shrink: 0;
   font-family: var(--font-mono);
   font-weight: var(--weight-bold);
   font-size: var(--text-label);
@@ -969,14 +1239,27 @@
               text-shadow var(--t-med) var(--ease-salida);
 }
 
-.config-paso__etq {
-  font-family: var(--font-mono);
-  font-weight: var(--weight-medium);
-  font-size: var(--text-label);
+.config-tab--activa .config-tab__num {
+  color: var(--color-brand-orange);
+  text-shadow: 0 0 14px rgba(242, 106, 33, 0.45);
+}
+
+.config-tab__cuerpo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  flex: 1;
+  min-width: 0;
+}
+
+.config-tab__nombre {
+  font-family: var(--font-display);
+  font-weight: var(--weight-bold);
+  font-size: var(--text-caption);
   line-height: var(--leading-caption);
   text-transform: uppercase;
   letter-spacing: var(--tracking-label);
-  color: var(--color-mist-gray);
+  color: var(--color-soft-mist);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -984,35 +1267,161 @@
               text-shadow var(--t-med) var(--ease-salida);
 }
 
-.config-paso--hecha .config-paso__num {
-  color: var(--color-brand-orange);
-  opacity: 0.75;
-}
-
-.config-paso--hecha .config-paso__etq {
-  color: var(--color-soft-mist);
-}
-
-/* Segmento activo: corte de esquina + hairline de acento + halo */
-.config-paso--activa {
-  background: rgba(242, 106, 33, 0.12);
-  clip-path: var(--clip-esquina-inf);
-  box-shadow: inset 0 -2px 0 var(--color-brand-orange), var(--glow-suave);
-}
-
-.config-paso--activa::after {
-  background: var(--color-brand-orange);
-  box-shadow: var(--sombra-neon);
-}
-
-.config-paso--activa .config-paso__num {
-  color: var(--color-brand-orange);
-  text-shadow: 0 0 14px rgba(242, 106, 33, 0.45);
-}
-
-.config-paso--activa .config-paso__etq {
+.config-tab--activa .config-tab__nombre {
   color: var(--color-brand-orange);
   text-shadow: 0 0 14px rgba(242, 106, 33, 0.4);
+}
+
+.config-tab__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: var(--leading-caption);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-mist-gray);
+}
+
+.config-tab__moto {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.config-tab__piezas {
+  flex-shrink: 0;
+  padding: 1px var(--space-6);
+  background: var(--surface-canvas);
+  border: 1px solid var(--color-ink-border);
+  border-radius: var(--radius-chips);
+  font-style: normal;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-mist-gray);
+  transition: color var(--t-fast) var(--ease-salida),
+              border-color var(--t-fast) var(--ease-salida),
+              background var(--t-fast) var(--ease-salida);
+}
+
+.config-tab--conpiezas .config-tab__piezas {
+  background: rgba(242, 106, 33, 0.12);
+  border-color: rgba(242, 106, 33, 0.4);
+  color: var(--color-brand-orange);
+}
+
+/* Renombrar y eliminar viven fuera del botón del tab: nada interactivo anidado */
+.config-tab__acciones {
+  position: absolute;
+  top: var(--space-8);
+  right: var(--space-8);
+  display: flex;
+  gap: var(--space-4);
+  opacity: 0;
+  transition: opacity var(--t-fast) var(--ease-salida);
+}
+
+.config-tab:hover .config-tab__acciones,
+.config-tab:focus-within .config-tab__acciones,
+.config-tab--activa .config-tab__acciones {
+  opacity: 1;
+}
+
+.config-tab__icono {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  background: var(--surface-elevated);
+  border: var(--linea);
+  border-radius: var(--radius-chips);
+  color: var(--color-mist-gray);
+  cursor: pointer;
+  transition: color var(--t-fast) var(--ease-salida),
+              border-color var(--t-fast) var(--ease-salida),
+              box-shadow var(--t-med) var(--ease-salida);
+}
+
+.config-tab__icono:hover {
+  color: var(--color-brand-orange);
+  border-color: rgba(242, 106, 33, 0.5);
+  box-shadow: var(--glow-suave);
+}
+
+.config-tab__icono:focus-visible {
+  outline: none;
+  border-color: var(--color-brand-orange);
+  box-shadow: 0 0 0 2px rgba(242, 106, 33, 0.3);
+}
+
+.config-tab__icono--cerrar:hover {
+  color: var(--color-jam-pink);
+  border-color: rgba(229, 72, 77, 0.5);
+  box-shadow: 0 0 0 1px rgba(229, 72, 77, 0.25);
+}
+
+.config-tab__editor {
+  display: flex;
+  align-items: center;
+  gap: var(--space-10);
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-12) var(--space-16);
+}
+
+.config-tab__input {
+  flex: 1;
+  min-width: 0;
+  height: 28px;
+  padding: 0 var(--space-8);
+  background: var(--surface-canvas);
+  border: 1px solid var(--color-brand-orange);
+  border-radius: var(--radius-inputs);
+  color: var(--color-paper);
+  font-family: var(--font-display);
+  font-weight: var(--weight-bold);
+  font-size: var(--text-caption);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  box-shadow: 0 0 0 3px rgba(242, 106, 33, 0.18);
+}
+
+.config-tab__input:focus {
+  outline: none;
+}
+
+/* Mismo lenguaje que un tab, pero compacto y siempre a la vista */
+.config-tabs__nueva {
+  display: grid;
+  place-items: center;
+  flex: 0 0 var(--space-48);
+  padding: 0;
+  background: var(--surface-elevated);
+  border: none;
+  border-left: var(--linea);
+  color: var(--color-brand-orange);
+  cursor: pointer;
+  transition: background var(--t-fast) var(--ease-salida),
+              color var(--t-fast) var(--ease-salida),
+              box-shadow var(--t-med) var(--ease-salida);
+}
+
+.config-tabs__nueva:hover {
+  background: var(--color-brand-orange);
+  color: var(--color-obsidian-plum);
+  box-shadow: var(--glow-acento);
+}
+
+.config-tabs__nueva:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--color-brand-orange);
+}
+
+.config-tabs__nueva:active {
+  background: var(--color-deep-violet);
 }
 
 /* ==========================================================================
@@ -1042,12 +1451,17 @@
     bottom: var(--space-8);
   }
 
-  .config-paso__etq {
-    display: none;
+  .config-tab {
+    flex-basis: 156px;
   }
 
-  .config-paso {
-    justify-content: center;
+  .config-tab__sel {
+    padding-left: var(--space-12);
+    padding-right: var(--space-48);
+  }
+
+  .config-tab__acciones {
+    right: var(--space-6);
   }
 }
 
@@ -1096,16 +1510,28 @@
   }
 
   .configuration-items {
-    overflow-x: auto;
-    padding-bottom: var(--space-16);
-    margin-bottom: var(--space-16);
+    padding-bottom: var(--space-12);
+    margin-bottom: var(--space-12);
     border-bottom: none;
-    white-space: nowrap;
+  }
+
+  /* En móvil las piezas corren en horizontal: la barra pegajosa sigue siendo fina */
+  .configuration-piezas {
+    flex-wrap: nowrap;
+    max-height: none;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-right: 0;
+    padding-bottom: var(--space-4);
   }
 
   .configuration-pill {
-    margin-bottom: 0;
     flex-shrink: 0;
+  }
+
+  /* El destino ya se explica sobre la lista: la barra pegajosa no repite el aviso */
+  .configuration-vacia {
+    display: none;
   }
 
   .configuration-total {
@@ -1118,8 +1544,42 @@
     width: 100%;
   }
 
-  .config-pasos {
+  .configuration-aviso {
+    flex-wrap: wrap;
+    row-gap: var(--space-8);
+  }
+
+  .configuration-aviso__texto {
+    flex: 1 1 160px;
+  }
+
+  .config-tabs {
+    margin-bottom: var(--space-24);
     clip-path: var(--clip-esquina-sup);
+  }
+
+  .config-tab {
+    flex: 1 0 152px;
+  }
+
+  .config-tab__meta {
+    display: none;
+  }
+
+  .config-tab__sel {
+    padding: var(--space-12);
+    padding-right: var(--space-52);
+  }
+
+  .config-tab__acciones {
+    top: 50%;
+    right: var(--space-8);
+    transform: translateY(-50%);
+    opacity: 1;
+  }
+
+  .config-tabs__nueva {
+    flex-basis: var(--space-40);
   }
 }
 
@@ -1145,6 +1605,21 @@
   .bike-stage-img,
   .compatible-item,
   .preview-details div {
+    transition: none;
+  }
+
+  .config-tab,
+  .config-tab::after,
+  .config-tab__num,
+  .config-tab__nombre,
+  .config-tab__piezas,
+  .config-tab__acciones,
+  .config-tab__icono,
+  .config-tabs__nueva,
+  .configuration-pill,
+  .configuration-aviso__enlace,
+  .configuration-aviso__accion,
+  .configuration-aviso__cerrar {
     transition: none;
   }
 
