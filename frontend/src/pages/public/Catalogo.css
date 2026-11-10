@@ -547,7 +547,7 @@
 
 .catalog-filters-main {
   display: grid;
-  grid-template-columns: minmax(220px, 1fr) minmax(170px, 210px) auto;
+  grid-template-columns: minmax(220px, 1fr) minmax(170px, 450px) auto;
   gap: var(--space-12);
   align-items: end;
 }
@@ -699,7 +699,7 @@
   display: flex;
   align-items: center;
   gap: var(--space-10);
-  height: 40px;
+  min-height: 40px;
   padding: 0 var(--space-12);
   background: var(--surface-elevated);
   border: var(--linea);
@@ -1082,7 +1082,7 @@
   }
 
   .catalog-filters-main {
-    grid-template-columns: minmax(220px, 1fr) minmax(180px, 220px);
+    grid-template-columns: minmax(80px, 1fr) minmax(80px, 220px);
   }
 
   .price-range {
