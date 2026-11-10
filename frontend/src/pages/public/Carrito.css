@@ -363,6 +363,20 @@
   opacity: 0.85;
 }
 
+/* Texto escrito que no se tradujo en una moto elegida: aviso, no error */
+.form-hint--aviso {
+  margin-top: var(--space-8);
+  padding: var(--space-8) var(--space-12);
+  border-left: 2px solid var(--color-brand-orange);
+  background: rgba(242, 106, 33, 0.08);
+  color: var(--color-paper);
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  line-height: var(--leading-caption);
+  letter-spacing: var(--tracking-caption);
+  opacity: 1;
+}
+
 .summary-note {
   display: flex;
   align-items: center;

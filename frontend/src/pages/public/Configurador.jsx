@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Check, ChevronDown, Pencil, Plus, Search, Shapes, Settings2, ShoppingCart, Trash2, Undo2, X } from 'lucide-react';
+import { ArrowRight, Check, ChevronDown, Pencil, Plus, Shapes, Settings2, ShoppingCart, Trash2, Undo2, X } from 'lucide-react';
 import { obtenerMotos } from '../../services/motos';
 import { obtenerAccesorios, obtenerTiposProducto } from '../../services/accesorios';
 import { useCart } from '../../context/CartContext';
 import SiteHeader from '../../components/buttons/SiteHeader';
 import ImagenProducto from '../../components/ImagenProducto';
+import SelectorMoto from '../../components/forms/SelectorMoto';
+import { etiquetaMoto, idMarcaMoto } from '../../utils/motos';
 import { refrescarMovimiento } from '../../utils/motion';
 import {
   LIMITE_NOMBRE,
@@ -189,6 +191,21 @@ export default function Configurador() {
 
   function buscarMoto(valor) {
     cambiarConfiguracion(configuracion.id, (c) => ({ moto: { ...c.moto, busqueda: valor } }));
+  }
+
+  // Elegir una sugerencia compromete la cascada completa: los tres selectores
+  // y la vista previa quedan alineados con la moto exacta, no con una aproximación.
+  function elegirMoto(moto) {
+    cambiarConfiguracion(configuracion.id, () => ({
+      moto: moto
+        ? {
+          marca: idMarcaMoto(moto),
+          modelo: moto.modelo_moto?.id_modelo_moto || '',
+          anio: String(moto.moto_anio ?? ''),
+          busqueda: etiquetaMoto(moto),
+        }
+        : { marca: '', modelo: '', anio: '', busqueda: '' },
+    }));
   }
 
   function toggleTipo(id) {
@@ -463,73 +480,50 @@ export default function Configurador() {
             {/* Selectores en cascada + búsqueda */}
             <div className="moto-selectors">
               <label className="select-label" htmlFor="config-buscar-moto">Buscar moto</label>
-              <div className="select-wrap">
-                <Search size={14} className="select-search-icon" aria-hidden="true" />
-                <input
-                  id="config-buscar-moto"
-                  type="text"
-                  className="select-wrap__input"
-                  value={busquedaMoto}
-                  onChange={(e) => buscarMoto(e.target.value)}
-                  placeholder="Marca, modelo o año..."
-                />
-              </div>
-
-              <label className="select-label" htmlFor="config-marca">Marca</label>
-              <div className="select-wrap">
+              <SelectorMoto
+                id="config-buscar-moto"
+                motos={motos}
+                texto={busquedaMoto}
+                onTexto={buscarMoto}
+                onElegir={elegirMoto}
+                placeholder="Marca, modelo o año..."
+              />
+            </div>
+            <div className="bike-stage">
+              <div className="stage-grid" />
+              <span className="stage-tag">{motoActual.modelo_moto?.marca_moto?.marca_nombre || ''}</span>
+              <ImagenProducto src={motoActual?.moto_imagen} alt={motoNombre} className="bike-stage-img" />
+            </div>
+            <div className="preview-details">
+              <div>
+                <small>Marca</small>
                 <select id="config-marca" value={marcaMoto} onChange={(e) => elegirMarca(e.target.value)}>
-                  <option value="">Todas las marcas</option>
+                  <option value="">Seleccionar</option>
                   {marcasMoto.map((m) => (
                     <option key={m.id} value={m.id}>{m.nombre}</option>
                   ))}
                 </select>
                 <ChevronDown className="select-arrow" size={16} aria-hidden="true" />
               </div>
-
-              <label className="select-label" htmlFor="config-modelo">Modelo</label>
-              <div className="select-wrap">
+              <div>
+                <small>Modelo</small>
                 <select id="config-modelo" value={modeloMoto} onChange={(e) => elegirModelo(e.target.value)} disabled={!marcaMoto && marcasMoto.length > 0}>
-                  <option value="">Todos los modelos</option>
+                  <option value="">Seleccionar</option>
                   {modelosMoto.map((m) => (
                     <option key={m.id} value={m.id}>{m.nombre} · {m.cilindraje}</option>
                   ))}
                 </select>
                 <ChevronDown className="select-arrow" size={16} aria-hidden="true" />
               </div>
-
-              <label className="select-label" htmlFor="config-anio">Año</label>
-              <div className="select-wrap">
+              <div>
+                <small>Año</small>
                 <select id="config-anio" value={anioMoto} onChange={(e) => elegirAnio(e.target.value)} disabled={!modeloMoto && modelosMoto.length > 0}>
-                  <option value="">Todos los años</option>
+                  <option value="">Seleccionar</option>
                   {aniosMoto.map((a) => (
                     <option key={a} value={a}>{a}</option>
                   ))}
                 </select>
                 <ChevronDown className="select-arrow" size={16} aria-hidden="true" />
-              </div>
-            </div>
-
-            <div className="bike-stage">
-              <div className="stage-grid" />
-              <span className="stage-tag">{motoActual?.moto_version || 'Compatible'}</span>
-              <ImagenProducto src={motoActual?.moto_imagen} alt={motoNombre} className="bike-stage-img" />
-              <div className="bike-stage-name">
-                <strong>{motoNombre}</strong>
-                <span>{motoActual?.modelo_moto?.cilindraje || '—'} · {motoActual?.moto_anio || '—'}</span>
-              </div>
-            </div>
-            <div className="preview-details">
-              <div>
-                <small>Modelo</small>
-                <strong>{motoActual?.modelo_moto?.modelo_nombre || '—'}</strong>
-              </div>
-              <div>
-                <small>Cilindraje</small>
-                <strong>{motoActual?.modelo_moto?.cilindraje || '—'}</strong>
-              </div>
-              <div>
-                <small>Estado</small>
-                <strong className="status-good"><Check size={14} aria-hidden="true" /> Compatible</strong>
               </div>
             </div>
           </section>

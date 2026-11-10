@@ -48,7 +48,7 @@ export default function Catalogo() {
               </p>
               <div className="catalog-hero-actions" data-reveal="up" data-reveal-delay="0.35">
                 <Link to="/configurador" className="btn btn--primary">Configurar mi moto <ArrowRight size={16} aria-hidden="true" /></Link>
-                <a href="#catalogo" className="btn btn--ghost catalog-hero-ghost">Explorar accesorios</a>
+                <Link to="/catalogo" className="btn btn--ghost catalog-hero-ghost">Explorar accesorios</Link>
               </div>
               <div className="catalog-hero-proof" data-reveal="fade" data-reveal-delay="0.5">
                 <span>JR</span><span>MG</span><span>DV</span><b>+</b><small>Más de 1.200 motociclistas ya configuraron la suya</small>

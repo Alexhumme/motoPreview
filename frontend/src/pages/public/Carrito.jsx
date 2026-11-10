@@ -17,7 +17,11 @@ import { obtenerMotos } from '../../services/motos';
 import { crearCotizacion } from '../../services/cotizaciones';
 import SiteHeader from '../../components/buttons/SiteHeader';
 import ImagenProducto from '../../components/ImagenProducto';
+import SelectorMoto from '../../components/forms/SelectorMoto';
+import { etiquetaMoto } from '../../utils/motos';
 import './Carrito.css';
+
+const SIN_MOTO = 'Sin moto específica';
 
 const money = (value) => new Intl.NumberFormat('es-CO', {
   style: 'currency',
@@ -31,14 +35,31 @@ export default function Carrito() {
   const navigate = useNavigate();
   const [motos, setMotos] = useState([]);
   const [idMoto, setIdMoto] = useState('');
+  const [textoMoto, setTextoMoto] = useState('');
+  const [cargandoMotos, setCargandoMotos] = useState(true);
   const [observaciones, setObservaciones] = useState('');
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState('');
   const [exito, setExito] = useState(false);
 
   useEffect(() => {
-    obtenerMotos().then(setMotos).catch(() => setMotos([]));
+    obtenerMotos()
+      .then(setMotos)
+      .catch(() => setMotos([]))
+      .finally(() => setCargandoMotos(false));
   }, []);
+
+  // Escribir invalida la elección previa: la cotización no puede llevar el id
+  // de una moto que ya no coincide con lo que el usuario ve en el campo.
+  function escribirMoto(valor) {
+    setTextoMoto(valor);
+    setIdMoto('');
+  }
+
+  function elegirMoto(moto) {
+    setIdMoto(moto?.id_moto || '');
+    if (moto) setTextoMoto(etiquetaMoto(moto));
+  }
 
   async function manejarEnvio(event) {
     event.preventDefault();
@@ -158,24 +179,23 @@ export default function Carrito() {
                   <form onSubmit={manejarEnvio} className="quote-form">
                     <div className="form-field">
                       <label htmlFor="moto-select" className="form-label">
-                        ¿Para qué moto es esta cotización? <span className="form-optional">(opcional)</span>
+                        ¿Para qué moto es esta cotización?
                       </label>
-                      <select
+                      <SelectorMoto
                         id="moto-select"
-                        className="form-input form-select"
-                        value={idMoto}
-                        onChange={(e) => setIdMoto(e.target.value)}
-                      >
-                        <option value="">Sin moto específica</option>
-                        {motos.map((moto) => (
-                          <option key={moto.id_moto} value={moto.id_moto}>
-                            {moto.modelo_moto?.marca_moto?.marca_nombre} {moto.modelo_moto?.modelo_nombre} {moto.moto_anio}
-                          </option>
-                        ))}
-                      </select>
-                      <p className="form-hint">
-                        Puedes dejarlo vacío si la cotización no está atada a una moto en particular.
-                      </p>
+                        motos={motos}
+                        texto={textoMoto}
+                        onTexto={escribirMoto}
+                        onElegir={elegirMoto}
+                        placeholder="Busca por marca, modelo o año..."
+                        opcionNinguna={SIN_MOTO}
+                        cargando={cargandoMotos}
+                      />
+                      {textoMoto.trim() && !idMoto && textoMoto !== SIN_MOTO && (
+                        <p className="form-hint form-hint--aviso" role="status">
+                          Elige una moto de las sugerencias o borra el texto: la cotización saldrá sin moto.
+                        </p>
+                      )}
                     </div>
 
                     <div className="form-field">

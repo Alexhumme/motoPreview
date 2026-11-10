@@ -153,7 +153,7 @@
 
 .configurator-layout {
   display: grid;
-  grid-template-columns: 340px minmax(0, 1fr);
+  grid-template-columns: 400px minmax(0, 1fr);
   gap: var(--space-32);
   align-items: start;
 }
@@ -250,73 +250,6 @@
     opacity: 0.35;
     box-shadow: 0 0 4px rgba(242, 106, 33, 0.25);
   }
-}
-
-.select-label {
-  display: block;
-  margin-bottom: var(--space-8);
-  font-family: var(--font-mono);
-  font-weight: var(--weight-medium);
-  font-size: var(--text-label);
-  line-height: var(--leading-caption);
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-label);
-  color: var(--color-mist-gray);
-}
-
-.select-wrap {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.select-wrap select {
-  width: 100%;
-  padding: var(--space-12) var(--space-40) var(--space-12) var(--space-16);
-  border: var(--linea-fuerte);
-  border-radius: var(--radius-inputs);
-  background-color: var(--surface-canvas);
-  color: var(--color-paper);
-  font-family: var(--font-ui);
-  font-size: var(--text-body);
-  line-height: var(--leading-body);
-  outline: none;
-  appearance: none;
-  -webkit-appearance: none;
-  cursor: pointer;
-  transition: border-color var(--t-fast) var(--ease-salida),
-              box-shadow var(--t-med) var(--ease-salida);
-}
-
-.select-wrap select:hover {
-  border-color: rgba(242, 106, 33, 0.5);
-  box-shadow: var(--glow-suave);
-}
-
-/* Foco = circuito encendido: hairline naranja + halo, sin relleno de color */
-.select-wrap select:focus {
-  border-color: var(--color-brand-orange);
-  box-shadow: 0 0 0 1px rgba(242, 106, 33, 0.45), var(--glow-suave);
-}
-
-.select-wrap select option {
-  background: var(--surface-elevated);
-  color: var(--color-paper);
-  font-family: var(--font-ui);
-}
-
-.select-arrow {
-  position: absolute;
-  right: var(--space-12);
-  color: var(--color-mist-gray);
-  pointer-events: none;
-  transition: color var(--t-fast) var(--ease-salida),
-              transform var(--t-med) var(--ease-salida);
-}
-
-.select-wrap:focus-within .select-arrow {
-  color: var(--color-brand-orange);
-  transform: translateY(1px);
 }
 
 /* Escenario de la moto: la media del configurador lleva el idioma HUD.
@@ -490,18 +423,7 @@
   color: var(--color-mist-gray);
 }
 
-.preview-details strong {
-  font-family: var(--font-mono);
-  font-weight: var(--weight-semibold);
-  font-size: var(--text-caption);
-  letter-spacing: var(--tracking-caption);
-  font-variant-numeric: tabular-nums;
-  color: var(--color-paper);
-  text-align: right;
-  overflow-wrap: anywhere;
-}
-
-.preview-details strong.status-good {
+.preview-details .status-good {
   display: inline-flex;
   align-items: center;
   gap: var(--space-6);
@@ -509,8 +431,60 @@
   text-shadow: 0 0 14px rgba(242, 106, 33, 0.35);
 }
 
-.preview-details strong.status-good svg {
+.preview-details .status-good svg {
   flex-shrink: 0;
+}
+
+.preview-details select {
+  width: 100%;
+  border: none;
+  background: none;
+  color: var(--color-paper);
+  font-family: var(--font-mono);
+  font-weight: var(--weight-semibold);
+  font-size: var(--text-caption);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  overflow-wrap: anywhere;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  transition: border-color var(--t-fast) var(--ease-salida),
+              box-shadow var(--t-med) var(--ease-salida);
+  padding-right: var(--space-32);
+  padding-left: var(--space-16);
+}
+
+.preview-details select:hover {
+  border-color: rgba(242, 106, 33, 0.5);
+  box-shadow: var(--glow-suave);
+}
+
+/* Foco = circuito encendido: hairline naranja + halo, sin relleno de color */
+.preview-details select:focus {
+  border-color: var(--color-brand-orange);
+  box-shadow: 0 0 0 1px rgba(242, 106, 33, 0.45), var(--glow-suave);
+}
+
+.preview-details select option {
+  font-family: var(--font-display);
+  background: var(--surface-elevated);
+  color: var(--color-paper);
+}
+
+.select-arrow {
+  position: absolute;
+  right: var(--space-12);
+  color: var(--color-mist-gray);
+  pointer-events: none;
+  transition: color var(--t-fast) var(--ease-salida),
+              transform var(--t-med) var(--ease-salida);
+}
+
+.preview-details div:focus-within .select-arrow {
+  color: var(--color-brand-orange);
+  transform: translateY(1px);
 }
 
 /* ==========================================================================
@@ -530,7 +504,7 @@
 }
 
 /* Destino de las piezas: deja claro que el + no toca el carrito */
-.compatible-destino {
+/*.compatible-destino {
   display: flex;
   align-items: center;
   gap: var(--space-8);
@@ -556,7 +530,7 @@
 .compatible-destino strong {
   font-weight: var(--weight-bold);
   color: var(--color-paper);
-}
+}*/
 
 /* Filtrado por capas (categoría → tipo) dentro del panel de compatibles */
 .compatible-filters {
@@ -620,7 +594,7 @@
   gap: var(--space-16);
   flex: 1;
   height: 500px;
-  max-height: 540px;
+  max-height: 532px;
   overflow-y: scroll;
   padding-right: var(--space-4);
   scrollbar-width: thin;
@@ -1489,10 +1463,6 @@
     height: 260px;
   }
 
-  .bike-stage-name strong {
-    font-size: var(--text-body-lg);
-  }
-
   .compatible-panel {
     padding: var(--space-24);
   }
@@ -1634,41 +1604,10 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-8);
-  margin-bottom: var(--space-16);
 }
 
 .moto-selectors .select-label {
   margin-bottom: 0;
   margin-top: var(--space-8);
-}
-
-.moto-selectors .select-label:first-child {
-  margin-top: 0;
-}
-
-.select-wrap__input {
-  width: 100%;
-  padding: var(--space-12) var(--space-16) var(--space-12) var(--space-40);
-  border: 1px solid var(--color-bone);
-  border-radius: var(--radius-inputs);
-  background: var(--surface-canvas);
-  color: var(--color-paper);
-  font-family: var(--font-ui);
-  font-size: var(--text-body);
-  outline: none;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
-}
-
-.select-wrap__input:focus {
-  border-color: var(--color-brand-orange);
-  box-shadow: 0 0 0 3px rgba(242, 106, 33, 0.15);
-}
-
-.select-search-icon {
-  position: absolute;
-  left: var(--space-12);
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--color-mist-gray);
-  pointer-events: none;
+  font-family: var(--font-mono);
 }

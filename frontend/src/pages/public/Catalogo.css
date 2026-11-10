@@ -470,6 +470,7 @@
 
 .stat-item strong {
   display: flex;
+  justify-content: center;
   font-family: var(--font-mono);
   font-weight: var(--weight-bold);
   font-size: var(--text-heading-lg);
