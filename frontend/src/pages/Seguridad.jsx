@@ -565,12 +565,12 @@ export default function Seguridad() {
                 <select
                   id="rol-activo"
                   className="form-input form-select"
-                  value={formulario.activo}
-                  onChange={(e) => setFormulario({ ...formulario, activo: e.target.value })}
+                  value={String(formulario.activo)}
+                  onChange={(e) => setFormulario({ ...formulario, activo: e.target.value === 'true' })}
                   disabled={guardando}
                 >
-                  <option value={true}>Activo</option>
-                  <option value={false}>Inactivo</option>
+                  <option value="true">Activo</option>
+                  <option value="false">Inactivo</option>
                 </select>
               </div>
 
