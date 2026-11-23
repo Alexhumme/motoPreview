@@ -7,7 +7,7 @@ import { useCart } from '../../context/CartContext';
 import SiteHeader from '../../components/buttons/SiteHeader';
 import ImagenProducto from '../../components/ImagenProducto';
 import SelectorMoto from '../../components/forms/SelectorMoto';
-import { etiquetaMoto, idMarcaMoto } from '../../utils/motos';
+import { idMarcaMoto } from '../../utils/motos';
 import { refrescarMovimiento } from '../../utils/motion';
 import {
   LIMITE_NOMBRE,
