@@ -1,0 +1,72 @@
+import { Link } from 'react-router-dom';
+import { ArrowUpRight, Plus, Rotate3d, Sparkles } from 'lucide-react';
+import { useCart } from '../../context/CartContext';
+import ImagenProducto from '../ImagenProducto';
+import './AccesorioCard.css';
+
+export default function AccesorioCard({ accesorio }) {
+  const { agregarItem } = useCart();
+  const precio = new Intl.NumberFormat('es-CO', {
+    style: 'currency',
+    currency: 'COP',
+    maximumFractionDigits: 0,
+  }).format(accesorio.acc_precio);
+  const disponible = accesorio.acc_estado === 'disponible';
+
+  return (
+    <article className="product-card fx-eleva" data-reveal="up">
+      <Link to={`/visualizador/${accesorio.id_accesorio}`} className="product-link" aria-label={`Ver ${accesorio.acc_nombre}`}>
+        {/* Área de imagen - usa ImagenProducto con fallback automático */}
+        <ImagenProducto
+          src={accesorio.imagen}
+          alt={accesorio.acc_nombre}
+          className="product-image"
+        />
+        <div className="product-shine" aria-hidden="true" />
+        <span className="product-escaneo" aria-hidden="true" />
+      </Link>
+
+      <div className="product-content">
+        {/* Badge "Disponible" - posición absoluta dentro del contenido */}
+        {disponible && (
+          <span className="product-badge badge--mint">
+            <Sparkles size={11} aria-hidden="true" /> Disponible
+          </span>
+        )}
+
+        <span className="product-view">
+          <Rotate3d size={13} aria-hidden="true" /> Vista 3D
+          <ArrowUpRight size={13} aria-hidden="true" />
+        </span>
+
+        <div className="product-meta">
+          <span>{accesorio.marca?.nombre || 'Sin marca'}</span>
+          {accesorio.tipos?.length > 0 && (
+            <span className="product-tag">{accesorio.tipos.map((t) => t.nombre).join(' · ')}</span>
+          )}
+        </div>
+
+        <h3 className="product-title" data-glitch={accesorio.acc_nombre}>
+          {accesorio.acc_nombre}
+        </h3>
+
+        <p className="product-description">{accesorio.acc_descripcion || 'Pieza verificada para personalizar tu motocicleta.'}</p>
+
+        <div className="product-footer">
+          <div className="product-price">
+            <small>Desde</small>
+            <strong>{precio}</strong>
+          </div>
+          <button
+            className="btn btn--primary btn--sm add-product"
+            disabled={!disponible}
+            onClick={() => agregarItem(accesorio)}
+            aria-label={`Agregar ${accesorio.acc_nombre} al carrito`}
+          >
+            <Plus size={15} aria-hidden="true" />
+          </button>
+        </div>
+      </div>
+    </article>
+  );
+}

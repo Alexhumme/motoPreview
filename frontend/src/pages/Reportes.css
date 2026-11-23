@@ -1,0 +1,227 @@
+/* ==========================================================================
+   REPORTES — Jam Design System
+   ========================================================================== */
+
+.reportes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-32);
+}
+
+/* Header */
+.reportes-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-24);
+  flex-wrap: wrap;
+}
+
+.reportes-title {
+  font-family: var(--font-display);
+  font-weight: var(--weight-black);
+  font-size: var(--text-heading);
+  line-height: var(--leading-heading);
+  letter-spacing: var(--tracking-heading);
+  color: var(--color-paper);
+  margin: 0;
+}
+
+.reportes-toggle {
+  display: flex;
+  gap: var(--space-8);
+  background: var(--surface-card);
+  border: 1px solid var(--color-bone);
+  border-radius: var(--radius-pills);
+  padding: var(--space-4);
+}
+
+.reportes-toggle .btn {
+  padding: var(--space-8) var(--space-16);
+  font-size: var(--text-body);
+  border-radius: var(--radius-inputs);
+}
+
+/* KPIs */
+.reportes-kpis {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-20);
+}
+
+.reportes-kpis .kpi {
+  padding: var(--space-24);
+}
+
+.reportes-kpis .kpi-icon {
+  width: 48px;
+  height: 48px;
+  font-size: 22px;
+}
+
+.reportes-kpis .kpi-content small {
+  font-size: var(--text-caption);
+}
+
+.reportes-kpis .kpi-content strong {
+  font-size: var(--text-heading-sm);
+}
+
+.reportes-kpis .kpi-content em {
+  font-size: var(--text-caption);
+}
+
+/* Grid */
+.reportes-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-24);
+}
+
+.reportes-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.card-head {
+  padding-bottom: var(--space-16);
+  border-bottom: 1px solid var(--color-bone);
+  margin-bottom: var(--space-20);
+}
+
+.card-head strong {
+  font-family: var(--font-display);
+  font-weight: var(--weight-black);
+  font-size: var(--text-heading-sm);
+  color: var(--color-paper);
+}
+
+/* Ranking */
+.reportes-ranking {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  flex: 1;
+}
+
+.reportes-empty {
+  text-align: center;
+  color: var(--color-mist-gray);
+  padding: var(--space-48) var(--space-24);
+  margin: 0;
+}
+
+.reportes-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.reportes-row-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-12);
+}
+
+.reportes-row-info span:first-child {
+  font-family: var(--font-ui);
+  font-size: var(--text-body);
+  color: var(--color-paper);
+  font-weight: var(--weight-medium);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reportes-row-count {
+  font-family: var(--font-display);
+  font-weight: var(--weight-bold);
+  font-size: var(--text-body);
+  color: var(--color-brand-orange);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.reportes-bar-track {
+  height: 6px;
+  background: var(--surface-canvas);
+  border-radius: var(--radius-pills);
+  overflow: hidden;
+}
+
+.reportes-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--color-brand-orange), var(--color-brand-orange-soft));
+  border-radius: var(--radius-pills);
+  transition: width 0.3s ease;
+}
+
+/* Estados */
+.reportes-estados {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  flex: 1;
+}
+
+.estado-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-16);
+  padding: var(--space-16) var(--space-20);
+  background: var(--surface-elevated);
+  border: 1px solid var(--color-bone);
+  border-radius: var(--radius-inputs);
+  transition: all 0.15s ease;
+}
+
+.estado-item:hover {
+  border-color: var(--color-mist-gray);
+}
+
+.estado-item .badge {
+  flex-shrink: 0;
+  font-size: var(--text-caption);
+  padding: var(--space-6) var(--space-12);
+}
+
+.estado-item strong {
+  font-family: var(--font-display);
+  font-weight: var(--weight-bold);
+  font-size: var(--text-body-lg);
+  color: var(--color-paper);
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .reportes-kpis {
+    grid-template-columns: 1fr;
+  }
+
+  .reportes-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .reportes-title {
+    font-size: var(--text-heading-lg);
+  }
+
+  .reportes-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .reportes-toggle {
+    width: 100%;
+  }
+
+  .reportes-toggle .btn {
+    flex: 1;
+  }
+}

@@ -1,0 +1,819 @@
+/* ==========================================================================
+   ADMIN LAYOUT — Jam Design System
+   ========================================================================== */
+
+.admin-shell {
+  --admin-header-h: 71px;                 /* 16 + 16 de padding + 38 de marca + 1 de borde */
+  --admin-riel-ancho: 68px;
+  --admin-riel-ancho-desplegado: 240px;
+  --admin-subsidebar-ancho: 208px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface-canvas);
+}
+
+/* ==========================================================================
+   HEADER / TOP NAV
+   ========================================================================== */
+
+.admin-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-24);
+  padding: var(--space-16) var(--space-32);
+  background: var(--surface-canvas);
+  border-bottom: 1px solid var(--color-ink-border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+/* Módulo header pattern: sección nombre, contexto breve, acción principal */
+.module-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-16);
+  flex: 1;
+}
+
+.module-header__title {
+  font-family: var(--font-display);
+  font-weight: var(--weight-black);
+  font-size: var(--text-heading);
+  line-height: var(--leading-heading);
+  letter-spacing: var(--tracking-heading);
+  color: var(--color-paper);
+  margin: 0;
+  flex: 1;
+}
+
+.module-header__context {
+  font-family: var(--font-ui);
+  font-size: var(--text-caption);
+  color: var(--color-mist-gray);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  flex-shrink: 0;
+}
+
+.module-header__action {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  flex-shrink: 0;
+}
+
+/* Module header pattern: section name, brief context, primary action
+   Used consistently across Dashboard, Inventario, Cotizaciones, etc.
+   Structure: [section title] [brief context] [primary action button] */
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  text-decoration: none;
+  color: inherit;
+}
+
+.brand-mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  background-color: var(--marca-fondo);
+  background-image: var(--marca-imagen);
+  background-size: 104%;
+  background-position: center;
+  background-repeat: no-repeat;
+  border-radius: var(--radius-nav);
+  font-size: 0;
+  color: transparent;
+}
+
+.brand-text {
+  font-family: var(--font-display);
+  font-weight: var(--weight-black);
+  font-size: 18px;
+  letter-spacing: -0.02em;
+  color: var(--color-paper);
+}
+
+.brand-text span {
+  color: var(--color-brand-orange);
+}
+
+/* Navigation links */
+.admin-nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  flex: 1;
+  justify-content: center;
+}
+
+.admin-nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  padding: var(--space-8) var(--space-12);
+  border-radius: var(--radius-nav);
+  font-family: var(--font-ui);
+  font-size: var(--text-body);
+  font-weight: var(--weight-medium);
+  color: var(--color-mist-gray);
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.admin-nav-link:hover {
+  color: var(--color-paper);
+  background: var(--color-smoke-plum);
+}
+
+.admin-nav-link--active {
+  color: var(--color-brand-orange);
+  background: rgba(242, 106, 33, 0.1);
+}
+
+.nav-icon {
+  display: flex;
+  width: 18px;
+  height: 18px;
+  font-size: 14px;
+}
+
+.admin-header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+}
+
+/* Button size variant */
+.btn--sm {
+  padding: var(--space-8) var(--space-12);
+  font-size: var(--text-caption);
+  border-radius: var(--radius-nav);
+}
+
+/* ==========================================================================
+   MAIN CONTENT
+   ========================================================================== */
+
+.admin-main {
+  flex: 1;
+  max-width: var(--page-max-width);
+  width: 100%;
+  margin: 0 auto;
+  padding: var(--space-48) var(--space-24) var(--space-80);
+}
+
+/* ==========================================================================
+   FOOTER
+   ========================================================================== */
+
+.admin-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-24) var(--space-32);
+  border-top: 1px solid var(--color-ink-border);
+  background: var(--surface-canvas);
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  color: var(--color-mist-gray);
+  opacity: 0.6;
+}
+
+/* ==========================================================================
+   RESPONSIVE
+   ========================================================================== */
+
+@media (max-width: 1024px) {
+  .admin-shell {
+    --admin-header-h: 63px; /* 12 + 12 de padding + 38 de marca + 1 de borde */
+  }
+
+  .admin-nav {
+    display: none;
+  }
+
+  .admin-header {
+    padding: var(--space-12) var(--space-20);
+  }
+
+  .brand-text { font-size: 16px; }
+}
+
+@media (max-width: 720px) {
+  .admin-main {
+    padding: var(--space-32) var(--space-16) var(--space-48);
+  }
+
+  .admin-header {
+    padding: var(--space-12) var(--space-16);
+  }
+
+  .admin-header-actions {
+    gap: var(--space-8);
+  }
+
+  .btn--sm {
+    padding: var(--space-6) var(--space-10);
+    font-size: 10px;
+  }
+
+  .admin-footer {
+    flex-direction: column;
+    gap: var(--space-4);
+    text-align: center;
+    padding: var(--space-20) var(--space-16);
+  }
+}
+
+/* ==========================================================================
+   SIDEBAR (admin) — riel de categorías + segunda barra de enlaces
+   ========================================================================== */
+.admin-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+/* El riel y la segunda barra se pegan bajo el header y miden justo lo que queda
+   de viewport: el sticky los encierra en .admin-body, así que nunca cubren ni
+   el header ni el footer. */
+.admin-sidebar {
+  flex-shrink: 0;
+  width: var(--admin-riel-ancho);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: var(--space-16);
+  padding: var(--space-16) var(--space-10);
+  border-right: 1px solid var(--color-ink-border);
+  background: var(--surface-canvas);
+  position: sticky;
+  top: var(--admin-header-h);
+  align-self: flex-start;
+  height: calc(100vh - var(--admin-header-h));
+  overflow-y: auto;
+  overflow-x: hidden;
+  transition: width 0.18s ease;
+}
+
+.sidebar-cats,
+.sidebar-bottom {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.sidebar-cat {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-10);
+  padding: var(--space-10);
+  border: none;
+  border-radius: var(--radius-nav);
+  background: transparent;
+  color: var(--color-mist-gray);
+  font-family: var(--font-ui);
+  font-size: var(--text-body);
+  font-weight: var(--weight-semibold);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+  text-align: left;
+}
+
+.sidebar-cat:hover {
+  background: var(--surface-elevated);
+  color: var(--color-paper);
+}
+
+.sidebar-cat--activa {
+  color: var(--color-paper);
+  background: var(--surface-elevated);
+}
+
+.sidebar-cat__icon {
+  width: 20px;
+  display: flex;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* En reposo el riel solo muestra iconos; los títulos aparecen al desplegarlo. */
+.sidebar-cat__label,
+.sidebar-profile__text,
+.sidebar-toggle__label {
+  display: none;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-profile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-10);
+  padding: var(--space-8) var(--space-10);
+  border: 1px solid var(--color-ink-border);
+  border-radius: var(--radius-nav);
+  color: var(--color-mist-gray);
+  font-family: var(--font-ui);
+  font-size: var(--text-body);
+  text-decoration: none;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.sidebar-profile:hover {
+  background: var(--surface-elevated);
+  border-color: var(--color-mist-gray);
+  color: var(--color-paper);
+}
+
+.sidebar-profile--activa {
+  background: rgba(242, 106, 33, 0.1);
+  border-color: rgba(242, 106, 33, 0.45);
+  color: var(--color-brand-orange);
+}
+
+.sidebar-profile__icon,
+.sidebar-toggle__icon {
+  width: 20px;
+  display: flex;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.sidebar-profile__name {
+  display: block;
+  font-weight: var(--weight-semibold);
+  color: var(--color-paper);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-profile__role {
+  display: block;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-mist-gray);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-10);
+  width: 100%;
+  padding: var(--space-10);
+  border: none;
+  border-radius: var(--radius-nav);
+  background: transparent;
+  color: var(--color-mist-gray);
+  font-family: var(--font-ui);
+  font-size: var(--text-body);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.sidebar-toggle:hover {
+  background: var(--surface-elevated);
+  color: var(--color-paper);
+}
+
+/* Desplegado: iconos + títulos (el botón solo existe en escritorio). */
+@media (min-width: 1025px) {
+  .admin-sidebar--desplegada {
+    width: var(--admin-riel-ancho-desplegado);
+  }
+
+  .admin-sidebar--desplegada .sidebar-cat,
+  .admin-sidebar--desplegada .sidebar-profile,
+  .admin-sidebar--desplegada .sidebar-toggle {
+    justify-content: flex-start;
+    padding: var(--space-10) var(--space-12);
+  }
+
+  .admin-sidebar--desplegada .sidebar-profile {
+    padding: var(--space-8) var(--space-12);
+  }
+
+  .admin-sidebar--desplegada .sidebar-cat__label {
+    display: block;
+    flex: 1;
+  }
+
+  .admin-sidebar--desplegada .sidebar-profile__text {
+    display: block;
+    flex: 1;
+  }
+
+  .admin-sidebar--desplegada .sidebar-toggle__label {
+    display: block;
+  }
+}
+
+/* Segunda barra: enlaces de la categoría activa en el riel. */
+.admin-subsidebar {
+  flex-shrink: 0;
+  width: var(--admin-subsidebar-ancho);
+  padding: var(--space-20) var(--space-10);
+  border-right: 1px solid var(--color-ink-border);
+  background: var(--surface-card);
+  position: sticky;
+  top: var(--admin-header-h);
+  align-self: flex-start;
+  height: calc(100vh - var(--admin-header-h));
+  overflow-y: auto;
+}
+
+.subsidebar-respaldo {
+  display: none;
+}
+
+.subsidebar-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  margin: 0 var(--space-2) var(--space-12);
+  padding: 0 var(--space-10) var(--space-12);
+  border-bottom: 1px solid var(--color-bone);
+}
+
+.subsidebar-header__icon {
+  display: flex;
+  color: var(--color-brand-orange);
+  flex-shrink: 0;
+}
+
+.subsidebar-title {
+  flex: 1;
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--weight-bold);
+  font-size: var(--text-body-lg);
+  color: var(--color-paper);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.subsidebar-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: var(--radius-nav);
+  background: transparent;
+  color: var(--color-mist-gray);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.subsidebar-close:hover {
+  background: var(--surface-elevated);
+  color: var(--color-paper);
+}
+
+.subsidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-10);
+  padding: var(--space-8) var(--space-12);
+  border-radius: var(--radius-nav);
+  font-family: var(--font-ui);
+  font-size: var(--text-body);
+  font-weight: var(--weight-medium);
+  color: var(--color-mist-gray);
+  text-decoration: none;
+  transition: background 0.15s ease, color 0.15s ease;
+  white-space: nowrap;
+}
+
+.sidebar-link:hover {
+  background: var(--surface-elevated);
+  color: var(--color-paper);
+}
+
+.sidebar-link--active {
+  color: var(--color-brand-orange);
+  background: rgba(242, 106, 33, 0.1);
+  font-weight: var(--weight-semibold);
+}
+
+.sidebar-link__icon {
+  width: 18px;
+  display: flex;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.sidebar-link__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* admin-main dentro del body: sin max-width propio (el body ya centra) */
+.admin-body .admin-main {
+  flex: 1;
+  min-width: 0;
+  max-width: none;
+  margin: 0;
+  padding: var(--space-40) var(--space-32) var(--space-64);
+}
+
+/* Responsive: el riel siempre se ve (solo iconos) y la segunda barra se superpone. */
+@media (max-width: 1024px) {
+  .admin-sidebar {
+    padding: var(--space-12) var(--space-8);
+  }
+
+  .sidebar-toggle {
+    display: none;
+  }
+
+  .subsidebar-respaldo {
+    display: block;
+    position: fixed;
+    inset: var(--admin-header-h) 0 0 0;
+    background: rgba(23, 27, 34, 0.62);
+    z-index: 90;
+  }
+
+  .admin-subsidebar {
+    position: fixed;
+    top: var(--admin-header-h);
+    bottom: 0;
+    left: var(--admin-riel-ancho);
+    width: min(260px, 76vw);
+    height: auto;
+    /* Sin esto, align-self: flex-start de la barra en flujo recorta el alto del panel. */
+    align-self: stretch;
+    z-index: 95;
+    box-shadow: var(--shadow-card);
+  }
+
+  .admin-body .admin-main {
+    padding: var(--space-32) var(--space-20) var(--space-48);
+  }
+}
+
+@media (max-width: 720px) {
+  .admin-body .admin-main {
+    padding: var(--space-24) var(--space-16) var(--space-40);
+  }
+}
+
+/* ==========================================================================
+   PIEL FUTURISTA DEL PANEL
+   Mismo idioma que el sitio público (esquinas cortadas, etiquetas mono,
+   hairlines naranjas) pero sin motor de motion: Lenis/GSAP quedan fuera de
+   /admin para no pelear con las barras sticky, así que aquí todo es CSS.
+   ========================================================================== */
+
+.admin-header {
+  border-bottom: var(--linea-fuerte);
+  box-shadow: 0 1px 0 0 rgba(242, 106, 33, 0.12);
+}
+
+.admin-brand,
+.admin-header .brand-text {
+  letter-spacing: 0.02em;
+}
+
+/* Rejilla de fondo solo en el arranque del contenido: textura de backdrop,
+   nunca detrás de las filas de las tablas. Va en z-index negativo para no
+   crear contextos de apilado en las vistas: un contexto nuevo dejaría los
+   modales por debajo del header sticky. */
+.admin-body .admin-main {
+  position: relative;
+}
+
+.admin-body .admin-main::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 240px;
+  background-image: var(--rejilla);
+  background-size: var(--rejilla-paso) var(--rejilla-paso);
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.55), transparent);
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.55), transparent);
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Marca de sección: un dado naranja cortado delante de cada título de página. */
+.admin-main h1 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+}
+
+.admin-main h1::before {
+  content: '';
+  width: 10px;
+  height: 10px;
+  flex-shrink: 0;
+  background: var(--color-brand-orange);
+  clip-path: var(--clip-esquina-sup);
+  box-shadow: var(--sombra-neon);
+}
+
+/* --- Riel de categorías ------------------------------------------------- */
+
+.admin-sidebar {
+  border-right: var(--linea);
+}
+
+.sidebar-cat {
+  position: relative;
+  border-radius: 0;
+  transition: background var(--t-fast) var(--ease-salida),
+              color var(--t-fast) var(--ease-salida),
+              box-shadow var(--t-fast) var(--ease-salida);
+}
+
+.sidebar-cat__label {
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+.sidebar-cat:hover {
+  color: var(--color-brand-orange);
+  background: rgba(242, 106, 33, 0.07);
+}
+
+.sidebar-cat--activa {
+  color: var(--color-brand-orange);
+  background: rgba(242, 106, 33, 0.12);
+  clip-path: var(--clip-esquina-inf);
+  box-shadow: inset 2px 0 0 var(--color-brand-orange);
+}
+
+.sidebar-cat--activa .sidebar-cat__icon {
+  filter: drop-shadow(0 0 6px rgba(242, 106, 33, 0.6));
+}
+
+.sidebar-profile,
+.sidebar-toggle {
+  border-radius: 0;
+}
+
+.sidebar-profile {
+  border: var(--linea);
+}
+
+.sidebar-profile:hover {
+  border-color: var(--color-brand-orange);
+  color: var(--color-brand-orange);
+}
+
+.sidebar-profile__role {
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  letter-spacing: var(--tracking-label);
+}
+
+.sidebar-toggle {
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+/* --- Segunda barra ------------------------------------------------------ */
+
+.admin-subsidebar {
+  border-right: var(--linea);
+}
+
+.subsidebar-header {
+  border-bottom: var(--linea);
+}
+
+.subsidebar-title {
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+}
+
+.sidebar-link {
+  position: relative;
+  border-radius: 0;
+  border: 1px solid transparent;
+  transition: background var(--t-fast) var(--ease-salida),
+              color var(--t-fast) var(--ease-salida),
+              border-color var(--t-fast) var(--ease-salida),
+              transform var(--t-fast) var(--ease-salida);
+}
+
+.sidebar-link__label {
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+.sidebar-link:hover {
+  background: rgba(242, 106, 33, 0.07);
+  color: var(--color-brand-orange);
+  transform: translateX(2px);
+}
+
+.sidebar-link--active {
+  color: var(--color-brand-orange);
+  background: rgba(242, 106, 33, 0.12);
+  border-color: rgba(242, 106, 33, 0.35);
+  clip-path: var(--clip-esquina-inf);
+  font-weight: var(--weight-bold);
+  box-shadow: inset 2px 0 0 var(--color-brand-orange);
+}
+
+.sidebar-link--active:hover {
+  transform: none;
+}
+
+/* --- Paneles, tarjetas y modales del panel ------------------------------ */
+
+.admin-shell .card,
+.admin-shell .table-wrap,
+.admin-shell .card-elevated {
+  border-radius: 0;
+  border: var(--linea);
+}
+
+.admin-shell .card--corte {
+  clip-path: var(--clip-esquina-inf);
+}
+
+.admin-shell .table-wrap {
+  clip-path: var(--clip-esquina-inf);
+}
+
+.admin-shell .card-head {
+  border-bottom: var(--linea);
+}
+
+.admin-shell .card-head small,
+.admin-shell .kpi-content small {
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  letter-spacing: var(--tracking-eyebrow);
+}
+
+.admin-shell .modal,
+.admin-shell .ra-modal {
+  border-radius: 0;
+  clip-path: var(--clip-esquina-inf);
+  border: var(--linea-fuerte);
+}
+
+.admin-shell .modal-close {
+  border-radius: 0;
+}
+
+.admin-shell .form-input,
+.admin-shell .ra-campo input,
+.admin-shell .ra-campo select,
+.admin-shell .ra-campo textarea {
+  border-radius: 0;
+}
+
+.admin-shell .badge {
+  border-radius: 0;
+}
+
+.admin-footer {
+  border-top: var(--linea);
+  font-size: var(--text-label);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}

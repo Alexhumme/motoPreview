@@ -1,0 +1,162 @@
+/* ==========================================================================
+   VISUALIZADOR — ficha de pieza junto al visor 3D
+   ========================================================================== */
+
+.visualizador-page {
+  min-height: 100vh;
+  background: var(--surface-canvas);
+  color: var(--color-paper);
+}
+
+.visualizador-back {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6);
+  margin: var(--space-24) var(--space-32) 0;
+}
+
+.visualizador-layout {
+  max-width: var(--page-max-width);
+  margin: 0 auto;
+  padding: var(--space-24) var(--space-32) var(--space-80);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 420px;
+  gap: var(--space-40);
+  align-items: start;
+}
+
+/* Panel de información */
+.visualizador-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+  height: fit-content;
+  padding: var(--space-24);
+  background: var(--surface-card);
+  border: var(--linea);
+  border-radius: 0;
+  clip-path: var(--clip-esquinas);
+}
+
+.visualizador-categoria {
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--color-brand-orange);
+}
+
+.visualizador-title {
+  font-family: var(--font-display);
+  font-weight: var(--weight-black);
+  font-size: var(--text-heading-lg);
+  line-height: var(--leading-heading);
+  letter-spacing: var(--tracking-heading);
+  text-transform: uppercase;
+  color: var(--color-paper);
+  margin: 0;
+}
+
+.visualizador-description {
+  font-family: var(--font-ui);
+  font-size: var(--text-body);
+  line-height: var(--leading-body);
+  color: var(--color-soft-mist);
+  margin: 0;
+}
+
+/* Lecturas de la ficha: dos campos separados por un hilo, no una caja suelta */
+.visualizador-ficha {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-16);
+  padding: var(--space-16) 0;
+  border-top: var(--linea);
+  border-bottom: var(--linea);
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--color-mist-gray);
+  font-variant-numeric: tabular-nums;
+}
+
+.visualizador-price {
+  font-family: var(--font-mono);
+  font-weight: var(--weight-bold);
+  font-size: var(--text-heading-sm);
+  letter-spacing: -0.01em;
+  color: var(--color-brand-orange);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Estado vacío */
+.visualizador-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-16);
+  margin: var(--space-40) var(--space-32);
+  padding: var(--space-80) var(--space-24);
+  text-align: center;
+  background: var(--surface-card);
+  border: var(--linea);
+  border-radius: 0;
+  clip-path: var(--clip-esquinas);
+}
+
+.visualizador-empty .empty-icon {
+  color: var(--color-mist-gray);
+  opacity: 0.5;
+}
+
+.visualizador-empty .empty-title {
+  font-family: var(--font-display);
+  font-weight: var(--weight-black);
+  font-size: var(--text-heading-sm);
+  text-transform: uppercase;
+  color: var(--color-paper);
+  margin: 0;
+}
+
+.visualizador-empty .empty-subtitle {
+  font-family: var(--font-ui);
+  font-size: var(--text-body);
+  color: var(--color-mist-gray);
+  margin: 0;
+  max-width: 400px;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .visualizador-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .visualizador-info {
+    max-width: 620px;
+  }
+}
+
+@media (max-width: 720px) {
+  .visualizador-back {
+    margin: var(--space-16) var(--space-20) 0;
+  }
+
+  .visualizador-layout {
+    padding: var(--space-16) var(--space-20) var(--space-64);
+  }
+
+  .visualizador-title {
+    font-size: var(--text-heading);
+  }
+
+  .visualizador-ficha {
+    grid-template-columns: 1fr;
+  }
+
+  .visualizador-empty {
+    margin: var(--space-24) var(--space-20);
+  }
+}

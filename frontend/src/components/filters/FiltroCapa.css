@@ -1,0 +1,123 @@
+/* ==========================================================================
+   FILTRO POR CAPAS — chips compactos reutilizados por catálogo y configurador
+   ========================================================================== */
+
+.filtro-capa {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  min-width: 0;
+}
+
+.filtro-capa__label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6);
+  flex-shrink: 0;
+  min-width: 92px;
+  padding-right: var(--space-12);
+  border-right: var(--linea);
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  font-weight: var(--weight-medium);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--color-brand-orange);
+}
+
+.filtro-capa__chips {
+    display: flex;
+    overflow-x: auto;
+    width: 100%;
+    gap: var(--space-8);
+    padding-bottom: var(--space-4);
+    scrollbar-width: none;
+    -webkit-mask-image: linear-gradient(to right, black calc(100% - 32px), transparent);
+    mask-image: linear-gradient(to right, black calc(100% - 32px), transparent);
+}
+
+.filtro-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6);
+  height: 28px;
+  padding: 0 var(--space-10);
+  background: var(--surface-elevated);
+  border: var(--linea);
+  border-radius: var(--radius-chips);
+  color: var(--color-mist-gray);
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  font-weight: var(--weight-medium);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color var(--t-fast) var(--ease-salida),
+              background var(--t-fast) var(--ease-salida),
+              border-color var(--t-fast) var(--ease-salida),
+              box-shadow var(--t-med) var(--ease-salida);
+}
+
+.filtro-chip:hover {
+  color: var(--color-paper);
+  border-color: rgba(242, 106, 33, 0.5);
+  box-shadow: var(--glow-suave);
+}
+
+.filtro-chip:focus-visible {
+  outline: none;
+  border-color: var(--color-brand-orange);
+  box-shadow: 0 0 0 3px rgba(242, 106, 33, 0.18);
+}
+
+/* Activa = circuito cerrado: relleno de marca, corte de esquina y halo */
+.filtro-chip--activa {
+  background: var(--color-brand-orange);
+  border-color: var(--color-brand-orange);
+  color: var(--color-obsidian-plum);
+  font-weight: var(--weight-bold);
+  clip-path: var(--clip-esquina-inf);
+  box-shadow: var(--glow-acento);
+}
+
+.filtro-chip__count {
+  font-style: normal;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0;
+  opacity: 0.6;
+  font-variant-numeric: tabular-nums;
+}
+
+.filtro-chip--activa .filtro-chip__count {
+  opacity: 0.75;
+}
+
+@media (max-width: 720px) {
+  .filtro-capa {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-8);
+  }
+
+  .filtro-capa__label {
+    min-width: 0;
+    padding-right: 0;
+    border-right: none;
+  }
+
+  .filtro-capa__chips {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    width: 100%;
+    padding-bottom: var(--space-4);
+    scrollbar-width: none;
+    mask-image: linear-gradient(to right, black calc(100% - 32px), transparent);
+  }
+
+  .filtro-capa__chips::-webkit-scrollbar {
+    display: none;
+  }
+}

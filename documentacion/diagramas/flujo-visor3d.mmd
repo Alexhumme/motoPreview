@@ -1,0 +1,22 @@
+flowchart TD
+    A([Inicio: /visualizador/:id]) --> B["GET /api/accesorios/:id<br/>(ficha del accesorio)"]
+    A --> C["GET /api/modelos-3d/accesorio/:id"]
+    B --> D[[Ficha: categoría, nombre,<br/>descripción, SKU, peso, precio]]
+    C --> E{HTTP?}
+    E -- "404" --> F((Sin modelo 3D))
+    E -- "200" --> G((url_modelo3d))
+    E -- "error red" --> F
+    F --> H["ModeloConFallback:<br/>fallo = true<br/>→ ModeloReemplazo<br/>(torus knot #0E6E6E)"]
+    G --> I["ModeloReal: useGLTF(url)<br/>carga y cachea GLTF/GLB"]
+    I --> J{"Error de carga<br/>del archivo GLTF?"}
+    J -- Sí --> K["ErrorBoundary3D.componentDidCatch<br/>→ onError()"]
+    K --> H
+    J -- No --> L["<primitive object={scene} scale={1.5}/>"]
+    H --> M
+    L --> M["<Canvas> three.js / React Three Fiber:<br/>· ambientLight 0.6<br/>· directionalLight [5,5,5]<br/>· Environment preset='city'<br/>· OrbitControls (min 2, max 8, sin pan)"]
+    M --> N[[Usuario rota, acerca y aleja<br/>el modelo con el ratón]]
+    N --> O([Fin])
+
+    subgraph Nota["Aviso al usuario"]
+        P["Si no hay URL: 'X aún no tiene un modelo 3D real<br/>cargado — mostrando vista de referencia.'"]
+    end

@@ -1,0 +1,75 @@
+/* ==========================================================================
+   SEGURIDAD (tabla de roles y acciones) — Jam Design System
+   Lo importa Seguridad.jsx: la página de Roles ya no existe.
+   ========================================================================== */
+
+.roles {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-32);
+}
+
+/* Table */
+.roles .table-wrap {
+  border-radius: var(--radius-cards);
+  border: 1px solid var(--color-bone);
+  background: var(--surface-card);
+  overflow: hidden;
+}
+
+.roles .table th,
+.roles .table td {
+  padding: var(--space-16) var(--space-20);
+}
+
+.roles .table th {
+  font-size: var(--text-caption);
+}
+
+.roles .table td {
+  font-size: var(--text-body);
+}
+
+.acciones {
+  display: flex;
+  gap: var(--space-8);
+  flex-wrap: wrap;
+}
+
+/* Modal Form */
+.modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-20);
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-12);
+  margin-top: var(--space-8);
+  padding-top: var(--space-16);
+  border-top: 1px solid var(--color-bone);
+}
+
+/* Responsive */
+@media (max-width: 720px) {
+  .roles .table-wrap {
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+  }
+
+  .roles .table th,
+  .roles .table td {
+    padding: var(--space-12) var(--space-16);
+  }
+
+  .acciones {
+    flex-direction: column;
+  }
+
+  .modal {
+    padding: var(--space-24);
+  }
+}

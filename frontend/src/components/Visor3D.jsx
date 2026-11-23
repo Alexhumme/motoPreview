@@ -1,0 +1,77 @@
+import { Component, Suspense, useState } from 'react';
+import { Canvas } from '@react-three/fiber';
+import { OrbitControls, useGLTF } from '@react-three/drei';
+import './Visor3D.css';
+
+function ModeloReal({ url }) {
+  const { scene } = useGLTF(url);
+  return <primitive object={scene} scale={1.5} />;
+}
+
+function ModeloReemplazo() {
+  return (
+    <mesh rotation={[0.4, 0.6, 0]}>
+      <torusKnotGeometry args={[1, 0.35, 128, 32]} />
+      <meshStandardMaterial color="#F26A21" metalness={0.4} roughness={0.3} />
+    </mesh>
+  );
+}
+
+class ErrorBoundary3D extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { huboError: false };
+  }
+  static getDerivedStateFromError() {
+    return { huboError: true };
+  }
+  componentDidCatch() {
+    this.props.onError?.();
+  }
+  render() {
+    if (this.state.huboError) return null;
+    return this.props.children;
+  }
+}
+
+function ModeloConFallback({ url }) {
+  const [fallo, setFallo] = useState(false);
+
+  if (fallo || !url) return <ModeloReemplazo />;
+
+  return (
+    <ErrorBoundary3D onError={() => setFallo(true)}>
+      <ModeloReal url={url} />
+    </ErrorBoundary3D>
+  );
+}
+
+export default function Visor3D({ url, nombreAccesorio }) {
+  return (
+    <div className="visor3d">
+      {/* El zoom de OrbitControls vive de la rueda: sin este atributo Lenis se la queda. */}
+      <div className="visor3d__marco fx-marcas" data-lenis-prevent>
+        <span className="visor3d__rejilla" aria-hidden="true" />
+        <Canvas camera={{ position: [3, 2, 3], fov: 45 }}>
+          <ambientLight intensity={0.7} />
+          <directionalLight position={[5, 5, 5]} intensity={1.1} />
+          <directionalLight position={[-4, 3, -2]} intensity={0.4} />
+          <Suspense fallback={null}>
+            <ModeloConFallback url={url} />
+          </Suspense>
+          <OrbitControls enablePan={false} minDistance={2} maxDistance={8} />
+        </Canvas>
+        <span className="visor3d__estado">
+          <span className="visor3d__estado-punto" aria-hidden="true" />
+          {url ? 'Malla real' : 'Vista de referencia'}
+        </span>
+        <span className="visor3d__mandos" aria-hidden="true">arrastrar · girar — rueda · acercar</span>
+      </div>
+      {!url && (
+        <p className="visor3d__aviso">
+          {nombreAccesorio} aún no tiene un modelo 3D real cargado — mostrando vista de referencia.
+        </p>
+      )}
+    </div>
+  );
+}

@@ -1,0 +1,325 @@
+/* ==========================================================================
+   SITE HEADER — Jam Design System
+   ========================================================================== */
+
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--surface-canvas);
+  border-bottom: var(--linea);
+}
+
+.site-header::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(242, 106, 33, 0.55), transparent);
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.site-header-inner {
+  max-width: var(--page-max-width);
+  height: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-32);
+  margin: 0 auto;
+  padding: 20px var(--space-32);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  text-decoration: none;
+  color: inherit;
+}
+
+.brand-mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  background-color: var(--marca-fondo);
+  background-image: var(--marca-imagen);
+  background-size: 104%;
+  background-position: center;
+  background-repeat: no-repeat;
+  clip-path: var(--clip-esquina-sup);
+  border-radius: var(--radius-nav);
+  font-size: 0;
+  color: transparent;
+}
+
+.brand-text {
+  font-family: var(--font-display);
+  font-weight: var(--weight-black);
+  font-size: 17px;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--color-paper);
+  transition: text-shadow var(--t-med) var(--ease-salida);
+}
+
+.brand-text span {
+  color: var(--color-brand-orange);
+}
+
+.brand:hover .brand-text {
+  text-shadow: 0 0 16px rgba(242, 106, 33, 0.45);
+}
+
+/* Navigation links */
+.main-nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-32);
+}
+
+.nav-link {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  font-weight: var(--weight-medium);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--color-mist-gray);
+  transition: color var(--t-fast) var(--ease-salida),
+              text-shadow var(--t-med) var(--ease-salida);
+  white-space: nowrap;
+}
+
+.nav-link:hover,
+.nav-link--active {
+  color: var(--color-paper);
+  text-shadow: 0 0 14px rgba(242, 106, 33, 0.35);
+}
+
+/* El subrayado se ancla al propio enlace: sin `position: relative` aquí, el
+   `absolute` se referenciaba al header sticky y quedaba pegado a su borde. */
+.nav-link::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -8px;
+  width: 100%;
+  height: 1px;
+  background: var(--color-brand-orange);
+  box-shadow: var(--sombra-neon);
+  transform: translateX(-50%) scaleX(0);
+  transform-origin: center;
+  transition: transform var(--t-med) var(--ease-salida);
+}
+
+.nav-link:hover::after {
+  transform: translateX(-50%) scaleX(0.6);
+}
+
+.nav-link--active::after {
+  transform: translateX(-50%) scaleX(1);
+}
+
+/* Header actions */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-16);
+}
+
+.header-account {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  font-family: var(--font-ui);
+  font-size: var(--text-body);
+  font-weight: var(--weight-medium);
+  color: var(--color-mist-gray);
+}
+
+/* Envoltor sin recorte: permite que el badge cuelgue del botón. */
+.cart-envoltura {
+  position: relative;
+  display: inline-flex;
+}
+
+.cart-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  border: var(--linea);
+  border-radius: var(--radius-buttons);
+  background: var(--surface-elevated);
+  color: var(--color-paper);
+  text-decoration: none;
+  transition: border-color var(--t-fast) var(--ease-salida),
+              background var(--t-fast) var(--ease-salida),
+              box-shadow var(--t-med) var(--ease-salida);
+  white-space: nowrap;
+}
+
+.cart-button:hover {
+  border-color: rgba(242, 106, 33, 0.55);
+  background: var(--color-smoke-plum);
+  box-shadow: var(--glow-suave);
+}
+
+/* La marca de esquina del botón de carrito se pinta en acento, no en currentColor */
+.cart-button::before {
+  border-color: var(--color-brand-orange);
+}
+
+/* Contador como chip de HUD: mono, cuadrado y con halo */
+.cart-badge {
+  position: absolute;
+  top: -7px;
+  right: -7px;
+  min-width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-chips);
+  background: var(--color-brand-orange);
+  color: var(--color-obsidian-plum);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: var(--weight-bold);
+  letter-spacing: 0;
+  box-shadow: var(--sombra-neon);
+}
+
+/* Hamburger (solo móvil) */
+.menu-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border: var(--linea);
+  border-radius: var(--radius-nav);
+  background: var(--color-carbon);
+  color: var(--color-paper);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: border-color var(--t-fast) var(--ease-salida),
+              color var(--t-fast) var(--ease-salida),
+              box-shadow var(--t-med) var(--ease-salida);
+}
+
+.menu-toggle:hover {
+  border-color: rgba(242, 106, 33, 0.55);
+  color: var(--color-brand-orange);
+  box-shadow: var(--glow-suave);
+}
+
+/* Menú móvil desplegable */
+.mobile-menu {
+  border-top: 1px solid var(--color-ink-border);
+  background: var(--surface-canvas);
+  padding: var(--space-16) var(--space-20) var(--space-24);
+}
+
+.mobile-nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.mobile-nav-link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  padding: var(--space-12) var(--space-16);
+  border: 1px solid transparent;
+  border-radius: var(--radius-nav);
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  font-weight: var(--weight-medium);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--color-mist-gray);
+  text-decoration: none;
+  transition: background var(--t-fast) var(--ease-salida),
+              color var(--t-fast) var(--ease-salida),
+              border-color var(--t-fast) var(--ease-salida);
+}
+
+.mobile-nav-link:hover,
+.mobile-nav-link--active {
+  background: var(--surface-elevated);
+  border-color: var(--color-ink-border);
+  color: var(--color-paper);
+}
+
+.mobile-nav-link--button {
+  background: none;
+  border: none;
+  text-align: left;
+  width: 100%;
+  cursor: pointer;
+  font: inherit;
+}
+
+.mobile-nav-link--brand {
+  background: var(--color-brand-orange);
+  color: var(--color-obsidian-plum);
+  text-align: center;
+  font-weight: var(--weight-bold);
+}
+
+.mobile-nav-link--brand:hover {
+  color: var(--color-obsidian-plum);
+  box-shadow: var(--glow-acento);
+}
+
+/* Responsive: mostrar hamburger y ocultar nav de escritorio */
+@media (max-width: 1024px) {
+  .menu-toggle {
+    display: inline-flex;
+  }
+
+  .main-nav {
+    display: none;
+  }
+
+  /* El carrito y la cuenta siguen visibles en la barra; el menú móvil
+     replica los enlaces para pantallas chicas. */
+}
+
+@media (min-width: 1025px) {
+  .mobile-menu {
+    display: none;
+  }
+}
+
+@media (max-width: 720px) {
+  .site-header-inner {
+    padding: 0 var(--space-16);
+    gap: var(--space-16);
+  }
+
+  .header-actions {
+    gap: var(--space-8);
+  }
+
+  .header-account {
+    gap: var(--space-8);
+    font-size: var(--text-caption);
+  }
+
+  .header-account button {
+    font-size: var(--text-caption);
+  }
+}

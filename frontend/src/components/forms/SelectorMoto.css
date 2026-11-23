@@ -1,0 +1,365 @@
+/* ==========================================================================
+   SELECTOR DE MOTO · input textual con sugerencias en vivo
+   El panel vive en un portal (body): los paneles de origen llevan clip-path
+   y recortarían la lista. Aquí se replica el idioma HUD del sistema.
+   ========================================================================== */
+
+.selector-moto {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.selector-moto__icono {
+  position: absolute;
+  left: var(--space-12);
+  color: var(--color-mist-gray);
+  pointer-events: none;
+  transition: color var(--t-fast) var(--ease-salida);
+}
+
+.selector-moto:focus-within .selector-moto__icono {
+  color: var(--color-brand-orange);
+}
+
+.selector-moto__input {
+  width: 100%;
+  padding: var(--space-12) var(--space-40) var(--space-12) 36px;
+  border: var(--linea-fuerte);
+  border-radius: var(--radius-inputs);
+  background: var(--surface-canvas);
+  color: var(--color-paper);
+  font-family: var(--font-ui);
+  font-size: var(--text-body);
+  line-height: var(--leading-body);
+  letter-spacing: var(--tracking-body);
+  outline: none;
+  transition: border-color var(--t-fast) var(--ease-salida),
+              box-shadow var(--t-med) var(--ease-salida),
+              background var(--t-fast) var(--ease-salida);
+}
+
+.selector-moto__input::placeholder {
+  color: var(--color-mist-gray);
+  opacity: 0.65;
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  letter-spacing: var(--tracking-caption);
+}
+
+.selector-moto__input:hover {
+  border-color: rgba(242, 106, 33, 0.45);
+}
+
+/* Foco = circuito encendido, igual que .form-input y los select del configurador */
+.selector-moto__input:focus {
+  border-color: var(--color-brand-orange);
+  background: rgba(242, 106, 33, 0.04);
+  box-shadow: 0 0 0 1px rgba(242, 106, 33, 0.45), var(--glow-suave);
+}
+
+.selector-moto__control {
+  position: absolute;
+  right: var(--space-6);
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: none;
+  border: 0;
+  border-radius: var(--radius-chips);
+  color: var(--color-mist-gray);
+  cursor: pointer;
+  transition: color var(--t-fast) var(--ease-salida),
+              background var(--t-fast) var(--ease-salida);
+}
+
+.selector-moto__control:hover {
+  color: var(--color-brand-orange);
+  background: rgba(242, 106, 33, 0.12);
+}
+
+.selector-moto__control svg {
+  transition: transform var(--t-med) var(--ease-salida);
+}
+
+.selector-moto__control--girada svg {
+  transform: rotate(180deg);
+}
+
+.selector-moto__live {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* --------------------------------------------------------------------------
+   PANEL DE SUGERENCIAS
+   -------------------------------------------------------------------------- */
+
+.selector-moto__panel {
+  position: fixed;
+  z-index: 900;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface-card);
+  border: var(--linea-fuerte);
+  border-radius: var(--radius-cards);
+  /* La muesca inferior derecha es la firma del sistema; el drop-shadow la
+     respeta porque clip-path se comería un box-shadow exterior. */
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - var(--corte-sm)), calc(100% - var(--corte-sm)) 100%, 0 100%);
+  filter: drop-shadow(0 20px 34px rgba(9, 10, 14, 0.42));
+  overflow: hidden;
+}
+
+.selector-moto__panel::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--color-brand-orange), rgba(242, 106, 33, 0) 72%);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.selector-moto__lista {
+  position: relative;
+  max-height: var(--alto-max, 292px);
+  margin: 0;
+  padding: var(--space-6);
+  list-style: none;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-bone) transparent;
+}
+
+.selector-moto__lista::-webkit-scrollbar { width: 6px; }
+.selector-moto__lista::-webkit-scrollbar-track { background: transparent; }
+.selector-moto__lista::-webkit-scrollbar-thumb {
+  background: var(--color-bone);
+  border-radius: 3px;
+}
+.selector-moto__lista::-webkit-scrollbar-thumb:hover { background: var(--color-brand-orange); }
+
+.selector-moto__opcion {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  padding: var(--space-10) var(--space-12);
+  border-left: 2px solid transparent;
+  border-radius: var(--radius-chips);
+  cursor: pointer;
+  transition: background var(--t-fast) var(--ease-salida),
+              border-color var(--t-fast) var(--ease-salida);
+}
+
+.selector-moto__opcion:hover {
+  background: var(--surface-elevated);
+}
+
+.selector-moto__opcion--activa,
+.selector-moto__opcion--activa:hover {
+  background: rgba(242, 106, 33, 0.12);
+  border-left-color: var(--color-brand-orange);
+}
+
+.selector-moto__romo {
+  flex: 0 0 auto;
+  width: 6px;
+  height: 6px;
+  background: var(--color-bone);
+  transform: rotate(45deg);
+  transition: background var(--t-fast) var(--ease-salida),
+              box-shadow var(--t-med) var(--ease-salida);
+}
+
+.selector-moto__opcion--activa .selector-moto__romo {
+  background: var(--color-brand-orange);
+  box-shadow: var(--sombra-neon);
+}
+
+.selector-moto__texto {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+  flex: 1;
+}
+
+.selector-moto__nombre {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-8);
+  color: var(--color-paper);
+  font-family: var(--font-display);
+  font-weight: var(--weight-semibold);
+  font-size: var(--text-body);
+  line-height: var(--leading-caption);
+  letter-spacing: var(--tracking-heading-sm);
+  overflow-wrap: anywhere;
+}
+
+.selector-moto__opcion--activa .selector-moto__nombre {
+  color: var(--color-brand-orange);
+}
+
+.selector-moto__anio {
+  flex: 0 0 auto;
+  padding: 0 var(--space-6);
+  border: var(--linea);
+  border-radius: var(--radius-chips);
+  color: var(--color-mist-gray);
+  font-family: var(--font-mono);
+  font-style: normal;
+  font-weight: var(--weight-medium);
+  font-size: var(--text-label);
+  line-height: 1.7;
+  letter-spacing: var(--tracking-label);
+}
+
+.selector-moto__opcion--activa .selector-moto__anio {
+  border-color: rgba(242, 106, 33, 0.45);
+  color: var(--color-paper);
+}
+
+.selector-moto__detalle {
+  color: var(--color-mist-gray);
+  font-family: var(--font-mono);
+  font-weight: var(--weight-regular);
+  font-size: var(--text-label);
+  line-height: var(--leading-caption);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+.selector-moto__resalte {
+  padding: 0 1px;
+  background: rgba(242, 106, 33, 0.22);
+  border-radius: 1px;
+  color: inherit;
+  font-weight: var(--weight-bold);
+}
+
+.selector-moto__intro {
+  flex: 0 0 auto;
+  color: var(--color-brand-orange);
+  opacity: 0.85;
+}
+
+/* «Sin moto específica»: misma fila, tono apagado para que no compita */
+.selector-moto__opcion--ninguna .selector-moto__nombre {
+  font-family: var(--font-mono);
+  font-weight: var(--weight-medium);
+  font-size: var(--text-caption);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--color-mist-gray);
+}
+
+.selector-moto__opcion--ninguna.selector-moto__opcion--activa .selector-moto__nombre {
+  color: var(--color-brand-orange);
+}
+
+.selector-moto__opcion--ninguna .selector-moto__romo {
+  background: none;
+  border: 1px solid var(--color-bone);
+}
+
+.selector-moto__vacio {
+  margin: 0;
+  padding: var(--space-20) var(--space-16);
+  color: var(--color-mist-gray);
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  line-height: var(--leading-caption);
+  letter-spacing: var(--tracking-caption);
+  text-align: center;
+}
+
+.selector-moto__pie {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-12);
+  padding: var(--space-8) var(--space-16);
+  border-top: var(--linea);
+  background: var(--surface-canvas);
+}
+
+.selector-moto__conteo {
+  color: var(--color-brand-orange);
+  font-family: var(--font-mono);
+  font-weight: var(--weight-medium);
+  font-size: var(--text-label);
+  line-height: var(--leading-caption);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  white-space: nowrap;
+}
+
+.selector-moto__teclas {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  color: var(--color-mist-gray);
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  line-height: var(--leading-caption);
+  letter-spacing: var(--tracking-caption);
+  white-space: nowrap;
+}
+
+.selector-moto__teclas kbd {
+  display: inline-grid;
+  place-items: center;
+  min-width: 18px;
+  padding: 0 var(--space-4);
+  border: var(--linea);
+  border-radius: var(--radius-chips);
+  background: var(--surface-card);
+  color: var(--color-soft-mist);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .selector-moto__panel {
+    animation: selector-moto-entra var(--t-fast) var(--ease-salida);
+  }
+}
+
+@keyframes selector-moto-entra {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (max-width: 720px) {
+  .selector-moto__teclas { display: none; }
+  .selector-moto__pie { justify-content: center; }
+  .selector-moto__opcion { padding: var(--space-12); }
+  .selector-moto__intro { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .selector-moto__input,
+  .selector-moto__icono,
+  .selector-moto__control,
+  .selector-moto__control svg,
+  .selector-moto__opcion,
+  .selector-moto__romo,
+  .selector-moto__panel {
+    transition: none;
+    animation: none;
+  }
+}

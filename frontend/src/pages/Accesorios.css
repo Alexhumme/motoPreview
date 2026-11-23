@@ -1,0 +1,85 @@
+/* ==========================================================================
+   ACCESORIOS (CRUD admin) — Jam Design System
+   ========================================================================== */
+
+.accesorios-admin {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-24);
+}
+
+.accesorios-admin__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-16);
+  flex-wrap: wrap;
+}
+
+.accesorios-admin__titulo {
+  font-family: var(--font-display);
+  font-weight: var(--weight-black);
+  font-size: var(--text-heading);
+  line-height: var(--leading-heading);
+  letter-spacing: var(--tracking-heading);
+  color: var(--color-paper);
+  margin: 0;
+}
+
+/* La tabla la dibuja DataTable: búsqueda, orden, filtros y paginación. */
+
+.accesorios-admin__sku {
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  color: var(--color-brand-orange-soft);
+}
+
+/* Formulario en modal */
+.accesorios-admin__fila {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-16);
+}
+
+/* Compatibilidad con modelos */
+.accesorios-admin__checkboxes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  margin-top: var(--space-8);
+  max-height: 180px;
+  overflow-y: auto;
+  padding: var(--space-12);
+  background: var(--surface-elevated);
+  border: var(--linea);
+  border-radius: 0;
+}
+
+.accesorios-admin__checkbox {
+  display: flex;
+  align-items: center;
+  gap: var(--space-10);
+  font-family: var(--font-ui);
+  font-size: var(--text-body);
+  color: var(--color-soft-mist);
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.accesorios-admin__checkbox:hover {
+  color: var(--color-paper);
+}
+
+.accesorios-admin__checkbox input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--color-brand-orange);
+  cursor: pointer;
+}
+
+/* Responsive */
+@media (max-width: 720px) {
+  .accesorios-admin__fila {
+    grid-template-columns: 1fr;
+  }
+}

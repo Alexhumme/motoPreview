@@ -1,0 +1,40 @@
+/* ==========================================================================
+   BANNER CONEXIÓN — Jam Design System
+   ========================================================================== */
+
+.banner-conexion {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: var(--color-jam-pink);
+  color: var(--color-paper);
+  text-align: center;
+  padding: var(--space-12) var(--space-24);
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  font-weight: var(--weight-medium);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-12);
+}
+
+/* Punto de alerta como rombo de HUD, no como círculo suave */
+.banner-conexion__punto {
+  width: 8px;
+  height: 8px;
+  border-radius: 1px;
+  transform: rotate(45deg);
+  background: var(--color-paper);
+  animation: banner-conexion-pulso 1.4s infinite;
+  flex-shrink: 0;
+}
+
+@keyframes banner-conexion-pulso {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}

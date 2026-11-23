@@ -1,0 +1,182 @@
+/* ==========================================================================
+   RECURSO ADMIN (CRUD genérico) — Jam Design System
+   ========================================================================== */
+
+.ra-cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-12);
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-24);
+}
+
+.ra-titulo {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--weight-black);
+  font-size: var(--text-heading);
+  line-height: var(--leading-heading);
+  letter-spacing: var(--tracking-heading);
+  color: var(--color-paper);
+}
+
+.ra-aviso {
+  margin: 0 0 var(--space-16);
+  padding: var(--space-12) var(--space-16);
+  border-radius: var(--radius-inputs);
+  font-family: var(--font-ui);
+  font-size: var(--text-body);
+}
+
+.ra-aviso--ok {
+  color: var(--color-brand-orange);
+  background: rgba(242, 106, 33, 0.1);
+  border: 1px solid rgba(242, 106, 33, 0.2);
+}
+
+.ra-aviso--error {
+  color: var(--color-jam-pink);
+  background: rgba(229, 72, 77, 0.08);
+  border: 1px solid rgba(229, 72, 77, 0.2);
+}
+
+.dt-boton--peligro {
+  color: var(--color-jam-pink);
+  background: rgba(229, 72, 77, 0.08);
+  border: 1px solid rgba(229, 72, 77, 0.3);
+}
+
+.dt-boton--peligro:hover:not(:disabled) {
+  color: var(--color-paper);
+  background: var(--color-jam-pink);
+  border-color: var(--color-jam-pink);
+}
+
+/* Modal */
+.ra-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-16);
+  background: rgba(9, 7, 12, 0.7);
+  backdrop-filter: blur(4px);
+}
+
+.ra-modal {
+  width: min(480px, 100%);
+  max-height: 92vh;
+  overflow-y: auto;
+  padding: var(--space-24);
+  background: var(--surface-card);
+  border: 1px solid var(--color-bone);
+  border-radius: var(--radius-cards);
+  color: var(--color-paper);
+}
+
+.ra-modal h2 {
+  margin: 0 0 var(--space-16);
+  font-family: var(--font-display);
+  font-weight: var(--weight-black);
+  font-size: var(--text-heading-sm);
+  color: var(--color-paper);
+}
+
+.ra-campo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  margin-bottom: var(--space-16);
+}
+
+.ra-campo label {
+  font-family: var(--font-ui);
+  font-size: var(--text-caption);
+  font-weight: var(--weight-semibold);
+  color: var(--color-mist-gray);
+}
+
+.ra-campo input,
+.ra-campo select,
+.ra-campo textarea {
+  padding: var(--space-10) var(--space-12);
+  border: 1px solid var(--color-bone);
+  border-radius: var(--radius-inputs);
+  background: var(--surface-canvas);
+  color: var(--color-paper);
+  font: inherit;
+  font-family: var(--font-ui);
+  font-size: var(--text-body);
+}
+
+.ra-campo input:focus-visible,
+.ra-campo select:focus-visible,
+.ra-campo textarea:focus-visible {
+  outline: 2px solid var(--color-brand-orange);
+  outline-offset: 1px;
+  border-color: var(--color-brand-orange);
+}
+
+.ra-campo [aria-invalid='true'] {
+  border-color: var(--color-jam-pink);
+}
+
+.ra-error-campo {
+  color: var(--color-jam-pink);
+  font-family: var(--font-ui);
+  font-size: var(--text-caption);
+}
+
+.ra-botones {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-10);
+  margin-top: var(--space-8);
+}
+
+/* Tabs (Motos) */
+.ra-tabs {
+  display: flex;
+  gap: var(--space-6);
+  margin-bottom: var(--space-24);
+  border-bottom: 1px solid var(--color-bone);
+}
+
+.ra-tab {
+  padding: var(--space-10) var(--space-16);
+  color: var(--color-mist-gray);
+  background: transparent;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  font: inherit;
+  font-family: var(--font-ui);
+  font-size: var(--text-body);
+  font-weight: var(--weight-semibold);
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.ra-tab:hover {
+  color: var(--color-paper);
+}
+
+.ra-tab[aria-selected='true'] {
+  color: var(--color-brand-orange);
+  border-bottom-color: var(--color-brand-orange);
+}
+
+/* Vista 3D */
+.ra-vista3d {
+  width: min(720px, 100%);
+  padding: var(--space-16);
+  background: var(--surface-card);
+  border: 1px solid var(--color-bone);
+  border-radius: var(--radius-cards);
+}
+
+.ra-vista3d .visor3d {
+  height: 360px;
+}

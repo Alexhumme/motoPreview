@@ -1,0 +1,1613 @@
+/* ==========================================================================
+   CONFIGURADOR — panel de instrumento (HUD)
+   Piel futurista sobre la estructura y la paleta existentes:
+   hilo de 1px, cortes diagonales, rótulos mono y glow de marca.
+   Todo se consume de src/styles/index.css (cero valores huérfanos).
+   ========================================================================== */
+
+/* ==========================================================================
+   ESCENARIO
+   ========================================================================== */
+
+.configurador-page {
+  position: relative;
+  min-height: 100vh;
+  background: var(--surface-canvas);
+  color: var(--color-paper);
+  overflow-x: clip;
+}
+
+/* Retícula técnica + halo solo como capa de fondo del encabezado: el texto
+   de cuerpo nunca se apoya sobre textura. */
+.configurador-page::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 460px;
+  background-image: var(--rejilla), var(--halo-radial);
+  background-size: var(--rejilla-paso) var(--rejilla-paso), cover;
+  -webkit-mask-image: linear-gradient(to bottom, #000 10%, transparent 92%);
+  mask-image: linear-gradient(to bottom, #000 10%, transparent 92%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.configurator-main {
+  position: relative;
+  z-index: 1;
+  max-width: var(--page-max-width);
+  margin: 0 auto;
+  padding: var(--space-48) var(--space-32) var(--space-80);
+}
+
+/* Estado de carga: la retícula del estudio ya aparece antes de los datos */
+.cargando-estado {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 640px;
+  padding: var(--space-32);
+  background: var(--surface-card);
+  border: var(--linea);
+  border-radius: var(--radius-cards);
+  box-shadow: var(--shadow-card);
+}
+
+/* ==========================================================================
+   ENCABEZADO
+   ========================================================================== */
+
+.configurator-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-24);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-32);
+  padding-bottom: var(--space-24);
+  border-bottom: var(--linea);
+}
+
+.configurator-copy {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  min-width: 0;
+}
+
+.configurator-title {
+  font-family: var(--font-display);
+  font-weight: var(--weight-black);
+  font-size: var(--text-heading);
+  line-height: var(--leading-heading);
+  letter-spacing: var(--tracking-heading);
+  text-transform: uppercase;
+  color: var(--color-paper);
+  margin: 0;
+  text-wrap: balance;
+}
+
+.configurator-subtitle {
+  font-family: var(--font-ui);
+  font-size: var(--text-body-lg);
+  line-height: var(--leading-body);
+  color: var(--color-mist-gray);
+  margin: 0;
+  max-width: 52ch;
+}
+
+/* Contador del carrito dentro del CTA: lectura de instrumento, no texto suelto */
+.btn-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2ch;
+  padding: var(--space-2) var(--space-6);
+  font-family: var(--font-mono);
+  font-weight: var(--weight-bold);
+  font-size: var(--text-label);
+  line-height: 1.4;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+  color: var(--color-brand-orange);
+  background: rgba(242, 106, 33, 0.12);
+  border: 1px solid rgba(242, 106, 33, 0.38);
+  border-radius: var(--radius-chips);
+}
+
+/* Error de carga: hilo de peligro + rótulo mono, nunca banda de color plana */
+.configurator-error {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  font-family: var(--font-ui);
+  font-size: var(--text-body);
+  line-height: var(--leading-body);
+  color: var(--color-jam-pink);
+  background: rgba(229, 72, 77, 0.1);
+  border: var(--linea);
+  border-left: 2px solid var(--color-jam-pink);
+  border-radius: var(--radius-inputs);
+  padding: var(--space-12) var(--space-16);
+  margin-bottom: var(--space-24);
+}
+
+.configurator-error::before {
+  content: 'ERROR';
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-weight: var(--weight-medium);
+  font-size: var(--text-label);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--color-jam-pink);
+  padding: var(--space-2) var(--space-6);
+  border: 1px solid rgba(229, 72, 77, 0.45);
+  border-radius: var(--radius-chips);
+}
+
+/* ==========================================================================
+   ESTRUCTURA
+   ========================================================================== */
+
+.configurator-layout {
+  display: grid;
+  grid-template-columns: 400px minmax(0, 1fr);
+  gap: var(--space-32);
+  align-items: start;
+}
+
+.bike-preview-panel,
+.compatible-panel {
+  min-width: 0;
+}
+
+/* Riel superior de cada panel: rótulo mono a la izquierda, lectura a la derecha */
+.panel-topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-16);
+  padding-bottom: var(--space-12);
+  border-bottom: var(--linea);
+}
+
+.panel-topline > span:first-child {
+  font-family: var(--font-mono);
+  font-weight: var(--weight-medium);
+  font-size: var(--text-label);
+  line-height: var(--leading-caption);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-eyebrow);
+  color: var(--color-brand-orange);
+}
+
+/* ==========================================================================
+   PANEL 1 · MOTOCICLETA (panel de instrumento: corte + halo + retícula)
+   ========================================================================== */
+
+.bike-preview-panel {
+  position: relative;
+  padding: var(--card-padding);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-24);
+  height: fit-content;
+  background: var(--surface-card);
+  border: var(--linea-fuerte);
+  border-radius: 0;
+  clip-path: var(--clip-esquinas);
+  box-shadow: var(--shadow-card);
+}
+
+.bike-preview-panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--halo-radial);
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.bike-preview-panel > * {
+  position: relative;
+  z-index: 1;
+}
+
+.live-status {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  font-family: var(--font-mono);
+  font-weight: var(--weight-medium);
+  font-size: var(--text-label);
+  line-height: var(--leading-caption);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--color-brand-orange);
+  white-space: nowrap;
+}
+
+/* El punto pasa a rombo con halo: mismo lenguaje que .eyebrow-dot */
+.live-dot {
+  width: 6px;
+  height: 6px;
+  flex-shrink: 0;
+  background: var(--color-brand-orange);
+  border-radius: 1px;
+  transform: rotate(45deg);
+  box-shadow: var(--sombra-neon);
+  animation: pulso-hud 2.4s var(--ease-fluido) infinite;
+}
+
+@keyframes pulso-hud {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: var(--sombra-neon);
+  }
+  50% {
+    opacity: 0.35;
+    box-shadow: 0 0 4px rgba(242, 106, 33, 0.25);
+  }
+}
+
+/* Escenario de la moto: la media del configurador lleva el idioma HUD.
+   --via-haz es local: mide el recorrido del haz según la altura de la etapa. */
+.bike-stage {
+  --via-haz: 318px;
+  position: relative;
+  height: 320px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-8);
+  background: linear-gradient(165deg, var(--surface-elevated), var(--surface-canvas));
+  border: var(--linea);
+  border-radius: 0;
+  clip-path: var(--clip-esquinas);
+  overflow: hidden;
+}
+
+.bike-stage::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--scanline);
+  opacity: 0.45;
+  pointer-events: none;
+  z-index: 3;
+}
+
+/* Haz de rastreo: recorre la etapa como un escáner 3D */
+.bike-stage::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--color-brand-orange), transparent);
+  box-shadow: var(--sombra-neon);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 4;
+  animation: barrido-etapa 5.4s var(--ease-fluido) infinite;
+}
+
+@keyframes barrido-etapa {
+  0% { opacity: 0; transform: translateY(0); }
+  12% { opacity: 0.9; }
+  86% { opacity: 0.9; }
+  100% { opacity: 0; transform: translateY(var(--via-haz, 318px)); }
+}
+
+.stage-grid {
+  position: absolute;
+  inset: 0;
+  background-image: var(--rejilla);
+  background-size: var(--rejilla-paso) var(--rejilla-paso);
+  opacity: 0.5;
+  -webkit-mask-image: radial-gradient(72% 72% at 50% 50%, transparent 12%, #000 88%);
+  mask-image: radial-gradient(72% 72% at 50% 50%, transparent 12%, #000 88%);
+  pointer-events: none;
+}
+
+.stage-tag {
+  position: absolute;
+  top: var(--space-12);
+  left: var(--space-12);
+  z-index: 10;
+  padding: var(--space-4) var(--space-8);
+  font-family: var(--font-mono);
+  font-weight: var(--weight-medium);
+  font-size: var(--text-label);
+  line-height: var(--leading-caption);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--color-brand-orange);
+  background: var(--surface-elevated);
+  border: var(--linea);
+  border-radius: 0;
+  clip-path: var(--clip-esquina-sup);
+}
+
+.bike-image {
+  max-width: 100%;
+  max-height: 260px;
+  border-radius: var(--radius-cards);
+  box-shadow: var(--shadow-card);
+  z-index: 2;
+}
+
+.bike-stage-img {
+  width: auto;
+  max-width: 82%;
+  max-height: 190px;
+  object-fit: contain;
+  position: relative;
+  z-index: 2;
+  filter: drop-shadow(0 18px 24px rgba(23, 27, 34, 0.45));
+  transition: transform var(--t-slow) var(--ease-salida);
+}
+
+.bike-stage:hover .bike-stage-img {
+  transform: scale(1.02);
+}
+
+.bike-stage-name {
+  position: relative;
+  z-index: 2;
+  margin-top: var(--space-16);
+  text-align: center;
+  padding-inline: var(--space-4);
+}
+
+.bike-stage-name strong {
+  display: block;
+  font-family: var(--font-display);
+  font-weight: var(--weight-black);
+  font-size: var(--text-heading-sm);
+  line-height: var(--leading-heading-sm);
+  letter-spacing: var(--tracking-heading-sm);
+  text-transform: uppercase;
+  color: var(--color-paper);
+}
+
+.bike-stage-name span {
+  display: block;
+  margin-top: var(--space-4);
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-mist-gray);
+}
+
+/* Lecturas del instrumento: filas de hilo, sin bandas de relleno */
+.preview-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-top: var(--space-8);
+  border-top: var(--linea);
+}
+
+.preview-details div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-12);
+  padding: var(--space-10) var(--space-8);
+  border-bottom: var(--linea);
+  min-width: 0;
+  transition: background var(--t-fast) var(--ease-salida),
+              box-shadow var(--t-med) var(--ease-salida);
+}
+
+.preview-details div:hover {
+  background: var(--surface-elevated);
+  box-shadow: inset 2px 0 0 var(--color-brand-orange);
+}
+
+.preview-details small {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-weight: var(--weight-medium);
+  font-size: var(--text-label);
+  line-height: var(--leading-caption);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--color-mist-gray);
+}
+
+.preview-details .status-good {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6);
+  color: var(--color-brand-orange);
+  text-shadow: 0 0 14px rgba(242, 106, 33, 0.35);
+}
+
+.preview-details .status-good svg {
+  flex-shrink: 0;
+}
+
+.preview-details select {
+  width: 100%;
+  border: none;
+  background: none;
+  color: var(--color-paper);
+  font-family: var(--font-mono);
+  font-weight: var(--weight-semibold);
+  font-size: var(--text-caption);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  overflow-wrap: anywhere;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  transition: border-color var(--t-fast) var(--ease-salida),
+              box-shadow var(--t-med) var(--ease-salida);
+  padding-right: var(--space-32);
+  padding-left: var(--space-16);
+}
+
+.preview-details select:hover {
+  border-color: rgba(242, 106, 33, 0.5);
+  box-shadow: var(--glow-suave);
+}
+
+/* Foco = circuito encendido: hairline naranja + halo, sin relleno de color */
+.preview-details select:focus {
+  border-color: var(--color-brand-orange);
+  box-shadow: 0 0 0 1px rgba(242, 106, 33, 0.45), var(--glow-suave);
+}
+
+.preview-details select option {
+  font-family: var(--font-display);
+  background: var(--surface-elevated);
+  color: var(--color-paper);
+}
+
+.select-arrow {
+  position: absolute;
+  right: var(--space-12);
+  color: var(--color-mist-gray);
+  pointer-events: none;
+  transition: color var(--t-fast) var(--ease-salida),
+              transform var(--t-med) var(--ease-salida);
+}
+
+.preview-details div:focus-within .select-arrow {
+  color: var(--color-brand-orange);
+  transform: translateY(1px);
+}
+
+/* ==========================================================================
+   PANEL 2 · COMPATIBLES (lista densa y con scroll: hilo + radio angular)
+   ========================================================================== */
+
+.compatible-panel {
+  position: relative;
+  padding: var(--card-padding);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+  background: var(--surface-card);
+  border: var(--linea);
+  border-radius: var(--radius-cards);
+  box-shadow: var(--shadow-card);
+}
+
+/* Destino de las piezas: deja claro que el + no toca el carrito */
+/*.compatible-destino {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  margin: 0;
+  padding: var(--space-8) var(--space-12);
+  background: var(--surface-canvas);
+  border: var(--linea);
+  border-left: 2px solid var(--color-brand-orange);
+  border-radius: var(--radius-chips);
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  line-height: var(--leading-caption);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--color-mist-gray);
+}
+
+.compatible-destino svg {
+  flex-shrink: 0;
+  color: var(--color-brand-orange);
+}
+
+.compatible-destino strong {
+  font-weight: var(--weight-bold);
+  color: var(--color-paper);
+}*/
+
+/* Filtrado por capas (categoría → tipo) dentro del panel de compatibles */
+.compatible-filters {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  padding-bottom: var(--space-16);
+  border-bottom: var(--linea);
+}
+
+.compatible-filters-clear {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6);
+  padding: var(--space-4) var(--space-10);
+  background: none;
+  border: var(--linea);
+  border-radius: var(--radius-chips);
+  color: var(--color-mist-gray);
+  font-family: var(--font-mono);
+  font-weight: var(--weight-medium);
+  font-size: var(--text-label);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  cursor: pointer;
+  transition: color var(--t-fast) var(--ease-salida),
+              border-color var(--t-fast) var(--ease-salida),
+              box-shadow var(--t-med) var(--ease-salida);
+}
+
+.compatible-filters-clear:hover {
+  color: var(--color-brand-orange);
+  border-color: rgba(242, 106, 33, 0.55);
+  box-shadow: var(--glow-suave);
+}
+
+/* Recuento de resultados: lectura de instrumento alineada */
+.result-count {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6);
+  padding: var(--space-2) var(--space-8);
+  font-family: var(--font-mono);
+  font-weight: var(--weight-medium);
+  font-size: var(--text-label);
+  line-height: 1.4;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-brand-orange);
+  background: rgba(242, 106, 33, 0.12);
+  border: 1px solid rgba(242, 106, 33, 0.38);
+  border-radius: var(--radius-chips);
+  white-space: nowrap;
+}
+
+.compatible-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+  flex: 1;
+  height: 500px;
+  max-height: 532px;
+  overflow-y: scroll;
+  padding-right: var(--space-4);
+  scrollbar-width: thin;
+}
+
+.list-state {
+  font-family: var(--font-ui);
+  font-size: var(--text-body);
+  line-height: var(--leading-body);
+  color: var(--color-mist-gray);
+  padding: var(--space-32);
+  text-align: center;
+  border: 1px dashed rgba(139, 148, 163, 0.25);
+  border-radius: var(--radius-cards);
+}
+
+/* Solo caja: la tipografía la manda .list-state (van en el mismo elemento) */
+.list-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 180px;
+  background: var(--surface-card);
+  border: var(--linea);
+  border-radius: var(--radius-cards);
+}
+
+.compatible-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-16);
+  padding: var(--space-16);
+  min-width: 0;
+  background: var(--surface-card);
+  border: var(--linea);
+  border-radius: var(--radius-cards);
+  transition: border-color var(--t-fast) var(--ease-salida),
+              box-shadow var(--t-med) var(--ease-salida),
+              transform var(--t-med) var(--ease-salida);
+}
+
+.compatible-item:hover {
+  border-color: rgba(242, 106, 33, 0.45);
+  box-shadow: var(--glow-suave);
+  transform: translateY(-2px);
+}
+
+/* Ya está en la configuración activa: riel de acento en el borde izquierdo */
+.compatible-item--elegida {
+  border-color: rgba(242, 106, 33, 0.45);
+  box-shadow: inset 2px 0 0 var(--color-brand-orange);
+}
+
+.compatible-item--elegida:hover {
+  box-shadow: inset 2px 0 0 var(--color-brand-orange), var(--glow-suave);
+}
+
+/* Media de la fila: rombo cortado, retícula propia, sin corte en la lista */
+.compatible-item .mini-art {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  border-radius: 0;
+  clip-path: var(--clip-esquina-sup);
+  background: var(--surface-canvas);
+  border: var(--linea);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.compatible-item .mini-art::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: var(--rejilla);
+  background-size: 16px 16px;
+  opacity: 0.5;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.compatible-item .mini-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  position: relative;
+  z-index: 0;
+}
+
+.compatible-item .mini-fallback {
+  font-family: var(--font-mono);
+  font-weight: var(--weight-bold);
+  font-size: var(--text-label);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  background: var(--color-brand-orange);
+  color: var(--color-obsidian-plum);
+  padding: var(--space-4) var(--space-6);
+}
+
+.compatible-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.compatible-info strong {
+  font-family: var(--font-display);
+  font-weight: var(--weight-bold);
+  font-size: var(--text-body-lg);
+  line-height: var(--leading-heading-sm);
+  letter-spacing: var(--tracking-heading-sm);
+  text-transform: uppercase;
+  color: var(--color-paper);
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* categoría · tipo · precio = una sola lectura mono alineada */
+.compatible-info span {
+  font-family: var(--font-mono);
+  font-weight: var(--weight-medium);
+  font-size: var(--text-label);
+  line-height: var(--leading-caption);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-mist-gray);
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.compatible-info small {
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--color-text-accent);
+  display: block;
+}
+
+/* ==========================================================================
+   BARRA DE CONFIGURACIÓN (resumen + precio, fina y pegajosa)
+   ========================================================================== */
+
+.configuration-bar {
+  position: sticky;
+  bottom: var(--space-16);
+  z-index: 20;
+  padding: var(--space-16) var(--space-24);
+  margin-top: var(--space-32);
+  background: var(--surface-card);
+  border: var(--linea-fuerte);
+  border-radius: 0;
+  clip-path: var(--clip-esquina-inf);
+  box-shadow: var(--shadow-card), var(--glow-suave);
+}
+
+/* Un solo corte (esquina inferior derecha): el notch deja ver el fondo,
+   por eso la barra no usa clip-esquinas completo cuando flota. */
+
+.configuration-items {
+  margin-bottom: var(--space-16);
+  padding-bottom: var(--space-16);
+  border-bottom: var(--linea);
+}
+
+.configuration-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  margin-bottom: var(--space-16);
+}
+
+.configuration-title__icono {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  clip-path: var(--clip-esquina-sup);
+  background: rgba(242, 106, 33, 0.12);
+  border: 1px solid rgba(242, 106, 33, 0.38);
+  color: var(--color-brand-orange);
+}
+
+.configuration-title__texto {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  flex: 1;
+  min-width: 0;
+}
+
+.configuration-title__indice {
+  flex-shrink: 0;
+  align-self: flex-start;
+  padding: var(--space-2) var(--space-8);
+  background: var(--surface-canvas);
+  border: var(--linea);
+  border-radius: var(--radius-chips);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: var(--tracking-label);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-mist-gray);
+}
+
+.configuration-title strong {
+  font-family: var(--font-display);
+  font-weight: var(--weight-bold);
+  font-size: var(--text-body-lg);
+  line-height: var(--leading-heading-sm);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--color-paper);
+}
+
+.configuration-title small {
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  line-height: var(--leading-caption);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-mist-gray);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Piezas de la configuración activa: envuelven y scrollean sin comerse la vista */
+.configuration-piezas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+  max-height: 108px;
+  overflow-y: auto;
+  padding-right: var(--space-4);
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-ink-border) transparent;
+}
+
+.configuration-piezas::-webkit-scrollbar {
+  width: 4px;
+}
+
+.configuration-piezas::-webkit-scrollbar-track {
+  background: var(--surface-canvas);
+}
+
+.configuration-piezas::-webkit-scrollbar-thumb {
+  background: var(--color-ink-border);
+}
+
+.configuration-piezas::-webkit-scrollbar-thumb:hover {
+  background: var(--color-brand-orange);
+}
+
+.configuration-vacia {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  margin: 0;
+  padding: var(--space-10) var(--space-12);
+  border: 1px dashed rgba(139, 148, 163, 0.3);
+  border-radius: var(--radius-chips);
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  line-height: var(--leading-caption);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--color-mist-gray);
+}
+
+.configuration-vacia svg {
+  flex-shrink: 0;
+  color: var(--color-brand-orange);
+}
+
+/* Píldora de línea: chip de instrumento (radio angular, hilo, mono) */
+.configuration-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-10);
+  padding: var(--space-6) var(--space-12);
+  border-radius: var(--radius-chips);
+  background: var(--surface-elevated);
+  border: var(--linea);
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  line-height: var(--leading-caption);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--color-paper);
+  max-width: 100%;
+  transition: border-color var(--t-fast) var(--ease-salida),
+              box-shadow var(--t-med) var(--ease-salida);
+}
+
+.configuration-pill > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.configuration-pill:hover {
+  border-color: rgba(242, 106, 33, 0.45);
+  box-shadow: var(--glow-suave);
+}
+
+/* Botón de retiro: cuadro exacto sobre la retícula de la píldora */
+.configuration-pill button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  padding: 0;
+  background: transparent;
+  border: none;
+  color: var(--color-jam-pink);
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+  transition: background var(--t-fast) var(--ease-salida),
+              box-shadow var(--t-med) var(--ease-salida),
+              color var(--t-fast) var(--ease-salida);
+}
+
+.configuration-pill button:hover {
+  background: rgba(229, 72, 77, 0.14);
+  color: var(--color-jam-pink);
+  box-shadow: 0 0 0 1px rgba(229, 72, 77, 0.5);
+}
+
+.configuration-total {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-16);
+}
+
+.configuration-total span {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.configuration-total small {
+  font-family: var(--font-mono);
+  font-weight: var(--weight-medium);
+  font-size: var(--text-label);
+  line-height: var(--leading-caption);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-eyebrow);
+  color: var(--color-mist-gray);
+}
+
+.configuration-total strong {
+  font-family: var(--font-mono);
+  font-weight: var(--weight-bold);
+  font-size: var(--text-heading-sm);
+  line-height: 1;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-brand-orange);
+  text-shadow: 0 0 26px rgba(242, 106, 33, 0.35);
+}
+
+/* Aviso del traslado (y del borrado de un tab): confirma, enlace y deshacer */
+.configuration-aviso {
+  display: flex;
+  align-items: center;
+  gap: var(--space-10);
+  margin-top: var(--space-16);
+  padding: var(--space-10) var(--space-12);
+  border: 1px solid rgba(242, 106, 33, 0.38);
+  border-radius: var(--radius-chips);
+  background: rgba(242, 106, 33, 0.1);
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  line-height: var(--leading-caption);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--color-brand-orange);
+}
+
+.configuration-aviso > svg {
+  flex-shrink: 0;
+}
+
+.configuration-aviso--aviso {
+  border-color: rgba(229, 72, 77, 0.4);
+  background: rgba(229, 72, 77, 0.1);
+  color: var(--color-jam-pink);
+}
+
+.configuration-aviso__texto {
+  flex: 1;
+  min-width: 0;
+  color: var(--color-soft-mist);
+}
+
+.configuration-aviso__enlace,
+.configuration-aviso__accion {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6);
+  flex-shrink: 0;
+  padding: var(--space-4) var(--space-8);
+  background: none;
+  border: var(--linea);
+  border-radius: var(--radius-chips);
+  font-family: inherit;
+  font-size: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color var(--t-fast) var(--ease-salida),
+              border-color var(--t-fast) var(--ease-salida),
+              box-shadow var(--t-med) var(--ease-salida);
+}
+
+.configuration-aviso__enlace {
+  border-color: rgba(242, 106, 33, 0.45);
+  color: var(--color-brand-orange);
+}
+
+.configuration-aviso__enlace:hover {
+  background: var(--color-brand-orange);
+  border-color: var(--color-brand-orange);
+  color: var(--color-obsidian-plum);
+  box-shadow: var(--glow-suave);
+}
+
+.configuration-aviso__accion {
+  color: var(--color-mist-gray);
+}
+
+.configuration-aviso__accion:hover {
+  color: var(--color-paper);
+  border-color: var(--color-mist-gray);
+}
+
+.configuration-aviso__enlace:focus-visible,
+.configuration-aviso__accion:focus-visible,
+.configuration-aviso__cerrar:focus-visible {
+  outline: none;
+  border-color: var(--color-brand-orange);
+  box-shadow: 0 0 0 2px rgba(242, 106, 33, 0.3);
+}
+
+.configuration-aviso__cerrar {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  padding: 0;
+  background: none;
+  border: var(--linea);
+  border-radius: var(--radius-chips);
+  color: var(--color-mist-gray);
+  cursor: pointer;
+  transition: color var(--t-fast) var(--ease-salida),
+              border-color var(--t-fast) var(--ease-salida);
+}
+
+.configuration-aviso__cerrar:hover {
+  color: var(--color-paper);
+  border-color: var(--color-mist-gray);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .configuration-aviso {
+    animation: aviso-entra var(--t-med) var(--ease-salida) both;
+  }
+
+  @keyframes aviso-entra {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: none; }
+  }
+}
+
+/* ==========================================================================
+   TABS DE CONFIGURACIÓN (HUD) — cada tab es un armado independiente con su
+   moto, sus capas y sus piezas. Crece para llenar la barra; con muchas, scrollea.
+   ========================================================================== */
+
+.config-tabs {
+  display: flex;
+  align-items: stretch;
+  margin: 0 0 var(--space-32);
+  background: var(--surface-card);
+  border: var(--linea);
+  border-radius: 0;
+  clip-path: var(--clip-esquinas);
+}
+
+.config-tabs__lista {
+  display: flex;
+  align-items: stretch;
+  flex: 1;
+  min-width: 0;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-ink-border) transparent;
+}
+
+.config-tabs__lista::-webkit-scrollbar {
+  height: 4px;
+}
+
+.config-tabs__lista::-webkit-scrollbar-track {
+  background: var(--surface-canvas);
+}
+
+.config-tabs__lista::-webkit-scrollbar-thumb {
+  background: var(--color-ink-border);
+  border-radius: 0;
+}
+
+.config-tabs__lista::-webkit-scrollbar-thumb:hover {
+  background: var(--color-brand-orange);
+}
+
+.config-tab {
+  position: relative;
+  display: flex;
+  flex: 1 0 172px;
+  min-width: 0;
+  border-right: var(--linea);
+  transition: background var(--t-fast) var(--ease-salida);
+}
+
+.config-tab:hover {
+  background: rgba(242, 106, 33, 0.05);
+}
+
+/* Hilo inferior: encendido a medias cuando el tab ya tiene piezas */
+.config-tab::after {
+  content: '';
+  position: absolute;
+  left: var(--space-16);
+  right: var(--space-16);
+  bottom: 0;
+  height: 1px;
+  background: var(--color-ink-border);
+  pointer-events: none;
+  transition: background var(--t-med) var(--ease-salida),
+              box-shadow var(--t-med) var(--ease-salida);
+}
+
+.config-tab--conpiezas::after {
+  background: rgba(242, 106, 33, 0.55);
+}
+
+.config-tab--activa {
+  background: rgba(242, 106, 33, 0.12);
+  box-shadow: inset 0 -2px 0 var(--color-brand-orange);
+}
+
+.config-tab--activa::after {
+  background: var(--color-brand-orange);
+  box-shadow: var(--sombra-neon);
+}
+
+.config-tab__sel {
+  display: flex;
+  align-items: center;
+  gap: var(--space-10);
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-12) var(--space-52) var(--space-12) var(--space-16);
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+/* El corte del contenedor se comería un anillo exterior: el foco va dentro */
+.config-tab__sel:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px rgba(242, 106, 33, 0.65);
+}
+
+.config-tab__num {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-weight: var(--weight-bold);
+  font-size: var(--text-label);
+  line-height: var(--leading-caption);
+  letter-spacing: var(--tracking-label);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-mist-gray);
+  transition: color var(--t-fast) var(--ease-salida),
+              text-shadow var(--t-med) var(--ease-salida);
+}
+
+.config-tab--activa .config-tab__num {
+  color: var(--color-brand-orange);
+  text-shadow: 0 0 14px rgba(242, 106, 33, 0.45);
+}
+
+.config-tab__cuerpo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  flex: 1;
+  min-width: 0;
+}
+
+.config-tab__nombre {
+  font-family: var(--font-display);
+  font-weight: var(--weight-bold);
+  font-size: var(--text-caption);
+  line-height: var(--leading-caption);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--color-soft-mist);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color var(--t-fast) var(--ease-salida),
+              text-shadow var(--t-med) var(--ease-salida);
+}
+
+.config-tab--activa .config-tab__nombre {
+  color: var(--color-brand-orange);
+  text-shadow: 0 0 14px rgba(242, 106, 33, 0.4);
+}
+
+.config-tab__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: var(--leading-caption);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-mist-gray);
+}
+
+.config-tab__moto {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.config-tab__piezas {
+  flex-shrink: 0;
+  padding: 1px var(--space-6);
+  background: var(--surface-canvas);
+  border: 1px solid var(--color-ink-border);
+  border-radius: var(--radius-chips);
+  font-style: normal;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-mist-gray);
+  transition: color var(--t-fast) var(--ease-salida),
+              border-color var(--t-fast) var(--ease-salida),
+              background var(--t-fast) var(--ease-salida);
+}
+
+.config-tab--conpiezas .config-tab__piezas {
+  background: rgba(242, 106, 33, 0.12);
+  border-color: rgba(242, 106, 33, 0.4);
+  color: var(--color-brand-orange);
+}
+
+/* Renombrar y eliminar viven fuera del botón del tab: nada interactivo anidado */
+.config-tab__acciones {
+  position: absolute;
+  top: var(--space-8);
+  right: var(--space-8);
+  display: flex;
+  gap: var(--space-4);
+  opacity: 0;
+  transition: opacity var(--t-fast) var(--ease-salida);
+}
+
+.config-tab:hover .config-tab__acciones,
+.config-tab:focus-within .config-tab__acciones,
+.config-tab--activa .config-tab__acciones {
+  opacity: 1;
+}
+
+.config-tab__icono {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  background: var(--surface-elevated);
+  border: var(--linea);
+  border-radius: var(--radius-chips);
+  color: var(--color-mist-gray);
+  cursor: pointer;
+  transition: color var(--t-fast) var(--ease-salida),
+              border-color var(--t-fast) var(--ease-salida),
+              box-shadow var(--t-med) var(--ease-salida);
+}
+
+.config-tab__icono:hover {
+  color: var(--color-brand-orange);
+  border-color: rgba(242, 106, 33, 0.5);
+  box-shadow: var(--glow-suave);
+}
+
+.config-tab__icono:focus-visible {
+  outline: none;
+  border-color: var(--color-brand-orange);
+  box-shadow: 0 0 0 2px rgba(242, 106, 33, 0.3);
+}
+
+.config-tab__icono--cerrar:hover {
+  color: var(--color-jam-pink);
+  border-color: rgba(229, 72, 77, 0.5);
+  box-shadow: 0 0 0 1px rgba(229, 72, 77, 0.25);
+}
+
+.config-tab__editor {
+  display: flex;
+  align-items: center;
+  gap: var(--space-10);
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-12) var(--space-16);
+}
+
+.config-tab__input {
+  flex: 1;
+  min-width: 0;
+  height: 28px;
+  padding: 0 var(--space-8);
+  background: var(--surface-canvas);
+  border: 1px solid var(--color-brand-orange);
+  border-radius: var(--radius-inputs);
+  color: var(--color-paper);
+  font-family: var(--font-display);
+  font-weight: var(--weight-bold);
+  font-size: var(--text-caption);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  box-shadow: 0 0 0 3px rgba(242, 106, 33, 0.18);
+}
+
+.config-tab__input:focus {
+  outline: none;
+}
+
+/* Mismo lenguaje que un tab, pero compacto y siempre a la vista */
+.config-tabs__nueva {
+  display: grid;
+  place-items: center;
+  flex: 0 0 var(--space-48);
+  padding: 0;
+  background: var(--surface-elevated);
+  border: none;
+  border-left: var(--linea);
+  color: var(--color-brand-orange);
+  cursor: pointer;
+  transition: background var(--t-fast) var(--ease-salida),
+              color var(--t-fast) var(--ease-salida),
+              box-shadow var(--t-med) var(--ease-salida);
+}
+
+.config-tabs__nueva:hover {
+  background: var(--color-brand-orange);
+  color: var(--color-obsidian-plum);
+  box-shadow: var(--glow-acento);
+}
+
+.config-tabs__nueva:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--color-brand-orange);
+}
+
+.config-tabs__nueva:active {
+  background: var(--color-deep-violet);
+}
+
+/* ==========================================================================
+   RESPONSIVE
+   ========================================================================== */
+
+@media (max-width: 1024px) {
+  .configurator-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .configurator-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .configurator-header .btn {
+    width: 100%;
+  }
+
+  /* Los paneles ya no van lado a lado: el instrumento deja de ser columna fija */
+  .bike-preview-panel {
+    clip-path: var(--clip-esquina-inf);
+  }
+
+  .configuration-bar {
+    bottom: var(--space-8);
+  }
+
+  .config-tab {
+    flex-basis: 156px;
+  }
+
+  .config-tab__sel {
+    padding-left: var(--space-12);
+    padding-right: var(--space-48);
+  }
+
+  .config-tab__acciones {
+    right: var(--space-6);
+  }
+}
+
+@media (max-width: 720px) {
+  .configurator-main {
+    padding: var(--space-32) var(--space-16) var(--space-48);
+  }
+
+  .configurator-header {
+    padding-bottom: var(--space-16);
+    margin-bottom: var(--space-24);
+  }
+
+  .configurator-title {
+    font-size: var(--text-heading-lg);
+  }
+
+  .bike-preview-panel {
+    padding: var(--space-24);
+  }
+
+  /* La etapa respira menos y el haz recorre la nueva altura */
+  .bike-stage {
+    --via-haz: 258px;
+    height: 260px;
+  }
+
+  .compatible-panel {
+    padding: var(--space-24);
+  }
+
+  .compatible-list {
+    height: 420px;
+    max-height: 420px;
+  }
+
+  /* Barra pegajosa más fina: sigue siendo legible sin tapar la lista */
+  .configuration-bar {
+    padding: var(--space-12) var(--space-16);
+    bottom: 0;
+    margin-top: var(--space-24);
+  }
+
+  .configuration-items {
+    padding-bottom: var(--space-12);
+    margin-bottom: var(--space-12);
+    border-bottom: none;
+  }
+
+  /* En móvil las piezas corren en horizontal: la barra pegajosa sigue siendo fina */
+  .configuration-piezas {
+    flex-wrap: nowrap;
+    max-height: none;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-right: 0;
+    padding-bottom: var(--space-4);
+  }
+
+  .configuration-pill {
+    flex-shrink: 0;
+  }
+
+  /* El destino ya se explica sobre la lista: la barra pegajosa no repite el aviso */
+  .configuration-vacia {
+    display: none;
+  }
+
+  .configuration-total {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-16);
+  }
+
+  .configuration-total .btn {
+    width: 100%;
+  }
+
+  .configuration-aviso {
+    flex-wrap: wrap;
+    row-gap: var(--space-8);
+  }
+
+  .configuration-aviso__texto {
+    flex: 1 1 160px;
+  }
+
+  .config-tabs {
+    margin-bottom: var(--space-24);
+    clip-path: var(--clip-esquina-sup);
+  }
+
+  .config-tab {
+    flex: 1 0 152px;
+  }
+
+  .config-tab__meta {
+    display: none;
+  }
+
+  .config-tab__sel {
+    padding: var(--space-12);
+    padding-right: var(--space-52);
+  }
+
+  .config-tab__acciones {
+    top: 50%;
+    right: var(--space-8);
+    transform: translateY(-50%);
+    opacity: 1;
+  }
+
+  .config-tabs__nueva {
+    flex-basis: var(--space-40);
+  }
+}
+
+/* ==========================================================================
+   MOVIMIENTO REDUCIDO
+   La textura y el haz se apagan; la legibilidad del instrumento no depende
+   de ellos.
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .live-dot {
+    animation: none;
+  }
+
+  .bike-stage::before {
+    display: none;
+  }
+
+  .bike-stage::after {
+    opacity: 0.25;
+  }
+
+  .bike-stage-img,
+  .compatible-item,
+  .preview-details div {
+    transition: none;
+  }
+
+  .config-tab,
+  .config-tab::after,
+  .config-tab__num,
+  .config-tab__nombre,
+  .config-tab__piezas,
+  .config-tab__acciones,
+  .config-tab__icono,
+  .config-tabs__nueva,
+  .configuration-pill,
+  .configuration-aviso__enlace,
+  .configuration-aviso__accion,
+  .configuration-aviso__cerrar {
+    transition: none;
+  }
+
+  .compatible-item:hover {
+    transform: none;
+  }
+}
+/* ==========================================================================
+   SELECTORES EN CASCADA DE MOTO (Configurador)
+   ========================================================================== */
+.moto-selectors {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.moto-selectors .select-label {
+  margin-bottom: 0;
+  margin-top: var(--space-8);
+  font-family: var(--font-mono);
+}

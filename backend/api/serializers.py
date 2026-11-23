@@ -1,0 +1,751 @@
+from rest_framework import serializers
+
+from .models import (
+    Accion,
+    Configuration,
+    ConfigurationDetail,
+    Inventory,
+    InventoryMovement,
+    Marca,
+    Model3D,
+    Motorcycle,
+    MotorcycleBrand,
+    MotorcycleModel,
+    MovementType,
+    Product,
+    ProductCategory,
+    Quote,
+    QuoteDetail,
+    QuoteStatusHistory,
+    Recurso,
+    RecursoAccion,
+    Role,
+    RolRecurso,
+    Store,
+    SubscriptionPlan,
+    TipoProducto,
+    User,
+)
+from . import services
+from .security import scopes_validos, validar_concesion
+
+
+class ProductCategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductCategory
+        fields = ("id_categoria_producto", "nombre", "descripcion")
+
+
+class MarcaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Marca
+        fields = ("id_marca", "nombre", "logo", "activo")
+        read_only_fields = ("id_marca",)
+
+
+class TipoProductoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TipoProducto
+        fields = ("id_tipo_producto", "nombre", "descripcion", "accesorio", "activo")
+        read_only_fields = ("id_tipo_producto",)
+
+
+class ProductSerializer(serializers.ModelSerializer):
+    id_categoria_producto = serializers.PrimaryKeyRelatedField(
+        source="categoria_producto",
+        queryset=ProductCategory.objects.all(),
+        allow_null=True,
+        required=False,
+    )
+    id_marca = serializers.PrimaryKeyRelatedField(
+        source="marca",
+        queryset=Marca.objects.all(),
+        allow_null=True,
+        required=False,
+    )
+    id_tipos = serializers.ListField(
+        child=serializers.UUIDField(),
+        required=False,
+        allow_empty=True,
+        write_only=True,
+    )
+
+    class Meta:
+        model = Product
+        fields = (
+            "id_producto",
+            "nombre",
+            "descripcion",
+            "estado",
+            "id_categoria_producto",
+            "id_marca",
+            "id_tipos",
+            "imagen",
+            "codigo_sku",
+            "precio",
+        )
+        read_only_fields = ("id_producto",)
+
+
+class AccesorioSerializer(serializers.Serializer):
+    """Representa una fila de `producto` en la forma plana que consume la
+    vidriera: id_accesorio, acc_nombre, acc_precio, marca y tipos.
+
+    Sirve igual para accesorios que para productos comunes: `es_accesorio`
+    indica cuál de las dos capas aplica.
+    """
+
+    def to_representation(self, instance):
+        marca = instance.marca
+        tipos = list(instance.tipos.all())
+        categoria_producto = instance.categoria_producto
+        return {
+            "id_accesorio": str(instance.id_producto),
+            "es_accesorio": instance.es_accesorio,
+            "id_marca": str(marca.id_marca) if marca else None,
+            "id_categoria_producto": (
+                str(categoria_producto.id_categoria_producto) if categoria_producto else None
+            ),
+            "acc_nombre": instance.nombre,
+            "acc_descripcion": instance.descripcion,
+            "acc_precio": str(instance.precio) if instance.precio is not None else None,
+            "acc_estado": instance.estado,
+            "imagen": instance.imagen,
+            "peso": str(instance.peso) if instance.peso is not None else None,
+            "color": None,
+            "codigo_sku": instance.codigo_sku,
+            "marca": (
+                {"id_marca": str(marca.id_marca), "nombre": marca.nombre, "logo": marca.logo}
+                if marca
+                else None
+            ),
+            "categoria_producto": (
+                {
+                    "id_categoria_producto": str(categoria_producto.id_categoria_producto),
+                    "nombre": categoria_producto.nombre,
+                }
+                if categoria_producto
+                else None
+            ),
+            "tipos": [{"id_tipo_producto": str(t.id_tipo_producto), "nombre": t.nombre, "accesorio": t.accesorio} for t in tipos],
+            "producto": ProductSerializer(instance).data,
+        }
+
+
+class AccesorioInputSerializer(serializers.Serializer):
+    """Entrada de crear/editar accesorio (forma plana del panel de administración)."""
+
+    acc_nombre = serializers.CharField(max_length=100)
+    id_marca = serializers.PrimaryKeyRelatedField(
+        queryset=Marca.objects.all(),
+        source="marca",
+        required=False,
+        allow_null=True,
+    )
+    acc_descripcion = serializers.CharField(
+        required=False, allow_blank=True, allow_null=True
+    )
+    acc_precio = serializers.DecimalField(max_digits=10, decimal_places=2)
+    peso = serializers.DecimalField(
+        max_digits=6, decimal_places=2, required=False, allow_null=True
+    )
+    codigo_sku = serializers.CharField(
+        max_length=100, required=False, allow_blank=True, allow_null=True
+    )
+    imagen = serializers.URLField(required=False, allow_blank=True, allow_null=True)
+    acc_estado = serializers.CharField(max_length=50, required=False, default="disponible")
+    id_tipos = serializers.ListField(
+        child=serializers.UUIDField(),
+        required=False,
+        allow_empty=True,
+    )
+
+    def to_fields(self, data):
+        """Mapea la entrada plana a campos del modelo Product (parcial-safe)."""
+        mapa = (
+            ("acc_nombre", "nombre"),
+            ("acc_descripcion", "descripcion"),
+            ("acc_precio", "precio"),
+            ("peso", "peso"),
+            ("codigo_sku", "codigo_sku"),
+            ("imagen", "imagen"),
+            ("acc_estado", "estado"),
+        )
+        campos = {}
+        for llave, campo in mapa:
+            if llave not in data:
+                continue
+            valor = data[llave]
+            if campo in ("codigo_sku", "imagen", "descripcion") and valor == "":
+                valor = None
+            campos[campo] = valor
+        if "marca" in data:
+            campos["marca"] = data["marca"]
+        # tipos (M2M) se manejan aparte por la vista
+        if "id_tipos" in data:
+            campos["_tipos"] = data["id_tipos"]
+        return campos
+
+
+class MotorcycleBrandSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MotorcycleBrand
+        fields = ("id_marca", "marca_nombre", "marca_pais")
+        read_only_fields = ("id_marca",)
+
+
+class MotorcycleModelSerializer(serializers.ModelSerializer):
+    id_marca = serializers.PrimaryKeyRelatedField(
+        source="marca",
+        queryset=MotorcycleBrand.objects.all(),
+        required=False,
+        allow_null=True,
+    )
+    marca_moto = MotorcycleBrandSerializer(source="marca", read_only=True)
+
+    class Meta:
+        model = MotorcycleModel
+        fields = (
+            "id_modelo_moto",
+            "id_marca",
+            "modelo_nombre",
+            "modelo_descripcion",
+            "cilindraje",
+            "marca_moto",
+        )
+        read_only_fields = ("id_modelo_moto",)
+
+
+class MotorcycleSerializer(serializers.ModelSerializer):
+    id_modelo_moto = serializers.PrimaryKeyRelatedField(
+        source="modelo",
+        queryset=MotorcycleModel.objects.all(),
+        required=False,
+        allow_null=True,
+    )
+    modelo_moto = MotorcycleModelSerializer(source="modelo", read_only=True)
+
+    class Meta:
+        model = Motorcycle
+        fields = (
+            "id_moto",
+            "id_modelo_moto",
+            "moto_anio",
+            "moto_version",
+            "moto_imagen",
+            "modelo_moto",
+        )
+        read_only_fields = ("id_moto",)
+
+
+class RoleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Role
+        fields = ("id_rol", "nombre_rol", "activo", "es_superadmin")
+        # `es_superadmin` lo fija la siembra del rol de sede; si el panel pudiera
+        # escribirlo, un rol de tienda se marcaría como privilegiado.
+        read_only_fields = ("id_rol", "es_superadmin")
+
+
+class SubscriptionPlanSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SubscriptionPlan
+        fields = (
+            "id_plan",
+            "plan_nombre",
+            "plan_descripcion",
+            "precio_mensual",
+            "limite_productos",
+            "limite_usuarios",
+            "plan_estado",
+        )
+        read_only_fields = ("id_plan",)
+
+
+class StoreSerializer(serializers.ModelSerializer):
+    id_plan = serializers.PrimaryKeyRelatedField(
+        source="plan",
+        queryset=SubscriptionPlan.objects.all(),
+        required=False,
+        allow_null=True,
+    )
+    plan_subscripcion = SubscriptionPlanSerializer(source="plan", read_only=True)
+
+    class Meta:
+        model = Store
+        fields = (
+            "id_tienda",
+            "id_plan",
+            "nombre_tienda",
+            "nit",
+            "direccion_tienda",
+            "telefono_tienda",
+            "email_tienda",
+            "fecha_afiliacion",
+            "estado_tienda",
+            "plan_subscripcion",
+        )
+        read_only_fields = ("id_tienda", "fecha_afiliacion")
+
+    def to_representation(self, instance):
+        """Oculta el NIT, teléfono y email de la tienda a quien no sea personal."""
+        data = super().to_representation(instance)
+        if not services.permite_datos_contacto(self.context.get("request")):
+            for campo in ("nit", "telefono_tienda", "email_tienda"):
+                data.pop(campo, None)
+        return data
+
+
+class UserSerializer(serializers.ModelSerializer):
+    id_tienda = serializers.UUIDField(source="tienda_id", read_only=True, allow_null=True)
+    id_rol = serializers.SerializerMethodField()
+    rol = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = (
+            "id_usuario",
+            "id_tienda",
+            "usu_nombre",
+            "usu_email",
+            "fecha_registro",
+            "estado_usuario",
+            "email_verificado",
+            "id_rol",
+            "rol",
+        )
+        read_only_fields = fields
+
+    def get_id_rol(self, instance) -> str | None:
+        role_id = instance.id_rol
+        return str(role_id) if role_id else None
+
+    def get_rol(self, instance) -> dict | None:
+        cached = getattr(instance, "_cached_role", "missing")
+        if cached != "missing":
+            return RoleSerializer(cached).data if cached else None
+        role_id = instance.id_rol
+        if not role_id:
+            return None
+        role = Role.objects.filter(pk=role_id).first()
+        return RoleSerializer(role).data if role else None
+
+
+class Model3DSerializer(serializers.ModelSerializer):
+    id_accesorio = serializers.UUIDField(source="accesorio_id", read_only=True, allow_null=True)
+
+    class Meta:
+        model = Model3D
+        fields = (
+            "id_modelo3d",
+            "id_accesorio",
+            "url_modelo3d",
+            "formato_archivo",
+            "estado_visualizacion",
+            "modelo3d_fecha",
+            "modelo3d_observaciones",
+        )
+        read_only_fields = ("id_modelo3d", "modelo3d_fecha")
+
+
+class InventorySerializer(serializers.ModelSerializer):
+    id_tienda = serializers.UUIDField(source="tienda_id", read_only=True, allow_null=True)
+    id_producto = serializers.UUIDField(source="producto_id", read_only=True, allow_null=True)
+    tienda = StoreSerializer(read_only=True)
+    producto = ProductSerializer(read_only=True)
+    # Forma plana del producto (si es accesorio) para el panel de inventario.
+    accesorio = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Inventory
+        fields = (
+            "id_inventario",
+            "id_tienda",
+            "id_producto",
+            "stock_actual",
+            "stock_minimo",
+            "estado_inventario",
+            "fecha_actualizacion",
+            "precio",
+            "tienda",
+            "producto",
+            "accesorio",
+        )
+        read_only_fields = ("id_inventario", "id_tienda", "id_producto", "estado_inventario")
+
+    def get_accesorio(self, instance):
+        producto = instance.producto
+        if producto and producto.es_accesorio:
+            return AccesorioSerializer(producto).data
+        return None
+
+
+class InventoryMovementSerializer(serializers.ModelSerializer):
+    id_inventario = serializers.PrimaryKeyRelatedField(source="inventario", queryset=Inventory.objects.all())
+    id_tipomov = serializers.PrimaryKeyRelatedField(source="tipo", queryset=MovementType.objects.all())
+    id_usuario = serializers.UUIDField(source="usuario_id", read_only=True, allow_null=True)
+
+    class Meta:
+        model = InventoryMovement
+        fields = (
+            "id_movimiento",
+            "id_inventario",
+            "id_tipomov",
+            "id_usuario",
+            "mov_cantidad",
+            "fecha_movimiento",
+            "observaciones",
+        )
+        read_only_fields = ("id_movimiento", "id_usuario", "fecha_movimiento")
+
+
+class MovementTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MovementType
+        fields = ("id_tipomov", "tipomov_nombre", "descripcion_tipomov")
+        read_only_fields = ("id_tipomov",)
+
+
+class QuoteDetailSerializer(serializers.ModelSerializer):
+    id_cotizacion = serializers.UUIDField(source="cotizacion_id", read_only=True, allow_null=True)
+    # Forma plana para el frontend: el item de cotizacion identifica al accesorio.
+    accesorio = serializers.SerializerMethodField()
+
+    class Meta:
+        model = QuoteDetail
+        fields = (
+            "id_detalle_cotizacion",
+            "id_cotizacion",
+            "cantidad",
+            "precio_unitario",
+            "subtotal",
+            "accesorio",
+        )
+        read_only_fields = ("id_detalle_cotizacion", "id_cotizacion")
+
+    def get_accesorio(self, instance):
+        return None
+
+class QuoteSerializer(serializers.ModelSerializer):
+    id_tienda = serializers.UUIDField(source="tienda_id", read_only=True, allow_null=True)
+    id_usuario = serializers.UUIDField(source="usuario_id", read_only=True, allow_null=True)
+    id_moto = serializers.UUIDField(source="moto_id", read_only=True, allow_null=True)
+    coti_fecha = serializers.DateTimeField(source="fecha_solicitud", read_only=True, allow_null=True)
+    moto = MotorcycleSerializer(read_only=True)
+    usuario = UserSerializer(read_only=True)
+    detalle_cotizacion = QuoteDetailSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Quote
+        fields = (
+            "id_cotizacion",
+            "id_tienda",
+            "id_usuario",
+            "id_moto",
+            "fecha_solicitud",
+            "coti_fecha",
+            "coti_estado",
+            "total",
+            "coti_observaciones",
+            "nombre_configuracion",
+            "moto",
+            "usuario",
+            "detalle_cotizacion",
+        )
+        read_only_fields = fields
+
+
+class QuoteStatusHistorySerializer(serializers.ModelSerializer):
+    id_cotizacion = serializers.UUIDField(source="cotizacion_id", read_only=True, allow_null=True)
+    id_usuario = serializers.UUIDField(source="usuario_id", read_only=True, allow_null=True)
+
+    class Meta:
+        model = QuoteStatusHistory
+        fields = ("id_hist", "id_cotizacion", "estado", "fecha", "id_usuario")
+        read_only_fields = ("id_hist",)
+
+
+class ConfigurationDetailSerializer(serializers.ModelSerializer):
+    id_configuracion = serializers.UUIDField(source="configuracion_id", read_only=True, allow_null=True)
+    id_categoria_accesorio = serializers.UUIDField(
+        source="categoria_accesorio_id", read_only=True, allow_null=True
+    )
+
+    class Meta:
+        model = ConfigurationDetail
+        fields = ("id_detalle", "id_configuracion", "id_categoria_accesorio", "cantidad")
+        read_only_fields = ("id_detalle",)
+
+
+class ConfigurationSerializer(serializers.ModelSerializer):
+    id_usuario = serializers.UUIDField(source="usuario_id", read_only=True, allow_null=True)
+    id_moto = serializers.UUIDField(source="moto_id", read_only=True, allow_null=True)
+    detalles = ConfigurationDetailSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Configuration
+        fields = ("id_configuracion", "id_usuario", "id_moto", "nombre", "detalles")
+        read_only_fields = ("id_configuracion",)
+
+
+class InventoryInputSerializer(serializers.Serializer):
+    id_accesorio = serializers.UUIDField(required=False)
+    id_producto = serializers.UUIDField(required=False)
+    stock_actual = serializers.IntegerField(required=False, min_value=0, default=0)
+    stock_minimo = serializers.IntegerField(required=False, min_value=0, default=0)
+    precio = serializers.DecimalField(max_digits=10, decimal_places=2, required=False, allow_null=True)
+
+    def validate(self, attrs):
+        if not attrs.get("id_accesorio") and not attrs.get("id_producto"):
+            raise serializers.ValidationError(
+                {"id_accesorio": "Envía id_accesorio (o id_producto) para crear el inventario."}
+            )
+        if attrs.get("id_accesorio") and attrs.get("id_producto"):
+            raise serializers.ValidationError(
+                {"id_producto": "Envía id_accesorio o id_producto, no ambos."}
+            )
+        return attrs
+
+
+class QuoteItemSerializer(serializers.Serializer):
+    id_accesorio = serializers.UUIDField()
+    cantidad = serializers.IntegerField(min_value=1)
+
+
+class QuoteCreateSerializer(serializers.Serializer):
+    # Opcional: una cotización puede no estar atada a una moto concreta.
+    id_moto = serializers.UUIDField(required=False, allow_null=True)
+    # Solo se usa si el usuario no pertenece a una tienda; ver
+    # views.resolver_tienda_cotizacion.
+    id_tienda = serializers.UUIDField(required=False, allow_null=True)
+    coti_observaciones = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    nombre_configuracion = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    items = QuoteItemSerializer(many=True, allow_empty=False)
+
+
+# ---------------------------------------------------------------------------
+# Serializers solo para documentar el schema OpenAPI (los formularios de
+# login/registro de Swagger). No validan nada en las vistas.
+# ---------------------------------------------------------------------------
+
+
+class ErrorSerializer(serializers.Serializer):
+    error = serializers.JSONField()
+
+
+class MessageSerializer(serializers.Serializer):
+    mensaje = serializers.CharField()
+
+
+class RootSerializer(serializers.Serializer):
+    mensaje = serializers.CharField()
+
+
+class HealthSerializer(serializers.Serializer):
+    ok = serializers.BooleanField()
+    database_configured = serializers.BooleanField()
+    database_connected = serializers.BooleanField(required=False)
+
+
+# ============================================================================
+# RBAC Serializers
+# ============================================================================
+
+class AccionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Accion
+        fields = ("id_accion", "codigo", "nombre", "descripcion", "metodo_http", "orden", "activo")
+        read_only_fields = ("id_accion",)
+
+
+class RecursoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Recurso
+        fields = ("id_recurso", "codigo", "nombre", "descripcion", "endpoint_base", "icono", "orden", "activo", "creado_en", "actualizado_en")
+        read_only_fields = ("id_recurso", "creado_en", "actualizado_en")
+
+
+class RecursoAccionSerializer(serializers.ModelSerializer):
+    recurso = RecursoSerializer(read_only=True)
+    accion = AccionSerializer(read_only=True)
+    id_recurso = serializers.PrimaryKeyRelatedField(
+        source="recurso",
+        queryset=Recurso.objects.all(),
+        write_only=True,
+    )
+    id_accion = serializers.PrimaryKeyRelatedField(
+        source="accion",
+        queryset=Accion.objects.all(),
+        write_only=True,
+    )
+
+    class Meta:
+        model = RecursoAccion
+        fields = ("id_recurso_accion", "id_recurso", "id_accion", "recurso", "accion", "descripcion", "requiere_scope", "activo")
+        read_only_fields = ("id_recurso_accion",)
+
+
+class RolRecursoSerializer(serializers.ModelSerializer):
+    recurso_accion = RecursoAccionSerializer(read_only=True)
+    id_rol = serializers.PrimaryKeyRelatedField(
+        source="rol",
+        queryset=Role.objects.all(),
+        write_only=True,
+    )
+    id_recurso_accion = serializers.PrimaryKeyRelatedField(
+        source="recurso_accion",
+        queryset=RecursoAccion.objects.all(),
+        write_only=True,
+    )
+    concedido_por = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(),
+        allow_null=True,
+        required=False,
+        write_only=True,
+    )
+
+    class Meta:
+        model = RolRecurso
+        fields = ("id_rol_recurso", "id_rol", "id_recurso_accion", "recurso_accion", "scope", "concedido_por", "concedido_en", "activo")
+        read_only_fields = ("id_rol_recurso", "concedido_en")
+
+    def validate(self, attrs):
+        """El scope se normaliza y se valida contra el recurso de la combinación.
+
+        `POST /api/rol-recursos` era la puerta ancha de la matriz: aceptaba
+        cualquier texto y cualquier alcance sobre cualquier recurso. Un `tienda`
+        sobre un recurso sin columna de tienda queda inerte —`scopes_aplicables`
+        nunca lo ofrece—, pero en el panel parece una concesión vigente.
+        """
+        recurso_accion = attrs.get("recurso_accion") or getattr(
+            self.instance, "recurso_accion", None
+        )
+        if recurso_accion is None:
+            raise serializers.ValidationError(
+                {"id_recurso_accion": "Indique la combinación recurso-acción."}
+            )
+        valido, motivo = validar_concesion(
+            recurso_accion.recurso.codigo,
+            attrs.get("scope", getattr(self.instance, "scope", "global")),
+            requiere_scope=recurso_accion.requiere_scope,
+        )
+        if motivo:
+            raise serializers.ValidationError({"scope": motivo})
+        attrs["scope"] = valido
+        return attrs
+
+
+class RecursoConPermisosSerializer(serializers.ModelSerializer):
+    """Recurso con sus acciones y estado de permiso para un rol específico"""
+    acciones = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Recurso
+        fields = ("id_recurso", "codigo", "nombre", "descripcion", "endpoint_base", "icono", "orden", "activo", "acciones")
+    
+    def get_acciones(self, obj):
+        """Todas las combinaciones activas del recurso.
+
+        Devuelve cada recurso-acción con su scope cuando el rol lo tiene
+        concedido, o ``scope: None`` cuando no (la UI lo pinta como casilla
+        sin marcar, de modo que se puedan OTORGAR permisos nuevos).
+
+        Usa los mapas precargados en el contexto (2 consultas en total para
+        todo el listado); si no vienen, cae a consultar por recurso.
+        """
+        rol_id = self.context.get("rol_id")
+        if not rol_id:
+            return []
+
+        combos_por_recurso = self.context.get("combos_por_recurso")
+        concedidos_ctx = self.context.get("concedidos")
+        if combos_por_recurso is None or concedidos_ctx is None:
+            from api.models import RolRecurso, RecursoAccion
+            combinaciones = list(
+                RecursoAccion.objects.filter(recurso=obj, activo=True)
+                .select_related("accion")
+                .order_by("accion__orden")
+            )
+            concedidos = {
+                rr.recurso_accion_id: rr.scope
+                for rr in RolRecurso.objects.filter(
+                    rol_id=rol_id,
+                    activo=True,
+                    recurso_accion__recurso=obj,
+                    recurso_accion__activo=True,
+                )
+            }
+        else:
+            combinaciones = combos_por_recurso.get(obj.id_recurso, [])
+            concedidos = concedidos_ctx
+
+        return [
+            {
+                "id_recurso_accion": str(ra.id_recurso_accion),
+                "accion_codigo": ra.accion.codigo,
+                "accion_nombre": ra.accion.nombre,
+                "scope": concedidos.get(ra.id_recurso_accion),
+                "activo": ra.id_recurso_accion in concedidos,
+                # Los alcances que esta combinación puede expresar. La lista la
+                # decide el mismo criterio con el que se valida al guardar, así
+                # que el selector no puede ofrecer una casilla que luego se
+                # rechace o quede inerte.
+                "requiere_scope": ra.requiere_scope,
+                "scopes_validos": list(scopes_validos(obj.codigo, ra.requiere_scope)),
+            }
+            for ra in combinaciones
+        ]
+
+
+# ============================================================================
+# Existing Serializers (existing code continues below)
+# ============================================================================
+
+class LoginRequestSerializer(serializers.Serializer):
+    usu_email = serializers.EmailField()
+    password = serializers.CharField(write_only=True)
+
+
+class LoginResponseSerializer(serializers.Serializer):
+    mensaje = serializers.CharField()
+    token = serializers.CharField()
+    usuario = UserSerializer(read_only=True)
+
+
+class RegisterRequestSerializer(serializers.Serializer):
+    usu_nombre = serializers.CharField()
+    usu_email = serializers.EmailField()
+    password = serializers.CharField(write_only=True, min_length=8)
+    id_rol = serializers.UUIDField()
+    id_tienda = serializers.UUIDField(required=False, allow_null=True)
+
+
+class RegisterResponseSerializer(serializers.Serializer):
+    mensaje = serializers.CharField()
+    usuario = UserSerializer(read_only=True)
+
+
+class ForgotRequestSerializer(serializers.Serializer):
+    usu_email = serializers.EmailField()
+
+
+class ResetRequestSerializer(serializers.Serializer):
+    token = serializers.CharField()
+    password = serializers.CharField(write_only=True, min_length=8)
+
+
+class QuoteStatusUpdateSerializer(serializers.Serializer):
+    coti_estado = serializers.ChoiceField(
+        choices=["pendiente", "aprobada", "rechazada", "completada"]
+    )
+
+
+class TokenDataSerializer(serializers.Serializer):
+    id_usuario = serializers.CharField()
+    id_rol = serializers.CharField(allow_null=True)
+    id_tienda = serializers.CharField(allow_null=True)
+
+
+class ProfileResponseSerializer(serializers.Serializer):
+    mensaje = serializers.CharField()
+    datos_del_token = TokenDataSerializer()

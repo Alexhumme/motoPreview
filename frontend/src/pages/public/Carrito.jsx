@@ -1,0 +1,243 @@
+import { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import {
+  ArrowLeft,
+  ArrowRight,
+  CheckCircle2,
+  LogIn,
+  Minus,
+  Plus,
+  ShieldCheck,
+  ShoppingCart,
+  Trash2,
+} from 'lucide-react';
+import { useCart } from '../../context/CartContext';
+import { useAuth } from '../../context/authContexto';
+import { obtenerMotos } from '../../services/motos';
+import { crearCotizacion } from '../../services/cotizaciones';
+import SiteHeader from '../../components/buttons/SiteHeader';
+import ImagenProducto from '../../components/ImagenProducto';
+import SelectorMoto from '../../components/forms/SelectorMoto';
+import { etiquetaMoto } from '../../utils/motos';
+import './Carrito.css';
+
+const SIN_MOTO = 'Sin moto específica';
+
+const money = (value) => new Intl.NumberFormat('es-CO', {
+  style: 'currency',
+  currency: 'COP',
+  maximumFractionDigits: 0,
+}).format(value);
+
+export default function Carrito() {
+  const { items, actualizarCantidad, eliminarItem, vaciarCarrito, totalItems, totalPrecio } = useCart();
+  const { usuario } = useAuth();
+  const navigate = useNavigate();
+  const [motos, setMotos] = useState([]);
+  const [idMoto, setIdMoto] = useState('');
+  const [textoMoto, setTextoMoto] = useState('');
+  const [cargandoMotos, setCargandoMotos] = useState(true);
+  const [observaciones, setObservaciones] = useState('');
+  const [enviando, setEnviando] = useState(false);
+  const [error, setError] = useState('');
+  const [exito, setExito] = useState(false);
+
+  useEffect(() => {
+    obtenerMotos()
+      .then(setMotos)
+      .catch(() => setMotos([]))
+      .finally(() => setCargandoMotos(false));
+  }, []);
+
+  // Escribir invalida la elección previa: la cotización no puede llevar el id
+  // de una moto que ya no coincide con lo que el usuario ve en el campo.
+  function escribirMoto(valor) {
+    setTextoMoto(valor);
+    setIdMoto('');
+  }
+
+  function elegirMoto(moto) {
+    setIdMoto(moto?.id_moto || '');
+    if (moto) setTextoMoto(etiquetaMoto(moto));
+  }
+
+  async function manejarEnvio(event) {
+    event.preventDefault();
+    setError('');
+    if (!usuario) {
+      navigate('/login');
+      return;
+    }
+    setEnviando(true);
+    try {
+      await crearCotizacion({
+        id_tienda: usuario.id_tienda,
+        id_moto: idMoto || null,
+        coti_observaciones: observaciones,
+        items: items.map((item) => ({ id_accesorio: item.accesorio.id_accesorio, cantidad: item.cantidad })),
+      });
+      vaciarCarrito();
+      setExito(true);
+    } catch (err) {
+      setError(err.response?.data?.error || 'No se pudo enviar la cotización.');
+    } finally {
+      setEnviando(false);
+    }
+  }
+
+  return (
+    <div className="cart-page">
+      <SiteHeader />
+      <main className="cart-main">
+        <Link to="/" className="btn btn--ghost btn--sm cart-back">
+          <ArrowLeft size={15} aria-hidden="true" /> Volver al catálogo
+        </Link>
+
+        {exito ? (
+          <div className="cart-empty" data-reveal="scale">
+            <CheckCircle2 className="empty-icon" size={48} strokeWidth={1.5} aria-hidden="true" />
+            <h1 className="cart-empty-title" data-glitch="¡Cotización enviada!">¡Cotización enviada!</h1>
+            <p className="cart-empty-subtitle">La tienda va a revisar tu solicitud pronto.</p>
+            <Link to="/" className="btn btn--primary">Volver al catálogo <ArrowRight size={16} aria-hidden="true" /></Link>
+          </div>
+        ) : (
+          <>
+            <header className="page-heading" data-reveal="up">
+              <div>
+                <div className="eyebrow"><span className="eyebrow-dot" aria-hidden="true"></span>Tu selección</div>
+                <h1 className="cart-title" data-glitch="Carrito de productos.">Carrito de productos.</h1>
+              </div>
+              <span className="cart-count-badge">{totalItems} {totalItems === 1 ? 'pieza' : 'piezas'}</span>
+            </header>
+
+            {items.length === 0 ? (
+              <div className="cart-empty" data-reveal="scale">
+                <ShoppingCart className="empty-icon" size={48} strokeWidth={1.5} aria-hidden="true" />
+                <h1 className="cart-empty-title">Tu carrito está esperando una buena idea.</h1>
+                <p className="cart-empty-subtitle">Explora las piezas disponibles y empieza a construir una configuración a tu medida.</p>
+                <Link to="/configurador" className="btn btn--primary">Abrir configurador <ArrowRight size={16} aria-hidden="true" /></Link>
+              </div>
+            ) : (
+              <div className="cart-layout">
+                <section className="cart-lines" data-reveal="grupo">
+                  {items.map((item) => (
+                    <article key={item.accesorio.id_accesorio} className="cart-line fx-eleva">
+                      <div className="mini-art">
+                        <ImagenProducto src={item.accesorio.imagen} />
+                      </div>
+                      <div className="cart-line-info">
+                        <span>{item.accesorio.categoria_producto?.nombre || item.accesorio.categoria_accesorio?.cat_nombre || 'Producto'}</span>
+                        <h3 className="cart-line-name">{item.accesorio.acc_nombre}</h3>
+                      </div>
+                      <div className="quantity-control">
+                        <button
+                          className="btn btn--ghost btn--sm"
+                          onClick={() => actualizarCantidad(item.accesorio.id_accesorio, item.cantidad - 1)}
+                          disabled={item.cantidad <= 1}
+                          aria-label="Disminuir cantidad"
+                        >
+                          <Minus size={14} aria-hidden="true" />
+                        </button>
+                        <b>{item.cantidad}</b>
+                        <button
+                          className="btn btn--ghost btn--sm"
+                          onClick={() => actualizarCantidad(item.accesorio.id_accesorio, item.cantidad + 1)}
+                          aria-label="Aumentar cantidad"
+                        >
+                          <Plus size={14} aria-hidden="true" />
+                        </button>
+                      </div>
+                      <strong className="cart-line-price">{money(item.accesorio.acc_precio * item.cantidad)}</strong>
+                      <button
+                        className="btn btn--danger btn--sm remove-button"
+                        onClick={() => eliminarItem(item.accesorio.id_accesorio)}
+                        aria-label={`Eliminar ${item.accesorio.acc_nombre}`}
+                      >
+                        <Trash2 size={14} aria-hidden="true" />
+                      </button>
+                    </article>
+                  ))}
+                </section>
+
+                <aside className="summary-card card" data-reveal="up" data-reveal-delay="0.15">
+                  <span className="summary-kicker">Resumen de cotización</span>
+                  <h2 className="summary-title">Lista para rodar.</h2>
+
+                  <div className="summary-row">
+                    <span>Subtotal</span>
+                    <strong>{money(totalPrecio)}</strong>
+                  </div>
+                  <div className="summary-row">
+                    <span>Envío</span>
+                    <strong>Por confirmar</strong>
+                  </div>
+                  <div className="summary-total">
+                    <span>Total estimado</span>
+                    <strong>{money(totalPrecio)}</strong>
+                  </div>
+
+                  <form onSubmit={manejarEnvio} className="quote-form">
+                    <div className="form-field">
+                      <label htmlFor="moto-select" className="form-label">
+                        ¿Para qué moto es esta cotización?
+                      </label>
+                      <SelectorMoto
+                        id="moto-select"
+                        motos={motos}
+                        texto={textoMoto}
+                        onTexto={escribirMoto}
+                        onElegir={elegirMoto}
+                        placeholder="Busca por marca, modelo o año..."
+                        opcionNinguna={SIN_MOTO}
+                        cargando={cargandoMotos}
+                      />
+                      {textoMoto.trim() && !idMoto && textoMoto !== SIN_MOTO && (
+                        <p className="form-hint form-hint--aviso" role="status">
+                          Elige una moto de las sugerencias o borra el texto: la cotización saldrá sin moto.
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="form-field">
+                      <label htmlFor="observaciones" className="form-label">Observaciones (opcional)</label>
+                      <textarea
+                        id="observaciones"
+                        className="form-input"
+                        value={observaciones}
+                        onChange={(e) => setObservaciones(e.target.value)}
+                        rows={3}
+                      />
+                    </div>
+
+                    {!usuario && (
+                      <p className="summary-note">Necesitas iniciar sesión para enviar la cotización.</p>
+                    )}
+
+                    {error && <p className="form-error" role="alert">{error}</p>}
+
+                    <button
+                      className="btn btn--primary btn--full"
+                      disabled={enviando || !usuario}
+                      type="submit"
+                    >
+                      {enviando
+                        ? 'Enviando...'
+                        : usuario
+                          ? <>Solicitar cotización <ArrowRight size={16} aria-hidden="true" /></>
+                          : <><LogIn size={16} aria-hidden="true" /> Iniciar sesión para continuar</>}
+                    </button>
+                  </form>
+
+                  <p className="summary-note">
+                    <ShieldCheck size={14} aria-hidden="true" />
+                    Sin pagos en línea. La tienda confirmará disponibilidad.
+                  </p>
+                </aside>
+              </div>
+            )}
+          </>
+        )}
+      </main>
+    </div>
+  );
+}

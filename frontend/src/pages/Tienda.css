@@ -1,0 +1,178 @@
+/* ==========================================================================
+   TIENDA — Jam Design System
+   ========================================================================== */
+
+.tienda {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-32);
+}
+
+/* Header */
+.tienda-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-24);
+}
+
+.tienda-title {
+  font-family: var(--font-display);
+  font-weight: var(--weight-black);
+  font-size: var(--text-heading);
+  line-height: var(--leading-heading);
+  letter-spacing: var(--tracking-heading);
+  color: var(--color-paper);
+  margin: 0;
+}
+
+/* Plan Section */
+.tienda-plan {
+  padding: var(--card-padding);
+}
+
+.tienda-section-title {
+  font-family: var(--font-display);
+  font-weight: var(--weight-bold);
+  font-size: var(--text-heading-sm);
+  color: var(--color-paper);
+  margin: 0 0 var(--space-24);
+}
+
+.tienda-plan-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-24);
+}
+
+.plan-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  padding: var(--space-20);
+  background: var(--surface-elevated);
+  border: 1px solid var(--color-bone);
+  border-radius: var(--radius-inputs);
+}
+
+.plan-label {
+  font-family: var(--font-display);
+  font-weight: var(--weight-regular);
+  font-size: var(--text-caption);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-mist-gray);
+}
+
+.plan-value {
+  font-family: var(--font-display);
+  font-weight: var(--weight-bold);
+  font-size: var(--text-body-lg);
+  color: var(--color-paper);
+}
+
+/* Datos Section */
+.tienda-datos {
+  padding: var(--card-padding);
+}
+
+.tienda-datos-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-16);
+  margin-bottom: var(--space-24);
+  padding-bottom: var(--space-16);
+  border-bottom: 1px solid var(--color-bone);
+}
+
+.tienda-section-title {
+  margin: 0;
+}
+
+/* Data List (view mode) */
+.tienda-data-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--space-16);
+  margin: 0;
+}
+
+.tienda-data-list div {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-16);
+  background: var(--surface-elevated);
+  border: 1px solid var(--color-bone);
+  border-radius: var(--radius-inputs);
+}
+
+.tienda-data-list dt {
+  font-family: var(--font-display);
+  font-weight: var(--weight-regular);
+  font-size: var(--text-caption);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-mist-gray);
+}
+
+.tienda-data-list dd {
+  font-family: var(--font-ui);
+  font-weight: var(--weight-semibold);
+  font-size: var(--text-body);
+  color: var(--color-paper);
+  margin: 0;
+}
+
+/* Form (edit mode) */
+.tienda-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-20);
+}
+
+.tienda-form .form-field {
+  max-width: 480px;
+}
+
+/* Success message */
+.mensaje {
+  padding: var(--space-12) var(--space-16);
+  border-radius: var(--radius-inputs);
+  font-family: var(--font-ui);
+  font-size: var(--text-body);
+  font-weight: var(--weight-medium);
+}
+
+.mensaje-exito {
+  background: rgba(242, 106, 33, 0.15);
+  border: 1px solid rgba(242, 106, 33, 0.3);
+  color: var(--color-brand-orange);
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .tienda-plan-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 720px) {
+  .tienda-title {
+    font-size: var(--text-heading-lg);
+  }
+
+  .tienda-plan-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .tienda-datos-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .tienda-data-list {
+    grid-template-columns: 1fr;
+  }
+}
