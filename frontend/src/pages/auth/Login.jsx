@@ -16,6 +16,11 @@ function generarCaptcha() {
   return { a, b, op, resultado };
 }
 
+function validarEmail(email) {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
+}
+
 export default function Login() {
   const [usu_email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -37,6 +42,11 @@ export default function Login() {
     if (parseInt(captchaInput, 10) !== captcha.resultado) {
       setError('La verificación (captcha) es incorrecta.');
       refrescarCaptcha();
+      return;
+    }
+    if (!validarEmail(usu_email)) {
+      setErrorEmail('Por favor, ingresa un correo electrónico válido');
+      setEnviando(false);
       return;
     }
     setEnviando(true);

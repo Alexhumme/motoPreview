@@ -12,15 +12,27 @@ export default function Registro() {
   const [usu_email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [errorEmail, setErrorEmail] = useState('');
   const [enviando, setEnviando] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
+  const validarEmail = (email) => {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
+  };
+
   async function manejarSubmit(event) {
     event.preventDefault();
     setError('');
+    setErrorEmail('');
     setEnviando(true);
     try {
+      if (!validarEmail(usu_email)) {
+        setErrorEmail('Por favor, ingresa un correo electrónico válido');
+        setEnviando(false);
+        return;
+      }
       await registrarCliente({ usu_nombre, usu_email, password, id_rol: ROL_CLIENTE, id_tienda: TIENDA_PRINCIPAL });
       await login(usu_email, password);
       navigate('/');
