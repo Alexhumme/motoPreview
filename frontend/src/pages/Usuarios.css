@@ -61,15 +61,3 @@
   color: var(--color-mist-gray);
   margin: var(--space-4) 0 0;
 }
-
-.usuarios-header-actions {
-  display: flex;
-  align-items: center;
-  gap: var(--space-12);
-  flex-wrap: wrap;
-}
-
-.usuarios-search {
-  min-width: 220px;
-  max-width: 320px;
-}

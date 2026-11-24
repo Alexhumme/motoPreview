@@ -30,6 +30,7 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
 - Usuarios sin permisos ven un mensaje de acceso en lugar de datos vacíos o inventario no autorizado.
 - `SelectorMoto`: la lista ya no se reabre tras elegir con Enter y una moto preseleccionada muestra todo el catálogo al enfocar.
 - El inventario muestra también productos comunes y los servicios del catálogo normalizan respuestas paginadas.
+- La vista de usuarios conserva una sola barra de búsqueda, provista por la tabla administrativa.
 
 ## [v1.1.1] - 2026-11-23
 
