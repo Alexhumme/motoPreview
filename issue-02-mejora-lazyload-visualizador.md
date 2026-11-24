@@ -1,31 +1,32 @@
-# Issue Mejora-02: Lazy-loading del motor de visualización 3D
+# Issue BUG-02: Búsqueda y selectores en la aplicación
 
 ## Descripción
-El motor visualizador 3D carga `three.js`, `gsap` y `lenis` de forma estática en el bundle principal, lo que aumenta significativamente el tiempo de carga inicial de la aplicación (aprox. 972 KB adicionales en el chunk principal).
+La aplicación requiere funcionalidades de búsqueda en tiempo real y selectores en cascada para la selección de motocicletas, marcas, modelos y años en el configurador y catálogo.
 
 ## Problema
-- `three.js`, `gsap` y `lenis` se importan al inicio en `Visualizador.jsx`
-- Esto afecta el Time-to-Interactive (TTI) de la aplicación
-- La mayoría de los usuarios no acceden al visualizador 3D en la primera visita
+- Búsqueda en la tabla de usuarios no funciona sin criterio de filtrado
+- Selectores en cascada (marca → modelo → año) no están implementados
+- Filtro por tipo (multi-select) no disponible en catálogo y configurador
+- Barra de búsqueda de moto no funciona en el configurador
 
-## Solución propuesta
-- Implementar lazy-loading dinámico para los módulos de visualización 3D
-- Mover las importaciones a nivel de función en su lugar de nivel de módulo
-- Usar `import()` dinámico de JavaScript para cargar `three.js` y sus dependencias bajo demanda
-- Mantener el fallback mientras se carga el visualizador
+## Pasos para reproducir
+1. Acceder al catálogo o configurador en http://localhost:5173
+2. Intentar buscar una moto por nombre o filtro
+3. Intentar usar los selectores en cascada para seleccionar marca/modelo/año
+4. Los filtros y búsquedas no retornan resultados esperados
 
 ## Prioridad
-Media
+Alta
 
 ## Responsable
-Equipo de frontend
+Equipo de desarrollo
 
 ## Criterio de solución considerado solucionado
-- El componente `Visualizador` ya no incluye `three.js`, `gsap` o `lenis` en el bundle inicial
-- Al acceder por primera vez al visualizador, se carga el módulo dinámicamente
-- El tiempo de carga inicial del bundle principal se reduce en aproximadamente 900 KB
-- El visualizador funciona correctamente después del carga dinámica
-- Se conservan los tests existentes para el visualizador
+- La búsqueda en la tabla de usuarios filtra por nombre, email o rol con contador de resultados
+- El selector marca → modelo → año funciona en cascada en el configurador
+- La barra de búsqueda de moto está funcional en el configurador
+- El filtro por tipo (multi-select) está disponible en catálogo y configurador
+- Los tests validan que los filtros y búsquedas retornan resultados correctos
 
 ## Issue relacionado
 Closes #02
