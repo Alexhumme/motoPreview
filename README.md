@@ -35,11 +35,7 @@ Abre http://localhost:5173 (el backend queda en http://127.0.0.1:8001).
 
 ## Credenciales
 
-| Rol | Correo | Contraseña |
-|---|---|---|
-| Superadmin | `superadmin@motopreview.com` | `Super2026` |
-
-> La contraseña del superadmin debe cambiarse tras el primer login. Para restablecerla usa `backend/scripts/restablecer_password_superadmin.py` (escribe el hash bcrypt que verifica el login; `manage.py changepassword` no sirve aquí porque genera PBKDF2).
+> Las credenciales de acceso deben gestionarse mediante variables de entorno. No se incluyen credenciales en el código fuente. Para acceder al superadmin, contacte con el equipo de desarrollo o use las variables de entorno del despliegue.
 
 ## Dónde revisar cada parte
 
