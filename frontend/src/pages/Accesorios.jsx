@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { useCargaInicial } from '../utils/useCargaInicial';
+import { useEffect, useRef, useState } from 'react';
 import { obtenerAccesorios, obtenerCategorias, crearAccesorio, actualizarAccesorio } from '../services/accesorios';
 import { obtenerModelosCompatibles, marcarCompatible, quitarCompatible } from '../services/compatibilidad';
 import { obtenerMotos } from '../services/motos';
@@ -18,9 +17,10 @@ const estadoBadge = {
 };
 
 export default function Accesorios() {
-  const { datos: accesorios, cargando, error } = useCargaInicial(() => obtenerAccesorios());
-  const { datos: categorias, cargando: categoriasCargando } = useCargaInicial(() => obtenerCategorias());
-  const { datos: modelos, cargando: modelosCargando } = useCargaInicial(() => obtenerMotos());
+  const [accesorios, setAccesorios] = useState([]);
+  const [categorias, setCategorias] = useState([]);
+  const [modelos, setModelos] = useState([]);
+  const [cargando, setCargando] = useState(true);
 
   const [modalAbierto, setModalAbierto] = useState(false);
   const [editandoId, setEditandoId] = useState(null);
@@ -30,7 +30,34 @@ export default function Accesorios() {
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState('');
 
-  // Carga inicial manejada por useCargaInicial hook
+  async function cargarTodo() {
+    const [datosAccesorios, datosCategorias, datosMotos] = await Promise.all([
+      obtenerAccesorios(), obtenerCategorias(), obtenerMotos(),
+    ]);
+    setAccesorios(datosAccesorios);
+    setCategorias(datosCategorias);
+    // modelos únicos, sacados de las motos (varias motos comparten modelo)
+    const modelosUnicos = [];
+    const vistos = new Set();
+    for (const moto of datosMotos) {
+      if (!vistos.has(moto.id_modelo_moto)) {
+        vistos.add(moto.id_modelo_moto);
+        modelosUnicos.push(moto.modelo_moto);
+      }
+    }
+    setModelos(modelosUnicos);
+    setCargando(false);
+  }
+
+  const cargadoRef = useRef(false);
+  useEffect(() => {
+    if (cargadoRef.current) return;
+    cargadoRef.current = true;
+    async function refrescar() {
+      await cargarTodo();
+    }
+    refrescar();
+  }, []);
 
   async function abrirNuevo() {
     setEditandoId(null);

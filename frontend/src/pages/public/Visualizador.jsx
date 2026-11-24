@@ -7,9 +7,6 @@ import Visor3D from '../../components/Visor3D';
 import SiteHeader from '../../components/buttons/SiteHeader';
 import './Visualizador.css';
 
-// Lazy loading for Visor3D y sus dependencias (three.js, gsap, lenis)
-const Visor3DLazy = lazy(() => import('../../components/Visor3D'));
-
 export default function Visualizador() {
   const { id } = useParams();
   const [accesorio, setAccesorio] = useState(null);
@@ -73,9 +70,7 @@ export default function Visualizador() {
       </Link>
 
       <div className="visualizador-layout">
-        <Suspense fallback={<div className="visualizador-loading">Cargando visualizador 3D...</div>}>
-          <Visor3DLazy url={modelo3d?.url_modelo3d} nombreAccesorio={accesorio.acc_nombre} />
-        </Suspense>
+        <Visor3D url={modelo3d?.url_modelo3d} nombreAccesorio={accesorio.acc_nombre} />
 
         <div className="visualizador-info">
           <span className="visualizador-categoria" data-scramble>{accesorio.marca?.nombre || 'Sin marca'}</span>

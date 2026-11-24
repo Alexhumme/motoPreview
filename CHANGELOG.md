@@ -2,8 +2,9 @@
 
 Todos los cambios importantes del proyecto se documentan en este archivo.
 
-El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y el versionado sigue [Semantic Versioning](https://semver.org/lang/es/).
-
+El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y el versionado sigue [Semantic Versioning](https://semver.org/lang/es/).                                    
+ 
+HEAD
 ## [v1.1.1] - 2026-11-23
 
 ### Fixed
@@ -20,12 +21,20 @@ MINOR porque se agregan funcionalidades sin romper compatibilidad
 
 ## [v1.1.0] - 2026-11-23
 
+## [v1.1.0] - 2026-11-24
+
+6f0376cee2150cc8ab624ed584f082350381d38a
+
 ### Added
 
 - Búsqueda en tiempo real en la tabla de Usuarios (por nombre, email o rol) con contador de resultados.
 - Selectores en cascada marca → modelo → año en el Configurador.
 - Barra de búsqueda de moto en el Configurador.
+HEAD
 - Filtro por tipo (multi-select) en el Catálogo y en el Configurador.
+
+- Filtro por tipo (multi-select) en el Configurador y en el Catálogo.
+6f0376cee2150cc8ab624ed584f082350381d38a
 - Documentación de deuda técnica (`documentacion/deuda-tecnica.md`).
 - Documentación de trazabilidad (`documentacion/trazabilidad.md`).
 - `CONTRIBUTING.md` y `CHANGELOG.md`.
@@ -49,7 +58,11 @@ MINOR porque se agregan funcionalidades sin romper compatibilidad
 - Configurador 3D (lazy-loaded) de accesorios compatibles por modelo de moto.
 - Dashboard con métricas por tienda y consolidado para Superadmin.
 - Tema oscuro/claro con conmutador persistente.
+ HEAD
 - Marca con el logo del casco (modo oscuro: logo v2; modo claro: casco sobre chip blanco).
+
+- Marca con logo del casco (modo oscuro: logo v2; modo claro: casco sobre chip blanco).
+ 6f0376cee2150cc8ab624ed584f082350381d38a
 - Login con captcha (operación matemática).
 - Sidebar categorizado en el panel de administración con iconos lucide.
 - Pruebas: 235 backend (51 skipped), 13 frontend (Vitest), lint 0 errores, build OK.

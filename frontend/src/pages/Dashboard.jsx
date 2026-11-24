@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/authContexto';
 import { usePermiso } from '../context/usePermiso';
@@ -24,9 +24,9 @@ const RESUMEN_VACIO = {
 export default function Dashboard() {
   const { usuario } = useAuth();
   const { esSuperAdmin } = usePermiso();
-  const { datos: inventario, cargando: cargandoInventario, error: errorInventario } = useCargaInicial(() => obtenerInventario());
-  const { datos: cotizaciones, cargando: cargandoCotizaciones, error: errorCotizaciones } = useCargaInicial(() => obtenerCotizaciones());
-  const { datos: resumen, cargando: cargandoResumen, error: errorResumen } = useCargaInicial(() => obtenerResumenDia());
+  const [inventario, setInventario] = useState([]);
+  const [cotizaciones, setCotizaciones] = useState([]);
+  const [resumen, setResumen] = useState(RESUMEN_VACIO);
   const [cargando, setCargando] = useState(true);
 
   // La dependencia es el id de la tienda, no el objeto usuario: el objeto cambia de
@@ -34,9 +34,37 @@ export default function Dashboard() {
   const idTienda = usuario?.id_tienda;
   const consolidado = esSuperAdmin();
 
-  // Carga inicial manejada por useCargaInicial hook
-  // Los datos de inventario, cotizaciones y resumen se cargan al montar el componente
-  // mediante el hook useCargaInicial
+  const idTiendaRef = useRef(Symbol('unset'));
+  useEffect(() => {
+    if (idTiendaRef.current === idTienda) return;
+    idTiendaRef.current = idTienda;
+    let activo = true;
+    async function cargar() {
+      try {
+        // Sin tienda propia el panel muestra el consolidado de todas las tiendas;
+        // el inventario y las cotizaciones solo existen por tienda.
+        const resumenDia = await obtenerResumenDia().catch(() => RESUMEN_VACIO);
+        if (!activo) return;
+        setResumen(resumenDia);
+        if (!idTienda) return;
+        const [datosInventario, datosCotizaciones] = await Promise.all([
+          obtenerInventario(idTienda),
+          obtenerCotizaciones(idTienda),
+        ]);
+        if (!activo) return;
+        setInventario(datosInventario);
+        setCotizaciones(datosCotizaciones);
+      } catch {
+        setInventario([]);
+        setCotizaciones([]);
+        setResumen(RESUMEN_VACIO);
+      } finally {
+        if (activo) setCargando(false);
+      }
+    }
+    cargar();
+    return () => { activo = false; };
+  }, [idTienda]);
 
   const stockBajo = inventario.filter((item) =>
     item.estado_inventario === 'bajo' || item.estado_inventario === 'agotado'
