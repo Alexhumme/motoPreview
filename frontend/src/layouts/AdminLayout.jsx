@@ -51,12 +51,6 @@ const CATEGORIAS = [
         ],
       },
       {
-        ruta: '/admin/catalogo',
-        etiqueta: 'Catálogo RBAC',
-        icono: Settings,
-        soloSuperAdmin: true,
-      },
-      {
         ruta: '/admin/marcas',
         etiqueta: 'Marcas',
         icono: Package,
@@ -98,6 +92,12 @@ const CATEGORIAS = [
     etiqueta: 'Administración',
     icono: Shield,
     items: [
+      {
+        ruta: '/admin/catalogo',
+        etiqueta: 'Catálogo RBAC',
+        icono: Settings,
+        soloSuperAdmin: true,
+      },
       {
         ruta: '/admin/usuarios',
         etiqueta: 'Usuarios',

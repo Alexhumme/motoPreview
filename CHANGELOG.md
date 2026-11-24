@@ -16,6 +16,7 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
 
 ### Changed
 
+- `Catálogo RBAC` se movió de `Catálogo` a `Administración` en el menú del portal, manteniendo su acceso exclusivo para Superadmin.
 - El dashboard administrativo consume el nuevo resumen por capacidades y deja de filtrar datos en el frontend.
 - Recharts se carga de forma diferida para no engrosar el bundle inicial.
 - Los indicadores, alertas y controles de tabla usan iconos de `lucide-react`.
