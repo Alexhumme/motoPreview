@@ -25,15 +25,19 @@ Flujos cubiertos (lo que la revisión P2 pedía probar contra BD real):
 import os
 import uuid
 import unittest
+from datetime import timedelta
 from decimal import Decimal
 from unittest.mock import patch
 
 from django.db import connection
-from django.test import TestCase
+from django.test import Client, TestCase
+from django.urls import reverse
+from django.utils import timezone
 from rest_framework.test import APIClient
 
 from api import tokens
 from api.models import (
+    Accion,
     AccessoryToken,
     Configuration,
     ConfigurationDetail,
@@ -50,6 +54,9 @@ from api.models import (
     Quote,
     QuoteDetail,
     QuoteStatusHistory,
+    Recurso,
+    RecursoAccion,
+    RolRecurso,
     Role,
     SiteSettings,
     Store,
@@ -416,6 +423,106 @@ class AdminUsuarioTests(EsquemaTestCase):
 
         self.assertEqual(modelo_admin.rol_actual(usuarios[con_rol.pk]), "admin")
         self.assertEqual(modelo_admin.rol_actual(usuarios[sin_rol.pk]), "SIN ROL")
+
+
+class AdminEliminacionTests(EsquemaTestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        seed_base()
+
+    def setUp(self):
+        super().setUp()
+        from django.contrib.auth import get_user_model
+
+        self.admin = get_user_model().objects.create(
+            username=f"qa-admin-{uuid.uuid4().hex[:8]}",
+            is_staff=True,
+            is_superuser=True,
+        )
+        self.client = Client()
+        self.client.force_login(self.admin)
+        self.plan = SubscriptionPlan.objects.get(plan_nombre="Plan de prueba")
+
+    def test_usuario_se_elimina_con_su_rol_token_y_permisos_concedidos(self):
+        usuario = self._crear_usuario("Eliminar", ROLE_CUSTOMER, tienda=None)
+        AccessoryToken.objects.create(
+            usuario=usuario,
+            tipo="verificacion",
+            hash="temporal",
+            expira_en=timezone.now() + timedelta(days=1),
+        )
+        recurso = Recurso.objects.create(
+            codigo=f"qa-{uuid.uuid4().hex[:8]}", nombre="Recurso temporal"
+        )
+        accion = Accion.objects.create(
+            codigo=f"qa-{uuid.uuid4().hex[:8]}", nombre="Acción temporal"
+        )
+        matriz = RecursoAccion.objects.create(recurso=recurso, accion=accion)
+        permiso = RolRecurso.objects.create(
+            rol=Role.objects.get(pk=ROLE_CUSTOMER),
+            recurso_accion=matriz,
+            concedido_por=usuario,
+        )
+
+        url = reverse("motopreview_admin:api_negociouserproxy_delete", args=[usuario.pk])
+        respuesta = self.client.post(url, {"post": "yes"})
+
+        self.assertEqual(respuesta.status_code, 302)
+        self.assertFalse(User.objects.filter(pk=usuario.pk).exists())
+        self.assertFalse(UserRole.objects.filter(id_usuario=usuario.pk).exists())
+        self.assertFalse(AccessoryToken.objects.filter(usuario_id=usuario.pk).exists())
+        permiso.refresh_from_db()
+        self.assertIsNone(permiso.concedido_por_id)
+
+    def test_usuario_con_cotizaciones_no_se_puede_eliminar(self):
+        usuario = self._crear_usuario("Con cotización", ROLE_CUSTOMER, tienda=None)
+        Quote.objects.create(usuario=usuario)
+        url = reverse("motopreview_admin:api_negociouserproxy_delete", args=[usuario.pk])
+
+        self.assertContains(self.client.get(url), "Cotizaciones")
+        self.assertEqual(self.client.post(url, {"post": "yes"}).status_code, 200)
+        self.assertTrue(User.objects.filter(pk=usuario.pk).exists())
+
+    def test_rol_asignado_no_se_puede_eliminar(self):
+        self._crear_usuario("Con rol", ROLE_CUSTOMER, tienda=None)
+        rol = Role.objects.get(pk=ROLE_CUSTOMER)
+        url = reverse("motopreview_admin:api_role_delete", args=[rol.pk])
+
+        self.assertContains(self.client.get(url), "Roles por usuario")
+        self.assertEqual(self.client.post(url, {"post": "yes"}).status_code, 200)
+        self.assertTrue(Role.objects.filter(pk=rol.pk).exists())
+
+    def test_tienda_con_usuarios_no_se_puede_eliminar(self):
+        tienda = self._crear_tienda(self.plan, "Tienda temporal")
+        self._crear_usuario("De la tienda", ROLE_ADMIN, tienda=tienda)
+        url = reverse("motopreview_admin:api_store_delete", args=[tienda.pk])
+
+        self.assertContains(self.client.get(url), "Usuarios")
+        self.assertEqual(self.client.post(url, {"post": "yes"}).status_code, 200)
+        self.assertTrue(Store.objects.filter(pk=tienda.pk).exists())
+
+    def test_producto_con_inventario_no_se_puede_eliminar(self):
+        tienda = self._crear_tienda(self.plan, "Tienda temporal")
+        producto = Product.objects.create(nombre="Producto temporal")
+        Inventory.objects.create(
+            producto=producto, tienda=tienda, stock_actual=1, stock_minimo=0
+        )
+        url = reverse("motopreview_admin:api_product_delete", args=[producto.pk])
+
+        self.assertContains(self.client.get(url), "Inventarios")
+        self.assertEqual(self.client.post(url, {"post": "yes"}).status_code, 200)
+        self.assertTrue(Product.objects.filter(pk=producto.pk).exists())
+
+    def test_producto_se_elimina_con_sus_tipos(self):
+        tipo = TipoProducto.objects.create(nombre="Tipo temporal")
+        producto = Product.objects.create(nombre="Producto temporal")
+        ProductoTipoProducto.objects.create(producto=producto, tipo=tipo)
+        url = reverse("motopreview_admin:api_product_delete", args=[producto.pk])
+
+        self.assertEqual(self.client.post(url, {"post": "yes"}).status_code, 302)
+        self.assertFalse(Product.objects.filter(pk=producto.pk).exists())
+        self.assertFalse(ProductoTipoProducto.objects.filter(producto_id=producto.pk).exists())
 
 
 class QuoteFlowTests(EsquemaTestCase):

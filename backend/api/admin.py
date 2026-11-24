@@ -17,8 +17,8 @@ from django.contrib import admin, messages
 from django.contrib.auth.admin import GroupAdmin, UserAdmin as AuthUserAdmin
 from django.contrib.auth.models import Group
 from django.contrib.auth.models import User as AuthUser
-from django.db import transaction
-from django.db.models import OuterRef, Q, Subquery
+from django.db import connection, transaction
+from django.db.models import DO_NOTHING, OuterRef, Q, Subquery
 from django.utils.text import slugify
 
 from .security import (
@@ -33,6 +33,7 @@ from .services import validar_password
 
 from .models import (
     Accion,
+    AccessoryToken,
     Marca,
     TipoProducto,
     Configuration,
@@ -62,6 +63,40 @@ from .models import (
 
 class BaseAdmin(admin.ModelAdmin):
     list_per_page = 50
+    referencias_eliminables = ()
+
+    def get_deleted_objects(self, objs, request):
+        eliminados, conteo, permisos, protegidos = super().get_deleted_objects(objs, request)
+        for obj in objs:
+            for referencia in self.referencias_bloqueadas(obj):
+                if referencia not in protegidos:
+                    protegidos.append(referencia)
+        return eliminados, conteo, permisos, protegidos
+
+    def referencias_bloqueadas(self, obj):
+        referencias = []
+        # DO_NOTHING no aparece como protegido en el collector de Django.
+        for field in obj._meta.get_fields():
+            if not (
+                field.auto_created
+                and not field.concrete
+                and (field.many_to_one or field.one_to_many)
+            ):
+                continue
+            if field.on_delete is not DO_NOTHING:
+                continue
+            relacionado = field.related_model
+            if relacionado in self.referencias_eliminables:
+                continue
+            total = relacionado._default_manager.filter(**{field.field.name: obj}).count()
+            if total:
+                nombre = MotopreviewAdminSite.SPANISH_NAMES.get(
+                    relacionado, relacionado._meta.verbose_name_plural
+                )
+                referencias.append(
+                    f"{nombre.capitalize()}: {total} registro(s) relacionado(s)"
+                )
+        return referencias
 
 
 class NegocioUserProxy(User):
@@ -94,6 +129,7 @@ class MotopreviewAdminSite(admin.AdminSite):
         Model3D: "Modelos 3D",
         Store: "Tiendas",
         SubscriptionPlan: "Planes de suscripción",
+        User: "Usuarios",
         NegocioUserProxy: "Usuarios de la plataforma",
         Inventory: "Inventarios",
         InventoryMovement: "Movimientos de inventario",
@@ -264,6 +300,13 @@ class RoleAdmin(BaseAdmin):
             "superadmin; marcar otro rol no le da acceso total."
         )
     }
+
+    def referencias_bloqueadas(self, obj):
+        referencias = super().referencias_bloqueadas(obj)
+        total = UserRole.objects.filter(id_rol=obj.pk).count()
+        if total:
+            referencias.append(f"Roles por usuario: {total} registro(s) relacionado(s)")
+        return referencias
 
     def save_model(self, request, obj, form, change):
         super().save_model(request, obj, form, change)
@@ -510,6 +553,7 @@ class NegocioUserForm(forms.ModelForm):
 
 class NegocioUserAdmin(BaseAdmin):
     form = NegocioUserForm
+    referencias_eliminables = (AccessoryToken, RolRecurso)
     list_display = (
         "usu_email",
         "usu_nombre",
@@ -567,6 +611,22 @@ class NegocioUserAdmin(BaseAdmin):
     @admin.display(description="Rol")
     def rol_actual(self, obj):
         return obj.rol_nombre or "SIN ROL"
+
+    def _limpiar_referencias(self, ids):
+        UserRole.objects.filter(id_usuario__in=ids).delete()
+        AccessoryToken.objects.filter(usuario_id__in=ids).delete()
+        RolRecurso.objects.filter(concedido_por_id__in=ids).update(concedido_por=None)
+
+    def delete_model(self, request, obj):
+        with transaction.atomic():
+            self._limpiar_referencias([obj.pk])
+            super().delete_model(request, obj)
+
+    def delete_queryset(self, request, queryset):
+        ids = list(queryset.values_list("id_usuario", flat=True))
+        with transaction.atomic():
+            self._limpiar_referencias(ids)
+            super().delete_queryset(request, queryset)
 
     def save_model(self, request, obj, form, change):
         password = form.cleaned_data.get("password")
@@ -632,6 +692,20 @@ class ProductAdmin(BaseAdmin):
         if "marca" in form.base_fields:
             form.base_fields["marca"].required = False
         return form
+
+    def referencias_bloqueadas(self, obj):
+        referencias = super().referencias_bloqueadas(obj)
+        # La tabla heredada aún tiene una FK aunque no exista como modelo.
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT to_regclass(%s)", ["public.accesorio"])
+            if cursor.fetchone()[0]:
+                cursor.execute(
+                    'SELECT 1 FROM "accesorio" WHERE "id_producto" = %s LIMIT 1',
+                    [obj.pk],
+                )
+                if cursor.fetchone():
+                    referencias.append("Accesorios: existen registros relacionados")
+        return referencias
 
 
 # Registro de modelos con admin personalizado

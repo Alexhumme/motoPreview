@@ -103,7 +103,7 @@ class ProductoTipoProducto(DatabaseModel):
         managed = True
 
     def __str__(self):
-        return f"{self.id_producto} -> {self.id_tipo_producto}"
+        return f"{self.producto_id} -> {self.tipo_id}"
 
 
 class Product(DatabaseModel):
