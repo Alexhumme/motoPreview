@@ -17,6 +17,7 @@ from .serializers import (
     InventoryUpdateSerializer,
     InventoryMovementSerializer,
     ProductSerializer,
+    QuoteDetailSerializer,
 )
 
 
@@ -414,3 +415,41 @@ class InventarioEditableTests(SimpleTestCase):
             vista.get(request)
         self.assertEqual(inventarios.filter.call_count, 2)
         objetos_movimiento.filter.assert_called_once_with(inventario__in=inventarios)
+
+
+class QuoteDetailSerializerTests(SimpleTestCase):
+    def test_detalle_devuelve_el_producto_unificado(self):
+        producto_id = uuid4()
+        detalle = SimpleNamespace(
+            id_detalle_cotizacion=uuid4(),
+            cotizacion_id=uuid4(),
+            producto_id=producto_id,
+            cantidad=2,
+            precio_unitario=Decimal("100.00"),
+            subtotal=Decimal("200.00"),
+            producto=SimpleNamespace(
+                nombre="Casco integral", codigo_sku="CASCO-1"
+            ),
+        )
+
+        datos = QuoteDetailSerializer(detalle).data
+
+        self.assertEqual(datos["id_producto"], str(producto_id))
+        self.assertEqual(datos["producto"]["nombre"], "Casco integral")
+        self.assertEqual(datos["producto"]["codigo_sku"], "CASCO-1")
+        self.assertNotIn("accesorio", datos)
+
+    def test_detalle_historico_sin_producto_no_falla(self):
+        detalle = SimpleNamespace(
+            id_detalle_cotizacion=uuid4(),
+            cotizacion_id=uuid4(),
+            producto_id=None,
+            cantidad=1,
+            precio_unitario=Decimal("100.00"),
+            subtotal=Decimal("100.00"),
+        )
+
+        datos = QuoteDetailSerializer(detalle).data
+
+        self.assertIsNone(datos["id_producto"])
+        self.assertIsNone(datos["producto"])

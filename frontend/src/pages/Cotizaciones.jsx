@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { AlertCircle, FileText, RefreshCw } from 'lucide-react';
 import { useAuth } from '../context/authContexto';
 import { obtenerCotizaciones, cambiarEstadoCotizacion } from '../services/cotizaciones';
+import { mensajeError } from '../services/crud';
 import { ConPermiso } from '../components/menus/ConPermiso';
 import './Cotizaciones.css';
 
@@ -22,17 +24,20 @@ export default function Cotizaciones() {
   const { usuario } = useAuth();
   const [cotizaciones, setCotizaciones] = useState([]);
   const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState('');
   const [expandida, setExpandida] = useState(null);
   const [actualizando, setActualizando] = useState(null);
 
   const idTienda = usuario.id_tienda;
 
   const cargar = useCallback(async () => {
+    setCargando(true);
+    setError('');
     try {
       const datos = await obtenerCotizaciones(idTienda);
       setCotizaciones(datos);
     } catch (err) {
-      console.error(err);
+      setError(mensajeError(err, 'No se pudieron cargar las cotizaciones.'));
     } finally {
       setCargando(false);
     }
@@ -81,9 +86,17 @@ export default function Cotizaciones() {
       </header>
 
       <section className="cotizaciones-list" aria-label="Listado de cotizaciones">
-        {cotizaciones.length === 0 ? (
+        {error ? (
+          <div className="cotizaciones-empty" role="alert">
+            <AlertCircle className="empty-icon" size={48} strokeWidth={1.5} aria-hidden="true" />
+            <p>{error}</p>
+            <button type="button" className="btn btn--outline btn--sm" onClick={cargar}>
+              <RefreshCw size={15} aria-hidden="true" /> Reintentar
+            </button>
+          </div>
+        ) : cotizaciones.length === 0 ? (
           <div className="cotizaciones-empty">
-            <span className="empty-icon" aria-hidden="true">▤</span>
+            <FileText className="empty-icon" size={48} strokeWidth={1.5} aria-hidden="true" />
             <p>No hay cotizaciones todavía.</p>
           </div>
         ) : (
@@ -116,7 +129,7 @@ export default function Cotizaciones() {
                   <ul className="cotizacion-items">
                     {cot.detalle_cotizacion?.map((item) => (
                       <li key={item.id_detalle_cotizacion}>
-                        <span>{item.cantidad} × {item.accesorio?.acc_nombre}</span>
+                        <span>{item.cantidad} × {item.producto?.nombre || 'Producto no disponible'}</span>
                         <span>{precioFormateado(item.subtotal)}</span>
                       </li>
                     ))}

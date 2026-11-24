@@ -634,13 +634,13 @@ class QuoteDetail(DatabaseModel):
         on_delete=models.DO_NOTHING,
         related_name="detalle_cotizacion",
     )
-    # El accesorio se selecciona por categoría o directamente del producto
-    # Se elimina el campo foreign key a Accessory para evitar dependencias
-    # tras la unificación en la tabla Product
-    categoria_accesorio = models.UUIDField(
-        db_column="id_categoria_accesorio",
+    producto = models.ForeignKey(
+        Product,
+        db_column="id_producto",
         null=True,
         blank=True,
+        on_delete=models.SET_NULL,
+        related_name="detalles_cotizacion",
     )
     cantidad = models.IntegerField()
     precio_unitario = models.DecimalField(max_digits=10, decimal_places=2)

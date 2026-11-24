@@ -1183,7 +1183,7 @@ class QuoteCollection(DatabaseGuardMixin):
             request,
             Quote.objects.select_related(
                 "tienda", "usuario", "moto__modelo__marca"
-            ).prefetch_related("detalle_cotizacion__categoria_accesorio"),
+            ).prefetch_related("detalle_cotizacion__producto"),
             campo_dueno="usuario_id",
         )
         if error:
@@ -1214,8 +1214,7 @@ class QuoteCollection(DatabaseGuardMixin):
                 return Response({"error": "La moto indicada no existe."}, status=400)
 
         accessory_ids = [item["id_accesorio"] for item in values["items"]]
-        # Los accesorios son filas de producto (tabla unificada); el detalle
-        # de la cotización guarda su categoría.
+        # Los accesorios son filas de producto (tabla unificada).
         productos = {
             str(producto.id_producto): producto
             for producto in Product.objects.filter(
@@ -1246,16 +1245,16 @@ class QuoteCollection(DatabaseGuardMixin):
                 for producto, quantity, price, subtotal in prepared:
                     QuoteDetail.objects.create(
                         cotizacion=quote,
-                        categoria_accesorio_id=producto.categoria_accesorio_id,
+                        producto=producto,
                         cantidad=quantity,
                         precio_unitario=price,
                         subtotal=subtotal,
                     )
         except IntegrityError:
             return Response({"error": "No se pudo guardar la cotización."}, status=409)
-        quote = Quote.objects.select_related("tienda", "usuario", "moto__modelo__marca").prefetch_related(
-            "detalle_cotizacion__categoria_accesorio"
-        ).get(pk=quote.id_cotizacion)
+        quote = Quote.objects.select_related(
+            "tienda", "usuario", "moto__modelo__marca"
+        ).prefetch_related("detalle_cotizacion__producto").get(pk=quote.id_cotizacion)
         return Response(QuoteSerializer(quote).data, status=status.HTTP_201_CREATED)
 
 
@@ -1269,9 +1268,9 @@ class QuoteDetailView(DatabaseGuardMixin):
 
         queryset, error = self.filtrar_por_scope(
             request,
-            Quote.objects.select_related("tienda", "usuario", "moto__modelo__marca").prefetch_related(
-                "detalle_cotizacion__categoria_accesorio"
-            ),
+            Quote.objects.select_related(
+                "tienda", "usuario", "moto__modelo__marca"
+            ).prefetch_related("detalle_cotizacion__producto"),
             campo_dueno="usuario_id",
         )
         if error:

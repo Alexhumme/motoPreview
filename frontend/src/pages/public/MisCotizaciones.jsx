@@ -109,7 +109,7 @@ export default function MisCotizaciones() {
                 <ul className="cotizacion-items">
                   {cot.detalle_cotizacion?.map((item) => (
                     <li key={item.id_detalle_cotizacion}>
-                      <span>{item.cantidad} × {item.accesorio?.acc_nombre}</span>
+                      <span>{item.cantidad} × {item.producto?.nombre || 'Producto no disponible'}</span>
                       <span>{precioFormateado(item.subtotal)}</span>
                     </li>
                   ))}

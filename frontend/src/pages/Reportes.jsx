@@ -1,6 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { AlertCircle, CircleDollarSign, ClipboardList, Percent, RefreshCw } from 'lucide-react';
 import { useAuth } from '../context/authContexto';
 import { obtenerCotizaciones } from '../services/cotizaciones';
+import { mensajeError } from '../services/crud';
 import './Reportes.css';
 
 const precioFormateado = (valor) =>
@@ -10,28 +12,24 @@ export default function Reportes() {
   const { usuario } = useAuth();
   const [cotizaciones, setCotizaciones] = useState([]);
   const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState('');
   const [rango, setRango] = useState('mes');
 
-  // Depender de `usuario` volvería a recargar al fusionar los permisos: el objeto
-  // cambia de referencia aunque el usuario sea el mismo.
   const idTienda = usuario?.id_tienda;
 
-  const idTiendaRef = useRef(Symbol('unset'));
-  useEffect(() => {
-    if (idTiendaRef.current === idTienda) return;
-    idTiendaRef.current = idTienda;
-    async function cargar() {
-      try {
-        const datos = await obtenerCotizaciones(idTienda);
-        setCotizaciones(datos);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setCargando(false);
-      }
+  const cargar = useCallback(async () => {
+    setCargando(true);
+    setError('');
+    try {
+      setCotizaciones(await obtenerCotizaciones(idTienda));
+    } catch (err) {
+      setError(mensajeError(err, 'No se pudieron cargar los reportes.'));
+    } finally {
+      setCargando(false);
     }
-    cargar();
   }, [idTienda]);
+
+  useEffect(() => { cargar(); }, [cargar]);
 
   if (cargando) {
     return (
@@ -73,7 +71,7 @@ export default function Reportes() {
   const conteoAccesorios = {};
   cotizacionesEnRango.forEach((c) => {
     c.detalle_cotizacion?.forEach((item) => {
-      const nombre = item.accesorio?.acc_nombre || 'Desconocido';
+      const nombre = item.producto?.nombre || 'Producto no disponible';
       conteoAccesorios[nombre] = (conteoAccesorios[nombre] || 0) + item.cantidad;
     });
   });
@@ -106,72 +104,86 @@ export default function Reportes() {
         </div>
       </header>
 
-      <section className="reportes-kpis" aria-label="Resumen de métricas">
-        <article className="kpi">
-          <span className="kpi-icon" aria-hidden="true">▤</span>
-          <div className="kpi-content">
-            <small>Ventas confirmadas</small>
-            <strong>{precioFormateado(totalVentas)}</strong>
-            <em>{rango === 'mes' ? 'este mes' : 'histórico'}</em>
-          </div>
-        </article>
-        <article className="kpi">
-          <span className="kpi-icon" aria-hidden="true">▤</span>
-          <div className="kpi-content">
-            <small>Cotizaciones recibidas</small>
-            <strong>{totalCotizaciones}</strong>
-            <em>{rango === 'mes' ? 'este mes' : 'histórico'}</em>
-          </div>
-        </article>
-        <article className="kpi">
-          <span className="kpi-icon" aria-hidden="true">%</span>
-          <div className="kpi-content">
-            <small>Tasa de aprobación</small>
-            <strong>{tasaAprobacion}%</strong>
-            <em>{rango === 'mes' ? 'este mes' : 'histórico'}</em>
-          </div>
-        </article>
-      </section>
+      {error && (
+        <div className="reportes-error" role="alert">
+          <AlertCircle size={24} aria-hidden="true" />
+          <p>{error}</p>
+          <button type="button" className="btn btn--outline btn--sm" onClick={cargar}>
+            <RefreshCw size={15} aria-hidden="true" /> Reintentar
+          </button>
+        </div>
+      )}
 
-      <section className="reportes-grid" aria-label="Detalles de reportes">
-        <article className="card reportes-card">
-          <header className="card-head">
-            <strong>Accesorios más cotizados</strong>
-          </header>
-          <div className="reportes-ranking">
-            {topAccesorios.length === 0 ? (
-              <p className="reportes-empty">Sin datos en este periodo.</p>
-            ) : (
-              topAccesorios.map(([nombre, cantidad]) => (
-                <div key={nombre} className="reportes-row">
-                  <div className="reportes-row-info">
-                    <span>{nombre}</span>
-                    <span className="reportes-row-count">{cantidad}</span>
-                  </div>
-                  <div className="reportes-bar-track">
-                    <div
-                      className="reportes-bar"
-                      style={{ width: `${(cantidad / maxCantidad) * 100}%` }}
-                    />
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </article>
+      {!error && (
+        <>
+          <section className="reportes-kpis" aria-label="Resumen de métricas">
+            <article className="kpi">
+              <span className="kpi-icon" aria-hidden="true"><CircleDollarSign size={22} strokeWidth={1.8} /></span>
+              <div className="kpi-content">
+                <small>Ventas confirmadas</small>
+                <strong>{precioFormateado(totalVentas)}</strong>
+                <em>{rango === 'mes' ? 'este mes' : 'histórico'}</em>
+              </div>
+            </article>
+            <article className="kpi">
+              <span className="kpi-icon" aria-hidden="true"><ClipboardList size={22} strokeWidth={1.8} /></span>
+              <div className="kpi-content">
+                <small>Cotizaciones recibidas</small>
+                <strong>{totalCotizaciones}</strong>
+                <em>{rango === 'mes' ? 'este mes' : 'histórico'}</em>
+              </div>
+            </article>
+            <article className="kpi">
+              <span className="kpi-icon" aria-hidden="true"><Percent size={22} strokeWidth={1.8} /></span>
+              <div className="kpi-content">
+                <small>Tasa de aprobación</small>
+                <strong>{tasaAprobacion}%</strong>
+                <em>{rango === 'mes' ? 'este mes' : 'histórico'}</em>
+              </div>
+            </article>
+          </section>
 
-        <article className="card reportes-card">
-          <header className="card-head">
-            <strong>Cotizaciones por estado</strong>
-          </header>
-          <div className="reportes-estados">
-            <EstadoItem label="Pendientes" value={conteoEstados.pendiente} color="violet" />
-            <EstadoItem label="Aprobadas" value={conteoEstados.aprobada} color="mint" />
-            <EstadoItem label="Rechazadas" value={conteoEstados.rechazada} color="pink" />
-            <EstadoItem label="Completadas" value={conteoEstados.completada} color="gray" />
-          </div>
-        </article>
-      </section>
+          <section className="reportes-grid" aria-label="Detalles de reportes">
+            <article className="card reportes-card">
+              <header className="card-head">
+                <strong>Accesorios más cotizados</strong>
+              </header>
+              <div className="reportes-ranking">
+                {topAccesorios.length === 0 ? (
+                  <p className="reportes-empty">Sin datos en este periodo.</p>
+                ) : (
+                  topAccesorios.map(([nombre, cantidad]) => (
+                    <div key={nombre} className="reportes-row">
+                      <div className="reportes-row-info">
+                        <span>{nombre}</span>
+                        <span className="reportes-row-count">{cantidad}</span>
+                      </div>
+                      <div className="reportes-bar-track">
+                        <div
+                          className="reportes-bar"
+                          style={{ width: `${(cantidad / maxCantidad) * 100}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </article>
+
+            <article className="card reportes-card">
+              <header className="card-head">
+                <strong>Cotizaciones por estado</strong>
+              </header>
+              <div className="reportes-estados">
+                <EstadoItem label="Pendientes" value={conteoEstados.pendiente} color="violet" />
+                <EstadoItem label="Aprobadas" value={conteoEstados.aprobada} color="mint" />
+                <EstadoItem label="Rechazadas" value={conteoEstados.rechazada} color="pink" />
+                <EstadoItem label="Completadas" value={conteoEstados.completada} color="gray" />
+              </div>
+            </article>
+          </section>
+        </>
+      )}
     </div>
   );
 }

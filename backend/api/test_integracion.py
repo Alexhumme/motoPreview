@@ -346,6 +346,8 @@ class QuoteFlowTests(EsquemaTestCase):
         data = respuesta.json()
         self.assertEqual(Decimal(data["total"]), Decimal("250.00"))
         self.assertEqual(len(data["detalle_cotizacion"]), 2)
+        nombres = {detalle["producto"]["nombre"] for detalle in data["detalle_cotizacion"]}
+        self.assertEqual(nombres, {a100.nombre, a50.nombre})
 
         cotizacion = Quote.objects.get(pk=data["id_cotizacion"])
         self.assertEqual(cotizacion.total, Decimal("250.00"))
@@ -355,7 +357,7 @@ class QuoteFlowTests(EsquemaTestCase):
 
     def test_crear_cotizacion_sin_moto_es_opcional(self):
         a100 = self.accesorios[Decimal("100.00")]
-        items = [{"id_accesorio": str(a100.id_accesorio), "cantidad": 1}]
+        items = [{"id_accesorio": str(a100.id_producto), "cantidad": 1}]
 
         for etiqueta, payload in (
             ("campo omitido", {"items": items}),
@@ -419,6 +421,20 @@ class QuoteFlowTests(EsquemaTestCase):
         historial = QuoteStatusHistory.objects.filter(cotizacion_id=pk).count()
         # Solo las transiciones válidas registran historial.
         self.assertEqual(historial, 2)
+
+    def test_admin_lista_y_abre_cotizaciones_con_sus_productos(self):
+        a100 = self.accesorios[Decimal("100.00")]
+        creada = self._crear_cotizacion((a100, 1))
+        self.assertEqual(creada.status_code, 201, creada.json())
+
+        lista = self.client.get("/api/cotizaciones")
+        self.assertEqual(lista.status_code, 200, lista.json())
+        self.assertEqual(len(lista.json()), 1)
+        self.assertEqual(lista.json()[0]["detalle_cotizacion"][0]["producto"]["nombre"], a100.nombre)
+
+        detalle = self.client.get(f"/api/cotizaciones/{creada.json()['id_cotizacion']}")
+        self.assertEqual(detalle.status_code, 200, detalle.json())
+        self.assertEqual(detalle.json()["detalle_cotizacion"][0]["id_producto"], str(a100.id_producto))
 
     def test_cliente_solo_ve_y_edita_sus_cotizaciones(self):
         a100 = self.accesorios[Decimal("100.00")]

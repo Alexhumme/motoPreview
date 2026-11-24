@@ -472,23 +472,30 @@ class MovementTypeSerializer(serializers.ModelSerializer):
 
 class QuoteDetailSerializer(serializers.ModelSerializer):
     id_cotizacion = serializers.UUIDField(source="cotizacion_id", read_only=True, allow_null=True)
-    # Forma plana para el frontend: el item de cotizacion identifica al accesorio.
-    accesorio = serializers.SerializerMethodField()
+    id_producto = serializers.UUIDField(source="producto_id", read_only=True, allow_null=True)
+    producto = serializers.SerializerMethodField()
 
     class Meta:
         model = QuoteDetail
         fields = (
             "id_detalle_cotizacion",
             "id_cotizacion",
+            "id_producto",
             "cantidad",
             "precio_unitario",
             "subtotal",
-            "accesorio",
+            "producto",
         )
         read_only_fields = ("id_detalle_cotizacion", "id_cotizacion")
 
-    def get_accesorio(self, instance):
-        return None
+    def get_producto(self, instance) -> dict[str, str | None] | None:
+        if instance.producto_id is None:
+            return None
+        return {
+            "id_producto": str(instance.producto_id),
+            "nombre": instance.producto.nombre,
+            "codigo_sku": instance.producto.codigo_sku,
+        }
 
 class QuoteSerializer(serializers.ModelSerializer):
     id_tienda = serializers.UUIDField(source="tienda_id", read_only=True, allow_null=True)
