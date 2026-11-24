@@ -11,15 +11,20 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
 - Resumen diferenciado para Superadmin, administrador de tienda, vendedor y cliente según sus permisos y scopes.
 - Endpoint agregado `/api/panel/resumen` con serie diaria, estados, métricas actuales, inventario y comparación de tiendas.
 - Ruta `/resumen`, acceso desde la cabecera del portal y redirección del cliente después de iniciar sesión.
+- Gráficos con Recharts: histórico diario de solicitudes y ventas, distribución de estados y comparación de tiendas.
+- Selector de período de 7, 30, 90 días y último año para todos los paneles con cotizaciones.
 
 ### Changed
 
 - El dashboard administrativo consume el nuevo resumen por capacidades y deja de filtrar datos en el frontend.
+- Recharts se carga de forma diferida para no engrosar el bundle inicial.
+- Los indicadores, alertas y controles de tabla usan iconos de `lucide-react`.
 
 ### Fixed
 
 - Carga del dashboard bajo React StrictMode y estados de error con reintento.
 - Usuarios sin permisos ven un mensaje de acceso en lugar de datos vacíos o inventario no autorizado.
+- `SelectorMoto`: la lista ya no se reabre tras elegir con Enter y una moto preseleccionada muestra todo el catálogo al enfocar.
 
 ## [v1.1.1] - 2026-11-23
 

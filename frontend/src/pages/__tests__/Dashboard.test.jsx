@@ -16,6 +16,10 @@ vi.mock('../../components/buttons/SiteHeader', () => ({
   default: () => <header>Cabecera del portal</header>,
 }));
 
+vi.mock('../../components/charts/GraficosDashboard', () => ({
+  default: () => <section>Gráficos del período</section>,
+}));
+
 const datos = {
   alcance: 'tienda',
   capacidades: { cotizaciones: true, inventario: true, comparar_tiendas: true },
@@ -124,6 +128,19 @@ describe('Dashboard por rol', () => {
     expect(await screen.findByText('No se pudo abrir el resumen')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Reintentar' }));
     expect(await screen.findByText('Hola, Ana.')).toBeInTheDocument();
+  });
+
+  it('carga los gráficos y vuelve a consultar al cambiar el período', async () => {
+    renderDashboard(usuario(ROL_ADMIN));
+    expect(await screen.findByText('Gráficos del período')).toBeInTheDocument();
+    await userEvent.selectOptions(screen.getByLabelText('Período del resumen'), '7');
+    await waitFor(() => expect(obtenerResumenPanel).toHaveBeenCalledTimes(2));
+    const parametros = obtenerResumenPanel.mock.calls[1][0];
+    expect(parametros.comparar).toBe(false);
+    expect(parametros.desde).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(parametros.hasta).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    const dias = (Date.parse(`${parametros.hasta}T00:00:00Z`) - Date.parse(`${parametros.desde}T00:00:00Z`)) / 86400000;
+    expect(dias).toBe(6);
   });
 
   it('informa cuando la cuenta no tiene capacidades', async () => {

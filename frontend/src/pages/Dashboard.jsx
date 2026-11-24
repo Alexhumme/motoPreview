@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   AlertTriangle,
@@ -20,6 +20,8 @@ import DataTable from '../components/tables/DataTable';
 import SiteHeader from '../components/buttons/SiteHeader';
 import './Dashboard.css';
 
+const GraficosDashboard = lazy(() => import('../components/charts/GraficosDashboard'));
+
 const formatoCOP = (valor) =>
   new Intl.NumberFormat('es-CO', {
     style: 'currency',
@@ -34,12 +36,32 @@ const ESTADOS = [
   { clave: 'completada', etiqueta: 'Completadas', color: 'gray' },
 ];
 
+const OPCIONES_RANGO = [
+  { valor: 7, etiqueta: 'Últimos 7 días' },
+  { valor: 30, etiqueta: 'Últimos 30 días' },
+  { valor: 90, etiqueta: 'Últimos 90 días' },
+  { valor: 365, etiqueta: 'Último año' },
+];
+
+function fechasDeRango(dias) {
+  const hasta = new Date();
+  const desde = new Date(hasta);
+  desde.setDate(desde.getDate() - (dias - 1));
+  const formatear = (fecha) => [
+    fecha.getFullYear(),
+    String(fecha.getMonth() + 1).padStart(2, '0'),
+    String(fecha.getDate()).padStart(2, '0'),
+  ].join('-');
+  return { desde: formatear(desde), hasta: formatear(hasta) };
+}
+
 export default function Dashboard() {
   const { usuario } = useAuth();
   const location = useLocation();
   const [datos, setDatos] = useState(null);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState('');
+  const [rango, setRango] = useState(30);
   const peticionRef = useRef(0);
 
   const rol = usuario?.id_rol;
@@ -55,7 +77,9 @@ export default function Dashboard() {
     setCargando(true);
     setError('');
     try {
-      const respuesta = await obtenerResumenPanel({ comparar: consolidado });
+      const params = { comparar: consolidado };
+      if (rango !== 30) Object.assign(params, fechasDeRango(rango));
+      const respuesta = await obtenerResumenPanel(params);
       if (peticionRef.current === peticion) setDatos(respuesta);
     } catch (err) {
       if (peticionRef.current === peticion) {
@@ -64,7 +88,7 @@ export default function Dashboard() {
     } finally {
       if (peticionRef.current === peticion) setCargando(false);
     }
-  }, [consolidado, idUsuario]);
+  }, [consolidado, idUsuario, rango]);
 
   useEffect(() => {
     cargar();
@@ -80,13 +104,13 @@ export default function Dashboard() {
   } else if (!datos) {
     contenido = <ErrorResumen mensaje="No hay información disponible para tu cuenta." onReintentar={cargar} />;
   } else if (consolidado) {
-    contenido = <PanelGlobal datos={datos} nombre={nombre} />;
+    contenido = <PanelGlobal datos={datos} nombre={nombre} rango={rango} onRango={setRango} />;
   } else if (cliente) {
-    contenido = <PanelCliente datos={datos} nombre={nombre} />;
+    contenido = <PanelCliente datos={datos} nombre={nombre} rango={rango} onRango={setRango} />;
   } else if (vendedor) {
-    contenido = <PanelVendedor datos={datos} nombre={nombre} />;
+    contenido = <PanelVendedor datos={datos} nombre={nombre} rango={rango} onRango={setRango} />;
   } else if (rol === ROL_ADMIN) {
-    contenido = <PanelAdmin datos={datos} nombre={nombre} />;
+    contenido = <PanelAdmin datos={datos} nombre={nombre} rango={rango} onRango={setRango} />;
   } else {
     contenido = <PanelPermisos datos={datos} nombre={nombre} />;
   }
@@ -113,6 +137,25 @@ function Encabezado({ nombre, descripcion, acciones }) {
   );
 }
 
+function SelectorRango({ valor, onChange }) {
+  return (
+    <label className="dashboard-range">
+      <span>Período</span>
+      <select aria-label="Período del resumen" value={valor} onChange={(evento) => onChange(Number(evento.target.value))}>
+        {OPCIONES_RANGO.map((opcion) => <option key={opcion.valor} value={opcion.valor}>{opcion.etiqueta}</option>)}
+      </select>
+    </label>
+  );
+}
+
+function PanelGraficos({ datos }) {
+  return (
+    <Suspense fallback={<div className="card dashboard-card chart-loading" role="status">Cargando gráficos…</div>}>
+      <GraficosDashboard datos={datos} />
+    </Suspense>
+  );
+}
+
 function Kpi({ icono: Icono, etiqueta, valor, detalle, alerta = false }) {
   return (
     <article className={`kpi${alerta ? ' kpi--alert' : ''}`}>
@@ -126,7 +169,7 @@ function Kpi({ icono: Icono, etiqueta, valor, detalle, alerta = false }) {
   );
 }
 
-function PanelGlobal({ datos, nombre }) {
+function PanelGlobal({ datos, nombre, rango, onRango }) {
   const actual = datos.actual;
   const tiendas = datos.tiendas || [];
   if (!actual) return <SinAcceso nombre={nombre} />;
@@ -138,6 +181,7 @@ function PanelGlobal({ datos, nombre }) {
         descripcion="Compara la operación de todas las tiendas y detecta dónde hace falta atención."
         acciones={(
           <>
+            <SelectorRango valor={rango} onChange={onRango} />
             <Link className="btn btn--outline btn--sm" to="/admin/tiendas">Gestionar tiendas</Link>
           </>
         )}
@@ -166,11 +210,12 @@ function PanelGlobal({ datos, nombre }) {
           )}
         />
       </section>
+      <PanelGraficos datos={datos} />
     </div>
   );
 }
 
-function PanelAdmin({ datos, nombre }) {
+function PanelAdmin({ datos, nombre, rango, onRango }) {
   const actual = datos.actual;
   const inventario = datos.inventario;
   if (!actual && !inventario) return <SinAcceso nombre={nombre} />;
@@ -180,6 +225,7 @@ function PanelAdmin({ datos, nombre }) {
       <Encabezado
         nombre={nombre}
         descripcion="Sigue las ventas, la cartera y el inventario de tu tienda."
+        acciones={actual ? <SelectorRango valor={rango} onChange={onRango} /> : null}
       />
       {actual && (
         <section className="dashboard-kpis dashboard-kpis--4" aria-label="Indicadores de la tienda">
@@ -193,11 +239,12 @@ function PanelAdmin({ datos, nombre }) {
         {actual && <PanelEstados datos={datos} titulo="Estado de las cotizaciones" />}
         {inventario && <PanelInventario inventario={inventario} />}
       </section>
+      {actual && <PanelGraficos datos={datos} />}
     </div>
   );
 }
 
-function PanelVendedor({ datos, nombre }) {
+function PanelVendedor({ datos, nombre, rango, onRango }) {
   const actual = datos.actual;
   if (!actual) return <SinAcceso nombre={nombre} />;
   const aprobadas = datos.estados.aprobada?.cantidad || 0;
@@ -211,6 +258,7 @@ function PanelVendedor({ datos, nombre }) {
         descripcion="Prioriza las solicitudes pendientes y da seguimiento a las cotizaciones aprobadas."
         acciones={(
           <>
+            <SelectorRango valor={rango} onChange={onRango} />
             <Link className="btn btn--primary btn--sm" to="/admin/cotizaciones">Revisar cotizaciones</Link>
           </>
         )}
@@ -232,11 +280,12 @@ function PanelVendedor({ datos, nombre }) {
           </div>
         </article>
       </section>
+      <PanelGraficos datos={datos} />
     </div>
   );
 }
 
-function PanelCliente({ datos, nombre }) {
+function PanelCliente({ datos, nombre, rango, onRango }) {
   const actual = datos.actual;
   if (!actual) return <SinAcceso nombre={nombre} />;
 
@@ -247,6 +296,7 @@ function PanelCliente({ datos, nombre }) {
         descripcion="Consulta el avance de tus cotizaciones y tus compras completadas."
         acciones={(
           <>
+            <SelectorRango valor={rango} onChange={onRango} />
             <Link className="btn btn--primary btn--sm" to="/configurador">Crear cotización</Link>
           </>
         )}
@@ -268,6 +318,7 @@ function PanelCliente({ datos, nombre }) {
           </div>
         </article>
       </section>
+      <PanelGraficos datos={datos} />
     </div>
   );
 }
