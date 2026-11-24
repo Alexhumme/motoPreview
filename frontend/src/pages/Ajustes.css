@@ -1,0 +1,117 @@
+.ajustes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-24);
+  max-width: 880px;
+}
+
+.ajustes-title {
+  font-family: var(--font-display);
+  font-weight: var(--weight-black);
+  font-size: var(--text-heading);
+  line-height: var(--leading-heading);
+  letter-spacing: var(--tracking-heading);
+  color: var(--color-paper);
+  margin: var(--space-8) 0 0;
+}
+
+.ajustes-help {
+  color: var(--color-mist-gray);
+  font-size: var(--text-body);
+  margin: var(--space-8) 0 0;
+}
+
+.ajustes-form {
+  padding: var(--space-24);
+}
+
+.ajustes-opcion {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: var(--space-16);
+}
+
+.ajustes-opcion-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  color: var(--color-brand-orange);
+  background: var(--surface-canvas);
+  border: 1px solid var(--color-bone);
+  border-radius: var(--radius-cards);
+}
+
+.ajustes-opcion-texto label {
+  color: var(--color-paper);
+  font-family: var(--font-ui);
+  font-weight: var(--weight-bold);
+}
+
+.ajustes-opcion-texto p {
+  max-width: 620px;
+  color: var(--color-mist-gray);
+  font-size: var(--text-caption);
+  line-height: var(--leading-body);
+  margin: var(--space-8) 0 0;
+}
+
+.ajustes-switch {
+  width: 44px;
+  height: 24px;
+  margin-top: var(--space-8);
+  accent-color: var(--color-brand-orange);
+  cursor: pointer;
+}
+
+.ajustes-switch:disabled {
+  cursor: wait;
+}
+
+.ajustes-mensaje {
+  color: var(--color-brand-orange-soft);
+  font-family: var(--font-ui);
+  font-size: var(--text-caption);
+  margin: var(--space-16) 0 0;
+}
+
+.ajustes-mensaje--error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-16);
+  padding: var(--space-12);
+  color: var(--color-jam-pink);
+  background: rgba(229, 72, 77, 0.1);
+  border: 1px solid rgba(229, 72, 77, 0.2);
+  border-radius: var(--radius-inputs);
+}
+
+.ajustes-mensaje--error p {
+  margin: 0;
+}
+
+.ajustes-acciones {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--space-24);
+  padding-top: var(--space-16);
+  border-top: var(--linea);
+}
+
+.ajustes-estado {
+  color: var(--color-mist-gray);
+  font-family: var(--font-ui);
+}
+
+@media (max-width: 640px) {
+  .ajustes-opcion {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .ajustes-switch {
+    grid-column: 2;
+    margin-top: 0;
+  }
+}

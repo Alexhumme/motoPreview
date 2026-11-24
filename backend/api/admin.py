@@ -52,6 +52,7 @@ from .models import (
     RecursoAccion,
     Role,
     RolRecurso,
+    SiteSettings,
     Store,
     SubscriptionPlan,
     User,
@@ -111,6 +112,7 @@ class MotopreviewAdminSite(admin.AdminSite):
         RecursoAccion: "Recursos-Acciones",
         RolRecurso: "Permisos de rol",
         UserRole: "Roles por usuario",
+        SiteSettings: "Ajustes del sitio",
     }
 
     # Cada sector temático agrupa sus modelos, en el orden en que se muestran.
@@ -131,7 +133,7 @@ class MotopreviewAdminSite(admin.AdminSite):
         ),
         ("SEGURIDAD Y ACCESOS", (Role,)),
         ("RBAC - PERMISOS", (Recurso, Accion, RecursoAccion, RolRecurso, UserRole)),
-        ("AUTENTICACIÓN Y AUTORIZACIÓN", (AuthUser, Group)),
+        ("AUTENTICACIÓN Y AUTORIZACIÓN", (AuthUser, Group, SiteSettings)),
     ]
 
     def get_app_list(self, request):
@@ -583,6 +585,18 @@ class NegocioUserAdmin(BaseAdmin):
 
 admin_site.register(NegocioUserProxy, NegocioUserAdmin)
 
+
+class SiteSettingsAdmin(BaseAdmin):
+    list_display = ("email_verification_required",)
+
+    def has_add_permission(self, request):
+        return not SiteSettings.objects.exists()
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+admin_site.register(SiteSettings, SiteSettingsAdmin)
 
 
 class ProductAdmin(BaseAdmin):

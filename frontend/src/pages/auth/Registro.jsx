@@ -12,6 +12,7 @@ export default function Registro() {
   const [usu_email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [mensaje, setMensaje] = useState('');
   const [enviando, setEnviando] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -19,9 +20,14 @@ export default function Registro() {
   async function manejarSubmit(event) {
     event.preventDefault();
     setError('');
+    setMensaje('');
     setEnviando(true);
     try {
-      await registrarCliente({ usu_nombre, usu_email, password, id_rol: ROL_CLIENTE, id_tienda: TIENDA_PRINCIPAL });
+      const registro = await registrarCliente({ usu_nombre, usu_email, password, id_rol: ROL_CLIENTE, id_tienda: TIENDA_PRINCIPAL });
+      if (registro.verificacion_requerida) {
+        setMensaje(registro.mensaje || 'Debes verificar tu correo antes de iniciar sesión.');
+        return;
+      }
       await login(usu_email, password);
       navigate('/');
     } catch (err) {
@@ -56,7 +62,7 @@ export default function Registro() {
                 required
                 autoComplete="name"
                 disabled={enviando}
-                aria-describedby={error ? 'auth-error' : undefined}
+                aria-describedby={error ? 'auth-error' : mensaje ? 'auth-mensaje' : undefined}
               />
             </div>
 
@@ -72,7 +78,7 @@ export default function Registro() {
                 required
                 autoComplete="email"
                 disabled={enviando}
-                aria-describedby={error ? 'auth-error' : undefined}
+                aria-describedby={error ? 'auth-error' : mensaje ? 'auth-mensaje' : undefined}
               />
             </div>
 
@@ -89,9 +95,13 @@ export default function Registro() {
                 required
                 autoComplete="new-password"
                 disabled={enviando}
-                aria-describedby={error ? 'auth-error' : undefined}
+                aria-describedby={error ? 'auth-error' : mensaje ? 'auth-mensaje' : undefined}
               />
             </div>
+
+            {mensaje && (
+              <p id="auth-mensaje" className="form-success" role="status">{mensaje}</p>
+            )}
 
             {error && (
               <p id="auth-error" className="form-error" role="alert">{error}</p>

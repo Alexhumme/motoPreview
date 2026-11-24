@@ -391,6 +391,18 @@
   color: var(--color-brand-orange);
 }
 
+.form-success {
+  font-family: var(--font-ui);
+  font-size: var(--text-caption);
+  font-weight: var(--weight-medium);
+  color: var(--color-brand-orange-soft);
+  margin: 0;
+  padding: var(--space-8) var(--space-12);
+  background: rgba(242, 106, 33, 0.1);
+  border: 1px solid rgba(242, 106, 33, 0.24);
+  border-radius: var(--radius-inputs);
+}
+
 /* ==========================================================================
    FOOTER
    ========================================================================== */

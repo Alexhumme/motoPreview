@@ -6,6 +6,16 @@ export async function registrarCliente(datos) {
   return respuesta.data;
 }
 
+export async function obtenerAjustesSitio() {
+  const respuesta = await api.get('/ajustes-sitio');
+  return respuesta.data;
+}
+
+export async function actualizarAjustesSitio(datos) {
+  const respuesta = await api.patch('/ajustes-sitio', datos);
+  return respuesta.data;
+}
+
 export async function solicitarRecuperacion(usu_email) {
   const respuesta = await api.post('/auth/forgot-password', { usu_email });
   return respuesta.data;

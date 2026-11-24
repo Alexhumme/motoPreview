@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import {
   LayoutDashboard, Package, ClipboardList, Settings, Receipt, FileText,
   BarChart3, Store, Shield, Users, ShieldCheck, Building2, Wrench,
-  PanelLeftClose, PanelLeftOpen, CircleUser, X, Sun, Moon,
+  PanelLeftClose, PanelLeftOpen, CircleUser, X, Sun, Moon, SlidersHorizontal,
 } from 'lucide-react';
 import { useAuth } from '../context/authContexto';
 import { usePermiso } from '../context/usePermiso';
@@ -113,6 +113,12 @@ const CATEGORIAS = [
         ruta: '/admin/tiendas',
         etiqueta: 'Tiendas',
         icono: Building2,
+        soloSuperAdmin: true,
+      },
+      {
+        ruta: '/admin/ajustes',
+        etiqueta: 'Ajustes',
+        icono: SlidersHorizontal,
         soloSuperAdmin: true,
       },
     ],

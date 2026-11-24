@@ -13,6 +13,25 @@ class DatabaseModel(models.Model):
         managed = False
 
 
+class SiteSettings(DatabaseModel):
+    id = models.PositiveSmallIntegerField(primary_key=True, default=1, editable=False)
+    email_verification_required = models.BooleanField(default=True)
+
+    class Meta(DatabaseModel.Meta):
+        db_table = "ajuste_sitio"
+        managed = True
+        verbose_name = "ajustes del sitio"
+        verbose_name_plural = "ajustes del sitio"
+
+    @classmethod
+    def obtener(cls):
+        ajuste, _ = cls.objects.get_or_create(pk=1)
+        return ajuste
+
+    def __str__(self):
+        return "Ajustes del sitio"
+
+
 class AccessoryCategory(DatabaseModel):
     id_categoria = models.UUIDField(primary_key=True, default=uuid.uuid4, db_column="id_categoria")
     cat_nombre = models.CharField(max_length=100)

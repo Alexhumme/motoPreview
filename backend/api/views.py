@@ -46,6 +46,7 @@ from .models import (
     RecursoAccion,
     Role,
     RolRecurso,
+    SiteSettings,
     Store,
     SubscriptionPlan,
     TipoProducto,
@@ -106,6 +107,7 @@ from .serializers import (
     RoleSerializer,
     RolRecursoSerializer,
     RootSerializer,
+    SiteSettingsSerializer,
     StoreSerializer,
     SubscriptionPlanSerializer,
     UserSerializer,
@@ -1384,6 +1386,9 @@ def register(request):
 
     role_name = role.nombre_rol.lower()
     is_customer = role_id.lower() == ROLE_CUSTOMER.lower() or role_name == "cliente"
+    verificacion_requerida = (
+        is_customer and SiteSettings.obtener().email_verification_required
+    )
     is_admin = bool(getattr(request.user, "is_authenticated", False)) and (
         ROLE_ADMIN.lower() in {role.lower() for role in user_role_ids(request.user)}
         or es_superadmin(request.user)
@@ -1472,7 +1477,8 @@ def register(request):
         )
 
     message = "Usuario creado con éxito."
-    if is_customer:
+    if verificacion_requerida:
+        message = "Usuario creado. Debes verificar tu correo antes de iniciar sesión."
         if can_send_email():
             raw_token = tokens.verification_token_for(user)
             link = link_with_token(settings.EMAIL_VERIFICATION_URL, raw_token)
@@ -1482,11 +1488,17 @@ def register(request):
                 body=f"Hola {name}, confirma tu correo en este enlace: {link}",
             )
             if not sent:
-                message = "Usuario creado, pero no se pudo enviar el correo de verificación."
+                message += " No se pudo enviar el correo de verificación."
         else:
-            message = "Usuario creado. El envío de verificación requiere configurar el correo SMTP."
+            message += " El envío de verificación requiere configurar el correo SMTP."
+    elif is_customer:
+        message = "Usuario creado con éxito. Ya puedes iniciar sesión."
     return Response(
-        {"mensaje": message, "usuario": user_payload(user)},
+        {
+            "mensaje": message,
+            "verificacion_requerida": verificacion_requerida,
+            "usuario": user_payload(user),
+        },
         status=status.HTTP_201_CREATED,
     )
 
@@ -1517,7 +1529,10 @@ def login(request):
         return Response({"error": "Credenciales inválidas."}, status=401)
     if user.estado_usuario != "activo":
         return Response({"error": "Usuario inactivo o bloqueado."}, status=403)
-    if not user.email_verificado:
+    if (
+        not user.email_verificado
+        and SiteSettings.obtener().email_verification_required
+    ):
         return Response(
             {"error": "Debes verificar tu correo antes de iniciar sesión."},
             status=status.HTTP_403_FORBIDDEN,
@@ -1537,6 +1552,25 @@ def login(request):
     except Exception:  # noqa: BLE001
         pass
     return Response({"mensaje": "Login exitoso.", "token": token, "usuario": payload})
+
+
+@extend_schema(methods=["GET"], responses={200: SiteSettingsSerializer})
+@extend_schema(
+    methods=["PATCH"],
+    request=SiteSettingsSerializer,
+    responses={200: SiteSettingsSerializer, 400: ErrorSerializer},
+)
+@api_view(["GET", "PATCH"])
+@permission_classes([IsSuperAdmin])
+@require_database
+def ajustes_sitio(request):
+    ajuste = SiteSettings.obtener()
+    if request.method == "PATCH":
+        serializer = SiteSettingsSerializer(ajuste, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+    return Response(SiteSettingsSerializer(ajuste).data)
 
 
 @extend_schema(responses={200: ProfileResponseSerializer})

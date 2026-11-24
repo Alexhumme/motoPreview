@@ -60,6 +60,27 @@ describe('AdminLayout', () => {
     expect(within(catalogo).queryByRole('link', { name: 'Accesorios' })).not.toBeInTheDocument();
   });
 
+  it('ofrece Ajustes a Superadmin', () => {
+    renderLayout();
+    const administracion = abrirAdministracion();
+    expect(within(administracion).getByRole('link', { name: 'Ajustes' })).toHaveAttribute('href', '/admin/ajustes');
+  });
+
+  it('no muestra Ajustes a un administrador de tienda', () => {
+    vi.mocked(usePermiso).mockReturnValue({
+      esSuperAdmin: () => false,
+      tieneAlgunPermiso: () => true,
+    });
+    vi.mocked(useAuth).mockReturnValue({
+      usuario: { id_rol: ROL_ADMIN, usu_nombre: 'Ana Pérez' },
+      logout: vi.fn(),
+    });
+
+    renderLayout();
+    const administracion = abrirAdministracion();
+    expect(within(administracion).queryByRole('link', { name: 'Ajustes' })).not.toBeInTheDocument();
+  });
+
   it('no muestra Catálogo RBAC a un administrador de tienda', () => {
     vi.mocked(useAuth).mockReturnValue({
       usuario: { id_rol: ROL_ADMIN, usu_nombre: 'Ana Pérez' },

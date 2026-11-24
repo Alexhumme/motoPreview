@@ -26,6 +26,7 @@ import os
 import uuid
 import unittest
 from decimal import Decimal
+from unittest.mock import patch
 
 from django.db import connection
 from django.test import TestCase
@@ -50,12 +51,13 @@ from api.models import (
     QuoteDetail,
     QuoteStatusHistory,
     Role,
+    SiteSettings,
     Store,
     SubscriptionPlan,
     TipoProducto,
     User,
 )
-from api.security import ROLE_ADMIN, ROLE_CUSTOMER, ROLE_SELLER
+from api.security import ROLE_ADMIN, ROLE_CUSTOMER, ROLE_SELLER, ROLE_SUPERADMIN
 
 RUN_DB_TESTS = os.environ.get("RUN_DB_TESTS") == "1"
 
@@ -203,6 +205,9 @@ class AuthFlowTests(EsquemaTestCase):
         super().setUp()
         self.client = APIClient()
         self.email = self._correo("cliente")
+        SiteSettings.objects.update_or_create(
+            pk=1, defaults={"email_verification_required": True}
+        )
 
     def _registrar(self, password, email=None):
         return self.client.post(
@@ -220,6 +225,8 @@ class AuthFlowTests(EsquemaTestCase):
         respuesta = self._registrar("Clave-Segura-123")
         self.assertEqual(respuesta.status_code, 201, respuesta.json())
         self.assertIn("usuario", respuesta.json())
+        self.assertTrue(respuesta.json()["verificacion_requerida"])
+        self.assertIn("Debes verificar tu correo", respuesta.json()["mensaje"])
 
         # Sin verificar, el login queda bloqueado.
         login = self.client.post(
@@ -248,6 +255,37 @@ class AuthFlowTests(EsquemaTestCase):
         self.assertEqual(login.status_code, 200, login.json())
         self.assertIn("token", login.json())
         self.assertEqual(login.json()["usuario"]["usu_email"], self.email)
+
+    def test_registro_y_login_sin_verificacion_cuando_esta_desactivada(self):
+        SiteSettings.objects.filter(pk=1).update(email_verification_required=False)
+        with patch("api.views.send_user_email") as enviar:
+            respuesta = self._registrar("Clave-Segura-123")
+        self.assertEqual(respuesta.status_code, 201, respuesta.json())
+        self.assertFalse(respuesta.json()["verificacion_requerida"])
+        self.assertIn("Ya puedes iniciar sesión", respuesta.json()["mensaje"])
+        enviar.assert_not_called()
+
+        usuario = User.objects.get(usu_email__iexact=self.email)
+        self.assertFalse(usuario.email_verificado)
+        login = self.client.post(
+            "/api/auth/login",
+            {"usu_email": self.email, "password": "Clave-Segura-123"},
+            format="json",
+        )
+        self.assertEqual(login.status_code, 200, login.json())
+
+    def test_reactivar_verificacion_bloquea_cuentas_pendientes(self):
+        SiteSettings.objects.filter(pk=1).update(email_verification_required=False)
+        self.assertEqual(self._registrar("Clave-Segura-123").status_code, 201)
+        SiteSettings.objects.filter(pk=1).update(email_verification_required=True)
+
+        login = self.client.post(
+            "/api/auth/login",
+            {"usu_email": self.email, "password": "Clave-Segura-123"},
+            format="json",
+        )
+        self.assertEqual(login.status_code, 403, login.json())
+        self.assertIn("verificar", login.json()["error"].lower())
 
     def test_token_legacy_sigue_verificando(self):
         respuesta = self._registrar("Clave-Segura-123")
@@ -285,6 +323,78 @@ class AuthFlowTests(EsquemaTestCase):
         self.assertEqual(self._registrar("Clave-Segura-123").status_code, 201)
         respuesta = self._registrar("Clave-Segura-123")
         self.assertEqual(respuesta.status_code, 409, respuesta.json())
+
+
+class SiteSettingsTests(EsquemaTestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        seed_base()
+        Role.objects.get_or_create(
+            pk=ROLE_SUPERADMIN,
+            defaults={"nombre_rol": "superadmin", "es_superadmin": True},
+        )
+
+    def setUp(self):
+        super().setUp()
+        self.client = APIClient()
+        SiteSettings.objects.update_or_create(
+            pk=1, defaults={"email_verification_required": True}
+        )
+        self.superadmin = self._crear_usuario(
+            "Superadmin", ROLE_SUPERADMIN, tienda=None, email=self._correo("superadmin")
+        )
+        self.admin = self._crear_usuario(
+            "Admin", ROLE_ADMIN, tienda=None, email=self._correo("admin")
+        )
+
+    def test_superadmin_consulta_y_actualiza_el_requisito(self):
+        self.client.force_authenticate(user=self.superadmin)
+        respuesta = self.client.get("/api/ajustes-sitio")
+        self.assertEqual(respuesta.status_code, 200, respuesta.json())
+        self.assertTrue(respuesta.json()["email_verification_required"])
+
+        respuesta = self.client.patch(
+            "/api/ajustes-sitio",
+            {"email_verification_required": False},
+            format="json",
+        )
+        self.assertEqual(respuesta.status_code, 200, respuesta.json())
+        self.assertFalse(respuesta.json()["email_verification_required"])
+        self.assertFalse(SiteSettings.objects.get(pk=1).email_verification_required)
+
+    def test_superadmin_no_puede_guardar_un_valor_invalido(self):
+        self.client.force_authenticate(user=self.superadmin)
+        respuesta = self.client.patch(
+            "/api/ajustes-sitio",
+            {"email_verification_required": "quizas"},
+            format="json",
+        )
+        self.assertEqual(respuesta.status_code, 400, respuesta.json())
+        self.assertTrue(SiteSettings.objects.get(pk=1).email_verification_required)
+
+    def test_admin_de_tienda_y_anonimo_no_pueden_consultar_ni_cambiar(self):
+        self.assertEqual(self.client.get("/api/ajustes-sitio").status_code, 401)
+        self.assertEqual(
+            self.client.patch(
+                "/api/ajustes-sitio",
+                {"email_verification_required": False},
+                format="json",
+            ).status_code,
+            401,
+        )
+
+        self.client.force_authenticate(user=self.admin)
+        self.assertEqual(self.client.get("/api/ajustes-sitio").status_code, 403)
+        self.assertEqual(
+            self.client.patch(
+                "/api/ajustes-sitio",
+                {"email_verification_required": False},
+                format="json",
+            ).status_code,
+            403,
+        )
+        self.assertTrue(SiteSettings.objects.get(pk=1).email_verification_required)
 
 
 class QuoteFlowTests(EsquemaTestCase):

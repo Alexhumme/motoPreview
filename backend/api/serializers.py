@@ -21,6 +21,7 @@ from .models import (
     RecursoAccion,
     Role,
     RolRecurso,
+    SiteSettings,
     Store,
     SubscriptionPlan,
     TipoProducto,
@@ -793,7 +794,14 @@ class RegisterRequestSerializer(serializers.Serializer):
 
 class RegisterResponseSerializer(serializers.Serializer):
     mensaje = serializers.CharField()
+    verificacion_requerida = serializers.BooleanField()
     usuario = UserSerializer(read_only=True)
+
+
+class SiteSettingsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SiteSettings
+        fields = ("email_verification_required",)
 
 
 class ForgotRequestSerializer(serializers.Serializer):

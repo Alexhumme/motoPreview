@@ -43,6 +43,7 @@ _RUTAS_API = [
     ("api/auth/verificar/<str:token>", views.verify_email),
     ("api/auth/forgot-password", views.forgot_password),
     ("api/auth/reset-password", views.reset_password),
+    ("api/ajustes-sitio", views.ajustes_sitio),
     ("api/marcas", views.BrandCollection.as_view()),
     ("api/marcas/<uuid:pk>", views.BrandDetail.as_view()),
     ("api/modelos-moto", views.ModelCollection.as_view()),
