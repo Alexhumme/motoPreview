@@ -39,7 +39,6 @@ from .models import (
     MotorcycleModel,
     MovementType,
     Product,
-    ProductCategory,
     Quote,
     QuoteDetail,
     QuoteStatusHistory,
@@ -91,7 +90,6 @@ from .serializers import (
     MotorcycleModelSerializer,
     MotorcycleSerializer,
     MovementTypeSerializer,
-    ProductCategorySerializer,
     ProductSerializer,
     ProfileResponseSerializer,
     QuoteCreateSerializer,
@@ -590,21 +588,6 @@ class ResourceDetail(DatabaseGuardMixin):
         return Response({"mensaje": "Registro eliminado."})
 
 
-class CategoryCollection(ResourceCollection):
-    model = ProductCategory
-    serializer_class = ProductCategorySerializer
-    permiso_recurso = "categorias"
-    lectura_sin_matriz = True
-
-
-class CategoryDetail(ResourceDetail):
-    model = ProductCategory
-    serializer_class = ProductCategorySerializer
-    permiso_recurso = "categorias"
-    not_found_message = "Categoría no encontrada."
-    lectura_sin_matriz = True
-
-
 class BrandCollection(ResourceCollection):
     model = MotorcycleBrand
     serializer_class = MotorcycleBrandSerializer
@@ -945,7 +928,7 @@ class CompatibilityByModelo(DatabaseGuardMixin):
     def get(self, request, id_modelo_moto):
         productos = (
             Product.objects.filter(es_accesorio=True)
-            .select_related("categoria_producto", "marca")
+            .select_related("marca")
             .prefetch_related("tipos")
             .order_by("nombre")
         )
@@ -957,19 +940,7 @@ class Model3DByAccessory(DatabaseGuardMixin):
     serializer_class = Model3DSerializer
 
     def get(self, request, id_accesorio):
-        # El parámetro es el id del accesorio (producto); el modelo 3D se
-        # asocia a su categoría. También acepta un id de categoría directo.
-        categoria_id = None
-        producto = Product.objects.filter(pk=id_accesorio).only(
-            "id_producto", "categoria_accesorio_id"
-        ).first()
-        if producto:
-            categoria_id = producto.categoria_accesorio_id
-        model = None
-        if categoria_id:
-            model = Model3D.objects.filter(accesorio_id=categoria_id).first()
-        if not model:
-            model = Model3D.objects.filter(accesorio_id=id_accesorio).first()
+        model = Model3D.objects.filter(accesorio_id=id_accesorio).first()
         if not model:
             return Response(
                 {"error": "Este accesorio no tiene modelo 3D asociado."},
@@ -988,7 +959,6 @@ class InventoryCollection(DatabaseGuardMixin):
     def get_queryset(self, request):
         return Inventory.objects.select_related(
             "tienda__plan",
-            "producto__categoria_producto",
             "producto__marca",
         ).prefetch_related("producto__tipos")
 
@@ -1063,8 +1033,7 @@ class InventoryDetail(DatabaseGuardMixin):
             request,
             Inventory.objects.select_related(
                 "tienda__plan",
-                "producto__categoria_producto",
-                "producto__marca",
+                    "producto__marca",
             ).prefetch_related("producto__tipos"),
         )
         if error:
@@ -1654,7 +1623,7 @@ class ProductCollection(ResourceCollection):
 
     def get_queryset(self):
         return Product.objects.select_related(
-            "categoria_producto", "marca"
+            "marca"
         ).prefetch_related("tipos")
 
     def get(self, request):
@@ -1669,7 +1638,7 @@ class ProductDetail(ResourceDetail):
     serializer_class = ProductSerializer
     permiso_recurso = "productos"
     not_found_message = "Producto no encontrado."
-    queryset_relaciones = ("categoria_producto", "marca")
+    queryset_relaciones = ("marca")
     lectura_sin_matriz = True
 
     def get(self, request, pk):
@@ -1678,21 +1647,6 @@ class ProductDetail(ResourceDetail):
         except Product.DoesNotExist:
             return Response({"error": self.not_found_message}, status=status.HTTP_404_NOT_FOUND)
         return Response(AccesorioSerializer(instance).data)
-
-
-class ProductCategoryCollection(ResourceCollection):
-    model = ProductCategory
-    serializer_class = ProductCategorySerializer
-    permiso_recurso = "categorias"
-    lectura_sin_matriz = True
-
-
-class ProductCategoryDetail(ResourceDetail):
-    model = ProductCategory
-    serializer_class = ProductCategorySerializer
-    permiso_recurso = "categorias"
-    not_found_message = "Categoría de producto no encontrada."
-    lectura_sin_matriz = True
 
 
 class TipoProductoCollection(ResourceCollection):
@@ -1733,7 +1687,7 @@ class AccesoriosCollection(ResourceCollection):
 
     def get_queryset(self):
         return Product.objects.select_related(
-            "categoria_producto", "marca"
+            "marca"
         ).prefetch_related("tipos").filter(es_accesorio=True)
 
     def get(self, request):
@@ -1774,7 +1728,7 @@ class AccesorioDetail(DatabaseGuardMixin):
         # Sin filtro por `es_accesorio`: el visualizador abre cualquier producto
         # del catálogo, y la ficha plana es la misma para accesorios y no accesorios.
         return Product.objects.select_related(
-            "categoria_producto", "marca"
+            "marca"
         ).prefetch_related("tipos").get(pk=pk)
 
     def get(self, request, pk):

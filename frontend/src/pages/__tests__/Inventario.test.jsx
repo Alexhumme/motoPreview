@@ -5,8 +5,8 @@ import Inventario from '../Inventario';
 import { useAuth } from '../../context/authContexto';
 import { usePermiso } from '../../context/usePermiso';
 import {
+  actualizarProducto,
   crearProducto,
-  obtenerCategorias,
   obtenerMarcasProducto,
   obtenerProductos,
   obtenerTiposProducto,
@@ -19,7 +19,6 @@ vi.mock('../../context/usePermiso', () => ({ usePermiso: vi.fn() }));
 vi.mock('../../services/accesorios', () => ({
   actualizarProducto: vi.fn(),
   crearProducto: vi.fn(),
-  obtenerCategorias: vi.fn(),
   obtenerMarcasProducto: vi.fn(),
   obtenerProductos: vi.fn(),
   obtenerTiposProducto: vi.fn(),
@@ -37,7 +36,6 @@ const productos = [
     acc_precio: '35000',
     acc_estado: 'disponible',
     es_accesorio: false,
-    categoria_producto: { id_categoria_producto: 'categoria-1', nombre: 'Mantenimiento' },
     marca: { id_marca: 'marca-1', nombre: 'Motozone' },
     tipos: [],
     producto: {
@@ -60,7 +58,6 @@ const productos = [
       nombre: 'Casco integral',
       precio: '180000',
       es_accesorio: true,
-      id_categoria_producto: 'categoria-1',
       id_marca: 'marca-1',
       tipos: [{ id_tipo_producto: 'tipo-casco', nombre: 'Cascos', accesorio: true }],
     },
@@ -87,7 +84,6 @@ beforeEach(() => {
   vi.mocked(usePermiso).mockReturnValue({ tienePermiso: () => true });
   vi.mocked(obtenerInventario).mockResolvedValue(inventario);
   vi.mocked(obtenerProductos).mockResolvedValue(productos);
-  vi.mocked(obtenerCategorias).mockResolvedValue([{ id_categoria_producto: 'categoria-1', nombre: 'Mantenimiento' }]);
   vi.mocked(obtenerMarcasProducto).mockResolvedValue([{ id_marca: 'marca-1', nombre: 'Motozone' }]);
   vi.mocked(obtenerTiposProducto).mockResolvedValue([{ id_tipo_producto: 'tipo-casco', nombre: 'Cascos', accesorio: true }]);
 });
@@ -135,6 +131,33 @@ describe('Inventario unificado', () => {
       precio: 95000,
       id_tipos: ['tipo-casco'],
     })));
+    expect(crearProducto.mock.calls[0][0]).not.toHaveProperty('id_categoria_producto');
+    expect(within(dialogo).queryByLabelText('Categoría')).not.toBeInTheDocument();
+  });
+
+  it('edita un producto sin enviar categoría', async () => {
+    vi.mocked(actualizarProducto).mockResolvedValue({});
+    renderInventario();
+    await screen.findByText('Aceite sintético');
+    fireEvent.click(screen.getByRole('button', { name: 'Catálogo' }));
+    const fila = (await screen.findByText('Aceite sintético')).closest('tr');
+    fireEvent.click(within(fila).getByRole('button', { name: 'Editar' }));
+    const dialogo = screen.getByRole('dialog');
+    fireEvent.change(within(dialogo).getByLabelText('Precio (COP)'), { target: { value: '40000' } });
+    fireEvent.click(within(dialogo).getByRole('button', { name: 'Guardar producto' }));
+    await waitFor(() => expect(actualizarProducto).toHaveBeenCalledWith('producto-aceite', expect.objectContaining({ precio: 40000 })));
+    expect(actualizarProducto.mock.calls[0][1]).not.toHaveProperty('id_categoria_producto');
+  });
+
+  it('muestra errores de validación del producto como texto', async () => {
+    vi.mocked(crearProducto).mockRejectedValue({ response: { data: { error: { nombre: ['Este producto ya existe.'] } } } });
+    renderInventario();
+    await screen.findByText('Aceite sintético');
+    fireEvent.click(screen.getByRole('button', { name: 'Nuevo producto' }));
+    const dialogo = screen.getByRole('dialog');
+    fireEvent.change(within(dialogo).getByLabelText('Nombre'), { target: { value: 'Producto duplicado' } });
+    fireEvent.click(within(dialogo).getByRole('button', { name: 'Guardar producto' }));
+    expect(await within(dialogo).findByRole('alert')).toHaveTextContent('Este producto ya existe.');
   });
 
   it('permite asociar al inventario un producto que aún no tiene stock', async () => {

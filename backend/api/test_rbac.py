@@ -259,7 +259,7 @@ class ScopesDePermisoTests(SimpleTestCase):
         self.assertEqual(scopes_aplicables(usuario(tienda=None), "inventario"), ["global"])
 
     def test_recurso_sin_columna_de_tienda_no_acepta_scope_tienda(self):
-        """`producto`, `categoria_producto` y `tipo_accesorio` no tienen tienda.
+        """`producto` y `tipo_producto` no tienen tienda.
 
         Aceptar un scope `tienda` sobre esas tablas daría a una tienda escritura
         sobre el catálogo global de las otras, así que el alcance que se ofrece
@@ -1198,12 +1198,11 @@ class MatrizPermitirDenegarTests(SimpleTestCase):
         publicas = {
             "AccesorioDetail", "AccesoriosCollection",
             "BrandCollection", "BrandDetail",
-            "CategoryCollection", "CategoryDetail",
             "CompatibilityByModelo",
             "MarcaCollection", "MarcaDetail",
             "Model3DCollection", "Model3DDetail",
             "ModelCollection", "ModelDetail", "MotorcycleCollection",
-            "MotorcycleDetail", "ProductCategoryCollection", "ProductCategoryDetail",
+            "MotorcycleDetail",
             "ProductCollection", "ProductDetail", "StoreCollection", "StoreDetail",
             "TipoProductoCollection", "TipoProductoDetail",
         }
@@ -1247,7 +1246,7 @@ class NormalizacionDeConcesionesTests(SimpleTestCase):
         self.assertEqual(normalizar_scope(""), "global")
 
     def test_un_recurso_sin_columna_de_tienda_no_admite_tienda(self):
-        """`producto`, `categoria_producto` y `tipo_accesorio` no tienen tienda."""
+        """`producto` y `tipo_producto` no tienen tienda."""
         self.assertEqual(scopes_validos("productos"), ("global",))
         self.assertEqual(scopes_validos("categorias"), ("global",))
         self.assertEqual(scopes_validos("movimientos"), ("global",))

@@ -14,7 +14,6 @@ from .models import (
     MotorcycleModel,
     MovementType,
     Product,
-    ProductCategory,
     Quote,
     QuoteDetail,
     QuoteStatusHistory,
@@ -29,12 +28,6 @@ from .models import (
 )
 from . import services
 from .security import scopes_validos, validar_concesion
-
-
-class ProductCategorySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ProductCategory
-        fields = ("id_categoria_producto", "nombre", "descripcion")
 
 
 class MarcaSerializer(serializers.ModelSerializer):
@@ -64,12 +57,6 @@ def _obtener_tipos_validos(ids):
 
 
 class ProductSerializer(serializers.ModelSerializer):
-    id_categoria_producto = serializers.PrimaryKeyRelatedField(
-        source="categoria_producto",
-        queryset=ProductCategory.objects.all(),
-        allow_null=True,
-        required=False,
-    )
     id_marca = serializers.PrimaryKeyRelatedField(
         source="marca",
         queryset=Marca.objects.all(),
@@ -92,7 +79,6 @@ class ProductSerializer(serializers.ModelSerializer):
             "nombre",
             "descripcion",
             "estado",
-            "id_categoria_producto",
             "id_marca",
             "id_tipos",
             "es_accesorio",
@@ -141,14 +127,10 @@ class AccesorioSerializer(serializers.Serializer):
     def to_representation(self, instance):
         marca = instance.marca
         tipos = list(instance.tipos.all())
-        categoria_producto = instance.categoria_producto
         return {
             "id_accesorio": str(instance.id_producto),
             "es_accesorio": instance.es_accesorio,
             "id_marca": str(marca.id_marca) if marca else None,
-            "id_categoria_producto": (
-                str(categoria_producto.id_categoria_producto) if categoria_producto else None
-            ),
             "acc_nombre": instance.nombre,
             "acc_descripcion": instance.descripcion,
             "acc_precio": str(instance.precio) if instance.precio is not None else None,
@@ -160,14 +142,6 @@ class AccesorioSerializer(serializers.Serializer):
             "marca": (
                 {"id_marca": str(marca.id_marca), "nombre": marca.nombre, "logo": marca.logo}
                 if marca
-                else None
-            ),
-            "categoria_producto": (
-                {
-                    "id_categoria_producto": str(categoria_producto.id_categoria_producto),
-                    "nombre": categoria_producto.nombre,
-                }
-                if categoria_producto
                 else None
             ),
             "tipos": [{"id_tipo_producto": str(t.id_tipo_producto), "nombre": t.nombre, "accesorio": t.accesorio} for t in tipos],
@@ -182,12 +156,6 @@ class AccesorioInputSerializer(serializers.Serializer):
     id_marca = serializers.PrimaryKeyRelatedField(
         queryset=Marca.objects.all(),
         source="marca",
-        required=False,
-        allow_null=True,
-    )
-    id_categoria_producto = serializers.PrimaryKeyRelatedField(
-        queryset=ProductCategory.objects.all(),
-        source="categoria_producto",
         required=False,
         allow_null=True,
     )
@@ -237,8 +205,6 @@ class AccesorioInputSerializer(serializers.Serializer):
             campos[campo] = valor
         if "marca" in data:
             campos["marca"] = data["marca"]
-        if "categoria_producto" in data:
-            campos["categoria_producto"] = data["categoria_producto"]
         if "es_accesorio" in data:
             campos["es_accesorio"] = data["es_accesorio"]
         # tipos (M2M) se manejan aparte por la vista

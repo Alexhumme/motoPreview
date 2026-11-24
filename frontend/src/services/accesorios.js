@@ -12,10 +12,6 @@ export async function obtenerProductos() {
   return lista(await api.get('/productos'));
 }
 
-export async function obtenerCategorias() {
-  return lista(await api.get('/categorias-producto'));
-}
-
 export async function obtenerTiposProducto() {
   return lista(await api.get('/tipos-producto'));
 }

@@ -30,7 +30,6 @@ def crear_producto(es_accesorio=False, tipos=()):
         nombre="Producto de prueba",
         descripcion="Descripción del producto",
         estado="disponible",
-        categoria_producto=None,
         marca=None,
         es_accesorio=es_accesorio,
         peso=Decimal("1.25"),
@@ -147,6 +146,16 @@ class ProductSerializerTests(SimpleTestCase):
         self.assertTrue(ProductSerializer().fields["tipos"].read_only)
 
     @mock.patch("api.serializers.transaction.atomic", return_value=nullcontext())
+    def test_crear_sin_tipos_no_intenta_escribir_la_relacion(self, _atomico):
+        producto = SimpleNamespace(tipos=mock.Mock())
+        serializer = ProductSerializer(data={"nombre": "Producto sin tipos"})
+        serializer.fields["codigo_sku"].validators = []
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+        with mock.patch.object(Product._default_manager, "create", return_value=producto):
+            serializer.save()
+        producto.tipos.set.assert_not_called()
+
+    @mock.patch("api.serializers.transaction.atomic", return_value=nullcontext())
     @mock.patch("api.serializers.TipoProducto.objects")
     def test_create_aplica_tipos_y_conserva_los_demas_campos(
         self, objetos, atomico
@@ -249,33 +258,10 @@ class ProductSerializerTests(SimpleTestCase):
 
 
 class AccesorioInputSerializerTests(SimpleTestCase):
-    def test_acepta_y_mapea_categoria_y_es_accesorio(self):
-        categoria = SimpleNamespace(id_categoria_producto=uuid4())
-        consulta = mock.Mock()
-        consulta.get.return_value = categoria
-        serializer = AccesorioInputSerializer(
-            data={
-                "acc_nombre": "Casco integral",
-                "acc_precio": "125.50",
-                "id_categoria_producto": str(categoria.id_categoria_producto),
-                "es_accesorio": True,
-            }
-        )
-        serializer.fields["id_categoria_producto"].queryset = consulta
-
-        self.assertTrue(serializer.is_valid(), serializer.errors)
-        self.assertIs(
-            serializer.validated_data["categoria_producto"], categoria
-        )
-        self.assertTrue(serializer.validated_data["es_accesorio"])
-        campos = serializer.to_fields(serializer.validated_data)
-        self.assertTrue(campos["es_accesorio"])
-        self.assertIs(campos["categoria_producto"], categoria)
-        self.assertNotIn("id_categoria_producto", campos)
-        self.assertEqual(
-            serializer.fields["id_categoria_producto"].source,
-            "categoria_producto",
-        )
+    def test_ignora_categoria_obsoleta_y_deriva_accesorio_desde_tipos(self):
+        self.assertNotIn("id_categoria_producto", AccesorioInputSerializer().fields)
+        self.assertNotIn("categoria_producto", ProductSerializer().fields)
+        self.assertNotIn("id_categoria_producto", ProductSerializer().fields)
 
     @mock.patch("api.serializers.TipoProducto.objects")
     def test_deriva_accesorio_y_conserva_ids_para_los_tipos(self, objetos):
@@ -335,7 +321,7 @@ class AccesorioInputSerializerTests(SimpleTestCase):
 class ConsultasProductoTests(SimpleTestCase):
     def test_catalogo_precarga_relaciones_vigentes(self):
         queryset = ProductCollection().get_queryset()
-        self.assertEqual(set(queryset.query.select_related), {"categoria_producto", "marca"})
+        self.assertEqual(set(queryset.query.select_related), {"marca"})
         self.assertIn("tipos", queryset._prefetch_related_lookups)
 
     def test_inventario_precarga_producto_tipos_y_marca(self):

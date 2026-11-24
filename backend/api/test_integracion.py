@@ -33,27 +33,26 @@ from rest_framework.test import APIClient
 
 from api import tokens
 from api.models import (
-    AccessoryCategory,
-    AccessoryCompatibility,
     AccessoryToken,
-    AccessoryType,
     Configuration,
     ConfigurationDetail,
     Inventory,
     InventoryMovement,
+    Marca,
     Model3D,
     Motorcycle,
     MotorcycleBrand,
     MotorcycleModel,
     MovementType,
     Product,
-    ProductCategory,
+    ProductoTipoProducto,
     Quote,
     QuoteDetail,
     QuoteStatusHistory,
     Role,
     Store,
     SubscriptionPlan,
+    TipoProducto,
     User,
 )
 from api.security import ROLE_ADMIN, ROLE_CUSTOMER, ROLE_SELLER
@@ -70,15 +69,13 @@ _ENUMS = {
 
 # Orden de creación respetando las dependencias entre claves foráneas.
 _ORDEN_TABLAS = [
-    AccessoryCategory,
-    ProductCategory,
-    AccessoryType,
+    Marca,
+    TipoProducto,
     Product,
-    Product,  # was Accessory
+    ProductoTipoProducto,
     MotorcycleBrand,
     MotorcycleModel,
     Motorcycle,
-    AccessoryCompatibility,
     Model3D,
     SubscriptionPlan,
     Store,
@@ -307,27 +304,18 @@ class QuoteFlowTests(EsquemaTestCase):
         )
         self._login(self.admin)
 
-        self.categoria = ProductCategory.objects.create(
-            nombre=f"Categoría-{uuid.uuid4().hex[:6]}"
-        )
-        self.tipo = AccessoryType.objects.create(nombre=f"Tipo-{uuid.uuid4().hex[:6]}")
-        self.cat_acc = AccessoryCategory.objects.create(
-            cat_nombre=f"CatAcc-{uuid.uuid4().hex[:6]}"
+        self.tipo = TipoProducto.objects.create(
+            nombre=f"Tipo-{uuid.uuid4().hex[:6]}", accesorio=True
         )
         self.accesorios = {}
         for precio in (Decimal("100.00"), Decimal("50.00")):
-            producto = Product.objects.create(
+            accesorio = Product.objects.create(
                 nombre=f"Producto-{uuid.uuid4().hex[:6]}",
                 estado="disponible",
-                categoria_producto=self.categoria,
+                es_accesorio=True,
                 precio=precio,
             )
-            accesorio = Product.objects.create(es_accesorio=True,
-                categoria=self.cat_acc,
-                producto=producto,
-                tipo=self.tipo,
-                color="Negro",
-            )
+            accesorio.tipos.add(self.tipo)
             self.accesorios[precio] = accesorio
 
         self.marca = MotorcycleBrand.objects.create(marca_nombre=f"Marca-{uuid.uuid4().hex[:6]}")
@@ -342,7 +330,7 @@ class QuoteFlowTests(EsquemaTestCase):
 
     def _crear_cotizacion(self, *accesorios_cantidades):
         items = [
-            {"id_accesorio": str(acc.id_accesorio), "cantidad": cantidad}
+            {"id_accesorio": str(acc.id_producto), "cantidad": cantidad}
             for acc, cantidad in accesorios_cantidades
         ]
         return self.client.post(
@@ -483,18 +471,16 @@ class InventoryFlowTests(EsquemaTestCase):
         )
         self._login(self.admin)
 
-        self.categoria = ProductCategory.objects.create(nombre=f"Categoría-{uuid.uuid4().hex[:6]}")
-        self.tipo = AccessoryType.objects.create(nombre=f"Tipo-{uuid.uuid4().hex[:6]}")
-        self.cat_acc = AccessoryCategory.objects.create(cat_nombre=f"CatAcc-{uuid.uuid4().hex[:6]}")
-        producto = Product.objects.create(
+        self.tipo = TipoProducto.objects.create(
+            nombre=f"Tipo-{uuid.uuid4().hex[:6]}", accesorio=True
+        )
+        self.accesorio = Product.objects.create(
             nombre=f"Producto-{uuid.uuid4().hex[:6]}",
             estado="disponible",
-            categoria_producto=self.categoria,
+            es_accesorio=True,
             precio=Decimal("80.00"),
         )
-        self.accesorio = Product.objects.create(es_accesorio=True,
-            categoria=self.cat_acc, producto=producto, tipo=self.tipo, color="Rojo"
-        )
+        self.accesorio.tipos.add(self.tipo)
 
     def _login(self, usuario):
         from api.views import issue_jwt
@@ -505,7 +491,7 @@ class InventoryFlowTests(EsquemaTestCase):
         return self.client.post(
             "/api/inventario",
             {
-                "id_accesorio": str(self.accesorio.id_accesorio),
+                "id_accesorio": str(self.accesorio.id_producto),
                 "stock_actual": stock,
                 "stock_minimo": minimo,
             },
@@ -583,26 +569,16 @@ class ReporteResumenTests(EsquemaTestCase):
         )
         self._login(self.admin)
 
-        self.categoria = ProductCategory.objects.create(
-            nombre=f"Categoría-{uuid.uuid4().hex[:6]}"
-        )
-        self.tipo = AccessoryType.objects.create(nombre=f"Tipo-{uuid.uuid4().hex[:6]}")
-        self.cat_acc = AccessoryCategory.objects.create(
-            cat_nombre=f"CatAcc-{uuid.uuid4().hex[:6]}"
-        )
-        producto = Product.objects.create(
-            nombre=f"Producto-{uuid.uuid4().hex[:6]}",
-            estado="disponible",
-            categoria_producto=self.categoria,
-            precio=Decimal("100.00"),
+        self.tipo = TipoProducto.objects.create(
+            nombre=f"Tipo-{uuid.uuid4().hex[:6]}", accesorio=True
         )
         self.accesorio = Product.objects.create(
+            nombre=f"Producto-{uuid.uuid4().hex[:6]}",
+            estado="disponible",
             es_accesorio=True,
-            categoria=self.cat_acc,
-            producto=producto,
-            tipo=self.tipo,
-            color="Negro",
+            precio=Decimal("100.00"),
         )
+        self.accesorio.tipos.add(self.tipo)
         marca = MotorcycleBrand.objects.create(marca_nombre=f"Marca-{uuid.uuid4().hex[:6]}")
         modelo = MotorcycleModel.objects.create(marca=marca, modelo_nombre="Modelo X")
         self.moto = Motorcycle.objects.create(modelo=modelo, moto_anio=2024)
@@ -618,7 +594,7 @@ class ReporteResumenTests(EsquemaTestCase):
             "/api/cotizaciones",
             {
                 "id_moto": str(self.moto.id_moto),
-                "items": [{"id_accesorio": str(self.accesorio.id_accesorio), "cantidad": 1}],
+                "items": [{"id_accesorio": str(self.accesorio.id_producto), "cantidad": 1}],
             },
             format="json",
         )

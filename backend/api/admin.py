@@ -45,7 +45,6 @@ from .models import (
     MotorcycleModel,
     MovementType,
     Product,
-    ProductCategory,
     Quote,
     QuoteDetail,
     QuoteStatusHistory,
@@ -91,7 +90,6 @@ class MotopreviewAdminSite(admin.AdminSite):
         Marca: "Marcas de producto",
         TipoProducto: "Tipos de producto",
         Product: "Productos",
-        ProductCategory: "Categorías de producto",
         Model3D: "Modelos 3D",
         Store: "Tiendas",
         SubscriptionPlan: "Planes de suscripción",
@@ -123,7 +121,7 @@ class MotopreviewAdminSite(admin.AdminSite):
         ),
         (
             "CATÁLOGO Y ACCESORIOS",
-            (Marca, TipoProducto, Product, ProductCategory, Model3D),
+            (Marca, TipoProducto, Product, Model3D),
         ),
         ("TIENDAS Y USUARIOS", (Store, SubscriptionPlan, NegocioUserProxy)),
         ("INVENTARIO", (Inventory, InventoryMovement, MovementType)),
@@ -588,14 +586,14 @@ admin_site.register(NegocioUserProxy, NegocioUserAdmin)
 
 
 class ProductAdmin(BaseAdmin):
-    list_display = ("nombre", "es_accesorio", "categoria_producto", "precio")
-    list_filter = ("es_accesorio", "categoria_producto", "marca")
+    list_display = ("nombre", "es_accesorio", "marca", "precio")
+    list_filter = ("es_accesorio", "marca")
     search_fields = ("nombre", "codigo_sku")
     readonly_fields = ("id_producto",)
     
     fieldsets = (
         ("Información básica", {
-            "fields": ("nombre", "descripcion", "estado", "categoria_producto", "imagen", "codigo_sku", "precio")
+            "fields": ("nombre", "descripcion", "estado", "imagen", "codigo_sku", "precio")
         }),
         ("Marca y tipos", {
             "fields": ("marca",),
@@ -624,7 +622,6 @@ class ProductAdmin(BaseAdmin):
 admin_models = [
     (Marca, BaseAdmin),
     (TipoProducto, BaseAdmin),
-    (ProductCategory, BaseAdmin),
     (Product, ProductAdmin),  # Admin personalizado para l�gica condicional
     (MotorcycleBrand, BaseAdmin),
     (MotorcycleModel, BaseAdmin),

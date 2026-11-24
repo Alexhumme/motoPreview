@@ -5,7 +5,6 @@ import { usePermiso } from '../context/usePermiso';
 import {
   actualizarProducto,
   crearProducto,
-  obtenerCategorias,
   obtenerMarcasProducto,
   obtenerProductos,
   obtenerTiposProducto,
@@ -13,12 +12,12 @@ import {
 import { crearInventario, obtenerInventario, registrarMovimiento } from '../services/inventario';
 import { TIPOS_MOVIMIENTO } from '../utils/constants/tiposMovimiento';
 import DataTable from '../components/tables/DataTable';
+import { mensajeError } from '../services/crud';
 import './Inventario.css';
 
 const PRODUCTO_VACIO = {
   nombre: '',
   descripcion: '',
-  id_categoria_producto: '',
   id_marca: '',
   precio: '',
   peso: '',
@@ -53,7 +52,6 @@ function formularioProducto(producto) {
   return {
     nombre: datos.nombre || datos.acc_nombre || '',
     descripcion: datos.descripcion || datos.acc_descripcion || '',
-    id_categoria_producto: datos.id_categoria_producto || '',
     id_marca: datos.id_marca || '',
     precio: datos.precio ?? datos.acc_precio ?? '',
     peso: datos.peso ?? '',
@@ -71,7 +69,6 @@ export default function Inventario() {
 
   const [productos, setProductos] = useState([]);
   const [inventario, setInventario] = useState([]);
-  const [categorias, setCategorias] = useState([]);
   const [marcas, setMarcas] = useState([]);
   const [tipos, setTipos] = useState([]);
   const [vista, setVista] = useState('inventario');
@@ -107,14 +104,12 @@ export default function Inventario() {
     const respuestas = await Promise.allSettled([
       obtenerInventario(idTienda),
       obtenerProductos(),
-      obtenerCategorias(),
       obtenerMarcasProducto(),
       obtenerTiposProducto(),
     ]);
-    const [datosInventario, datosProductos, datosCategorias, datosMarcas, datosTipos] = respuestas;
+    const [datosInventario, datosProductos, datosMarcas, datosTipos] = respuestas;
     if (datosInventario.status === 'fulfilled') setInventario(datosInventario.value);
     if (datosProductos.status === 'fulfilled') setProductos(datosProductos.value);
-    if (datosCategorias.status === 'fulfilled') setCategorias(datosCategorias.value);
     if (datosMarcas.status === 'fulfilled') setMarcas(datosMarcas.value);
     if (datosTipos.status === 'fulfilled') setTipos(datosTipos.value);
     if (respuestas.some((respuesta) => respuesta.status === 'rejected')) {
@@ -152,7 +147,6 @@ export default function Inventario() {
     setErrorProducto('');
     const datos = {
       ...formulario,
-      id_categoria_producto: formulario.id_categoria_producto || null,
       id_marca: formulario.id_marca || null,
       descripcion: formulario.descripcion || null,
       codigo_sku: formulario.codigo_sku || null,
@@ -166,7 +160,7 @@ export default function Inventario() {
       setProductoAbierto(false);
       await cargarDatos();
     } catch (err) {
-      setErrorProducto(err.response?.data?.error || 'No se pudo guardar el producto.');
+      setErrorProducto(mensajeError(err, 'No se pudo guardar el producto.'));
     } finally {
       setGuardandoProducto(false);
     }
@@ -193,7 +187,7 @@ export default function Inventario() {
       setInventarioAbierto(false);
       await cargarDatos();
     } catch (err) {
-      setErrorInventario(err.response?.data?.error || 'No se pudo agregar el producto al inventario.');
+      setErrorInventario(mensajeError(err, 'No se pudo agregar el producto al inventario.'));
     } finally {
       setGuardandoInventario(false);
     }
@@ -220,7 +214,7 @@ export default function Inventario() {
       setMovimientoAbierto(false);
       await cargarDatos();
     } catch (err) {
-      setErrorMovimiento(err.response?.data?.error || 'No se pudo registrar el movimiento.');
+      setErrorMovimiento(mensajeError(err, 'No se pudo registrar el movimiento.'));
     } finally {
       setGuardandoMovimiento(false);
     }
@@ -244,7 +238,6 @@ export default function Inventario() {
         </span>
       ),
     },
-    { clave: 'categoria', etiqueta: 'Categoría', valor: (producto) => producto.categoria_producto?.nombre || '' },
     { clave: 'marca', etiqueta: 'Marca', valor: (producto) => producto.marca?.nombre || '' },
     {
       clave: 'tipos',
@@ -349,26 +342,17 @@ export default function Inventario() {
               </div>
               <button className="modal-close" onClick={() => setProductoAbierto(false)} aria-label="Cerrar"><X size={18} /></button>
             </header>
-            <form onSubmit={guardarProducto} className="modal-form" noValidate>
+            <form onSubmit={guardarProducto} className="modal-form">
               <div className="form-field">
                 <label className="form-label" htmlFor="producto-nombre">Nombre</label>
                 <input id="producto-nombre" className="form-input" value={formulario.nombre} onChange={(evento) => setFormulario({ ...formulario, nombre: evento.target.value })} required />
               </div>
-              <div className="inventario-fila">
-                <div className="form-field">
-                  <label className="form-label" htmlFor="producto-categoria">Categoría</label>
-                  <select id="producto-categoria" className="form-input" value={formulario.id_categoria_producto} onChange={(evento) => setFormulario({ ...formulario, id_categoria_producto: evento.target.value })}>
-                    <option value="">Sin categoría</option>
-                    {categorias.map((categoria) => <option key={categoria.id_categoria_producto} value={categoria.id_categoria_producto}>{categoria.nombre}</option>)}
-                  </select>
-                </div>
-                <div className="form-field">
-                  <label className="form-label" htmlFor="producto-marca">Marca</label>
-                  <select id="producto-marca" className="form-input" value={formulario.id_marca} onChange={(evento) => setFormulario({ ...formulario, id_marca: evento.target.value })}>
-                    <option value="">Sin marca</option>
-                    {marcas.map((marca) => <option key={marca.id_marca} value={marca.id_marca}>{marca.nombre}</option>)}
-                  </select>
-                </div>
+              <div className="form-field">
+                <label className="form-label" htmlFor="producto-marca">Marca</label>
+                <select id="producto-marca" className="form-input" value={formulario.id_marca} onChange={(evento) => setFormulario({ ...formulario, id_marca: evento.target.value })}>
+                  <option value="">Sin marca</option>
+                  {marcas.map((marca) => <option key={marca.id_marca} value={marca.id_marca}>{marca.nombre}</option>)}
+                </select>
               </div>
               <div className="form-field">
                 <label className="form-label">Tipos de producto</label>

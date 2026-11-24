@@ -26,21 +26,6 @@ class AccessoryCategory(DatabaseModel):
         return self.cat_nombre or str(self.id_categoria)
 
 
-class ProductCategory(DatabaseModel):
-    id_categoria_producto = models.UUIDField(
-        primary_key=True, default=uuid.uuid4, db_column="id_categoria_producto"
-    )
-    nombre = models.CharField(max_length=100)
-    descripcion = models.TextField(null=True, blank=True)
-
-    class Meta(DatabaseModel.Meta):
-        db_table = "categoria_producto"
-        ordering = ["nombre"]
-
-    def __str__(self):
-        return self.nombre or str(self.id_categoria_producto)
-
-
 class AccessoryType(DatabaseModel):
     id_tipo = models.UUIDField(primary_key=True, default=uuid.uuid4, db_column="id_tipo")
     nombre = models.CharField(max_length=100)
@@ -89,16 +74,14 @@ class TipoProducto(DatabaseModel):
 
 class ProductoTipoProducto(DatabaseModel):
     producto = models.ForeignKey(
-        "Product", db_column="id_producto", on_delete=models.DO_NOTHING, related_name="producto_tipos"
-    )
+        "Product", db_column="id_producto", on_delete=models.CASCADE, related_name="producto_tipos"    )
     tipo = models.ForeignKey(
-        "TipoProducto", db_column="id_tipo_producto", on_delete=models.DO_NOTHING, related_name="producto_tipos"
-    )
+        "TipoProducto", db_column="id_tipo_producto", on_delete=models.CASCADE, related_name="producto_tipos"    )
 
     class Meta(DatabaseModel.Meta):
         db_table = "producto_tipo_producto"
         unique_together = (("producto", "tipo"),)
-        managed = False
+        managed = True
 
     def __str__(self):
         return f"{self.id_producto} -> {self.id_tipo_producto}"
@@ -109,14 +92,6 @@ class Product(DatabaseModel):
     nombre = models.CharField(max_length=100)
     descripcion = models.TextField(null=True, blank=True)
     estado = models.CharField(max_length=50, default="disponible")
-    categoria_producto = models.ForeignKey(
-        ProductCategory,
-        db_column="id_categoria_producto",
-        null=True,
-        blank=True,
-        on_delete=models.DO_NOTHING,
-        related_name="productos",
-    )
     imagen = models.URLField(null=True, blank=True)
     codigo_sku = models.CharField(max_length=100, null=True, blank=True, unique=True)
     precio = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
@@ -146,9 +121,7 @@ class Product(DatabaseModel):
 
 
 # Tabla de accesorios eliminada.
-# Los campos clave (peso, tipo) ahora están en el modelo Product.
-# Las categorías de compatibilidad se manejan mediante AccessoryCategory
-# y la relación N:N con motos se ha simplificado usando categorías.
+# Los campos clave (peso, marca y tipos) ahora están en el modelo Product.
 
 
 class MotorcycleBrand(DatabaseModel):
