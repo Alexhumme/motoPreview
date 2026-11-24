@@ -744,6 +744,18 @@ class StoreCollection(ResourceCollection):
         tienda_id = getattr(self.request.user, "id_tienda", None)
         return Store.objects.select_related("plan").filter(id_tienda=tienda_id)
 
+    def post(self, request):
+        superadmin = es_superadmin(request.user)
+        scopes = scopes_concedidos(request.user, "tiendas", "crear")
+        if not superadmin and (
+            getattr(request.user, "id_tienda", None) is not None or "global" not in scopes
+        ):
+            return Response(
+                {"error": "No tiene permisos para crear tiendas."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        return super().post(request)
+
 
 class StoreDetail(ResourceDetail):
     model = Store
@@ -755,11 +767,26 @@ class StoreDetail(ResourceDetail):
 
     def get_object(self, pk):
         queryset = Store.objects.select_related("plan")
-        if not es_superadmin(self.request.user):
+        superadmin = es_superadmin(self.request.user)
+        if not superadmin:
             # El id del path no abre las fichas de otras tiendas: un administrador
             # autenticado solo ve la suya (y quien no tiene tienda, ninguna).
             queryset = queryset.filter(id_tienda=getattr(self.request.user, "id_tienda", None))
-        return queryset.get(pk=pk)
+        instance = queryset.get(pk=pk)
+        if not superadmin:
+            self.check_object_permissions(self.request, instance)
+        return instance
+
+    def delete(self, request, pk):
+        try:
+            instance = self.get_object(pk)
+        except self.model.DoesNotExist:
+            return Response({"error": self.not_found_message}, status=status.HTTP_404_NOT_FOUND)
+        with transaction.atomic():
+            instance.estado_tienda = "inactiva"
+            instance.save(update_fields=["estado_tienda"])
+        datos = self.serializer_class(instance, context={"request": request}).data
+        return Response({"mensaje": "Tienda desactivada.", "estado": datos["estado_tienda"]})
 
 
 class UserCollection(DatabaseGuardMixin):

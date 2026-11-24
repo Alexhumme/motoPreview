@@ -16,7 +16,7 @@ from django.test import SimpleTestCase, override_settings
 from django.utils import timezone
 
 from . import services, tokens
-from .security import ROLE_ADMIN, ROLE_CUSTOMER, ROLE_SELLER
+from .security import ROLE_ADMIN, ROLE_CUSTOMER, ROLE_SELLER, ROLE_SUPERADMIN
 
 SECRETO_PRUEBA = "clave-de-prueba-de-32-bytes-para-servicios"
 
@@ -190,6 +190,15 @@ class StorePrivacyTests(SimpleTestCase):
         self.assertTrue(services.permite_datos_contacto(self._request(admin)))
         vendedor = SimpleNamespace(is_authenticated=True, role_ids=[ROLE_SELLER])
         self.assertTrue(services.permite_datos_contacto(self._request(vendedor)))
+
+    def test_superadmin_si_ve_datos_contacto(self):
+        superadmin = SimpleNamespace(
+            is_authenticated=True,
+            role_ids=[ROLE_SUPERADMIN],
+            estado_usuario="activo",
+            rol_superadmin_vigente=True,
+        )
+        self.assertTrue(services.permite_datos_contacto(self._request(superadmin)))
 
     def test_sin_request_no_se_permite(self):
         self.assertFalse(services.permite_datos_contacto(None))

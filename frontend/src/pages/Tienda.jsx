@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '../context/authContexto';
+import { usePermiso } from '../context/usePermiso';
 import { obtenerTienda, actualizarTienda } from '../services/tiendas';
 import './Tienda.css';
 
 export default function Tienda() {
   const { usuario } = useAuth();
+  const { tienePermiso } = usePermiso();
+  const puedeEditar = tienePermiso('tiendas', 'actualizar');
   const [tienda, setTienda] = useState(null);
   const [cargando, setCargando] = useState(true);
   const [editando, setEditando] = useState(false);
@@ -106,7 +109,7 @@ export default function Tienda() {
       <section className="card tienda-datos" aria-labelledby="datos-title">
         <header className="tienda-datos-header">
           <h2 id="datos-title" className="tienda-section-title">Información general</h2>
-          {!editando && (
+          {!editando && puedeEditar && (
             <button className="btn btn--outline btn--sm" onClick={() => setEditando(true)}>Editar</button>
           )}
         </header>

@@ -14,6 +14,7 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
 - Gráficos con Recharts: histórico diario de solicitudes y ventas, distribución de estados y comparación de tiendas.
 - Selector de período de 7, 30, 90 días y último año para todos los paneles con cotizaciones.
 - Vista unificada de inventario y catálogo con alta/edición de productos, asociación de stock y movimientos.
+- CRUD de tiendas con alta, edición de plan y datos de contacto, y desactivación lógica gobernada por RBAC.
 
 ### Changed
 
