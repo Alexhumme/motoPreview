@@ -37,10 +37,12 @@ export function usePermiso() {
    * @returns {boolean}
    */
   const tienePermiso = (recurso, accion, scope) => {
-    if (!usuario || !usuario.permisos) return false;
-    
+    if (!usuario) return false;
+
     // SUPERADMIN bypass
     if (esSuperAdmin()) return true;
+
+    if (!usuario.permisos) return false;
 
     // Buscar en los permisos del usuario
     const permiso = usuario.permisos.find(p => 

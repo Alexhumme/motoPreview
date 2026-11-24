@@ -5,13 +5,17 @@ from unittest import mock
 from uuid import uuid4
 
 from django.test import SimpleTestCase
+from rest_framework.request import Request
+from rest_framework.test import APIRequestFactory
 
 from .models import Product, TipoProducto
-from .views import InventoryCollection, ProductCollection
+from .views import InventoryCollection, InventoryMovementView, ProductCollection
 from .serializers import (
     AccesorioInputSerializer,
     AccesorioSerializer,
     InventorySerializer,
+    InventoryUpdateSerializer,
+    InventoryMovementSerializer,
     ProductSerializer,
 )
 
@@ -351,3 +355,62 @@ class InventorySerializerTests(SimpleTestCase):
         inventario = SimpleNamespace(producto=None)
 
         self.assertIsNone(InventorySerializer().get_accesorio(inventario))
+
+
+class InventarioEditableTests(SimpleTestCase):
+    def test_edicion_no_permite_cambiar_stock_sin_movimiento(self):
+        serializer = InventoryUpdateSerializer(data={"stock_actual": 50, "stock_minimo": 3})
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+        self.assertNotIn("stock_actual", serializer.validated_data)
+
+    def test_edicion_rechaza_stock_minimo_negativo(self):
+        serializer = InventoryUpdateSerializer(data={"stock_minimo": -1})
+        self.assertFalse(serializer.is_valid())
+        self.assertIn("stock_minimo", serializer.errors)
+
+    def test_edicion_rechaza_precio_negativo(self):
+        serializer = InventoryUpdateSerializer(data={"precio": -1})
+        self.assertFalse(serializer.is_valid())
+        self.assertIn("precio", serializer.errors)
+
+    def test_movimiento_incluye_tipo_usuario_y_producto_legibles(self):
+        movimiento = SimpleNamespace(
+            id_movimiento=uuid4(),
+            inventario=SimpleNamespace(
+                pk=uuid4(),
+                producto=SimpleNamespace(
+                    id_producto=uuid4(), nombre="Aceite", codigo_sku="ACE-1"
+                ),
+            ),
+            tipo_id=uuid4(), usuario_id=uuid4(),
+            mov_cantidad=-2, fecha_movimiento=None, observaciones=None,
+            tipo=SimpleNamespace(pk=uuid4(), tipomov_nombre="salida"),
+            usuario=SimpleNamespace(usu_nombre="Ana"),
+        )
+        datos = InventoryMovementSerializer(movimiento).data
+        self.assertEqual(datos["tipo"]["tipomov_nombre"], "salida")
+        self.assertEqual(datos["usuario"]["usu_nombre"], "Ana")
+        self.assertEqual(datos["producto"]["nombre"], "Aceite")
+
+    @mock.patch("api.views.UUID", side_effect=ValueError)
+    def test_filtro_de_tienda_invalido_devuelve_400(self, _uuid):
+        vista = InventoryCollection()
+        request = Request(APIRequestFactory().get("/api/inventario", {"id_tienda": "no-uuid"}))
+        with mock.patch.object(vista, "filtrar_por_scope", return_value=(mock.Mock(), None)):
+            respuesta = vista.get(request)
+        self.assertEqual(respuesta.status_code, 400)
+
+    def test_historial_filtra_por_inventario_y_tienda(self):
+        inventarios = mock.Mock()
+        inventarios.filter.return_value = inventarios
+        objetos_movimiento = mock.Mock()
+        vista = InventoryMovementView()
+        request = Request(APIRequestFactory().get("/api/inventario/movimiento", {
+            "id_inventario": str(uuid4()), "id_tienda": str(uuid4()),
+        }))
+        with mock.patch.object(vista, "filtrar_por_scope", return_value=(inventarios, None)), \
+                mock.patch("api.views.InventoryMovement.objects", objetos_movimiento), \
+                mock.patch("api.views.paginate_response"):
+            vista.get(request)
+        self.assertEqual(inventarios.filter.call_count, 2)
+        objetos_movimiento.filter.assert_called_once_with(inventario__in=inventarios)

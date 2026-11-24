@@ -405,10 +405,23 @@ class InventorySerializer(serializers.ModelSerializer):
         return AccesorioSerializer(producto).data
 
 
+class InventoryUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Inventory
+        fields = ("stock_minimo", "precio")
+        extra_kwargs = {
+            "stock_minimo": {"min_value": 0},
+            "precio": {"min_value": 0},
+        }
+
+
 class InventoryMovementSerializer(serializers.ModelSerializer):
     id_inventario = serializers.PrimaryKeyRelatedField(source="inventario", queryset=Inventory.objects.all())
     id_tipomov = serializers.PrimaryKeyRelatedField(source="tipo", queryset=MovementType.objects.all())
     id_usuario = serializers.UUIDField(source="usuario_id", read_only=True, allow_null=True)
+    tipo = serializers.SerializerMethodField()
+    usuario = serializers.SerializerMethodField()
+    producto = serializers.SerializerMethodField()
 
     class Meta:
         model = InventoryMovement
@@ -420,8 +433,34 @@ class InventoryMovementSerializer(serializers.ModelSerializer):
             "mov_cantidad",
             "fecha_movimiento",
             "observaciones",
+            "tipo",
+            "usuario",
+            "producto",
         )
         read_only_fields = ("id_movimiento", "id_usuario", "fecha_movimiento")
+
+    def get_tipo(self, instance) -> dict[str, str] | None:
+        if instance.tipo_id is None:
+            return None
+        return {
+            "id_tipomov": str(instance.tipo_id),
+            "tipomov_nombre": instance.tipo.tipomov_nombre,
+        }
+
+    def get_usuario(self, instance) -> dict[str, str] | None:
+        if instance.usuario_id is None:
+            return None
+        return {"id_usuario": str(instance.usuario_id), "usu_nombre": instance.usuario.usu_nombre}
+
+    def get_producto(self, instance) -> dict[str, str | None] | None:
+        producto = instance.inventario.producto
+        if producto is None:
+            return None
+        return {
+            "id_producto": str(producto.id_producto),
+            "nombre": producto.nombre,
+            "codigo_sku": producto.codigo_sku,
+        }
 
 
 class MovementTypeSerializer(serializers.ModelSerializer):

@@ -158,6 +158,19 @@
   font-size: var(--text-caption);
 }
 
+.tienda-inventario,
+.tienda-historial {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+}
+
+.tienda-historial {
+  margin-top: var(--space-24);
+  padding-top: var(--space-24);
+  border-top: 1px solid var(--color-bone);
+}
+
 /* Responsive */
 @media (max-width: 720px) {
   .inventario-title {

@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import { ClipboardList, TrendingUp, WalletCards } from 'lucide-react';
+import GestionInventarioTienda from '../components/inventario/GestionInventarioTienda';
 import { obtenerResumenDia } from '../services/reportes';
 import { obtenerTienda } from '../services/tiendas';
 import { mensajeError } from '../services/crud';
@@ -96,7 +98,7 @@ export default function ResumenTienda() {
 
       <section className="dashboard-kpis" aria-label={`Indicadores de ${tienda.nombre_tienda}`}>
         <article className="kpi kpi--venta">
-          <span className="kpi-icon" aria-hidden="true">↗</span>
+          <span className="kpi-icon" aria-hidden="true"><TrendingUp size={20} /></span>
           <div className="kpi-content">
             <small>Ventas del día</small>
             <strong>{formatoCOP(ventasDia.total)}</strong>
@@ -104,7 +106,7 @@ export default function ResumenTienda() {
           </div>
         </article>
         <article className="kpi kpi--cobrar">
-          <span className="kpi-icon" aria-hidden="true">◎</span>
+          <span className="kpi-icon" aria-hidden="true"><WalletCards size={20} /></span>
           <div className="kpi-content">
             <small>Pagos que faltan</small>
             <strong>{formatoCOP(porCobrar.total)}</strong>
@@ -112,7 +114,7 @@ export default function ResumenTienda() {
           </div>
         </article>
         <article className="kpi">
-          <span className="kpi-icon" aria-hidden="true">▤</span>
+          <span className="kpi-icon" aria-hidden="true"><ClipboardList size={20} /></span>
           <div className="kpi-content">
             <small>Pedidos pendientes</small>
             <strong>{pendientes.cantidad}</strong>
@@ -120,6 +122,8 @@ export default function ResumenTienda() {
           </div>
         </article>
       </section>
+
+      <GestionInventarioTienda idTienda={id} />
 
       <section className="card" aria-label="Datos de contacto">
         <header className="card-head">

@@ -81,6 +81,7 @@ from .serializers import (
     InventoryInputSerializer,
     InventoryMovementSerializer,
     InventorySerializer,
+    InventoryUpdateSerializer,
     MarcaSerializer,
     LoginRequestSerializer,
     LoginResponseSerializer,
@@ -951,22 +952,32 @@ class Model3DByAccessory(DatabaseGuardMixin):
 
 # (Compatibilidad por categoria retirada: el Configurador ahora filtra por tipo de producto)
 
+def inventario_con_relaciones():
+    return Inventory.objects.select_related(
+        "tienda__plan",
+        "producto__marca",
+    ).prefetch_related("producto__tipos")
+
+
 class InventoryCollection(DatabaseGuardMixin):
     permission_classes = [HasPermiso]
     serializer_class = InventorySerializer
     permiso_recurso = "inventario"
 
     def get_queryset(self, request):
-        return Inventory.objects.select_related(
-            "tienda__plan",
-            "producto__marca",
-        ).prefetch_related("producto__tipos")
+        return inventario_con_relaciones()
 
     def get(self, request):
-
         rows, error = self.filtrar_por_scope(request, self.get_queryset(request))
         if error:
             return error
+        tienda_id = request.query_params.get("id_tienda")
+        if tienda_id:
+            try:
+                tienda_id = UUID(str(tienda_id))
+            except (TypeError, ValueError):
+                return Response({"error": "id_tienda debe ser un UUID válido."}, status=400)
+            rows = rows.filter(tienda_id=tienda_id)
         return paginate_response(request, rows, InventorySerializer)
 
     @extend_schema(
@@ -1027,23 +1038,39 @@ class InventoryDetail(DatabaseGuardMixin):
     permiso_recurso = "inventario"
     permiso_detalle = True
 
-    def get(self, request, pk):
-
-        queryset, error = self.filtrar_por_scope(
-            request,
-            Inventory.objects.select_related(
-                "tienda__plan",
-                    "producto__marca",
-            ).prefetch_related("producto__tipos"),
-        )
+    def _inventario(self, request, pk):
+        queryset, error = self.filtrar_por_scope(request, inventario_con_relaciones())
         if error:
-            return error
+            return None, error
         instance = queryset.filter(pk=pk).first()
         if not instance:
-            return Response(
+            return None, Response(
                 {"error": "Registro de inventario no encontrado."},
                 status=status.HTTP_404_NOT_FOUND,
             )
+        return instance, None
+
+    def get(self, request, pk):
+        instance, error = self._inventario(request, pk)
+        if error:
+            return error
+        return Response(InventorySerializer(instance).data)
+
+    @extend_schema(
+        request=InventoryUpdateSerializer,
+        responses={200: InventorySerializer, 400: ErrorSerializer, 404: ErrorSerializer},
+    )
+    def patch(self, request, pk):
+        instance, error = self._inventario(request, pk)
+        if error:
+            return error
+        serializer = InventoryUpdateSerializer(instance, data=request.data, partial=True)
+        if not serializer.is_valid():
+            return Response({"error": serializer.errors}, status=400)
+        instance = serializer.save()
+        instance.estado_inventario = inventory_status(instance.stock_actual, instance.stock_minimo)
+        instance.fecha_actualizacion = timezone.localdate()
+        instance.save(update_fields=["estado_inventario", "fecha_actualizacion"])
         return Response(InventorySerializer(instance).data)
 
 
@@ -1053,6 +1080,29 @@ class InventoryMovementView(DatabaseGuardMixin):
     # La tabla `movimiento_inventario` no tiene recurso propio sembrado: el
     # asiento de inventario se autoriza con `inventario:crear`.
     permiso_recurso = "inventario"
+
+    def get(self, request):
+        inventarios, error = self.filtrar_por_scope(request, Inventory.objects.all())
+        if error:
+            return error
+        inventario_id = request.query_params.get("id_inventario")
+        if inventario_id:
+            try:
+                inventario_id = UUID(str(inventario_id))
+            except (TypeError, ValueError):
+                return Response({"error": "id_inventario debe ser un UUID válido."}, status=400)
+            inventarios = inventarios.filter(pk=inventario_id)
+        tienda_id = request.query_params.get("id_tienda")
+        if tienda_id:
+            try:
+                tienda_id = UUID(str(tienda_id))
+            except (TypeError, ValueError):
+                return Response({"error": "id_tienda debe ser un UUID válido."}, status=400)
+            inventarios = inventarios.filter(tienda_id=tienda_id)
+        movimientos = InventoryMovement.objects.filter(inventario__in=inventarios).select_related(
+            "tipo", "usuario", "inventario__producto"
+        )
+        return paginate_response(request, movimientos, InventoryMovementSerializer)
 
     def post(self, request):
 
