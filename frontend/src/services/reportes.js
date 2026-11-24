@@ -12,3 +12,12 @@ export async function obtenerResumenDia(idTienda) {
   const respuesta = await api.get('/reportes/resumen', { params });
   return respuesta.data;
 }
+
+export async function obtenerResumenPanel({ comparar = false, desde, hasta } = {}) {
+  const params = {};
+  if (comparar) params.comparar = 1;
+  if (desde) params.desde = desde;
+  if (hasta) params.hasta = hasta;
+  const respuesta = await api.get('/panel/resumen', { params });
+  return respuesta.data;
+}

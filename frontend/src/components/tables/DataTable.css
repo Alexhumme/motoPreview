@@ -109,6 +109,10 @@
   cursor: not-allowed;
 }
 
+.dt-boton svg {
+  vertical-align: -2px;
+}
+
 /* Sin clip en los botones de borde: el corte se llevaría la hairline de la
    diagonal, así que estos se quedan rectos y el acento lo pone el hover. */
 .dt-boton--suave {
@@ -201,8 +205,8 @@
 }
 
 .dt-orden span[aria-hidden='true'] {
+  display: inline-flex;
   color: var(--color-brand-orange);
-  font-size: 9px;
 }
 
 .dt-acciones {

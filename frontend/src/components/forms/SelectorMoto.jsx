@@ -75,7 +75,7 @@ export default function SelectorMoto({
 
   const [abierta, setAbierta] = useState(false);
   const [activo, setActivo] = useState(0);
-  const [confirmado, setConfirmado] = useState('');
+  const [confirmado, setConfirmado] = useState(texto);
   const [pos, setPos] = useState(null);
 
   // Al enfocar una moto ya elegida la lista muestra todo el catálogo: si no,
@@ -154,8 +154,8 @@ export default function SelectorMoto({
     setConfirmado(opcion.etiqueta);
     onTexto?.(opcion.etiqueta);
     onElegir?.(opcion.moto);
-    setAbierta(false);
     inputRef.current?.focus();
+    setAbierta(false);
   }
 
   function limpiar() {

@@ -5,7 +5,7 @@ probarla sin montar PostgreSQL y reutilizarla entre endpoints.
 """
 from decimal import Decimal
 
-from .security import ROLE_ADMIN, ROLE_SELLER, has_any_role
+from .security import ROLE_ADMIN, ROLE_SELLER, es_superadmin, has_any_role
 
 QUOTE_STATES = {"pendiente", "aprobada", "rechazada", "completada"}
 QUOTE_TRANSITIONS = {
@@ -64,12 +64,13 @@ def allow_state_transition(current, new_state):
 def permite_datos_contacto(request):
     """¿Puede esta petición ver NIT/teléfono/email de las tiendas?
 
-    Solo el personal (admin/vendedor autenticado) ve los datos de contacto;
+    Superadmin y personal (admin/vendedor autenticado) ven los datos de contacto;
     la API pública de tiendas los oculta.
     """
     if not request:
         return False
-    return has_any_role(getattr(request, "user", None), (ROLE_ADMIN, ROLE_SELLER))
+    user = getattr(request, "user", None)
+    return es_superadmin(user) or has_any_role(user, (ROLE_ADMIN, ROLE_SELLER))
 
 
 def calc_quote(items, productos, max_items=100):

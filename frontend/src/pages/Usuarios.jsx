@@ -28,7 +28,6 @@ export default function Usuarios() {
   const [roles, setRoles] = useState([]);
   const [tiendas, setTiendas] = useState([]);
   const [cargando, setCargando] = useState(true);
-  const [busqueda, setBusqueda] = useState('');
   const [modalAbierto, setModalAbierto] = useState(false);
   const [usuarioADesactivar, setUsuarioADesactivar] = useState(null);
   const [editandoId, setEditandoId] = useState(null);
@@ -122,14 +121,6 @@ export default function Usuarios() {
     return roles.find((r) => r.id_rol === u.id_rol)?.nombre_rol || String(u.id_rol);
   }
 
-  const usuariosFiltrados = usuarios.filter((u) => {
-    const texto = busqueda.trim().toLowerCase();
-    if (!texto) return true;
-    return [u.usu_nombre, u.usu_email, nombreRol(u)]
-      .filter(Boolean)
-      .some((v) => v.toLowerCase().includes(texto));
-  });
-
   const columnas = [
     { clave: 'usu_nombre', etiqueta: 'Nombre', render: (u) => <strong>{u.usu_nombre}</strong> },
     { clave: 'usu_email', etiqueta: 'Email' },
@@ -158,28 +149,18 @@ export default function Usuarios() {
       <header className="usuarios-header">
         <div>
           <h1 className="usuarios-title">Usuarios de la tienda</h1>
-          <p className="usuarios-subtitle">{usuariosFiltrados.length} de {usuarios.length} usuarios</p>
+          <p className="usuarios-subtitle">{usuarios.length} usuarios</p>
         </div>
-        <div className="usuarios-header-actions">
-          <input
-            type="search"
-            className="form-input usuarios-search"
-            value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
-            placeholder="Buscar por nombre, email o rol..."
-            aria-label="Buscar usuarios"
-          />
-          <ConPermiso recurso="usuarios" accion="crear" fallback={null}>
-            <button className="btn btn--primary" onClick={abrirNuevo}>
-              <span aria-hidden="true">+</span> Nuevo usuario
-            </button>
-          </ConPermiso>
-        </div>
+        <ConPermiso recurso="usuarios" accion="crear" fallback={null}>
+          <button className="btn btn--primary" onClick={abrirNuevo}>
+            <span aria-hidden="true">+</span> Nuevo usuario
+          </button>
+        </ConPermiso>
       </header>
 
       <DataTable
         columnas={columnas}
-        filas={usuariosFiltrados}
+        filas={usuarios}
         claveFila="id_usuario"
         cargando={cargando}
         vacio="No hay usuarios registrados."
