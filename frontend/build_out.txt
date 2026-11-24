@@ -1,0 +1,149 @@
+﻿
+> frontend@0.0.0 build
+> vite build
+
+node.exe : [33m(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned 
+to become the default in a future major version of Vite:
+En línea: 1 Carácter: 1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ([33m(!) Your V...ersion of Vite::String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  - `__dirname` (vite.config.ts:10:25). Use `import.meta.dirname` instead
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.[39m
+[36mvite v8.2.2 [32mbuilding client environment for production...[36m[39m
+transforming...
+Ô£ô 683 modules transformed.
+[31mÔ£ù[39m Build failed in 446ms
+[31merror during build:
+[31mBuild failed with 23 errors:
+
+[31m[UNRESOLVED_IMPORT] [0mCould not resolve '../../utils/constants/roles' in src/layouts/AdminLayout.jsx
+   [38;5;246mÔò¡[0m[38;5;246mÔöÇ[0m[38;5;246m[[0m src/layouts/AdminLayout.jsx:4:27 [38;5;246m][0m
+   [38;5;246mÔöé[0m
+ [38;5;246m4 Ôöé[0m 
+[38;5;249mi[0m[38;5;249mm[0m[38;5;249mp[0m[38;5;249mo[0m[38;5;249mr[0m[38;5;249mt[0m[38;5;249m 
+[0m[38;5;249m{[0m[38;5;249m [0m[38;5;249mR[0m[38;5;249mO[0m[38;5;249mL[0m[38;5;249m_[0m[38;5;249mA[0m[3
+8;5;249mD[0m[38;5;249mM[0m[38;5;249mI[0m[38;5;249mN[0m[38;5;249m [0m[38;5;249m}[0m[38;5;249m 
+[0m[38;5;249mf[0m[38;5;249mr[0m[38;5;249mo[0m[38;5;249mm[0m[38;5;249m 
+[0m"../../utils/constants/roles"[38;5;249m;[0m
+ [38;5;240m  Ôöé[0m                           
+ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔö¼ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ  
+ [38;5;240m  Ôöé[0m                                         Ôò░ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ 
+Module not found.
+ [38;5;240m  Ôöé[0m 
+ [38;5;240m  Ôöé[0m [38;5;115mHelp[0m: 'src/layouts/AdminLayout.jsx' is imported by the following path:
+ [38;5;240m  Ôöé[0m         - src/layouts/AdminLayout.jsx
+ [38;5;240m  Ôöé[0m         - src/App.tsx
+ [38;5;240m  Ôöé[0m         - src/main.tsx
+ [38;5;240m  Ôöé[0m         - index.html
+[38;5;246mÔöÇÔöÇÔöÇÔò»[0m
+
+[31m[UNRESOLVED_IMPORT] [0mCould not resolve '../../context/AuthContext' in src/pages/Cotizaciones.jsx
+   [38;5;246mÔò¡[0m[38;5;246mÔöÇ[0m[38;5;246m[[0m src/pages/Cotizaciones.jsx:2:25 [38;5;246m][0m
+   [38;5;246mÔöé[0m
+ [38;5;246m2 Ôöé[0m 
+[38;5;249mi[0m[38;5;249mm[0m[38;5;249mp[0m[38;5;249mo[0m[38;5;249mr[0m[38;5;249mt[0m[38;5;249m 
+[0m[38;5;249m{[0m[38;5;249m [0m[38;5;249mu[0m[38;5;249ms[0m[38;5;249me[0m[38;5;249mA[0m[38;5;249mu[0m[3
+8;5;249mt[0m[38;5;249mh[0m[38;5;249m [0m[38;5;249m}[0m[38;5;249m 
+[0m[38;5;249mf[0m[38;5;249mr[0m[38;5;249mo[0m[38;5;249mm[0m[38;5;249m 
+[0m"../../context/AuthContext"[38;5;249m;[0m
+ [38;5;240m  Ôöé[0m                         
+ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔö¼ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ  
+ [38;5;240m  Ôöé[0m                                      Ôò░ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ Module not 
+found.
+ [38;5;240m  Ôöé[0m 
+ [38;5;240m  Ôöé[0m [38;5;115mHelp[0m: 'src/pages/Cotizaciones.jsx' is imported by the following path:
+ [38;5;240m  Ôöé[0m         - src/pages/Cotizaciones.jsx
+ [38;5;240m  Ôöé[0m         - src/App.tsx
+ [38;5;240m  Ôöé[0m         - src/main.tsx
+ [38;5;240m  Ôöé[0m         - index.html
+[38;5;246mÔöÇÔöÇÔöÇÔò»[0m
+
+[31m[UNRESOLVED_IMPORT] [0mCould not resolve '../../services/cotizaciones' in src/pages/Cotizaciones.jsx
+   [38;5;246mÔò¡[0m[38;5;246mÔöÇ[0m[38;5;246m[[0m src/pages/Cotizaciones.jsx:3:62 [38;5;246m][0m
+   [38;5;246mÔöé[0m
+ [38;5;246m3 Ôöé[0m 
+[38;5;249mi[0m[38;5;249mm[0m[38;5;249mp[0m[38;5;249mo[0m[38;5;249mr[0m[38;5;249mt[0m[38;5;249m 
+[0m[38;5;249m{[0m[38;5;249m [0m[38;5;249mo[0m[38;5;249mb[0m[38;5;249mt[0m[38;5;249me[0m[38;5;249mn[0m[3
+8;5;249me[0m[38;5;249mr[0m[38;5;249mC[0m[38;5;249mo[0m[38;5;249mt[0m[38;5;249mi[0m[38;5;249mz[0m[38;5;249
+ma[0m[38;5;249mc[0m[38;5;249mi[0m[38;5;249mo[0m[38;5;249mn[0m[38;5;249me[0m[38;5;249ms[0m[38;5;249m,[0m
+[38;5;249m [0m[38;5;249mc[0m[38;5;249ma[0m[38;5;249mm[0m[38;5;249mb[0m[38;5;249mi[0m[38;5;249ma[0m[38;5;2
+49mr[0m[38;5;249mE[0m[38;5;249ms[0m[38;5;249mt[0m[38;5;249ma[0m[38;5;249md[0m[38;5;249mo[0m[38;5;249mC[0
+m[38;5;249mo[0m[38;5;249mt[0m[38;5;249mi[0m[38;5;249mz[0m[38;5;249ma[0m[38;5;249mc[0m[38;5;249mi[0m[38;5
+;249mo[0m[38;5;249mn[0m[38;5;249m [0m[38;5;249m}[0m[38;5;249m 
+[0m[38;5;249mf[0m[38;5;249mr[0m[38;5;249mo[0m[38;5;249mm[0m[38;5;249m 
+[0m"../../services/cotizaciones"[38;5;249m;[0m
+ [38;5;240m  Ôöé[0m                                                              
+ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔö¼ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ  
+ [38;5;240m  Ôöé[0m                                                                            
+Ôò░ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ Module not found.
+ [38;5;240m  Ôöé[0m 
+ [38;5;240m  Ôöé[0m [38;5;115mHelp[0m: 'src/pages/Cotizaciones.jsx' is imported by the following path:
+ [38;5;240m  Ôöé[0m         - src/pages/Cotizaciones.jsx
+ [38;5;240m  Ôöé[0m         - src/App.tsx
+ [38;5;240m  Ôöé[0m         - src/main.tsx
+ [38;5;240m  Ôöé[0m         - index.html
+[38;5;246mÔöÇÔöÇÔöÇÔò»[0m
+
+[31m[UNRESOLVED_IMPORT] [0mCould not resolve '../../context/AuthContext' in src/pages/Reportes.jsx
+   [38;5;246mÔò¡[0m[38;5;246mÔöÇ[0m[38;5;246m[[0m src/pages/Reportes.jsx:2:25 [38;5;246m][0m
+   [38;5;246mÔöé[0m
+ [38;5;246m2 Ôöé[0m 
+[38;5;249mi[0m[38;5;249mm[0m[38;5;249mp[0m[38;5;249mo[0m[38;5;249mr[0m[38;5;249mt[0m[38;5;249m 
+[0m[38;5;249m{[0m[38;5;249m [0m[38;5;249mu[0m[38;5;249ms[0m[38;5;249me[0m[38;5;249mA[0m[38;5;249mu[0m[3
+8;5;249mt[0m[38;5;249mh[0m[38;5;249m [0m[38;5;249m}[0m[38;5;249m 
+[0m[38;5;249mf[0m[38;5;249mr[0m[38;5;249mo[0m[38;5;249mm[0m[38;5;249m 
+[0m"../../context/AuthContext"[38;5;249m;[0m
+ [38;5;240m  Ôöé[0m                         
+ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔö¼ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ  
+ [38;5;240m  Ôöé[0m                                      Ôò░ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ Module not 
+found.
+ [38;5;240m  Ôöé[0m 
+ [38;5;240m  Ôöé[0m [38;5;115mHelp[0m: 'src/pages/Reportes.jsx' is imported by the following path:
+ [38;5;240m  Ôöé[0m         - src/pages/Reportes.jsx
+ [38;5;240m  Ôöé[0m         - src/App.tsx
+ [38;5;240m  Ôöé[0m         - src/main.tsx
+ [38;5;240m  Ôöé[0m         - index.html
+[38;5;246mÔöÇÔöÇÔöÇÔò»[0m
+
+[31m[UNRESOLVED_IMPORT] [0mCould not resolve '../../services/cotizaciones' in src/pages/Reportes.jsx
+   [38;5;246mÔò¡[0m[38;5;246mÔöÇ[0m[38;5;246m[[0m src/pages/Reportes.jsx:3:37 [38;5;246m][0m
+   [38;5;246mÔöé[0m
+ [38;5;246m3 Ôöé[0m 
+[38;5;249mi[0m[38;5;249mm[0m[38;5;249mp[0m[38;5;249mo[0m[38;5;249mr[0m[38;5;249mt[0m[38;5;249m 
+[0m[38;5;249m{[0m[38;5;249m [0m[38;5;249mo[0m[38;5;249mb[0m[38;5;249mt[0m[38;5;249me[0m[38;5;249mn[0m[3
+8;5;249me[0m[38;5;249mr[0m[38;5;249mC[0m[38;5;249mo[0m[38;5;249mt[0m[38;5;249mi[0m[38;5;249mz[0m[38;5;249
+ma[0m[38;5;249mc[0m[38;5;249mi[0m[38;5;249mo[0m[38;5;249mn[0m[38;5;249me[0m[38;5;249ms[0m[38;5;249m 
+[0m[38;5;249m}[0m[38;5;249m [0m[38;5;249mf[0m[38;5;249mr[0m[38;5;249mo[0m[38;5;249mm[0m[38;5;249m 
+[0m"../../services/cotizaciones"[38;5;249m;[0m
+ [38;5;240m  Ôöé[0m                                     
+ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔö¼ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ  
+ [38;5;240m  Ôöé[0m                                                   
+Ôò░ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ Module not found.
+ [38;5;240m  Ôöé[0m 
+ [38;5;240m  Ôöé[0m [38;5;115mHelp[0m: 'src/pages/Reportes.jsx' is imported by the following path:
+ [38;5;240m  Ôöé[0m         - src/pages/Reportes.jsx
+ [38;5;240m  Ôöé[0m         - src/App.tsx
+ [38;5;240m  Ôöé[0m         - src/main.tsx
+ [38;5;240m  Ôöé[0m         - index.html
+[38;5;246mÔöÇÔöÇÔöÇÔò»[0m
+
+...[31m
+    at aggregateBindingErrorsIntoJsError (file:///C:/Users/elkin%20aguas/Documents/Proyectos/motoPreview/frontend/node_
+modules/rolldown/dist/shared/error-BP8lJHle.mjs:48:18)
+    at unwrapBindingResult (file:///C:/Users/elkin%20aguas/Documents/Proyectos/motoPreview/frontend/node_modules/rolldo
+wn/dist/shared/error-BP8lJHle.mjs:18:128)
+    at #build (file:///C:/Users/elkin%20aguas/Documents/Proyectos/motoPreview/frontend/node_modules/rolldown/dist/share
+d/rolldown-DfXO5K1m.mjs:133:34)
+    at async buildEnvironment (file:///C:/Users/elkin%20aguas/Documents/Proyectos/motoPreview/frontend/node_modules/vit
+e/dist/node/chunks/node.js:33821:66)
+    at async Object.build (file:///C:/Users/elkin%20aguas/Documents/Proyectos/motoPreview/frontend/node_modules/vite/di
+st/node/chunks/node.js:34242:19)
+    at async Object.buildApp (file:///C:/Users/elkin%20aguas/Documents/Proyectos/motoPreview/frontend/node_modules/vite
+/dist/node/chunks/node.js:34239:153)
+    at async CAC.<anonymous> 
+(file:///C:/Users/elkin%20aguas/Documents/Proyectos/motoPreview/frontend/node_modules/vite/dist/node/cli.js:776:3) {
+  errors: [Getter/Setter]
+}[39m
