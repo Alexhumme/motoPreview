@@ -16,7 +16,7 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
 - Lazy-loading implementado para Visor3D con React.lazy y Suspense
 - Migración de patrones useEffect + useRef a hook reutilizable useCargaInicial
 
-## [v1.1.0] - 2026-11-24
+## [v1.1.0] - 2026-11-23
 
 ### Added
 
