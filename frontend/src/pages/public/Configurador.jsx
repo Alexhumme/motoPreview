@@ -7,7 +7,7 @@ import { useCart } from '../../context/CartContext';
 import SiteHeader from '../../components/buttons/SiteHeader';
 import ImagenProducto from '../../components/ImagenProducto';
 import SelectorMoto from '../../components/forms/SelectorMoto';
-import { idMarcaMoto } from '../../utils/motos';
+import { etiquetaMoto, idMarcaMoto } from '../../utils/motos';
 import { refrescarMovimiento } from '../../utils/motion';
 import {
   LIMITE_NOMBRE,
@@ -326,11 +326,12 @@ export default function Configurador() {
     });
   }
 
-  function etiquetaMoto(cfg) {
+  function etiquetaConfiguracion(cfg) {
+    const moto = cfg.moto;
     const partes = [
-      nombresMoto.marcas.get(String(cfg.moto.marca)),
-      nombresMoto.modelos.get(String(cfg.moto.modelo)),
-      cfg.moto.anio,
+      nombresMoto.marcas.get(String(moto.marca)),
+      nombresMoto.modelos.get(String(moto.modelo)),
+      moto.anio,
     ].filter(Boolean);
     return partes.length ? partes.join(' · ') : 'Sin moto definida';
   }
@@ -417,7 +418,7 @@ export default function Configurador() {
                       <span className="config-tab__cuerpo">
                         <span className="config-tab__nombre">{cfg.nombre}</span>
                         <span className="config-tab__meta">
-                          <span className="config-tab__moto">{etiquetaMoto(cfg)}</span>
+                          <span className="config-tab__moto">{etiquetaConfiguracion(cfg)}</span>
                           <em className="config-tab__piezas">
                             {cfg.piezas.length} {cfg.piezas.length === 1 ? 'pza' : 'pzs'}
                           </em>
@@ -617,7 +618,7 @@ export default function Configurador() {
                 <strong data-scramble-hover>{configuracion.nombre}</strong>
                 <small>
                   {piezas.length
-                    ? `${piezas.length} ${piezas.length === 1 ? 'pieza seleccionada' : 'piezas seleccionadas'} · ${etiquetaMoto(configuracion)}`
+                    ? `${piezas.length} ${piezas.length === 1 ? 'pieza seleccionada' : 'piezas seleccionadas'} · ${etiquetaConfiguracion(configuracion)}`
                     : 'Aún no has agregado piezas'}
                 </small>
               </span>
