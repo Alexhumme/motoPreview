@@ -48,6 +48,18 @@ describe('AdminLayout', () => {
     expect(within(catalogo).queryByRole('link', { name: 'Catálogo RBAC' })).not.toBeInTheDocument();
   });
 
+  it('ofrece una sola entrada para inventario y accesorios', () => {
+    vi.mocked(usePermiso).mockReturnValue({
+      esSuperAdmin: () => true,
+      tieneAlgunPermiso: () => true,
+    });
+    renderLayout();
+    fireEvent.click(screen.getByRole('button', { name: 'Catálogo' }));
+    const catalogo = screen.getByRole('complementary', { name: 'Enlaces de Catálogo' });
+    expect(within(catalogo).getByRole('link', { name: 'Inventario y accesorios' })).toHaveAttribute('href', '/admin/inventario');
+    expect(within(catalogo).queryByRole('link', { name: 'Accesorios' })).not.toBeInTheDocument();
+  });
+
   it('no muestra Catálogo RBAC a un administrador de tienda', () => {
     vi.mocked(useAuth).mockReturnValue({
       usuario: { id_rol: ROL_ADMIN, usu_nombre: 'Ana Pérez' },

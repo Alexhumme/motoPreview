@@ -6,6 +6,11 @@ export async function obtenerInventario(idTienda) {
   return respuesta.data;
 }
 
+export async function crearInventario(datos) {
+  const respuesta = await api.post('/inventario', datos);
+  return respuesta.data;
+}
+
 export async function registrarMovimiento(datos) {
   const respuesta = await api.post('/inventario/movimiento', datos);
   return respuesta.data;

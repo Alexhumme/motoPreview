@@ -962,9 +962,8 @@ class InventoryCollection(DatabaseGuardMixin):
         return Inventory.objects.select_related(
             "tienda__plan",
             "producto__categoria_producto",
-            "producto__categoria_accesorio",
-            "producto__tipo_accesorio",
-        )
+            "producto__marca",
+        ).prefetch_related("producto__tipos")
 
     def get(self, request):
 
@@ -1037,10 +1036,9 @@ class InventoryDetail(DatabaseGuardMixin):
             request,
             Inventory.objects.select_related(
                 "tienda__plan",
-                "producto",
-                "producto__categoria_accesorio",
-                "producto__tipo_accesorio",
-            ),
+                "producto__categoria_producto",
+                "producto__marca",
+            ).prefetch_related("producto__tipos"),
         )
         if error:
             return error
@@ -1629,8 +1627,8 @@ class ProductCollection(ResourceCollection):
 
     def get_queryset(self):
         return Product.objects.select_related(
-            "categoria_producto", "categoria_accesorio", "tipo_accesorio"
-        ).all()
+            "categoria_producto", "marca"
+        ).prefetch_related("tipos")
 
     def get(self, request):
         # La vidriera lista TODOS los productos (accesorio o no) en la forma plana
@@ -1644,7 +1642,7 @@ class ProductDetail(ResourceDetail):
     serializer_class = ProductSerializer
     permiso_recurso = "productos"
     not_found_message = "Producto no encontrado."
-    queryset_relaciones = ("categoria_producto", "categoria_accesorio", "tipo_accesorio")
+    queryset_relaciones = ("categoria_producto", "marca")
     lectura_sin_matriz = True
 
     def get(self, request, pk):

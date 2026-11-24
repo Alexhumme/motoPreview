@@ -30,7 +30,6 @@ const Reportes = lazy(() => import('./pages/Reportes'));
 const Usuarios = lazy(() => import('./pages/Usuarios'));
 const Tienda = lazy(() => import('./pages/Tienda'));
 const Seguridad = lazy(() => import('./pages/Seguridad'));
-const Accesorios = lazy(() => import('./pages/Accesorios'));
 const Marcas = lazy(() => import('./pages/Marcas'));
 const TiposProducto = lazy(() => import('./pages/TiposProducto'));
 const CatalogoRBAC = lazy(() => import('./pages/CatalogoRBAC'));
@@ -119,23 +118,24 @@ function App() {
         >
           <Route index element={<LazyWrapper Component={Dashboard} />} />
           <Route path="perfil" element={<LazyWrapper Component={Perfil} />} />
-          <Route path="inventario" element={<LazyWrapper Component={Inventario} />} />
-          <Route path="cotizaciones" element={<LazyWrapper Component={Cotizaciones} />} />
-          <Route path="reportes" element={<LazyWrapper Component={Reportes} />} />
           <Route
-            path="accesorios"
+            path="inventario"
             element={
               <RutaProtegida
-                rolesPermitidos={[ROL_ADMIN]}
                 permisos={[
+                  { recurso: 'inventario', accion: 'listar' },
+                  { recurso: 'inventario', accion: 'crear' },
+                  { recurso: 'inventario', accion: 'actualizar' },
                   { recurso: 'productos', accion: 'crear' },
                   { recurso: 'productos', accion: 'actualizar' },
                 ]}
               >
-                <LazyWrapper Component={Accesorios} />
+                <LazyWrapper Component={Inventario} />
               </RutaProtegida>
             }
           />
+          <Route path="cotizaciones" element={<LazyWrapper Component={Cotizaciones} />} />
+          <Route path="reportes" element={<LazyWrapper Component={Reportes} />} />
           <Route
             path="usuarios"
             element={

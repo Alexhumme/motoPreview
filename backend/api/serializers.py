@@ -1,3 +1,4 @@
+from django.db import transaction
 from rest_framework import serializers
 
 from .models import (
@@ -50,6 +51,18 @@ class TipoProductoSerializer(serializers.ModelSerializer):
         read_only_fields = ("id_tipo_producto",)
 
 
+def _obtener_tipos_validos(ids):
+    ids = set(ids)
+    if not ids:
+        return []
+    tipos = list(TipoProducto.objects.filter(id_tipo_producto__in=ids))
+    if {tipo.id_tipo_producto for tipo in tipos} != ids:
+        raise serializers.ValidationError(
+            {"id_tipos": "Uno o más tipos de producto no existen."}
+        )
+    return tipos
+
+
 class ProductSerializer(serializers.ModelSerializer):
     id_categoria_producto = serializers.PrimaryKeyRelatedField(
         source="categoria_producto",
@@ -63,6 +76,8 @@ class ProductSerializer(serializers.ModelSerializer):
         allow_null=True,
         required=False,
     )
+    tipos = TipoProductoSerializer(many=True, read_only=True)
+    es_accesorio = serializers.BooleanField(read_only=True)
     id_tipos = serializers.ListField(
         child=serializers.UUIDField(),
         required=False,
@@ -80,11 +95,39 @@ class ProductSerializer(serializers.ModelSerializer):
             "id_categoria_producto",
             "id_marca",
             "id_tipos",
+            "es_accesorio",
+            "peso",
+            "tipos",
             "imagen",
             "codigo_sku",
             "precio",
         )
         read_only_fields = ("id_producto",)
+
+    def validate(self, attrs):
+        if "id_tipos" in attrs:
+            tipos = _obtener_tipos_validos(attrs["id_tipos"])
+            attrs["tipos"] = tipos
+            attrs["es_accesorio"] = any(tipo.accesorio for tipo in tipos)
+        return attrs
+
+    def create(self, validated_data):
+        tipos = validated_data.pop("tipos", None)
+        validated_data.pop("id_tipos", None)
+        with transaction.atomic():
+            instance = super().create(validated_data)
+            if tipos is not None:
+                instance.tipos.set(tipos)
+        return instance
+
+    def update(self, instance, validated_data):
+        tipos = validated_data.pop("tipos", None)
+        validated_data.pop("id_tipos", None)
+        with transaction.atomic():
+            instance = super().update(instance, validated_data)
+            if tipos is not None:
+                instance.tipos.set(tipos)
+        return instance
 
 
 class AccesorioSerializer(serializers.Serializer):
@@ -142,6 +185,12 @@ class AccesorioInputSerializer(serializers.Serializer):
         required=False,
         allow_null=True,
     )
+    id_categoria_producto = serializers.PrimaryKeyRelatedField(
+        queryset=ProductCategory.objects.all(),
+        source="categoria_producto",
+        required=False,
+        allow_null=True,
+    )
     acc_descripcion = serializers.CharField(
         required=False, allow_blank=True, allow_null=True
     )
@@ -159,6 +208,13 @@ class AccesorioInputSerializer(serializers.Serializer):
         required=False,
         allow_empty=True,
     )
+    es_accesorio = serializers.BooleanField(required=False)
+
+    def validate(self, attrs):
+        if "id_tipos" in attrs:
+            tipos = _obtener_tipos_validos(attrs["id_tipos"])
+            attrs["es_accesorio"] = any(tipo.accesorio for tipo in tipos)
+        return attrs
 
     def to_fields(self, data):
         """Mapea la entrada plana a campos del modelo Product (parcial-safe)."""
@@ -181,6 +237,10 @@ class AccesorioInputSerializer(serializers.Serializer):
             campos[campo] = valor
         if "marca" in data:
             campos["marca"] = data["marca"]
+        if "categoria_producto" in data:
+            campos["categoria_producto"] = data["categoria_producto"]
+        if "es_accesorio" in data:
+            campos["es_accesorio"] = data["es_accesorio"]
         # tipos (M2M) se manejan aparte por la vista
         if "id_tipos" in data:
             campos["_tipos"] = data["id_tipos"]
@@ -353,7 +413,6 @@ class InventorySerializer(serializers.ModelSerializer):
     id_producto = serializers.UUIDField(source="producto_id", read_only=True, allow_null=True)
     tienda = StoreSerializer(read_only=True)
     producto = ProductSerializer(read_only=True)
-    # Forma plana del producto (si es accesorio) para el panel de inventario.
     accesorio = serializers.SerializerMethodField()
 
     class Meta:
@@ -375,9 +434,9 @@ class InventorySerializer(serializers.ModelSerializer):
 
     def get_accesorio(self, instance):
         producto = instance.producto
-        if producto and producto.es_accesorio:
-            return AccesorioSerializer(producto).data
-        return None
+        if producto is None:
+            return None
+        return AccesorioSerializer(producto).data
 
 
 class InventoryMovementSerializer(serializers.ModelSerializer):

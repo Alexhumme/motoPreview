@@ -33,21 +33,15 @@ const CATEGORIAS = [
     icono: Package,
     items: [
       {
-        ruta: '/admin/accesorios',
-        etiqueta: 'Accesorios',
-        icono: Wrench,
-        permisos: [
-          { recurso: 'productos', accion: 'crear' },
-          { recurso: 'productos', accion: 'actualizar' },
-        ],
-      },
-      {
         ruta: '/admin/inventario',
-        etiqueta: 'Inventario',
+        etiqueta: 'Inventario y accesorios',
         icono: ClipboardList,
         permisos: [
           { recurso: 'inventario', accion: 'listar' },
+          { recurso: 'inventario', accion: 'crear' },
           { recurso: 'inventario', accion: 'actualizar' },
+          { recurso: 'productos', accion: 'crear' },
+          { recurso: 'productos', accion: 'actualizar' },
         ],
       },
       {

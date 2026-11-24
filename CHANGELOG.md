@@ -13,6 +13,7 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
 - Ruta `/resumen`, acceso desde la cabecera del portal y redirección del cliente después de iniciar sesión.
 - Gráficos con Recharts: histórico diario de solicitudes y ventas, distribución de estados y comparación de tiendas.
 - Selector de período de 7, 30, 90 días y último año para todos los paneles con cotizaciones.
+- Vista unificada de inventario y catálogo con alta/edición de productos, asociación de stock y movimientos.
 
 ### Changed
 
@@ -20,12 +21,14 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
 - El dashboard administrativo consume el nuevo resumen por capacidades y deja de filtrar datos en el frontend.
 - Recharts se carga de forma diferida para no engrosar el bundle inicial.
 - Los indicadores, alertas y controles de tabla usan iconos de `lucide-react`.
+- `Accesorios` e `Inventario` comparten una sola ruta; la clasificación de accesorio se deriva de los tipos de producto.
 
 ### Fixed
 
 - Carga del dashboard bajo React StrictMode y estados de error con reintento.
 - Usuarios sin permisos ven un mensaje de acceso en lugar de datos vacíos o inventario no autorizado.
 - `SelectorMoto`: la lista ya no se reabre tras elegir con Enter y una moto preseleccionada muestra todo el catálogo al enfocar.
+- El inventario muestra también productos comunes y los servicios del catálogo normalizan respuestas paginadas.
 
 ## [v1.1.1] - 2026-11-23
 

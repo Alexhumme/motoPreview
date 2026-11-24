@@ -1,31 +1,35 @@
 import api from './api';
 
+function lista(respuesta) {
+  return Array.isArray(respuesta.data) ? respuesta.data : respuesta.data.resultados || [];
+}
+
 export async function obtenerAccesorios() {
-  const respuesta = await api.get('/accesorios');
-  return respuesta.data;
+  return lista(await api.get('/accesorios'));
+}
+
+export async function obtenerProductos() {
+  return lista(await api.get('/productos'));
 }
 
 export async function obtenerCategorias() {
-  const respuesta = await api.get('/categorias');
-  return respuesta.data;
-}
-
-export async function crearAccesorio(datos) {
-  const respuesta = await api.post('/accesorios', datos);
-  return respuesta.data;
+  return lista(await api.get('/categorias-producto'));
 }
 
 export async function obtenerTiposProducto() {
-  const respuesta = await api.get('/tipos-producto');
-  return respuesta.data;
+  return lista(await api.get('/tipos-producto'));
 }
 
 export async function obtenerMarcasProducto() {
-  const respuesta = await api.get('/marcas-producto');
+  return lista(await api.get('/marcas-producto'));
+}
+
+export async function crearProducto(datos) {
+  const respuesta = await api.post('/productos', datos);
   return respuesta.data;
 }
 
-export async function actualizarAccesorio(id, datos) {
-  const respuesta = await api.put(`/accesorios/${id}`, datos);
+export async function actualizarProducto(id, datos) {
+  const respuesta = await api.put(`/productos/${id}`, datos);
   return respuesta.data;
 }
