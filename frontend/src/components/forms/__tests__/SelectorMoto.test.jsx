@@ -74,7 +74,7 @@ describe('SelectorMoto', () => {
     escribir('yamaha');
     expect(input).toHaveAttribute('aria-expanded', 'true');
     expect(screen.getAllByRole('option')).toHaveLength(2);
-    expect(screen.getByText('689 cc · Japón')).toBeInTheDocument();
+    expect(screen.getAllByRole('option')[0]).toHaveTextContent('689 cc · Japón');
   });
 
   it('resalta la palabra escrita dentro de la sugerencia', () => {
