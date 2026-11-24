@@ -4,7 +4,7 @@ Todos los cambios importantes del proyecto se documentan en este archivo.
 
 El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y el versionado sigue [Semantic Versioning](https://semver.org/lang/es/).
 
-## [v1.1.1] - 2026-11-24
+## [v1.1.1] - 2026-11-23
 
 ### Fixed
 
@@ -15,6 +15,8 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
 
 - Lazy-loading implementado para Visor3D con React.lazy y Suspense
 - Migración de patrones useEffect + useRef a hook reutilizable useCargaInicial
+
+MINOR porque se agregan funcionalidades sin romper compatibilidad
 
 ## [v1.1.0] - 2026-11-23
 

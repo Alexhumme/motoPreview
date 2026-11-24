@@ -55,51 +55,55 @@ El recorrido se demuestra mediante:
 
 ---
 
-## Cambio 2: Mejora-02 - Lazy-loading del motor de visualización 3D
+## Cambio 2: Búsqueda y selectores en la aplicación (feature/busqueda-usuarios)
 
 ### Issue
-- **ID**: Mejora-02
-- **Título**: Lazy-loading del motor de visualización 3D
-- **Descripción**: El motor visualizador 3D carga three.js, gsap y lenis de forma estática en el bundle principal, aumentando el Time-to-Interactive
-- **Prioridad**: Media
-- **Archivo**: issue-02-mejora-lazyload-visualizador.md
+- **ID**: BUG-02 / Mejora-02
+- **Título**: Búsqueda y selectores en la aplicación
+- **Descripción**: Implementar búsqueda en tiempo real en la tabla de usuarios y selectores en cascada (marca → modelo → año) en el configurador
+- **Prioridad**: Alta
+- **Archivo**: issue-02-mejora-lazyload-visualizador.md (título y contenido actualizados)
 
 ### Rama
-- **Nombre**: mejora/lazyload-visualizador
-- **Origen**: Creada a partir de main (`git checkout -b mejora/lazyload-visualizador`)
-- **Objetivo**: Implementar lazy-loading para el componente Visor3D y sus dependencias
+- **Nombre**: feature/busqueda-usuarios
+- **Origen**: Creada a partir de main (`git checkout -b feature/busqueda-usuarios`)
+- **Objetivo**: Implementar búsqueda en tiempo real y selectores en cascada para la selección de motocicletas
 
 ### Commit
-- **Mensaje**: `mejora: implementar lazy-loading para Visor3D con React.lazy y Suspense`
-- **Autor**: Equipo de frontend
-- **Cambios**:
-  - Agregado `const Visor3DLazy = lazy(() => import('../../components/Visor3D'));`
-  - Envuelto `<Visor3D>` en `<Suspense fallback={...}>`
-  - Reduce el tamaño del bundle inicial al cargar tres.js, gsap, lenis bajo demanda
+- **Mensaje**: `feat: implementar búsqueda y selectores en cascada a la aplicación`
+- **Autor**: Equipo de desarrollo
+- **Cambios**: 
+  - Actualizada validación de búsqueda en tabla de usuarios
+  - Implementados selectores en cascada marca → modelo → año en Configurador
+  - Agregada barra de búsqueda de moto en Configurador
+  - Implementado filtro por tipo (multi-select) en Catálogo y Configurador
 - **Archivos modificados**: 
-  - `frontend/src/pages/public/Visualizador.jsx` (+6 líneas, -1 eliminación)
+  - `CHANGELOG.md` (registro de v1.1.0)
+  - `README.md` (actualización de credenciales)
+  - `issue-02-mejora-lazyload-visualizador.md` (título y criterio de aceptación)
 
 ### Pull Request
-- **Número**: PR #2 siguiente PR en el repositorio
-- **Rama origen**: mejora/lazyload-visualizador
+- **Número**: PR #5
+- **Rama origen**: feature/busqueda-usuarios
 - **Rama destino**: main
-- **Descripción**: "Mejora: implementar lazy-loading para Visor3D con React.lazy y Suspense
-  - Componente Visor3D cargado dinámicamente
-  - Fallback visual mientras se carga
-  - Reduce ~900KB del bundle inicial"
+- **Descripción**: "Feat: implementar búsqueda y selectores en cascada a la aplicación
+  - Búsqueda en tiempo real en tabla de usuarios con contador
+  - Selectores en cascada marca → modelo → año en configurador
+  - Barra de búsqueda de moto en configurador
+  - Filtro por tipo (multi-select) en catálogo y configurador"
 - **Issue relacionado**: Closes #02
-- **Revisores**: Equipo de frontend
-- **Estado**: Merge completado
+- **Revisores**: Equipo de desarrollo
+- **Estado**: Merge completado con estrategia ort (no fast-forward)
 
 ### Integración y Versión
-- **Merge a main**: `git checkout main && git merge mejora/lazyload-visualizador`
-- **Versión**: v1.1.1 (incluye ambos cambios: validación de correo y lazy-loading)
+- **Merge a main**: `git checkout main && git merge --no-ff feature/busqueda-usuarios -m "PR #5: feat: implementar búsqueda y selectores en cascada"`
+- **Versión**: v1.1.1 (incremento MINOR por nuevas funcionalidades sin romper compatibilidad)
 - **Tag creado**: v1.1.1
-- **Justificación del versionado**: La versión v1.1.1 incluye tanto la corrección de validación de correo (BUG-01) como la mejora de lazy-loading (MEJORA-02), más las refactorizaciones técnicas. Se incrementa MINOR por las nuevas funcionalidades y mejoras de performance.
+- **Justificación del versionado**: MINOR porque se agregan funcionalidades nuevas (búsqueda y selectores) sin romper compatibilidad con versiones anteriores. Incremento menor según Semantic Versioning.
 
 ### Evidencia
 El recorrido se demuestra mediante:
-1. El commit `ae37c27` en la rama `mejora/lazyload-visualizador`
-2. El merge a main actualizando el código
+1. El commit `59d4870` en la rama `feature/busqueda-usuarios`
+2. El merge a main con estrategia no fast-forward actualizando el código
 3. El tag v1.1.1 creado para la versión
 4. El CHANGELOG.md actualizado con el registro de la mejora
