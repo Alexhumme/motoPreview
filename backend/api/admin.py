@@ -558,8 +558,10 @@ class NegocioUserAdmin(BaseAdmin):
 
     def get_queryset(self, request):
         queryset = super().get_queryset(request)
-        rol = UserRole.objects.filter(id_usuario=OuterRef("pk")).values("id_rol")[:1]
-        nombre_rol = Role.objects.filter(pk=Subquery(rol)).values("nombre_rol")[:1]
+        rol_id = UserRole.objects.filter(id_usuario=OuterRef("pk")).values("id_rol")[:1]
+        queryset = queryset.annotate(rol_id=Subquery(rol_id))
+        # Dos etapas evitan que OuterRef se resuelva contra la subconsulta de roles.
+        nombre_rol = Role.objects.filter(pk=OuterRef("rol_id")).values("nombre_rol")[:1]
         return queryset.annotate(rol_nombre=Subquery(nombre_rol))
 
     @admin.display(description="Rol")

@@ -56,6 +56,7 @@ from api.models import (
     SubscriptionPlan,
     TipoProducto,
     User,
+    UserRole,
 )
 from api.security import ROLE_ADMIN, ROLE_CUSTOMER, ROLE_SELLER, ROLE_SUPERADMIN
 
@@ -395,6 +396,26 @@ class SiteSettingsTests(EsquemaTestCase):
             403,
         )
         self.assertTrue(SiteSettings.objects.get(pk=1).email_verification_required)
+
+
+class AdminUsuarioTests(EsquemaTestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        seed_base()
+
+    def test_listado_muestra_el_rol_asignado_y_distingue_cuentas_sin_rol(self):
+        from api.admin import NegocioUserAdmin, admin_site
+
+        con_rol = self._crear_usuario("Con rol", ROLE_ADMIN, tienda=None)
+        sin_rol = self._crear_usuario("Sin rol", ROLE_CUSTOMER, tienda=None)
+        UserRole.objects.filter(id_usuario=sin_rol.id_usuario).delete()
+
+        modelo_admin = NegocioUserAdmin(User, admin_site)
+        usuarios = modelo_admin.get_queryset(None).in_bulk([con_rol.pk, sin_rol.pk])
+
+        self.assertEqual(modelo_admin.rol_actual(usuarios[con_rol.pk]), "admin")
+        self.assertEqual(modelo_admin.rol_actual(usuarios[sin_rol.pk]), "SIN ROL")
 
 
 class QuoteFlowTests(EsquemaTestCase):
