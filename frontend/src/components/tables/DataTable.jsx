@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp } from 'lucide-react';
 import './DataTable.css';
 
 const TAMANOS = [10, 25, 50, 100];
@@ -131,7 +132,11 @@ export default function DataTable({
                   {c.ordenable === false ? c.etiqueta : (
                     <button type="button" className="dt-orden" onClick={() => cambiarOrden(c.clave)}>
                       {c.etiqueta}
-                      <span aria-hidden="true">{orden.clave === c.clave ? (orden.direccion === 'asc' ? ' ▲' : ' ▼') : ''}</span>
+                      {orden.clave === c.clave && (
+                        <span aria-hidden="true">
+                          {orden.direccion === 'asc' ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                        </span>
+                      )}
                     </button>
                   )}
                 </th>
@@ -178,9 +183,13 @@ export default function DataTable({
             </select>
           </label>
           <span className="dt-paginas">
-            <button type="button" className="dt-boton dt-boton--suave" disabled={paginaActual <= 1} onClick={() => setPagina(paginaActual - 1)}>‹ Anterior</button>
+            <button type="button" className="dt-boton dt-boton--suave" disabled={paginaActual <= 1} onClick={() => setPagina(paginaActual - 1)}>
+              <ChevronLeft size={14} aria-hidden="true" /> Anterior
+            </button>
             <span>{paginaActual} / {totalPaginas}</span>
-            <button type="button" className="dt-boton dt-boton--suave" disabled={paginaActual >= totalPaginas} onClick={() => setPagina(paginaActual + 1)}>Siguiente ›</button>
+            <button type="button" className="dt-boton dt-boton--suave" disabled={paginaActual >= totalPaginas} onClick={() => setPagina(paginaActual + 1)}>
+              Siguiente <ChevronRight size={14} aria-hidden="true" />
+            </button>
           </span>
         </div>
       )}

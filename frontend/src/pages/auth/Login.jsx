@@ -42,13 +42,11 @@ export default function Login() {
     setEnviando(true);
     try {
       const usuario = await login(usu_email, password);
-      // Superadmin → consola de seguridad; personal → panel; cliente → inicio
-      if (usuario.id_rol === ROL_SUPERADMIN) {
-        navigate('/admin/permisos');
-      } else if (usuario.id_rol === ROL_ADMIN || usuario.id_rol === ROL_VENDEDOR) {
+      // El personal entra al panel; el cliente, a su resumen personal.
+      if (usuario.id_rol === ROL_SUPERADMIN || usuario.id_rol === ROL_ADMIN || usuario.id_rol === ROL_VENDEDOR) {
         navigate('/admin');
       } else {
-        navigate('/');
+        navigate('/resumen');
       }
     } catch (err) {
       setError(err.response?.data?.error || 'Credenciales inválidas');

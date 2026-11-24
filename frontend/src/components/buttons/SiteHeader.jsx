@@ -5,7 +5,7 @@ import { useAuth } from '../../context/authContexto';
 import { usePermiso } from '../../context/usePermiso';
 import { useCart } from '../../context/CartContext';
 import { useTema } from '../../context/temaContexto';
-import { ROL_ADMIN, ROL_VENDEDOR } from '../../utils/constants/roles';
+import { ROL_ADMIN, ROL_CLIENTE, ROL_VENDEDOR } from '../../utils/constants/roles';
 import './SiteHeader.css';
 
 export default function SiteHeader() {
@@ -27,6 +27,7 @@ export default function SiteHeader() {
     usuario.id_rol === ROL_VENDEDOR ||
     esSuperAdmin()
   );
+  const esCliente = usuario?.id_rol === ROL_CLIENTE;
   // Mismo criterio que el panel admin: con matriz RBAC cargada, el enlace
   // solo se pinta si el rol puede entrar a algún módulo; sin matriz, hereda.
   const permisosCargados = (usuario?.permisos?.length ?? 0) > 0 || esSuperAdmin();
@@ -96,7 +97,7 @@ export default function SiteHeader() {
           </button>
           {usuario ? (
             <div className="header-account">
-              {/* El personal va a su panel; los clientes, a sus cotizaciones */}
+              {esCliente && <Link to="/resumen" className="btn btn--ghost">Mi resumen</Link>}
 
               {mostrarPanel &&
                 (esSuperAdmin() ? (
@@ -139,6 +140,7 @@ export default function SiteHeader() {
             <Link to="/catalogo" className={`mobile-nav-link${location.pathname === '/catalogo' ? ' mobile-nav-link--active' : ''}`}>Catálogo</Link>
             <Link to="/configurador" className={`mobile-nav-link${location.pathname === '/configurador' ? ' mobile-nav-link--active' : ''}`}>Configurador</Link>
             <Link to="/contacto" className={`mobile-nav-link${location.pathname === '/contacto' ? ' mobile-nav-link--active' : ''}`}>Contactanos</Link>
+            {esCliente && <Link to="/resumen" className="mobile-nav-link">Mi resumen</Link>}
             {usuario ? (
               <button onClick={logout} className="mobile-nav-link mobile-nav-link--button">Salir</button>
             ) : (

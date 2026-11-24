@@ -96,6 +96,7 @@ _RUTAS_API = [
     ("api/inventario/movimiento", views.InventoryMovementView.as_view()),
     ("api/inventario/<uuid:pk>", views.InventoryDetail.as_view()),
     ("api/cotizaciones", views.QuoteCollection.as_view()),
+    ("api/panel/resumen", views.PanelResumenView.as_view()),
     ("api/cotizaciones/<uuid:pk>", views.QuoteDetailView.as_view()),
     ("api/cotizaciones/<uuid:pk>/estado", views.QuoteStatus.as_view()),
     ("api/cotizaciones/<uuid:pk>/historial", views.QuoteHistoryView.as_view()),
