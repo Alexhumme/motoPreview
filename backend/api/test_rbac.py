@@ -656,6 +656,7 @@ class RecursoPorVistaTests(SimpleTestCase):
             "RolePermisosBulkUpdateView": "reasignar concesiones, solo Superadmin",
             # Datos propios del usuario autenticado.
             "PermisosUsuarioView": "el usuario lee sus propios permisos",
+            "PanelResumenView": "resumen por capacidades; cada bloque aplica su propio scope",
             # Vidriera: lectura de catálogo por relación, sin sesión.
             "Model3DByAccessory": "visor 3D público del accesorio",
         }

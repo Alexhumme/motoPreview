@@ -102,6 +102,14 @@ function App() {
           }
         />
         <Route
+          path="/resumen"
+          element={
+            <RutaProtegida>
+              <LazyWrapper Component={Dashboard} />
+            </RutaProtegida>
+          }
+        />
+        <Route
           path="/admin"
           element={
             <RutaProtegida rolesPermitidos={[ROL_ADMIN, ROL_VENDEDOR]}>
@@ -109,7 +117,7 @@ function App() {
             </RutaProtegida>
           }
         >
-          <Route index element={<Dashboard />} />
+          <Route index element={<LazyWrapper Component={Dashboard} />} />
           <Route path="perfil" element={<LazyWrapper Component={Perfil} />} />
           <Route path="inventario" element={<LazyWrapper Component={Inventario} />} />
           <Route path="cotizaciones" element={<LazyWrapper Component={Cotizaciones} />} />

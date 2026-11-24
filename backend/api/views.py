@@ -2,7 +2,7 @@ import functools
 import hashlib
 import logging
 import secrets
-from datetime import timedelta
+from datetime import date, timedelta
 from decimal import Decimal
 from uuid import UUID
 
@@ -1970,6 +1970,315 @@ def resumen_global(hoy):
 
     consolidado["tiendas"] = tiendas
     return consolidado
+
+
+def _rango_resumen(request):
+    """Fechas inclusivas del panel; por defecto, los últimos 30 días."""
+    hoy = timezone.localdate()
+    desde = hoy - timedelta(days=29)
+    hasta = hoy
+    for nombre, atributo in (("desde", "desde"), ("hasta", "hasta")):
+        valor = request.query_params.get(nombre)
+        if valor in (None, ""):
+            continue
+        try:
+            fecha = date.fromisoformat(str(valor))
+        except (TypeError, ValueError):
+            return None, None, Response(
+                {"error": f"{nombre} debe tener formato AAAA-MM-DD."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if atributo == "desde":
+            desde = fecha
+        else:
+            hasta = fecha
+    if desde > hasta:
+        return None, None, Response(
+            {"error": "desde no puede ser posterior a hasta."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    if (hasta - desde).days > 365:
+        return None, None, Response(
+            {"error": "El rango no puede superar 366 días."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    return desde, hasta, None
+
+
+def _queryset_con_acceso(usuario, recurso, queryset, *, campo_dueno=None):
+    """QuerySet ya autorizado y acotado, o ``None`` si el bloque no aplica."""
+    scopes = scopes_concedidos(usuario, recurso, "listar")
+    if not scopes:
+        return None, scopes
+    predicado, error = filas_del_scope(
+        usuario,
+        recurso,
+        scopes,
+        campo_tienda="tienda_id",
+        campo_dueno=campo_dueno,
+    )
+    if error:
+        return None, scopes
+    return queryset.filter(predicado), scopes
+
+
+def _estados_cotizacion(filas):
+    estados = {
+        nombre: {"cantidad": 0, "total": Decimal("0")}
+        for nombre in ("pendiente", "aprobada", "rechazada", "completada")
+    }
+    for fila in filas:
+        estado = fila["coti_estado"]
+        if estado in estados:
+            estados[estado] = _magnitud(fila)
+    return estados
+
+
+def _ventas_por_fecha(cotizaciones, desde, hasta):
+    """Ventas completadas, sin duplicar una cotización el mismo día.
+
+    El historial no guarda el importe de la venta: se toma el total actual de la
+    cotización, igual que el resumen existente. ``distinct`` se apoya en día,
+    cotización y tienda para tolerar transiciones repetidas.
+    """
+    fechas = list(
+        QuoteStatusHistory.objects.filter(
+            estado="completada",
+            cotizacion__in=cotizaciones,
+            fecha__date__gte=desde,
+            fecha__date__lte=hasta,
+        )
+        .order_by()
+        .values("cotizacion_id", "fecha__date", "cotizacion__tienda_id")
+        .distinct()
+    )
+    if not fechas:
+        return []
+    totales = dict(
+        Quote.objects.filter(pk__in={fila["cotizacion_id"] for fila in fechas})
+        .values_list("pk", "total")
+    )
+    return [
+        {
+            "fecha": fila["fecha__date"],
+            "tienda_id": fila["cotizacion__tienda_id"],
+            "total": totales.get(fila["cotizacion_id"]) or Decimal("0"),
+        }
+        for fila in fechas
+    ]
+
+
+def _serie_diaria(cotizaciones, ventas, desde, hasta):
+    por_fecha = {}
+    for fila in cotizaciones:
+        clave = por_fecha.setdefault(
+            fila["fecha_solicitud__date"],
+            {
+                "cotizaciones": {"cantidad": 0, "total": Decimal("0")},
+                "ventas_completadas": {"cantidad": 0, "total": Decimal("0")},
+            },
+        )
+        clave["cotizaciones"]["cantidad"] += fila["cantidad"]
+        clave["cotizaciones"]["total"] += fila["total"] or Decimal("0")
+    for fila in ventas:
+        clave = por_fecha.setdefault(
+            fila["fecha"],
+            {
+                "cotizaciones": {"cantidad": 0, "total": Decimal("0")},
+                "ventas_completadas": {"cantidad": 0, "total": Decimal("0")},
+            },
+        )
+        clave["ventas_completadas"]["cantidad"] += 1
+        clave["ventas_completadas"]["total"] += fila["total"]
+
+    serie = []
+    dia = desde
+    while dia <= hasta:
+        magnitud = por_fecha.get(
+            dia,
+            {
+                "cotizaciones": {"cantidad": 0, "total": Decimal("0")},
+                "ventas_completadas": {"cantidad": 0, "total": Decimal("0")},
+            },
+        )
+        serie.append({"fecha": dia.isoformat(), **magnitud})
+        dia += timedelta(days=1)
+    return serie
+
+
+def _metricas_actuales(cotizaciones, hoy):
+    estados = _estados_cotizacion(
+        cotizaciones.values("coti_estado").annotate(
+            cantidad=Count("pk"), total=Sum("total")
+        )
+    )
+    ventas_hoy = _ventas_por_fecha(cotizaciones, hoy, hoy)
+    return {
+        "cotizaciones": {
+            "cantidad": sum(estado["cantidad"] for estado in estados.values()),
+            "total": sum((estado["total"] for estado in estados.values()), Decimal("0")),
+        },
+        "ventas_completadas": estados["completada"],
+        "por_cobrar": estados["aprobada"],
+        "pedidos_pendientes": estados["pendiente"],
+        "ventas_hoy": {
+            "cantidad": len(ventas_hoy),
+            "total": sum((venta["total"] for venta in ventas_hoy), Decimal("0")),
+        },
+    }
+
+
+def _inventario_del_panel(inventario):
+    filas = list(
+        inventario.values("estado_inventario").annotate(
+            cantidad=Count("pk"), unidades=Sum("stock_actual")
+        )
+    )
+    por_estado = {fila["estado_inventario"]: fila for fila in filas}
+    alertas = list(
+        inventario.filter(estado_inventario__in=("bajo", "agotado"))
+        .select_related("producto")
+        .order_by("stock_actual", "pk")[:5]
+        .values(
+            "id_inventario",
+            "stock_actual",
+            "stock_minimo",
+            "estado_inventario",
+            "producto__nombre",
+        )
+    )
+    return {
+        "total": sum(fila["cantidad"] for fila in filas),
+        "unidades": sum((fila["unidades"] or 0 for fila in filas), 0),
+        "bajo": por_estado.get("bajo", {}).get("cantidad", 0),
+        "agotado": por_estado.get("agotado", {}).get("cantidad", 0),
+        "alertas": alertas,
+    }
+
+
+def _comparacion_tiendas(cotizaciones, ventas):
+    por_tienda = {}
+    for fila in cotizaciones:
+        clave = por_tienda.setdefault(
+            fila["tienda_id"],
+            {
+                "cotizaciones": {"cantidad": 0, "total": Decimal("0")},
+                "ventas_completadas": {"cantidad": 0, "total": Decimal("0")},
+            },
+        )
+        clave["cotizaciones"]["cantidad"] += fila["cantidad"]
+        clave["cotizaciones"]["total"] += fila["total"] or Decimal("0")
+    for fila in ventas:
+        clave = por_tienda.setdefault(
+            fila["tienda_id"],
+            {
+                "cotizaciones": {"cantidad": 0, "total": Decimal("0")},
+                "ventas_completadas": {"cantidad": 0, "total": Decimal("0")},
+            },
+        )
+        clave["ventas_completadas"]["cantidad"] += 1
+        clave["ventas_completadas"]["total"] += fila["total"]
+
+    tiendas = []
+    for tienda in Store.objects.filter(estado_tienda="activa").order_by("nombre_tienda"):
+        magnitud = por_tienda.get(
+            tienda.id_tienda,
+            {
+                "cotizaciones": {"cantidad": 0, "total": Decimal("0")},
+                "ventas_completadas": {"cantidad": 0, "total": Decimal("0")},
+            },
+        )
+        tiendas.append(
+            {
+                "id_tienda": str(tienda.id_tienda),
+                "nombre": tienda.nombre_tienda,
+                **magnitud,
+            }
+        )
+    return tiendas
+
+
+class PanelResumenView(DatabaseGuardMixin):
+    """Resumen del portal por capacidades reales del usuario.
+
+    La autenticación es el único requisito de entrada. Cada bloque consulta sus
+    propios scopes antes de tocar los datos, de modo que un cliente no necesita
+    permisos de ventas ni inventario para ver su propia actividad.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        desde, hasta, error = _rango_resumen(request)
+        if error:
+            return error
+        hoy = timezone.localdate()
+
+        cotizaciones, scopes_cotizaciones = _queryset_con_acceso(
+            request.user,
+            "cotizaciones",
+            Quote.objects.all(),
+            campo_dueno="usuario_id",
+        )
+        inventario, _ = _queryset_con_acceso(
+            request.user,
+            "inventario",
+            Inventory.objects.all(),
+        )
+
+        if es_superadmin(request.user):
+            alcance = "global"
+        elif request.user.id_tienda:
+            alcance = "tienda"
+        elif "propio" in scopes_cotizaciones:
+            alcance = "propio"
+        elif cotizaciones is not None:
+            alcance = "global"
+        else:
+            alcance = None
+
+        comparar = es_superadmin(request.user) and request.query_params.get("comparar") == "1"
+        datos = {
+            "alcance": alcance,
+            "zona": settings.TIME_ZONE,
+            "desde": desde.isoformat(),
+            "hasta": hasta.isoformat(),
+            "capacidades": {
+                "cotizaciones": cotizaciones is not None,
+                "inventario": inventario is not None,
+                "comparar_tiendas": comparar and cotizaciones is not None,
+            },
+            "diario": [],
+            "estados": _estados_cotizacion([]),
+            "actual": None,
+            "inventario": None,
+        }
+
+        if cotizaciones is not None:
+            en_rango = cotizaciones.filter(
+                fecha_solicitud__date__gte=desde,
+                fecha_solicitud__date__lte=hasta,
+            )
+            cotizaciones_diarias = list(
+                en_rango.values("fecha_solicitud__date", "tienda_id").annotate(
+                    cantidad=Count("pk"), total=Sum("total")
+                )
+            )
+            ventas = _ventas_por_fecha(cotizaciones, desde, hasta)
+            datos["diario"] = _serie_diaria(cotizaciones_diarias, ventas, desde, hasta)
+            datos["estados"] = _estados_cotizacion(
+                en_rango.values("coti_estado").annotate(
+                    cantidad=Count("pk"), total=Sum("total")
+                )
+            )
+            datos["actual"] = _metricas_actuales(cotizaciones, hoy)
+            if comparar:
+                datos["tiendas"] = _comparacion_tiendas(cotizaciones_diarias, ventas)
+
+        if inventario is not None:
+            datos["inventario"] = _inventario_del_panel(inventario)
+
+        return Response(datos)
 
 
 class ReporteResumenView(DatabaseGuardMixin):
