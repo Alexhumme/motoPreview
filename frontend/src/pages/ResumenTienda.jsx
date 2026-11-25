@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ClipboardList, TrendingUp, WalletCards, Plus, Eye, Check, X } from 'lucide-react';
+import { ClipboardList, TrendingUp, WalletCards } from 'lucide-react';
 import GestionInventarioTienda from '../components/inventario/GestionInventarioTienda';
 import { obtenerResumenDia } from '../services/reportes';
+import { obtenerTienda, obtenerTiendas } from '../services/tiendas';
+import { obtenerUsuarios, actualizarUsuario } from '../services/usuarios';
 import { mensajeError } from '../services/crud';
 import DataTable from '../components/tables/DataTable';
 import { usePermiso } from '../context/usePermiso';
@@ -25,6 +27,12 @@ const formatoCOP = (valor) =>
 
 const VACIO = { cantidad: 0, total: 0 };
 
+const TABS = [
+  { clave: 'inventario', etiqueta: 'Inventario de la tienda' },
+  { clave: 'movimientos', etiqueta: 'Movimientos de la tienda' },
+  { clave: 'datos', etiqueta: 'Datos de la tienda' },
+];
+
 /**
  * Resumen del día de una tienda específica, abierto desde el inventario de
  * tiendas. El backend solo entrega esta vista al superadmin; el personal de
@@ -32,11 +40,9 @@ const VACIO = { cantidad: 0, total: 0 };
  */
 export default function ResumenTienda() {
   const { id } = useParams();
-  const { esSuperAdmin, esAdmin, esVendedor } = usePermiso();
+  const { esSuperAdmin } = usePermiso();
   // Funciona tanto si usePermiso devuelve una función como un booleano.
   const esSuper = typeof esSuperAdmin === 'function' ? !!esSuperAdmin() : !!esSuperAdmin;
-  const esAdminTienda = typeof esAdmin === 'function' ? !!esAdmin() : !!esAdmin;
-  const esVendedorTienda = typeof esVendedor === 'function' ? !!esVendedor() : !!esVendedor;
 
   const [tienda, setTienda] = useState(null);
   const [resumen, setResumen] = useState(null);
@@ -54,12 +60,6 @@ export default function ResumenTienda() {
   const [guardando, setGuardando] = useState(false);
   const [errorModal, setErrorModal] = useState('');
 
-  const [vista, setVista] = useState('datos'); // 'inventario' | 'movimientos' | 'datos'
-  const [productoSeleccionado, setProductoSeleccionado] = useState(null);
-
-  const [modalAgregarProducto, setModalAgregarProducto] = useState(false);
-  const [productoCatalogo, setProductoCatalogo] = useState(null);
-  const [formAgregarProducto, setFormAgregarProducto] = useState({ id_producto: '', cantidad: 1 });
   const [tabActivo, setTabActivo] = useState('inventario');
 
   const cargar = useCallback(async () => {
@@ -69,6 +69,7 @@ export default function ResumenTienda() {
       setResumen(datosResumen);
       setError('');
     } catch (err) {
+      console.error(err);
       setError(mensajeError(err, 'No se pudo cargar el resumen de esta tienda.'));
     } finally {
       setCargando(false);
@@ -86,6 +87,7 @@ export default function ResumenTienda() {
       setTiendas(datosTiendas);
       setErrorUsuarios('');
     } catch (err) {
+      console.error(err);
       setErrorUsuarios(mensajeError(err, 'No se pudo cargar la lista de usuarios de la tienda.'));
     } finally {
       setCargandoUsuarios(false);
@@ -135,61 +137,6 @@ export default function ResumenTienda() {
       setErrorModal(err.response?.data?.error || 'Error al cambiar el rol.');
     } finally {
       setGuardando(false);
-    }
-  }
-
-  async function cargarProductosCatalogo() {
-    try {
-      const respuesta = await fetch('/api/productos', {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
-      });
-      const productos = await respuesta.json();
-      setProductoCatalogo(productos);
-      setModalAgregarProducto(true);
-    } catch (err) {
-      setError(mensajeError(err, 'No se pudieron cargar los productos del catálogo.'));
-    }
-  }
-
-  function cerrarModalAgregarProducto() {
-    setModalAgregarProducto(false);
-    setProductoCatalogo(null);
-    setFormAgregarProducto({ id_producto: '', cantidad: 1 });
-  }
-
-  async function confirmarAgregarProducto(evento) {
-    evento.preventDefault();
-    setGuardando(true);
-    setErrorModal('');
-    try {
-      const { id_producto, cantidad } = formAgregarProducto;
-      const respuesta = await fetch(`/api/inventario/${id}/agregar`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id_producto, cantidad }),
-      });
-      const resultado = await respuesta.json();
-      if (resultado.exito) {
-        setFormAgregarProducto({ id_producto: '', cantidad: 1 });
-        cerrarModalAgregarProducto();
-        await cargar();
-        // El backend debe ejecutar el trigger que registra el movimiento de entrada
-        // referente a ese producto
-      } else {
-        setErrorModal(resultado.mensaje || 'Error al agregar producto al inventario.');
-      }
-    } catch (err) {
-      setErrorModal(err.response?.data?.error || 'Error al agregar producto al inventario.');
-    } finally {
-      setGuardando(false);
-    }
-  }
-
-  function reabrirCambiarRol() {
-    if (modalCambiarRol) {
-      setRolDestino(modalCambiarRol.id_rol || '');
-      setTiendaDestino(modalCambiarRol.id_tienda || '');
     }
   }
 
@@ -248,20 +195,6 @@ export default function ResumenTienda() {
   const porCobrar = resumen?.por_cobrar || VACIO;
   const pendientes = resumen?.pedidos_pendientes || VACIO;
 
-  // Contador de trabajadores asignados a la tienda (rol Vendedor = 3 o ROL_VENDEDOR)
-  const totalTrabajadores = tienda.usuarios
-    ? tienda.usuarios.filter(
-        u => u.id_rol === ROL_VENDEDOR || (u.rol && u.rol === 'Vendedor')
-      ).length
-    : 0;
-
-  // Tabs system: separa Inventario, Movimientos y Datos de la tienda
-  const tabs = [
-    { clave: 'inventario', etiqueta: 'Inventario de la tienda' },
-    { clave: 'movimientos', etiqueta: 'Movimientos de la tienda' },
-    { clave: 'datos', etiqueta: 'Datos de la tienda' },
-  ];
-
   return (
     <div className="tiendas">
       <header className="tiendas-header">
@@ -278,21 +211,7 @@ export default function ResumenTienda() {
         </div>
       </header>
 
-      <div className="inventario-tabs" aria-label="Vistas de la tienda">
-        {tabs.map((t) => (
-          <button
-            key={t.clave}
-            type="button"
-            role="tab"
-            aria-selected={tabActivo === t.clave}
-            className={`inventario-tab${tabActivo === t.clave ? ' inventario-tab--activa' : ''}`}
-            onClick={() => setTabActivo(t.clave)}
-          >
-            {t.etiqueta}
-          </button>
-        ))}
-      </div>
-
+      {/* Indicadores: siempre visibles, sin importar la pestaña */}
       <section className="dashboard-kpis" aria-label={`Indicadores de ${tienda.nombre_tienda}`}>
         <article className="kpi kpi--venta">
           <span className="kpi-icon" aria-hidden="true"><TrendingUp size={20} /></span>
@@ -320,74 +239,118 @@ export default function ResumenTienda() {
         </article>
       </section>
 
-      <GestionInventarioTienda idTienda={id} />
+      <div className="inventario-tabs" role="tablist" aria-label="Vistas de la tienda">
+        {TABS.map((t) => (
+          <button
+            key={t.clave}
+            id={`tab-${t.clave}`}
+            type="button"
+            role="tab"
+            aria-selected={tabActivo === t.clave}
+            aria-controls={`panel-${t.clave}`}
+            className={`inventario-tab${tabActivo === t.clave ? ' inventario-tab--activa' : ''}`}
+            onClick={() => setTabActivo(t.clave)}
+          >
+            {t.etiqueta}
+          </button>
+        ))}
+      </div>
 
-      <section className="card" aria-label="Datos de contacto">
-        <header className="card-head">
-          <span>
-            <small>Contacto</small>
-            <strong>Datos de la tienda</strong>
-          </span>
-        </header>
-        <dl className="tiendas-data-list">
-          <div><dt>NIT</dt><dd>{tienda.nit || '—'}</dd></div>
-          <div><dt>Teléfono</dt><dd>{tienda.telefono_tienda || '—'}</dd></div>
-          <div><dt>Email</dt><dd>{tienda.email_tienda || '—'}</dd></div>
-          <div><dt>Dirección</dt><dd>{tienda.direccion_tienda || '—'}</dd></div>
-        </dl>
-      </section>
-
-      {/* Panel de cotizaciones de la tienda - titulo cambiado a "cotizaciones de [la tienda]" */}
-      <section className="card" aria-label="Cotizaciones de la tienda">
-        <header className="card-head">
-          <span>
-            <small>Cotizaciones</small>
-            <strong>Cotizaciones de {tienda.nombre_tienda}</strong>
-          </span>
-        </header>
-        <div className="cotizaciones-panel">
-          <p className="cotizaciones-count">
-            <strong>{pendientes.cantidad} cotización{pendientes.cantidad !== 1 ? 'es' : ''} pendiente{pendientes.cantidad !== 1 ? 's' : ''}</strong>
-          </p>
-          <MiniCotizacionesList idTienda={id} soloTienda={true} rango={3} />
-          <div className="ver-todas">
-           <Link className="btn btn--outline btn--sm" to={`/admin/tiendas/${id}/cotizaciones`}>Ver todas las cotizaciones de la tienda</Link>
-          </div>
+      {/* TAB: Inventario */}
+      {tabActivo === 'inventario' && (
+        <div id="panel-inventario" role="tabpanel" aria-labelledby="tab-inventario">
+          <GestionInventarioTienda idTienda={id} />
         </div>
-      </section>
+      )}
 
-      {/* Panel de estados de solicitudes - titulo cambiado de 'Estado de mis solicitudes' a 'Estado de las solicitudes' */}
-      <section className="card" aria-label="Estado de solicitudes">
-        <header className="card-head">
-          <span>
-            <small>Período</small>
-            <strong>Estado de las solicitudes</strong>
-          </span>
-        </header>
-        <PanelEstadosResumen datos={resumen} titulo="Estado de las solicitudes" />
-      </section>
+      {/* TAB: Movimientos */}
+      {tabActivo === 'movimientos' && (
+        <div id="panel-movimientos" role="tabpanel" aria-labelledby="tab-movimientos">
+          <section className="card" aria-label="Movimientos de la tienda">
+            <header className="card-head">
+              <span>
+                <small>Historial</small>
+                <strong>Movimientos de {tienda.nombre_tienda}</strong>
+              </span>
+            </header>
+            {/* TODO: reemplazar por tu componente de movimientos, por ejemplo:
+                <MovimientosTienda idTienda={id} /> */}
+            <p className="mini-vacio">Aún no hay un listado de movimientos configurado para esta vista.</p>
+          </section>
+        </div>
+      )}
 
-      {esSuper && (
-        <section className="card" aria-label="Usuarios de la tienda">
-          <header className="card-head">
-            <span>
-              <small>Usuarios</small>
-              <strong>Usuarios asignados a {tienda.nombre_tienda}</strong>
-            </span>
-          </header>
-          {errorUsuarios && <p className="form-error" role="alert">{errorUsuarios}</p>}
-          {cargandoUsuarios ? (
-            <p>Cargando usuarios...</p>
-          ) : (
-            <DataTable
-              columnas={columnasUsuarios}
-              filas={usuarios}
-              claveFila="id_usuario"
-              cargando={cargandoUsuarios}
-              vacio="No hay usuarios asignados a esta tienda."
-            />
+      {/* TAB: Datos de la tienda */}
+      {tabActivo === 'datos' && (
+        <div id="panel-datos" role="tabpanel" aria-labelledby="tab-datos">
+          <section className="card" aria-label="Datos de contacto">
+            <header className="card-head">
+              <span>
+                <small>Contacto</small>
+                <strong>Datos de la tienda</strong>
+              </span>
+            </header>
+            <dl className="tiendas-data-list">
+              <div><dt>NIT</dt><dd>{tienda.nit || '—'}</dd></div>
+              <div><dt>Teléfono</dt><dd>{tienda.telefono_tienda || '—'}</dd></div>
+              <div><dt>Email</dt><dd>{tienda.email_tienda || '—'}</dd></div>
+              <div><dt>Dirección</dt><dd>{tienda.direccion_tienda || '—'}</dd></div>
+            </dl>
+          </section>
+
+          <section className="card" aria-label="Cotizaciones de la tienda">
+            <header className="card-head">
+              <span>
+                <small>Cotizaciones</small>
+                <strong>Cotizaciones de {tienda.nombre_tienda}</strong>
+              </span>
+            </header>
+            <div className="cotizaciones-panel">
+              <p className="cotizaciones-count">
+                <strong>{pendientes.cantidad} cotización{pendientes.cantidad !== 1 ? 'es' : ''} pendiente{pendientes.cantidad !== 1 ? 's' : ''}</strong>
+              </p>
+              <MiniCotizacionesList idTienda={id} rango={3} />
+              <div className="ver-todas">
+                <Link className="btn btn--outline btn--sm" to={`/admin/tiendas/${id}/cotizaciones`}>
+                  Ver todas las cotizaciones de la tienda
+                </Link>
+              </div>
+            </div>
+          </section>
+
+          <section className="card" aria-label="Estado de solicitudes">
+            <header className="card-head">
+              <span>
+                <small>Período</small>
+                <strong>Estado de las solicitudes</strong>
+              </span>
+            </header>
+            <PanelEstadosResumen datos={resumen} />
+          </section>
+
+          {esSuper && (
+            <section className="card" aria-label="Usuarios de la tienda">
+              <header className="card-head">
+                <span>
+                  <small>Usuarios</small>
+                  <strong>Usuarios asignados a {tienda.nombre_tienda}</strong>
+                </span>
+              </header>
+              {errorUsuarios && <p className="form-error" role="alert">{errorUsuarios}</p>}
+              {cargandoUsuarios ? (
+                <p>Cargando usuarios...</p>
+              ) : (
+                <DataTable
+                  columnas={columnasUsuarios}
+                  filas={usuarios}
+                  claveFila="id_usuario"
+                  cargando={cargandoUsuarios}
+                  vacio="No hay usuarios asignados a esta tienda."
+                />
+              )}
+            </section>
           )}
-        </section>
+        </div>
       )}
 
       {modalCambiarRol && (
@@ -462,32 +425,27 @@ export default function ResumenTienda() {
 }
 
 /** Mini-listado de las últimas cotizaciones solicitadas a la tienda */
-function MiniCotizacionesList({ idTienda, soloTienda = false, rango = 3 }) {
-  const { esSuperAdmin, esAdmin, esVendedor } = usePermiso();
-  const esSuper = typeof esSuperAdmin === 'function' ? !!esSuperAdmin() : !!esSuperAdmin;
-  const esAdminT = typeof esAdmin === 'function' ? !!esAdmin() : !!esAdmin;
-  const esVendedorT = typeof esVendedor === 'function' ? !!esVendedor() : !!esVendedor;
-
+function MiniCotizacionesList({ idTienda, rango = 3 }) {
   const [cotizaciones, setCotizaciones] = useState([]);
   const [cargando, setCargando] = useState(true);
 
   const cargar = useCallback(async () => {
     try {
       const params = { limite: rango };
-      if (!esSuper && idTienda) {
-        // Admin y vendedor solo ven cotizaciones de su tienda
-        params.id_tienda = idTienda;
-      }
+      if (idTienda) params.id_tienda = idTienda;
       const query = new URLSearchParams(params).toString();
-      const respuesta = await fetch(`/api/cotizaciones/ultimas?${query}`);
+      // TODO: mover a services/cotizaciones para reutilizar el token de autenticación.
+      const respuesta = await fetch(`/api/cotizaciones/ultimas?${query}`, { credentials: 'include' });
+      if (!respuesta.ok) throw new Error(`HTTP ${respuesta.status}`);
       const data = await respuesta.json();
       setCotizaciones(data.cotizaciones || []);
     } catch (err) {
+      console.error(err);
       setCotizaciones([]);
     } finally {
       setCargando(false);
     }
-  }, [idTienda, esSuper, esAdminT, esVendedorT]);
+  }, [idTienda, rango]);
 
   const cargarRef = useRef();
   useEffect(() => {
@@ -500,7 +458,9 @@ function MiniCotizacionesList({ idTienda, soloTienda = false, rango = 3 }) {
   if (cargando) {
     return (
       <div className="mini-skeleton">
-        {[0, 1, 2].map(() => <div key={Math.random()} className="skeleton" style={{ height: '40px', marginBottom: '8px' }} />)}
+        {[0, 1, 2].map((i) => (
+          <div key={i} className="skeleton" style={{ height: '40px', marginBottom: '8px' }} />
+        ))}
       </div>
     );
   }
@@ -520,47 +480,42 @@ function MiniCotizacionesList({ idTienda, soloTienda = false, rango = 3 }) {
             </span>
           </div>
           <div className="mini-acciones">
-            <button className="btn btn--ghost btn--xs" onClick={() => window.open(`/cotizacion/${cot.id_cotizacion}`, '_blank')}>
+            <Link className="btn btn--ghost btn--xs" to={`/cotizacion/${cot.id_cotizacion}`}>
               Ver detalle
-            </button>
-            <button className="btn btn--outline btn--xs" onClick={() => alert('Cambiar estado de cotización')}>Cambiar estado</button>
+            </Link>
           </div>
         </div>
       ))}
-      <button className="btn btn--link btn--xs ver-todas-mas" onClick={() => window.open(`/admin/tiendas/${idTienda}/cotizaciones`, '_blank')}>
-        Ver todas
-      </button>
     </div>
   );
 }
 
-/** Panel de estados de cotizaciones adaptado para el resumen de tienda */
-function PanelEstadosResumen({ datos, titulo }) {
-  // Los datos vienen del resumen de la tienda (obtenerResumenDia)
-  // Estructura: { ventas_dia, por_cobrar, pedidos_pendientes }
-  // Para estados usaremos los datos disponibles o valores por defecto
+/** Barras de estado de solicitudes (usa resumen.estados si el backend lo entrega) */
+function PanelEstadosResumen({ datos }) {
   const ESTADOS = [
-    { clave: 'pendiente', etiqueta: 'Pendientes', color: 'violet' },
-    { clave: 'aprobada', etiqueta: 'Aprobadas', color: 'mint' },
-    { clave: 'rechazada', etiqueta: 'Rechazadas', color: 'pink' },
-    { clave: 'completada', etiqueta: 'Completadas', color: 'gray' },
+    { clave: 'pendiente', etiqueta: 'Pendientes' },
+    { clave: 'aprobada', etiqueta: 'Aprobadas' },
+    { clave: 'rechazada', etiqueta: 'Rechazadas' },
+    { clave: 'completada', etiqueta: 'Completadas' },
   ];
 
-  // Usar los estados del resumen si están disponibles, sino valores cero
-  const obtenerCantidad = (clave) => (datos?.estados?.[clave]?.cantidad !== undefined ? datos.estados[clave].cantidad : 0);
-
+  const obtenerCantidad = (clave) => Number(datos?.estados?.[clave]?.cantidad) || 0;
   const total = ESTADOS.reduce((suma, estado) => suma + obtenerCantidad(estado.clave), 0);
+
   return (
-    <article className="card dashboard-card">
-      <header className="card-head"><span><small>Período</small><strong>{titulo}</strong></span></header>
-      <div className="status-bars">
-        {ESTADOS.map((estado) => (
+    <div className="status-bars">
+      {ESTADOS.map((estado) => {
+        const cantidad = obtenerCantidad(estado.clave);
+        const porcentaje = total > 0 ? (cantidad / total) * 100 : 0;
+        return (
           <div key={estado.clave} className="status-bar">
-            <div className="status-bar__label"><span>{estado.etiqueta}</span><b>{obtenerCantidad(estado.clave)}</b></div>
-            <div className="status-bar__track"><div className="status-bar__value" style={{ width: `${(obtenerCantidad(estado.clave) / total * 100) || 0}%` }} /></div>
+            <div className="status-bar__label"><span>{estado.etiqueta}</span><b>{cantidad}</b></div>
+            <div className="status-bar__track">
+              <div className="status-bar__value" style={{ width: `${porcentaje}%` }} />
+            </div>
           </div>
-        ))}
-      </div>
-    </article>
+        );
+      })}
+    </div>
   );
 }
