@@ -19,6 +19,7 @@ function generarCaptcha() {
 export default function Login() {
   const [usu_email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [recordarme, setRecordarme] = useState(false);
   const [error, setError] = useState('');
   const [enviando, setEnviando] = useState(false);
   const [captcha, setCaptcha] = useState(generarCaptcha);
@@ -41,7 +42,7 @@ export default function Login() {
     }
     setEnviando(true);
     try {
-      const usuario = await login(usu_email, password);
+      const usuario = await login(usu_email, password, recordarme);
       // El personal entra al panel; el cliente, a su resumen personal.
       if (usuario.id_rol === ROL_SUPERADMIN || usuario.id_rol === ROL_ADMIN || usuario.id_rol === ROL_VENDEDOR) {
         navigate('/admin');
@@ -103,7 +104,12 @@ export default function Login() {
 
             <div className="form-options">
               <label className="checkbox-label">
-                <input type="checkbox" className="checkbox-input" />
+                <input
+                  type="checkbox"
+                  className="checkbox-input"
+                  checked={recordarme}
+                  onChange={(e) => setRecordarme(e.target.checked)}
+                />
                 <span className="checkbox-text">Recordarme</span>
               </label>
               <Link to="/recuperar" className="link link--forgot" data-scramble-hover>¿La olvidaste?</Link>

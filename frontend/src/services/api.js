@@ -1,10 +1,11 @@
 import axios from 'axios';
 import { API_URL } from '../utils/config';
+import { limpiarSesion, obtenerToken } from '../utils/sesion';
 
 const api = axios.create({ baseURL: API_URL });
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
+  const token = obtenerToken();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -18,8 +19,7 @@ api.interceptors.response.use(
   },
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('usuario');
+      limpiarSesion();
       if (window.location.pathname !== '/login') {
         window.location.href = '/login';
       }
