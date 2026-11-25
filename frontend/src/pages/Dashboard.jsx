@@ -10,6 +10,7 @@ import {
   Package,
   Percent,
   Store,
+  User,
   XCircle,
 } from 'lucide-react';
 import { useAuth } from '../context/authContexto';
@@ -218,7 +219,8 @@ function PanelGlobal({ datos, nombre, rango, onRango }) {
 function PanelAdmin({ datos, nombre, rango, onRango }) {
   const actual = datos.actual;
   const inventario = datos.inventario;
-  if (!actual && !inventario) return <SinAcceso nombre={nombre} />;
+  // Contador de trabajadores asignados a la tienda
+  const totalTrabajadores = datos.tienda ? datos.tienda.usuarios ? datos.tienda.usuarios.filter(u => u.id_rol === ROL_VENDEDOR).length : 0 : 0;
 
   return (
     <div className="dashboard">
@@ -232,11 +234,13 @@ function PanelAdmin({ datos, nombre, rango, onRango }) {
           <Kpi icono={ArrowUpRight} etiqueta="Ventas de hoy" valor={formatoCOP(actual.ventas_hoy.total)} detalle={`${actual.ventas_hoy.cantidad} completadas`} />
           <Kpi icono={CircleDollarSign} etiqueta="Por cobrar" valor={formatoCOP(actual.por_cobrar.total)} detalle={`${actual.por_cobrar.cantidad} aprobadas`} />
           <Kpi icono={ClipboardList} etiqueta="Pendientes" valor={actual.pedidos_pendientes.cantidad} detalle="Cotizaciones por revisar" alerta={actual.pedidos_pendientes.cantidad > 0} />
-          <Kpi icono={Package} etiqueta="Inventario" valor={inventario?.total ?? '—'} detalle={inventario ? `${inventario.bajo + inventario.agotado} requieren atención` : 'Sin permiso de inventario'} />
+          <Kpi icono={User} etiqueta="Trabajadores" valor={totalTrabajadores} detalle="Asignados a la tienda" />
+          {inventario && <Kpi icono={Package} etiqueta="Inventario" valor={inventario?.total ?? '—'} detalle={inventario ? `${inventario.bajo + inventario.agotado} requieren atención` : 'Sin permiso de inventario'} />}
         </section>
       )}
       <section className="dashboard-grid" aria-label="Detalle de la tienda">
         {actual && <PanelEstados datos={datos} titulo="Estado de las cotizaciones" />}
+        {datos.tienda && <MiniCotizacionesListTienda idTienda={datos.tienda.id_tienda} soloTienda={true} rango={3} />}
         {inventario && <PanelInventario inventario={inventario} />}
       </section>
       {actual && <PanelGraficos datos={datos} />}
@@ -250,6 +254,9 @@ function PanelVendedor({ datos, nombre, rango, onRango }) {
   const aprobadas = datos.estados.aprobada?.cantidad || 0;
   const totalRango = ESTADOS.reduce((suma, estado) => suma + (datos.estados[estado.clave]?.cantidad || 0), 0);
   const tasa = totalRango ? Math.round((aprobadas / totalRango) * 100) : 0;
+
+  // Contador de trabajadores asignados a la tienda
+  const totalTrabajadores = datos.tienda ? datos.tienda.usuarios ? datos.tienda.usuarios.filter(u => u.id_rol === ROL_VENDEDOR).length : 0 : 0;
 
   return (
     <div className="dashboard">
@@ -267,10 +274,12 @@ function PanelVendedor({ datos, nombre, rango, onRango }) {
         <Kpi icono={ClipboardList} etiqueta="Por revisar" valor={actual.pedidos_pendientes.cantidad} detalle="Tu cola de trabajo" alerta={actual.pedidos_pendientes.cantidad > 0} />
         <Kpi icono={Check} etiqueta="Aprobadas" valor={aprobadas} detalle="En el período" />
         <Kpi icono={ArrowUpRight} etiqueta="Ventas de hoy" valor={formatoCOP(actual.ventas_hoy.total)} detalle={`${actual.ventas_hoy.cantidad} completadas`} />
+        <Kpi icono={User} etiqueta="Trabajadores" valor={totalTrabajadores} detalle="Asignados a la tienda" />
         <Kpi icono={Percent} etiqueta="Aprobación" valor={`${tasa}%`} detalle="Sobre el período" />
       </section>
       <section className="dashboard-grid" aria-label="Seguimiento comercial">
-        <PanelEstados datos={datos} titulo="Tu embudo de cotizaciones" />
+        <PanelEstados datos={datos} titulo="Estado de las solicitudes" />
+        {datos.tienda && <MiniCotizacionesListTienda idTienda={datos.tienda.id_tienda} soloTienda={true} rango={3} />}
         <article className="card dashboard-card">
           <header className="card-head"><span><small>Siguiente paso</small><strong>Convierte las aprobadas</strong></span></header>
           <div className="dashboard-callout">
@@ -289,6 +298,9 @@ function PanelCliente({ datos, nombre, rango, onRango }) {
   const actual = datos.actual;
   if (!actual) return <SinAcceso nombre={nombre} />;
 
+  // Contador de trabajadores asignados a la tienda (para reemplazar la tarjeta de Completadas)
+  const totalTrabajadores = datos.tienda ? datos.tienda.usuarios ? datos.tienda.usuarios.filter(u => u.id_rol === ROL_VENDEDOR).length : 0 : 0;
+
   return (
     <div className="dashboard">
       <Encabezado
@@ -304,11 +316,13 @@ function PanelCliente({ datos, nombre, rango, onRango }) {
       <section className="dashboard-kpis dashboard-kpis--4" aria-label="Indicadores personales">
         <Kpi icono={ClipboardList} etiqueta="Mis cotizaciones" valor={actual.cotizaciones.cantidad} detalle="Solicitudes enviadas" />
         <Kpi icono={Clock3} etiqueta="Pendientes" valor={actual.pedidos_pendientes.cantidad} detalle="Esperando revisión" alerta={actual.pedidos_pendientes.cantidad > 0} />
-        <Kpi icono={Check} etiqueta="Completadas" valor={actual.ventas_completadas.cantidad} detalle="Cotizaciones finalizadas" />
+        {/* Se reemplaza la tarjeta de 'Completadas' por un contador de trabajadores */}
+        <Kpi icono={User} etiqueta="Trabajadores" valor={totalTrabajadores} detalle="Asignados a la tienda" />
         <Kpi icono={ArrowUpRight} etiqueta="Total completado" valor={formatoCOP(actual.ventas_completadas.total)} detalle="Compras finalizadas" />
       </section>
       <section className="dashboard-grid" aria-label="Detalle personal">
-        <PanelEstados datos={datos} titulo="Estado de mis solicitudes" />
+        <PanelEstados datos={datos} titulo="Estado de las solicitudes" />
+        <MiniCotizacionesListCliente idTienda={datos.tienda?.id_tienda} rango={3} />
         <article className="card dashboard-card">
           <header className="card-head"><span><small>Tus cotizaciones</small><strong>Revisa cada detalle</strong></span></header>
           <div className="dashboard-callout">
@@ -428,6 +442,138 @@ function StatusBar({ label, value, max, color }) {
     <div className="status-bar">
       <div className="status-bar__label"><span>{label}</span><b>{value}</b></div>
       <div className="status-bar__track"><div className={`status-bar__value ${colorClass}`} style={{ width: `${pct}%` }} /></div>
+    </div>
+  );
+}
+
+/** Mini-listado de las últimas 3 cotizaciones solicitadas a la tienda (para admin y vendedor) */
+function MiniCotizacionesListTienda({ idTienda, soloTienda = false, rango = 3 }) {
+  const [cotizaciones, setCotizaciones] = useState([]);
+  const [cargando, setCargando] = useState(true);
+
+  const cargar = useCallback(async () => {
+    try {
+      const params = { limite: rango };
+      if (idTienda) {
+        params.id_tienda = idTienda;
+      }
+      const respuesta = await fetch('/api/cotizaciones/ultimas', {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(params),
+      });
+      const data = await respuesta.json();
+      setCotizaciones(data.cotizaciones || []);
+    } catch (err) {
+      setCotizaciones([]);
+    } finally {
+      setCargando(false);
+    }
+  }, [idTienda]);
+
+  const cargarRef = useRef();
+  useEffect(() => {
+    if (cargarRef.current === cargar) return;
+    cargarRef.current = cargar;
+    async function init() { await cargar(); }
+    init();
+  }, [cargar]);
+
+  if (cargando) {
+    return <div className="mini-skeleton">{[0, 1, 2].map(() => <div key={Math.random()} className="skeleton" style={{ height: '40px', marginBottom: '8px' }} />)}</div>;
+  }
+
+  return (
+    <div className="mini-listado">
+      {cotizaciones.length === 0 && <p className="mini-vacio">No hay cotizaciones registradas.</p>}
+      {cotizaciones.map((cot) => (
+        <div key={cot.id_cotizacion} className="mini-item">
+          <div className="mini-info">
+            <strong>{cot.producto?.nombre || cot.accesorio?.acc_nombre || 'Producto'}</strong>
+            <small>#{cot.id_cotizacion}</small>
+          </div>
+          <div className="mini-estado">
+            <span className={`badge badge--${cot.estado === 'aprobada' ? 'mint' : cot.estado === 'rechazada' ? 'pink' : 'violet'}`}>
+              {cot.estado}
+            </span>
+          </div>
+          <div className="mini-acciones">
+            <button className="btn btn--ghost btn--xs" onClick={() => window.open(`/cotizacion/${cot.id_cotizacion}`, '_blank')}>
+              Ver detalle
+            </button>
+            <button className="btn btn--outline btn--xs" onClick={() => alert('Cambiar estado de cotización')} />
+          </div>
+        </div>
+      ))}
+      <button className="btn btn--link btn--xs ver-todas-mas" onClick={() => window.open(`/admin/tiendas/${idTienda}/cotizaciones`, '_blank')}>
+        Ver todas
+      </button>
+    </div>
+  );
+}
+
+/** Mini-listado de las últimas 3 cotizaciones propias del cliente */
+function MiniCotizacionesListCliente({ idTienda, rango = 3 }) {
+  const [cotizaciones, setCotizaciones] = useState([]);
+  const [cargando, setCargando] = useState(true);
+
+  const cargar = useCallback(async () => {
+    try {
+      const params = { limite: rango };
+      if (idTienda) {
+        params.id_tienda = idTienda;
+      }
+      const respuesta = await fetch('/api/cotizaciones/ultimas', {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(params),
+      });
+      const data = await respuesta.json();
+      setCotizaciones(data.cotizaciones || []);
+    } catch (err) {
+      setCotizaciones([]);
+    } finally {
+      setCargando(false);
+    }
+  }, [idTienda]);
+
+  const cargarRef = useRef();
+  useEffect(() => {
+    if (cargarRef.current === cargar) return;
+    cargarRef.current = cargar;
+    async function init() { await cargar(); }
+    init();
+  }, [cargar]);
+
+  if (cargando) {
+    return <div className="mini-skeleton">{[0, 1, 2].map(() => <div key={Math.random()} className="skeleton" style={{ height: '40px', marginBottom: '8px' }} />)}</div>;
+  }
+
+  return (
+    <div className="mini-listado">
+      {cotizaciones.length === 0 && <p className="mini-vacio">No hay cotizaciones registradas.</p>}
+      {cotizaciones.map((cot) => (
+        <div key={cot.id_cotizacion} className="mini-item">
+          <div className="mini-info">
+            <strong>{cot.producto?.nombre || cot.accesorio?.acc_nombre || 'Producto'}</strong>
+            <small>#{cot.id_cotizacion}</small>
+          </div>
+          <div className="mini-estado">
+            <span className={`badge badge--${cot.estado === 'aprobada' ? 'mint' : cot.estado === 'rechazada' ? 'pink' : 'violet'}`}>
+              {cot.estado}
+            </span>
+          </div>
+          <div className="mini-acciones">
+            <button className="btn btn--ghost btn--xs" onClick={() => window.open(`/cotizacion/${cot.id_cotizacion}`, '_blank')}>
+              Ver detalle
+            </button>
+            <button className="btn btn--outline btn--xs" onClick={() => alert('Cambiar estado de cotización')} />
+          </div>
+        </div>
+      ))}
+      <button className="btn btn--link btn--xs ver-todas-mas" onClick={() => window.open(`/mis-cotizaciones`, '_blank')}>
+        Ver todas
+      </button>
     </div>
   );
 }

@@ -1,10 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ClipboardList, TrendingUp, WalletCards } from 'lucide-react';
+import { ClipboardList, TrendingUp, WalletCards, Plus, Eye, Check, X } from 'lucide-react';
 import GestionInventarioTienda from '../components/inventario/GestionInventarioTienda';
 import { obtenerResumenDia } from '../services/reportes';
-import { obtenerTienda, obtenerTiendas, obtenerUsuarios } from '../services/tiendas';
-import { actualizarUsuario } from '../services/roles';
 import { mensajeError } from '../services/crud';
 import DataTable from '../components/tables/DataTable';
 import { usePermiso } from '../context/usePermiso';
@@ -34,9 +32,11 @@ const VACIO = { cantidad: 0, total: 0 };
  */
 export default function ResumenTienda() {
   const { id } = useParams();
-  const { esSuperAdmin } = usePermiso();
+  const { esSuperAdmin, esAdmin, esVendedor } = usePermiso();
   // Funciona tanto si usePermiso devuelve una función como un booleano.
   const esSuper = typeof esSuperAdmin === 'function' ? !!esSuperAdmin() : !!esSuperAdmin;
+  const esAdminTienda = typeof esAdmin === 'function' ? !!esAdmin() : !!esAdmin;
+  const esVendedorTienda = typeof esVendedor === 'function' ? !!esVendedor() : !!esVendedor;
 
   const [tienda, setTienda] = useState(null);
   const [resumen, setResumen] = useState(null);
@@ -53,6 +53,14 @@ export default function ResumenTienda() {
   const [tiendaDestino, setTiendaDestino] = useState('');
   const [guardando, setGuardando] = useState(false);
   const [errorModal, setErrorModal] = useState('');
+
+  const [vista, setVista] = useState('datos'); // 'inventario' | 'movimientos' | 'datos'
+  const [productoSeleccionado, setProductoSeleccionado] = useState(null);
+
+  const [modalAgregarProducto, setModalAgregarProducto] = useState(false);
+  const [productoCatalogo, setProductoCatalogo] = useState(null);
+  const [formAgregarProducto, setFormAgregarProducto] = useState({ id_producto: '', cantidad: 1 });
+  const [tabActivo, setTabActivo] = useState('inventario');
 
   const cargar = useCallback(async () => {
     try {
@@ -130,6 +138,61 @@ export default function ResumenTienda() {
     }
   }
 
+  async function cargarProductosCatalogo() {
+    try {
+      const respuesta = await fetch('/api/productos', {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const productos = await respuesta.json();
+      setProductoCatalogo(productos);
+      setModalAgregarProducto(true);
+    } catch (err) {
+      setError(mensajeError(err, 'No se pudieron cargar los productos del catálogo.'));
+    }
+  }
+
+  function cerrarModalAgregarProducto() {
+    setModalAgregarProducto(false);
+    setProductoCatalogo(null);
+    setFormAgregarProducto({ id_producto: '', cantidad: 1 });
+  }
+
+  async function confirmarAgregarProducto(evento) {
+    evento.preventDefault();
+    setGuardando(true);
+    setErrorModal('');
+    try {
+      const { id_producto, cantidad } = formAgregarProducto;
+      const respuesta = await fetch(`/api/inventario/${id}/agregar`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id_producto, cantidad }),
+      });
+      const resultado = await respuesta.json();
+      if (resultado.exito) {
+        setFormAgregarProducto({ id_producto: '', cantidad: 1 });
+        cerrarModalAgregarProducto();
+        await cargar();
+        // El backend debe ejecutar el trigger que registra el movimiento de entrada
+        // referente a ese producto
+      } else {
+        setErrorModal(resultado.mensaje || 'Error al agregar producto al inventario.');
+      }
+    } catch (err) {
+      setErrorModal(err.response?.data?.error || 'Error al agregar producto al inventario.');
+    } finally {
+      setGuardando(false);
+    }
+  }
+
+  function reabrirCambiarRol() {
+    if (modalCambiarRol) {
+      setRolDestino(modalCambiarRol.id_rol || '');
+      setTiendaDestino(modalCambiarRol.id_tienda || '');
+    }
+  }
+
   const columnasUsuarios = [
     { clave: 'usu_nombre', etiqueta: 'Nombre', render: (u) => <strong>{u.usu_nombre}</strong> },
     { clave: 'usu_email', etiqueta: 'Email' },
@@ -185,6 +248,20 @@ export default function ResumenTienda() {
   const porCobrar = resumen?.por_cobrar || VACIO;
   const pendientes = resumen?.pedidos_pendientes || VACIO;
 
+  // Contador de trabajadores asignados a la tienda (rol Vendedor = 3 o ROL_VENDEDOR)
+  const totalTrabajadores = tienda.usuarios
+    ? tienda.usuarios.filter(
+        u => u.id_rol === ROL_VENDEDOR || (u.rol && u.rol === 'Vendedor')
+      ).length
+    : 0;
+
+  // Tabs system: separa Inventario, Movimientos y Datos de la tienda
+  const tabs = [
+    { clave: 'inventario', etiqueta: 'Inventario de la tienda' },
+    { clave: 'movimientos', etiqueta: 'Movimientos de la tienda' },
+    { clave: 'datos', etiqueta: 'Datos de la tienda' },
+  ];
+
   return (
     <div className="tiendas">
       <header className="tiendas-header">
@@ -200,6 +277,21 @@ export default function ResumenTienda() {
           <Link className="btn btn--ghost btn--sm" to="/admin/tiendas">Volver al inventario</Link>
         </div>
       </header>
+
+      <div className="inventario-tabs" aria-label="Vistas de la tienda">
+        {tabs.map((t) => (
+          <button
+            key={t.clave}
+            type="button"
+            role="tab"
+            aria-selected={tabActivo === t.clave}
+            className={`inventario-tab${tabActivo === t.clave ? ' inventario-tab--activa' : ''}`}
+            onClick={() => setTabActivo(t.clave)}
+          >
+            {t.etiqueta}
+          </button>
+        ))}
+      </div>
 
       <section className="dashboard-kpis" aria-label={`Indicadores de ${tienda.nombre_tienda}`}>
         <article className="kpi kpi--venta">
@@ -243,6 +335,36 @@ export default function ResumenTienda() {
           <div><dt>Email</dt><dd>{tienda.email_tienda || '—'}</dd></div>
           <div><dt>Dirección</dt><dd>{tienda.direccion_tienda || '—'}</dd></div>
         </dl>
+      </section>
+
+      {/* Panel de cotizaciones de la tienda - titulo cambiado a "cotizaciones de [la tienda]" */}
+      <section className="card" aria-label="Cotizaciones de la tienda">
+        <header className="card-head">
+          <span>
+            <small>Cotizaciones</small>
+            <strong>Cotizaciones de {tienda.nombre_tienda}</strong>
+          </span>
+        </header>
+        <div className="cotizaciones-panel">
+          <p className="cotizaciones-count">
+            <strong>{pendientes.cantidad} cotización{pendientes.cantidad !== 1 ? 'es' : ''} pendiente{pendientes.cantidad !== 1 ? 's' : ''}</strong>
+          </p>
+          <MiniCotizacionesList idTienda={id} soloTienda={true} rango={3} />
+          <div className="ver-todas">
+           <Link className="btn btn--outline btn--sm" to={`/admin/tiendas/${id}/cotizaciones`}>Ver todas las cotizaciones de la tienda</Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Panel de estados de solicitudes - titulo cambiado de 'Estado de mis solicitudes' a 'Estado de las solicitudes' */}
+      <section className="card" aria-label="Estado de solicitudes">
+        <header className="card-head">
+          <span>
+            <small>Período</small>
+            <strong>Estado de las solicitudes</strong>
+          </span>
+        </header>
+        <PanelEstadosResumen datos={resumen} titulo="Estado de las solicitudes" />
       </section>
 
       {esSuper && (
@@ -336,5 +458,109 @@ export default function ResumenTienda() {
         </div>
       )}
     </div>
+  );
+}
+
+/** Mini-listado de las últimas cotizaciones solicitadas a la tienda */
+function MiniCotizacionesList({ idTienda, soloTienda = false, rango = 3 }) {
+  const { esSuperAdmin, esAdmin, esVendedor } = usePermiso();
+  const esSuper = typeof esSuperAdmin === 'function' ? !!esSuperAdmin() : !!esSuperAdmin;
+  const esAdminT = typeof esAdmin === 'function' ? !!esAdmin() : !!esAdmin;
+  const esVendedorT = typeof esVendedor === 'function' ? !!esVendedor() : !!esVendedor;
+
+  const [cotizaciones, setCotizaciones] = useState([]);
+  const [cargando, setCargando] = useState(true);
+
+  const cargar = useCallback(async () => {
+    try {
+      const params = { limite: rango };
+      if (!esSuper && idTienda) {
+        // Admin y vendedor solo ven cotizaciones de su tienda
+        params.id_tienda = idTienda;
+      }
+      const query = new URLSearchParams(params).toString();
+      const respuesta = await fetch(`/api/cotizaciones/ultimas?${query}`);
+      const data = await respuesta.json();
+      setCotizaciones(data.cotizaciones || []);
+    } catch (err) {
+      setCotizaciones([]);
+    } finally {
+      setCargando(false);
+    }
+  }, [idTienda, esSuper, esAdminT, esVendedorT]);
+
+  const cargarRef = useRef();
+  useEffect(() => {
+    if (cargarRef.current === cargar) return;
+    cargarRef.current = cargar;
+    async function init() { await cargar(); }
+    init();
+  }, [cargar]);
+
+  if (cargando) {
+    return (
+      <div className="mini-skeleton">
+        {[0, 1, 2].map(() => <div key={Math.random()} className="skeleton" style={{ height: '40px', marginBottom: '8px' }} />)}
+      </div>
+    );
+  }
+
+  return (
+    <div className="mini-listado">
+      {cotizaciones.length === 0 && <p className="mini-vacio">No hay cotizaciones registradas.</p>}
+      {cotizaciones.map((cot) => (
+        <div key={cot.id_cotizacion} className="mini-item">
+          <div className="mini-info">
+            <strong>{cot.producto?.nombre || cot.accesorio?.acc_nombre || 'Producto'}</strong>
+            <small>#{cot.id_cotizacion}</small>
+          </div>
+          <div className="mini-estado">
+            <span className={`badge badge--${cot.estado === 'aprobada' ? 'mint' : cot.estado === 'rechazada' ? 'pink' : 'violet'}`}>
+              {cot.estado}
+            </span>
+          </div>
+          <div className="mini-acciones">
+            <button className="btn btn--ghost btn--xs" onClick={() => window.open(`/cotizacion/${cot.id_cotizacion}`, '_blank')}>
+              Ver detalle
+            </button>
+            <button className="btn btn--outline btn--xs" onClick={() => alert('Cambiar estado de cotización')}>Cambiar estado</button>
+          </div>
+        </div>
+      ))}
+      <button className="btn btn--link btn--xs ver-todas-mas" onClick={() => window.open(`/admin/tiendas/${idTienda}/cotizaciones`, '_blank')}>
+        Ver todas
+      </button>
+    </div>
+  );
+}
+
+/** Panel de estados de cotizaciones adaptado para el resumen de tienda */
+function PanelEstadosResumen({ datos, titulo }) {
+  // Los datos vienen del resumen de la tienda (obtenerResumenDia)
+  // Estructura: { ventas_dia, por_cobrar, pedidos_pendientes }
+  // Para estados usaremos los datos disponibles o valores por defecto
+  const ESTADOS = [
+    { clave: 'pendiente', etiqueta: 'Pendientes', color: 'violet' },
+    { clave: 'aprobada', etiqueta: 'Aprobadas', color: 'mint' },
+    { clave: 'rechazada', etiqueta: 'Rechazadas', color: 'pink' },
+    { clave: 'completada', etiqueta: 'Completadas', color: 'gray' },
+  ];
+
+  // Usar los estados del resumen si están disponibles, sino valores cero
+  const obtenerCantidad = (clave) => (datos?.estados?.[clave]?.cantidad !== undefined ? datos.estados[clave].cantidad : 0);
+
+  const total = ESTADOS.reduce((suma, estado) => suma + obtenerCantidad(estado.clave), 0);
+  return (
+    <article className="card dashboard-card">
+      <header className="card-head"><span><small>Período</small><strong>{titulo}</strong></span></header>
+      <div className="status-bars">
+        {ESTADOS.map((estado) => (
+          <div key={estado.clave} className="status-bar">
+            <div className="status-bar__label"><span>{estado.etiqueta}</span><b>{obtenerCantidad(estado.clave)}</b></div>
+            <div className="status-bar__track"><div className="status-bar__value" style={{ width: `${(obtenerCantidad(estado.clave) / total * 100) || 0}%` }} /></div>
+          </div>
+        ))}
+      </div>
+    </article>
   );
 }
