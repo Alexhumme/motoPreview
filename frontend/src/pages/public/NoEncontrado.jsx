@@ -5,7 +5,7 @@ import './NoEncontrado.css';
 export default function NoEncontrado() {
   return (
     <div className="no-encontrado-page">
-      <Link to="/" className="btn btn--ghost btn--sm">
+      <Link to="/catalogo" className="btn btn--ghost btn--sm">
         <ArrowLeft size={15} aria-hidden="true" /> Volver al catálogo
       </Link>
 
@@ -15,7 +15,7 @@ export default function NoEncontrado() {
         <p className="not-found-text">
           Puede que el enlace esté roto o que hayas escrito mal la dirección.
         </p>
-        <Link to="/" className="btn btn--primary btn--full">Volver al catálogo</Link>
+        <Link to="/catalogo" className="btn btn--primary btn--full">Volver al catálogo</Link>
       </div>
     </div>
   );

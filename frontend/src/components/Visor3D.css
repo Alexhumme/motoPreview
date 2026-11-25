@@ -68,7 +68,7 @@
   font-size: var(--text-label);
   letter-spacing: var(--tracking-label);
   text-transform: uppercase;
-  color: var(--color-mist-gray);
+  color: var(--color-paper);
   pointer-events: none;
 }
 

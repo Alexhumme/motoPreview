@@ -89,7 +89,7 @@ export default function Carrito() {
     <div className="cart-page">
       <SiteHeader />
       <main className="cart-main">
-        <Link to="/" className="btn btn--ghost btn--sm cart-back">
+        <Link to="/catalogo" className="btn btn--ghost btn--sm cart-back">
           <ArrowLeft size={15} aria-hidden="true" /> Volver al catálogo
         </Link>
 

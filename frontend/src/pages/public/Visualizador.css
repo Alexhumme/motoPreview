@@ -49,7 +49,7 @@
 .visualizador-title {
   font-family: var(--font-display);
   font-weight: var(--weight-black);
-  font-size: var(--text-heading-lg);
+  font-size: var(--text-heading);
   line-height: var(--leading-heading);
   letter-spacing: var(--tracking-heading);
   text-transform: uppercase;

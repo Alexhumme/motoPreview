@@ -66,7 +66,7 @@ export default function MisCotizaciones() {
       <SiteHeader />
       <div className="mis-cotizaciones">
         <header className="mis-cotizaciones-header" data-reveal="up">
-        <Link to="/" className="btn btn--ghost btn--sm">
+        <Link to="/catalogo" className="btn btn--ghost btn--sm">
           <ArrowLeft size={15} aria-hidden="true" /> Volver al catálogo
         </Link>
         <h1 className="mis-cotizaciones-title" data-glitch="Mis cotizaciones">Mis cotizaciones</h1>

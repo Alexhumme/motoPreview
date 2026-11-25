@@ -387,7 +387,7 @@
   text-transform: uppercase;
   letter-spacing: var(--tracking-label);
   color: var(--color-mist-gray);
-  margin: 0;
+  margin: var(--space-16) 0 0 0;
 }
 
 .summary-note svg {
