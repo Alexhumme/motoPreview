@@ -3,11 +3,16 @@ import { useAuth } from '../context/authContexto';
 import { usePermiso } from '../context/usePermiso';
 import ModalConfirmacion from '../components/forms/ModalConfirmacion';
 import DataTable from '../components/tables/DataTable';
-import { obtenerUsuarios, registrarUsuario, actualizarUsuario, desactivarUsuario } from '../services/usuarios';
+import {
+  obtenerUsuarios,
+  registrarUsuario,
+  actualizarUsuario,
+  desactivarUsuario,
+} from '../services/usuarios';
 import { obtenerRoles } from '../services/roles';
 import { obtenerTiendas } from '../services/tiendas';
 import { ConPermiso } from '../components/menus/ConPermiso';
-import { ROL_SUPERADMIN } from '../utils/constants/roles';
+import { ROL_SUPERADMIN, ROL_CLIENTE } from '../utils/constants/roles';
 import './Usuarios.css';
 
 const VACIO = { usu_nombre: '', usu_email: '', password: '', id_rol: '', id_tienda: '', estado_usuario: 'activo' };
@@ -15,18 +20,22 @@ const VACIO = { usu_nombre: '', usu_email: '', password: '', id_rol: '', id_tien
 const estadoLabels = {
   activo: 'Activo',
   inactivo: 'Inactivo',
-  bloqueado: 'Bloqueado'
+  bloqueado: 'Bloqueado',
 };
 
 const estadoBadge = {
   activo: 'mint',
   inactivo: 'gray',
-  bloqueado: 'pink'
+  bloqueado: 'pink',
 };
 
 export default function Usuarios() {
   const { usuario } = useAuth();
   const { esSuperAdmin } = usePermiso();
+  const esCliente = usuario?.id_rol === ROL_CLIENTE;
+  // Funciona tanto si usePermiso devuelve una función como un booleano.
+  const esSuper = typeof esSuperAdmin === 'function' ? !!esSuperAdmin() : !!esSuperAdmin;
+
   const [usuarios, setUsuarios] = useState([]);
   const [roles, setRoles] = useState([]);
   const [tiendas, setTiendas] = useState([]);
@@ -38,8 +47,7 @@ export default function Usuarios() {
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState('');
 
-  const idTienda = usuario.id_tienda;
-  const esSuper = !!esSuperAdmin?.();
+  const idTienda = usuario?.id_tienda;
 
   const cargar = useCallback(async () => {
     // Cada recurso se carga por separado: un rol con `usuarios:listar` pero sin
@@ -81,7 +89,14 @@ export default function Usuarios() {
 
   function abrirEdicion(u) {
     setEditandoId(u.id_usuario);
-    setFormulario({ usu_nombre: u.usu_nombre, usu_email: u.usu_email, password: '', id_rol: u.id_rol, id_tienda: u.id_tienda || '', estado_usuario: u.estado_usuario });
+    setFormulario({
+      usu_nombre: u.usu_nombre,
+      usu_email: u.usu_email,
+      password: '',
+      id_rol: u.id_rol,
+      id_tienda: u.id_tienda || '',
+      estado_usuario: u.estado_usuario,
+    });
     setError('');
     setModalAbierto(true);
   }
@@ -96,7 +111,11 @@ export default function Usuarios() {
     setError('');
     try {
       if (editandoId) {
-        const datos = { usu_nombre: formulario.usu_nombre, id_rol: formulario.id_rol, estado_usuario: formulario.estado_usuario };
+        const datos = {
+          usu_nombre: formulario.usu_nombre,
+          id_rol: formulario.id_rol,
+          estado_usuario: formulario.estado_usuario,
+        };
         if (formulario.password) datos.password = formulario.password;
         await actualizarUsuario(editandoId, datos);
       } else {
@@ -179,7 +198,7 @@ export default function Usuarios() {
             <ConPermiso recurso="usuarios" accion="actualizar" fallback={null}>
               <button className="btn btn--ghost btn--sm" onClick={() => abrirEdicion(u)}>Editar</button>
             </ConPermiso>
-            {u.estado_usuario !== 'bloqueado' && u.id_usuario !== usuario.id_usuario && (
+            {u.estado_usuario !== 'bloqueado' && u.id_usuario !== usuario?.id_usuario && (
               <ConPermiso recurso="usuarios" accion="eliminar" fallback={null}>
                 <button className="btn btn--danger btn--sm" onClick={() => pedirConfirmacionDesactivar(u)}>
                   Desactivar
@@ -259,6 +278,7 @@ export default function Usuarios() {
               {!editandoId && (
                 <div className="form-field">
                   <label htmlFor="tienda" className="form-label">Tienda</label>
+
                   {esSuper ? (
                     <>
                       <select
@@ -270,11 +290,18 @@ export default function Usuarios() {
                       >
                         <option value="">Sin tienda (global)</option>
                         {tiendas.map((t) => (
-                          <option key={t.id_tienda} value={t.id_tienda}>{t.tienda_nombre || t.nombre_tienda || t.id_tienda}</option>
+                          <option key={t.id_tienda} value={t.id_tienda}>
+                            {t.tienda_nombre || t.nombre_tienda || t.id_tienda}
+                          </option>
                         ))}
                       </select>
-                      <small className="form-hint">Solo asigna una tienda si el usuario pertenece a una sede. Deja "Sin tienda" para usuarios globales (ej. Superadmin).</small>
+                      <small className="form-hint">
+                        Solo asigna una tienda si el usuario pertenece a una sede. Deja "Sin tienda" para usuarios globales (ej. Superadmin).
+                      </small>
                     </>
+                  ) : esCliente ? (
+                    // Cliente: no muestra campo de tienda, su id_tienda es null
+                    <input type="hidden" name="id_tienda" value="" />
                   ) : (
                     <>
                       <input

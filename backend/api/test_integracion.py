@@ -155,6 +155,37 @@ def seed_base():
         (ROLE_CUSTOMER, "cliente"),
     ):
         Role.objects.get_or_create(pk=pk, defaults={"nombre_rol": nombre})
+    # Concesiones RBAC base: admin tiene todo, vendedor y cliente tienen propios
+    from api.models import RolRecurso, RecursoAccion, Recurso
+    from api.security import ROLE_ADMIN, ROLE_CUSTOMER, ROLE_SELLER
+    # Obtener o crear las acciones de cotización
+    cotizar_acction, _ = RecursoAccion.objects.get_or_create(
+        codigo="crear", defaults={"nombre": "Crear cotización", "activo": True}
+    )
+    cotizaciones_recurso, _ = Recurso.objects.get_or_create(
+        codigo="cotizaciones", defaults={"nombre": "Cotizaciones", "activo": True}
+    )
+    # Concesión `propio` para cliente en cotizaciones
+    RolRecurso.objects.get_or_create(
+        rol_id=ROLE_CUSTOMER,
+        recurso_accion=cotizar_acction,
+        scope="propio",
+        defaults={"activo": True},
+    )
+    # Concesión `tienda` para vendedor en cotizaciones
+    RolRecurso.objects.get_or_create(
+        rol_id=ROLE_SELLER,
+        recurso_accion=cotizar_acction,
+        scope="tienda",
+        defaults={"activo": True},
+    )
+    # Concesión `global` para admin en cotizaciones
+    RolRecurso.objects.get_or_create(
+        rol_id=ROLE_ADMIN,
+        recurso_accion=cotizar_acction,
+        scope="global",
+        defaults={"activo": True},
+    )
     plan, _ = SubscriptionPlan.objects.get_or_create(
         plan_nombre="Plan de prueba",
         defaults={

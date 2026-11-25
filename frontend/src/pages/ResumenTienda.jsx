@@ -3,8 +3,18 @@ import { Link, useParams } from 'react-router-dom';
 import { ClipboardList, TrendingUp, WalletCards } from 'lucide-react';
 import GestionInventarioTienda from '../components/inventario/GestionInventarioTienda';
 import { obtenerResumenDia } from '../services/reportes';
-import { obtenerTienda } from '../services/tiendas';
+import { obtenerTienda, obtenerTiendas, obtenerUsuarios } from '../services/tiendas';
+import { actualizarUsuario } from '../services/roles';
 import { mensajeError } from '../services/crud';
+import DataTable from '../components/tables/DataTable';
+import { usePermiso } from '../context/usePermiso';
+import {
+  NOMBRE_ROL,
+  ROL_SUPERADMIN,
+  ROL_ADMIN,
+  ROL_VENDEDOR,
+  ROL_CLIENTE,
+} from '../utils/constants/roles';
 import './Dashboard.css';
 import './Tiendas.css';
 
@@ -24,10 +34,25 @@ const VACIO = { cantidad: 0, total: 0 };
  */
 export default function ResumenTienda() {
   const { id } = useParams();
+  const { esSuperAdmin } = usePermiso();
+  // Funciona tanto si usePermiso devuelve una función como un booleano.
+  const esSuper = typeof esSuperAdmin === 'function' ? !!esSuperAdmin() : !!esSuperAdmin;
+
   const [tienda, setTienda] = useState(null);
   const [resumen, setResumen] = useState(null);
   const [error, setError] = useState('');
   const [cargando, setCargando] = useState(true);
+
+  const [usuarios, setUsuarios] = useState([]);
+  const [tiendas, setTiendas] = useState([]);
+  const [cargandoUsuarios, setCargandoUsuarios] = useState(false);
+  const [errorUsuarios, setErrorUsuarios] = useState('');
+
+  const [modalCambiarRol, setModalCambiarRol] = useState(null);
+  const [rolDestino, setRolDestino] = useState('');
+  const [tiendaDestino, setTiendaDestino] = useState('');
+  const [guardando, setGuardando] = useState(false);
+  const [errorModal, setErrorModal] = useState('');
 
   const cargar = useCallback(async () => {
     try {
@@ -40,7 +65,24 @@ export default function ResumenTienda() {
     } finally {
       setCargando(false);
     }
-  }, [id]);
+
+    if (!esSuper) return;
+
+    try {
+      setCargandoUsuarios(true);
+      const [datosUsuarios, datosTiendas] = await Promise.all([
+        obtenerUsuarios(id),
+        obtenerTiendas().catch(() => []),
+      ]);
+      setUsuarios(datosUsuarios);
+      setTiendas(datosTiendas);
+      setErrorUsuarios('');
+    } catch (err) {
+      setErrorUsuarios(mensajeError(err, 'No se pudo cargar la lista de usuarios de la tienda.'));
+    } finally {
+      setCargandoUsuarios(false);
+    }
+  }, [id, esSuper]);
 
   const cargarRef = useRef();
   useEffect(() => {
@@ -55,6 +97,69 @@ export default function ResumenTienda() {
     cargar();
   }
 
+  function abrirCambiarRol(usuario) {
+    setModalCambiarRol(usuario);
+    setRolDestino(usuario.id_rol || '');
+    setTiendaDestino(usuario.id_tienda || '');
+    setErrorModal('');
+  }
+
+  function cerrarCambiarRol() {
+    setModalCambiarRol(null);
+    setRolDestino('');
+    setTiendaDestino('');
+    setErrorModal('');
+  }
+
+  async function confirmarCambiarRol(e) {
+    if (e?.preventDefault) e.preventDefault();
+    if (!modalCambiarRol || !rolDestino) return;
+    setGuardando(true);
+    setErrorModal('');
+    try {
+      await actualizarUsuario(modalCambiarRol.id_usuario, {
+        id_rol: rolDestino,
+        id_tienda: tiendaDestino || null,
+      });
+      cerrarCambiarRol();
+      await cargar();
+    } catch (err) {
+      setErrorModal(err.response?.data?.error || 'Error al cambiar el rol.');
+    } finally {
+      setGuardando(false);
+    }
+  }
+
+  const columnasUsuarios = [
+    { clave: 'usu_nombre', etiqueta: 'Nombre', render: (u) => <strong>{u.usu_nombre}</strong> },
+    { clave: 'usu_email', etiqueta: 'Email' },
+    {
+      clave: 'rol',
+      etiqueta: 'Rol',
+      valor: (u) => (u.id_rol ? NOMBRE_ROL[u.id_rol] || String(u.id_rol) : 'Sin rol'),
+      render: (u) => {
+        const rol = u.id_rol ? NOMBRE_ROL[u.id_rol] || String(u.id_rol) : 'Sin rol';
+        return <span className="badge badge--violet">{rol}</span>;
+      },
+    },
+    {
+      clave: 'acciones',
+      etiqueta: 'Acciones',
+      render: (u) =>
+        esSuper ? (
+          <div className="acciones-small">
+            <button
+              type="button"
+              className="btn btn--ghost btn--xs"
+              onClick={() => abrirCambiarRol(u)}
+            >
+              Cambiar rol
+            </button>
+          </div>
+        ) : null,
+    },
+  ];
+
   if (cargando) {
     return (
       <div className="tiendas" role="status" aria-live="polite">
@@ -64,10 +169,10 @@ export default function ResumenTienda() {
     );
   }
 
-  if (error) {
+  if (error || !tienda) {
     return (
       <div className="tiendas" role="alert">
-        <p>{error}</p>
+        <p>{error || 'No se encontró la tienda.'}</p>
         <div className="tiendas-acciones">
           <button type="button" className="btn btn--outline btn--sm" onClick={reintentar}>Reintentar</button>
           <Link className="btn btn--ghost btn--sm" to="/admin/tiendas">Volver al inventario</Link>
@@ -139,6 +244,97 @@ export default function ResumenTienda() {
           <div><dt>Dirección</dt><dd>{tienda.direccion_tienda || '—'}</dd></div>
         </dl>
       </section>
+
+      {esSuper && (
+        <section className="card" aria-label="Usuarios de la tienda">
+          <header className="card-head">
+            <span>
+              <small>Usuarios</small>
+              <strong>Usuarios asignados a {tienda.nombre_tienda}</strong>
+            </span>
+          </header>
+          {errorUsuarios && <p className="form-error" role="alert">{errorUsuarios}</p>}
+          {cargandoUsuarios ? (
+            <p>Cargando usuarios...</p>
+          ) : (
+            <DataTable
+              columnas={columnasUsuarios}
+              filas={usuarios}
+              claveFila="id_usuario"
+              cargando={cargandoUsuarios}
+              vacio="No hay usuarios asignados a esta tienda."
+            />
+          )}
+        </section>
+      )}
+
+      {modalCambiarRol && (
+        <div
+          className="modal-overlay"
+          onClick={cerrarCambiarRol}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="cambiar-rol-modal-title"
+        >
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <header className="modal-header">
+              <h2 id="cambiar-rol-modal-title" className="modal-title">Cambiar rol de usuario</h2>
+              <button type="button" className="modal-close" onClick={cerrarCambiarRol} aria-label="Cerrar">✕</button>
+            </header>
+
+            <form onSubmit={confirmarCambiarRol} className="modal-form">
+              <p>
+                <strong>{modalCambiarRol.usu_nombre}</strong> · {modalCambiarRol.usu_email}
+              </p>
+
+              <div className="form-field">
+                <label htmlFor="rol-destino" className="form-label">Rol destino</label>
+                <select
+                  id="rol-destino"
+                  className="form-input form-select"
+                  value={rolDestino}
+                  onChange={(e) => setRolDestino(e.target.value)}
+                  disabled={guardando}
+                >
+                  <option value={ROL_SUPERADMIN}>Superadmin</option>
+                  <option value={ROL_ADMIN}>Admin Tienda</option>
+                  <option value={ROL_VENDEDOR}>Vendedor</option>
+                  <option value={ROL_CLIENTE}>Cliente</option>
+                </select>
+              </div>
+
+              <div className="form-field">
+                <label htmlFor="tienda-asignar" className="form-label">Tienda</label>
+                <select
+                  id="tienda-asignar"
+                  className="form-input form-select"
+                  value={tiendaDestino}
+                  onChange={(e) => setTiendaDestino(e.target.value)}
+                  disabled={guardando}
+                >
+                  <option value="">Sin tienda</option>
+                  {tiendas.map((t) => (
+                    <option key={t.id_tienda} value={t.id_tienda}>
+                      {t.tienda_nombre || t.nombre_tienda || t.id_tienda}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {errorModal && <p className="form-error" role="alert">{errorModal}</p>}
+
+              <footer className="modal-footer">
+                <button type="button" className="btn btn--ghost" onClick={cerrarCambiarRol} disabled={guardando}>
+                  Cancelar
+                </button>
+                <button type="submit" className="btn btn--primary" disabled={guardando || !rolDestino}>
+                  {guardando ? 'Guardando...' : 'Cambiar rol'}
+                </button>
+              </footer>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
