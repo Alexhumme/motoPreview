@@ -9,7 +9,12 @@ from rest_framework.request import Request
 from rest_framework.test import APIRequestFactory
 
 from .models import Product, TipoProducto
-from .views import InventoryCollection, InventoryMovementView, ProductCollection
+from .views import (
+    InventoryCollection,
+    InventoryMovementView,
+    ProductCollection,
+    ProductDetail,
+)
 from .serializers import (
     AccesorioInputSerializer,
     AccesorioSerializer,
@@ -328,6 +333,12 @@ class ConsultasProductoTests(SimpleTestCase):
         queryset = ProductCollection().get_queryset()
         self.assertEqual(set(queryset.query.select_related), {"marca"})
         self.assertIn("tipos", queryset._prefetch_related_lookups)
+
+    def test_detalle_precarga_marca_sin_dividir_el_nombre(self):
+        vista = ProductDetail()
+        queryset = Product.objects.select_related(*vista.queryset_relaciones)
+
+        self.assertEqual(set(queryset.query.select_related), {"marca"})
 
     def test_inventario_precarga_producto_tipos_y_marca(self):
         queryset = InventoryCollection().get_queryset(None)
