@@ -59,9 +59,9 @@ from .security import (
     IsSuperAdmin,
     ROLE_ADMIN,
     ROLE_CUSTOMER,
-    ROLE_SELLER,
     ROLE_SUPERADMIN,
     es_rol_de_sede,
+    es_rol_de_sistema,
     es_superadmin,
     filas_del_scope,
     politica_de_la_operacion,
@@ -69,6 +69,7 @@ from .security import (
     mismo_identificador,
     normalizar_concesiones,
     scopes_concedidos,
+    usuario_tiene_permiso,
 )
 from .serializers import (
     AccionSerializer,
@@ -665,11 +666,11 @@ class RoleDetail(ResourceDetail):
             role = self.get_object(pk)
         except self.model.DoesNotExist:
             return Response({"error": self.not_found_message}, status=status.HTTP_404_NOT_FOUND)
-        if es_rol_de_sede(role) and not es_superadmin(request.user):
-            # `activo=False` en el rol de sede apaga el bypass para toda la
-            # plataforma: es un apagón, no una edición de catálogo.
+        if es_rol_de_sistema(role) and not es_superadmin(request.user):
+            # `activo=False` en un rol del sistema apaga una puerta para todas
+            # las tiendas: es un cambio global, no de catálogo de la tienda.
             return Response(
-                {"error": "El rol de la sede solo lo edita la sede."},
+                {"error": "Los roles del sistema solo los edita la sede."},
                 status=status.HTTP_403_FORBIDDEN,
             )
         return super().update(request, pk, partial=partial)
@@ -682,9 +683,9 @@ class RoleDetail(ResourceDetail):
         except self.model.DoesNotExist:
             return Response({"error": self.not_found_message}, status=status.HTTP_404_NOT_FOUND)
 
-        if es_rol_de_sede(role):
+        if es_rol_de_sistema(role):
             return Response(
-                {"error": "No se puede eliminar el rol de Superadmin."},
+                {"error": "No se pueden eliminar los roles del sistema."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -1389,13 +1390,21 @@ def register(request):
     verificacion_requerida = (
         is_customer and SiteSettings.obtener().email_verification_required
     )
-    is_admin = bool(getattr(request.user, "is_authenticated", False)) and (
+    es_autenticado = bool(getattr(request.user, "is_authenticated", False))
+    # Crear cuentas de tienda es una capacidad de la matriz (`usuarios:crear`),
+    # no un privilegio del rol Admin hardcodeado: así un rol de tienda con esa
+    # concesión puede dar de alta vendedores/cajeros sin ser Admin. El rol
+    # heredado se conserva para no romper las sesiones ya existentes.
+    es_admin_heredado = es_autenticado and (
         ROLE_ADMIN.lower() in {role.lower() for role in user_role_ids(request.user)}
         or es_superadmin(request.user)
     )
-    if not is_customer and not is_admin:
+    puede_crear_staff = es_admin_heredado or (
+        es_autenticado and usuario_tiene_permiso(request.user, "usuarios", "crear")
+    )
+    if not is_customer and not puede_crear_staff:
         return Response(
-            {"error": "Solo un administrador autenticado puede registrar usuarios de tienda."},
+            {"error": "No tiene permisos para registrar usuarios de tienda."},
             status=status.HTTP_403_FORBIDDEN,
         )
     if not puede_asignar_rol(request.user, role):
@@ -1408,7 +1417,6 @@ def register(request):
         )
 
     user_store = getattr(request.user, "id_tienda", None)
-    es_autenticado = bool(getattr(request.user, "is_authenticated", False))
     es_super = es_autenticado and es_superadmin(request.user)
 
     # La vidriera pública es la única que trae tienda en el body. Cuando registra
@@ -1447,11 +1455,14 @@ def register(request):
                 )
             plan = store.plan
             limit = plan.limite_usuarios if plan else None
+            # El plan limita el personal de la tienda, no solo Admin/Vendedor:
+            # cajeros y roles de tienda personalizados también ocupan cupo.
+            staff_ids = UserRole.objects.exclude(
+                id_rol__in=[ROLE_CUSTOMER, ROLE_SUPERADMIN]
+            ).values("id_usuario")
             active_staff = User.objects.filter(
                 tienda_id=store_id,
-                id_usuario__in=UserRole.objects.filter(
-                    id_rol__in=[ROLE_ADMIN, ROLE_SELLER]
-                ).values("id_usuario"),
+                id_usuario__in=staff_ids,
             ).exclude(estado_usuario="bloqueado").count()
             if limit is not None and active_staff >= limit:
                 return Response(
@@ -1721,7 +1732,7 @@ class ProductDetail(ResourceDetail):
     serializer_class = ProductSerializer
     permiso_recurso = "productos"
     not_found_message = "Producto no encontrado."
-    queryset_relaciones = ("marca")
+    queryset_relaciones = ("marca",)
     lectura_sin_matriz = True
 
     def get(self, request, pk):

@@ -70,6 +70,18 @@ def es_rol_de_sede(rol):
             or bool(getattr(rol, "es_superadmin", False)))
 
 
+# Roles que definen el comportamiento base de la plataforma. Un administrador
+# de tienda puede crear y editar roles propios, pero no renombrar, desactivar
+# ni borrar estos: son globales y afectan a todas las tiendas.
+ROLES_SISTEMA = (ROLE_SUPERADMIN, ROLE_ADMIN, ROLE_SELLER, ROLE_CUSTOMER)
+
+
+def es_rol_de_sistema(rol):
+    if rol is None:
+        return False
+    return str(rol.pk).lower() in {str(valor).lower() for valor in ROLES_SISTEMA}
+
+
 def puede_asignar_rol(solicitante, rol_destino):
     """Qué rol puede poner el solicitante en la cuenta de alguien.
 
