@@ -2,7 +2,6 @@ import { useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { LogIn, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../../context/authContexto';
-import { ROL_ADMIN, ROL_SUPERADMIN, ROL_VENDEDOR } from '../../utils/constants/roles';
 import './Auth.css';
 import SiteHeader from '../../components/buttons/SiteHeader';
 
@@ -42,13 +41,10 @@ export default function Login() {
     }
     setEnviando(true);
     try {
-      const usuario = await login(usu_email, password, recordarme);
-      // El personal entra al panel; el cliente, a su resumen personal.
-      if (usuario.id_rol === ROL_SUPERADMIN || usuario.id_rol === ROL_ADMIN || usuario.id_rol === ROL_VENDEDOR) {
-        navigate('/admin');
-      } else {
-        navigate('/resumen');
-      }
+      await login(usu_email, password, recordarme);
+      // Todas las cuentas entran al panel; el menú lateral se arma con sus
+      // permisos RBAC y el resumen se adapta al rol.
+      navigate('/admin');
     } catch (err) {
       setError(err.response?.data?.error || 'Credenciales inválidas');
       refrescarCaptcha();

@@ -2,16 +2,14 @@ import { Link, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { Menu, X, Sun, Moon, ShoppingCart, UserCog, LogIn } from 'lucide-react';
 import { useAuth } from '../../context/authContexto';
-import { usePermiso } from '../../context/usePermiso';
 import { useCart } from '../../context/CartContext';
 import { useTema } from '../../context/temaContexto';
-import { ROL_ADMIN, ROL_CLIENTE, ROL_VENDEDOR } from '../../utils/constants/roles';
+import { ROL_CLIENTE } from '../../utils/constants/roles';
 import './SiteHeader.css';
 
 export default function SiteHeader() {
   const location = useLocation();
   const { usuario, logout } = useAuth();
-  const { tieneAlgunPermiso, esSuperAdmin } = usePermiso();
   const { totalItems } = useCart();
   const { tema, alternarTema } = useTema();
 
@@ -22,22 +20,10 @@ export default function SiteHeader() {
     setMenuAbierto(false);
   }, [location.pathname]);
 
-  const esStaff = !!usuario && (
-    usuario.id_rol === ROL_ADMIN ||
-    usuario.id_rol === ROL_VENDEDOR ||
-    esSuperAdmin()
-  );
   const esCliente = usuario?.id_rol === ROL_CLIENTE;
-  // Mismo criterio que el panel admin: con matriz RBAC cargada, el enlace
-  // solo se pinta si el rol puede entrar a algún módulo; sin matriz, hereda.
-  const permisosCargados = (usuario?.permisos?.length ?? 0) > 0 || esSuperAdmin();
-  const mostrarPanel = esStaff && (!permisosCargados || tieneAlgunPermiso([
-    { recurso: 'inventario', accion: 'listar' },
-    { recurso: 'cotizaciones', accion: 'listar' },
-    { recurso: 'usuarios', accion: 'listar' },
-    { recurso: 'roles', accion: 'listar' },
-    { recurso: 'productos', accion: 'crear' },
-  ]));
+  // Todas las cuentas entran al panel; dentro, el menú lateral se filtra por
+  // los permisos RBAC del rol.
+  const mostrarPanel = !!usuario;
 
   return (
     <header className="site-header">
@@ -99,16 +85,12 @@ export default function SiteHeader() {
             <div className="header-account">
               {esCliente && <Link to="/resumen" className="btn btn--ghost">Mi resumen</Link>}
 
-              {mostrarPanel &&
-                (esSuperAdmin() ? (
-                  <Link to={esSuperAdmin() ? '/admin/permisos' : esStaff ? '/admin' : '/mis-cotizaciones'}
-                    className='btn btn--ghost'>
-                    <UserCog size={16} aria-hidden="true" />
-                    <span className="cart-label">Panel {usuario.usu_nombre?.split(' ')[0]}</span>
-                  </Link>
-                ) : (
-                  <Link to="/admin">Panel</Link>
-                ))}
+              {mostrarPanel && (
+                <Link to="/admin" className="btn btn--ghost">
+                  <UserCog size={16} aria-hidden="true" />
+                  <span className="cart-label">Panel {usuario.usu_nombre?.split(' ')[0]}</span>
+                </Link>
+              )}
               <button onClick={logout} className="btn btn--ghost">Salir</button>
             </div>
           ) : (
@@ -142,7 +124,10 @@ export default function SiteHeader() {
             <Link to="/contacto" className={`mobile-nav-link${location.pathname === '/contacto' ? ' mobile-nav-link--active' : ''}`}>Contactanos</Link>
             {esCliente && <Link to="/resumen" className="mobile-nav-link">Mi resumen</Link>}
             {usuario ? (
-              <button onClick={logout} className="mobile-nav-link mobile-nav-link--button">Salir</button>
+              <>
+                <Link to="/admin" className="mobile-nav-link">Panel</Link>
+                <button onClick={logout} className="mobile-nav-link mobile-nav-link--button">Salir</button>
+              </>
             ) : (
               <Link to="/login" className="mobile-nav-link mobile-nav-link--brand">Ingresar</Link>
             )}

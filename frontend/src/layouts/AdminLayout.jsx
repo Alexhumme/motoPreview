@@ -8,15 +8,15 @@ import {
 import { useAuth } from '../context/authContexto';
 import { usePermiso } from '../context/usePermiso';
 import { useTema } from '../context/temaContexto';
-import { NOMBRE_ROL, ROL_ADMIN } from '../utils/constants/roles';
+import { NOMBRE_ROL } from '../utils/constants/roles';
 import './AdminLayout.css';
 
 /**
- * Menú dinámico agrupado por categorías. Cada enlace se pinta solo si el rol
- * del usuario tiene alguno de los permisos RBAC indicados. Los enlaces sin
- * `permisos` son siempre visibles para el personal de tienda, y `soloAdmin`
- * restringe a administradores. Si el usuario aún no tiene permisos cargados,
- * se aplica el menú por rol heredado para no dejar al personal sin navegación.
+ * Menú dinámico agrupado por categorías. Cada enlace se pinta solo si la
+ * matriz RBAC concede alguno de sus permisos; el Superadmin conserva el bypass
+ * total. `soloConTienda` oculta los módulos que necesitan una sede asignada y
+ * `soloSuperAdmin` queda para las vistas de plataforma que el backend solo abre
+ * a la sede (catálogo RBAC, tiendas y ajustes globales).
  */
 const CATEGORIAS = [
   {
@@ -48,13 +48,21 @@ const CATEGORIAS = [
         ruta: '/admin/marcas',
         etiqueta: 'Marcas',
         icono: Package,
-        soloSuperAdmin: true,
+        permisos: [
+          { recurso: 'marcas', accion: 'crear' },
+          { recurso: 'marcas', accion: 'actualizar' },
+          { recurso: 'marcas', accion: 'eliminar' },
+        ],
       },
       {
         ruta: '/admin/tipos-producto',
         etiqueta: 'Tipos',
         icono: Wrench,
-        soloSuperAdmin: true,
+        permisos: [
+          { recurso: 'tipos', accion: 'crear' },
+          { recurso: 'tipos', accion: 'actualizar' },
+          { recurso: 'tipos', accion: 'eliminar' },
+        ],
       },
     ],
   },
@@ -76,7 +84,10 @@ const CATEGORIAS = [
         ruta: '/admin/reportes',
         etiqueta: 'Reportes',
         icono: BarChart3,
-        permisos: [{ recurso: 'cotizaciones', accion: 'listar' }],
+        permisos: [
+          { recurso: 'ventas', accion: 'listar' },
+          { recurso: 'ventas', accion: 'exportar' },
+        ],
       },
       { ruta: '/admin/tienda', etiqueta: 'Mi tienda', icono: Store, soloConTienda: true },
     ],
@@ -96,18 +107,21 @@ const CATEGORIAS = [
         ruta: '/admin/usuarios',
         etiqueta: 'Usuarios',
         icono: Users,
-        soloAdmin: true,
         permisos: [
           { recurso: 'usuarios', accion: 'listar' },
           { recurso: 'usuarios', accion: 'crear' },
+          { recurso: 'usuarios', accion: 'actualizar' },
         ],
       },
       {
         ruta: '/admin/permisos',
         etiqueta: 'Seguridad',
         icono: ShieldCheck,
-        soloAdmin: true,
-        permisos: [{ recurso: 'roles', accion: 'listar' }],
+        permisos: [
+          { recurso: 'roles', accion: 'listar' },
+          { recurso: 'roles', accion: 'crear' },
+          { recurso: 'roles', accion: 'actualizar' },
+        ],
       },
       {
         ruta: '/admin/tiendas',
@@ -153,14 +167,11 @@ export default function AdminLayout() {
     localStorage.setItem(CLAVE_RIEL, JSON.stringify(riel));
   }, [riel]);
 
-  const esAdmin = usuario?.id_rol === ROL_ADMIN || esSuperAdmin();
-  const permisosCargados = (usuario?.permisos?.length ?? 0) > 0 || esSuperAdmin();
-
   function itemVisible(enlace) {
-    if (enlace.soloAdmin && !esAdmin) return false;
-    if (enlace.soloSuperAdmin && !esSuperAdmin()) return false;
     if (enlace.soloConTienda && !usuario?.id_tienda) return false;
-    if (!permisosCargados) return true;
+    // La sede no consulta la matriz: ve todo el panel por diseño.
+    if (esSuperAdmin()) return true;
+    if (enlace.soloSuperAdmin) return false;
     if (!enlace.permisos) return true;
     return tieneAlgunPermiso(enlace.permisos);
   }

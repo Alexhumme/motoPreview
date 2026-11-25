@@ -376,11 +376,13 @@ export default function Seguridad() {
                   Permisos
                 </button>
               )}
-              <ConPermiso recurso="roles" accion="actualizar" fallback={null}>
-                <button className="btn btn--ghost btn--sm" onClick={() => abrirEdicion(r)}>
-                  Editar
-                </button>
-              </ConPermiso>
+              {(esSuperAdmin() || !esRolSistema(r.id_rol)) && (
+                <ConPermiso recurso="roles" accion="actualizar" fallback={null}>
+                  <button className="btn btn--ghost btn--sm" onClick={() => abrirEdicion(r)}>
+                    Editar
+                  </button>
+                </ConPermiso>
+              )}
               {!esRolSistema(r.id_rol) && (
                 <ConPermiso recurso="roles" accion="eliminar" fallback={null}>
                   <button className="btn btn--danger btn--sm" onClick={() => setRolAEliminar(r)}>

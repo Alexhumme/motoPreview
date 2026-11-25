@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '../context/authContexto';
+import { usePermiso } from '../context/usePermiso';
 import ModalConfirmacion from '../components/forms/ModalConfirmacion';
 import DataTable from '../components/tables/DataTable';
 import { obtenerUsuarios, registrarUsuario, actualizarUsuario, desactivarUsuario } from '../services/usuarios';
 import { obtenerRoles } from '../services/roles';
 import { obtenerTiendas } from '../services/tiendas';
 import { ConPermiso } from '../components/menus/ConPermiso';
+import { ROL_SUPERADMIN } from '../utils/constants/roles';
 import './Usuarios.css';
 
 const VACIO = { usu_nombre: '', usu_email: '', password: '', id_rol: '', id_tienda: '', estado_usuario: 'activo' };
@@ -24,6 +26,7 @@ const estadoBadge = {
 
 export default function Usuarios() {
   const { usuario } = useAuth();
+  const { esSuperAdmin } = usePermiso();
   const [usuarios, setUsuarios] = useState([]);
   const [roles, setRoles] = useState([]);
   const [tiendas, setTiendas] = useState([]);
@@ -36,22 +39,20 @@ export default function Usuarios() {
   const [error, setError] = useState('');
 
   const idTienda = usuario.id_tienda;
+  const esSuper = !!esSuperAdmin?.();
 
   const cargar = useCallback(async () => {
-    try {
-      const [datos, datosRoles, datosTiendas] = await Promise.all([
-        obtenerUsuarios(idTienda),
-        obtenerRoles(),
-        obtenerTiendas(),
-      ]);
-      setUsuarios(datos);
-      setRoles(datosRoles);
-      setTiendas(datosTiendas);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setCargando(false);
-    }
+    // Cada recurso se carga por separado: un rol con `usuarios:listar` pero sin
+    // `roles:listar` debe poder ver la tabla aunque el selector de roles falle.
+    const [resUsuarios, resRoles, resTiendas] = await Promise.allSettled([
+      obtenerUsuarios(idTienda),
+      obtenerRoles(),
+      obtenerTiendas(),
+    ]);
+    if (resUsuarios.status === 'fulfilled') setUsuarios(resUsuarios.value);
+    if (resRoles.status === 'fulfilled') setRoles(resRoles.value);
+    if (resTiendas.status === 'fulfilled') setTiendas(resTiendas.value);
+    setCargando(false);
   }, [idTienda]);
 
   const cargarRef = useRef();
@@ -62,9 +63,18 @@ export default function Usuarios() {
     refrescar();
   }, [cargar]);
 
+  // La sede puede asignar cualquier rol; el resto de cuentas no puede conceder
+  // el rol de sede y solo ve la lista como catálogo de referencia.
+  const rolesAsignables = esSuper
+    ? roles
+    : roles.filter((r) => !r.es_superadmin && r.id_rol !== ROL_SUPERADMIN);
+  const tiendaPropia = tiendas.find((t) => t.id_tienda === idTienda);
+  const nombreTiendaPropia =
+    tiendaPropia?.nombre_tienda || tiendaPropia?.tienda_nombre || 'Tu tienda';
+
   function abrirNuevo() {
     setEditandoId(null);
-    setFormulario(VACIO);
+    setFormulario({ ...VACIO, id_tienda: esSuper ? '' : (idTienda || '') });
     setError('');
     setModalAbierto(true);
   }
@@ -95,7 +105,7 @@ export default function Usuarios() {
           usu_email: formulario.usu_email,
           password: formulario.password,
           id_rol: formulario.id_rol,
-          id_tienda: formulario.id_tienda || null,
+          id_tienda: esSuper ? (formulario.id_tienda || null) : (idTienda || null),
         });
       }
       await cargar();
@@ -148,7 +158,7 @@ export default function Usuarios() {
     <div className="usuarios">
       <header className="usuarios-header">
         <div>
-          <h1 className="usuarios-title">Usuarios de la tienda</h1>
+          <h1 className="usuarios-title">{esSuper ? 'Usuarios' : 'Usuarios de la tienda'}</h1>
           <p className="usuarios-subtitle">{usuarios.length} usuarios</p>
         </div>
         <ConPermiso recurso="usuarios" accion="crear" fallback={null}>
@@ -240,7 +250,7 @@ export default function Usuarios() {
                   onChange={(e) => setFormulario({ ...formulario, id_rol: e.target.value })}
                   disabled={guardando}
                 >
-                  {roles.map((r) => (
+                  {rolesAsignables.map((r) => (
                     <option key={r.id_rol} value={r.id_rol}>{r.nombre_rol}</option>
                   ))}
                 </select>
@@ -248,20 +258,36 @@ export default function Usuarios() {
 
               {!editandoId && (
                 <div className="form-field">
-                  <label htmlFor="tienda" className="form-label">Tienda (opcional)</label>
-                  <select
-                    id="tienda"
-                    className="form-input form-select"
-                    value={formulario.id_tienda}
-                    onChange={(e) => setFormulario({ ...formulario, id_tienda: e.target.value })}
-                    disabled={guardando}
-                  >
-                    <option value="">Sin tienda (global)</option>
-                    {tiendas.map((t) => (
-                      <option key={t.id_tienda} value={t.id_tienda}>{t.tienda_nombre || t.nombre_tienda || t.id_tienda}</option>
-                    ))}
-                  </select>
-                  <small className="form-hint">Solo asigna una tienda si el usuario pertenece a una sede. Deja "Sin tienda" para usuarios globales (ej. Superadmin).</small>
+                  <label htmlFor="tienda" className="form-label">Tienda</label>
+                  {esSuper ? (
+                    <>
+                      <select
+                        id="tienda"
+                        className="form-input form-select"
+                        value={formulario.id_tienda}
+                        onChange={(e) => setFormulario({ ...formulario, id_tienda: e.target.value })}
+                        disabled={guardando}
+                      >
+                        <option value="">Sin tienda (global)</option>
+                        {tiendas.map((t) => (
+                          <option key={t.id_tienda} value={t.id_tienda}>{t.tienda_nombre || t.nombre_tienda || t.id_tienda}</option>
+                        ))}
+                      </select>
+                      <small className="form-hint">Solo asigna una tienda si el usuario pertenece a una sede. Deja "Sin tienda" para usuarios globales (ej. Superadmin).</small>
+                    </>
+                  ) : (
+                    <>
+                      <input
+                        id="tienda"
+                        type="text"
+                        className="form-input"
+                        value={nombreTiendaPropia}
+                        readOnly
+                        disabled
+                      />
+                      <small className="form-hint">El usuario se asignará a tu tienda automáticamente.</small>
+                    </>
+                  )}
                 </div>
               )}
 

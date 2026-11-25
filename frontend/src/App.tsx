@@ -7,7 +7,6 @@ import Contacto from './pages/public/Contacto';
 import Carrito from './pages/public/Carrito';
 import AdminLayout from './layouts/AdminLayout';
 import RutaProtegida from './components/private/RutaProtegida';
-import { ROL_ADMIN, ROL_SUPERADMIN, ROL_VENDEDOR } from './utils/constants/roles';
 import MisCotizaciones from './pages/public/MisCotizaciones';
 import NoEncontrado from './pages/public/NoEncontrado';
 import VerificarCorreo from './pages/auth/VerificarCorreo';
@@ -112,7 +111,7 @@ function App() {
         <Route
           path="/admin"
           element={
-            <RutaProtegida rolesPermitidos={[ROL_ADMIN, ROL_VENDEDOR]}>
+            <RutaProtegida>
               <AdminLayout />
             </RutaProtegida>
           }
@@ -135,21 +134,58 @@ function App() {
               </RutaProtegida>
             }
           />
-          <Route path="cotizaciones" element={<LazyWrapper Component={Cotizaciones} />} />
-          <Route path="reportes" element={<LazyWrapper Component={Reportes} />} />
+          <Route
+            path="cotizaciones"
+            element={
+              <RutaProtegida
+                permisos={[
+                  { recurso: 'cotizaciones', accion: 'listar' },
+                  { recurso: 'cotizaciones', accion: 'actualizar' },
+                ]}
+              >
+                <LazyWrapper Component={Cotizaciones} />
+              </RutaProtegida>
+            }
+          />
+          <Route
+            path="reportes"
+            element={
+              <RutaProtegida
+                permisos={[
+                  { recurso: 'ventas', accion: 'listar' },
+                  { recurso: 'ventas', accion: 'exportar' },
+                ]}
+              >
+                <LazyWrapper Component={Reportes} />
+              </RutaProtegida>
+            }
+          />
           <Route
             path="usuarios"
             element={
-              <RutaProtegida rolesPermitidos={[ROL_ADMIN]} recurso="usuarios" accion="listar">
+              <RutaProtegida
+                permisos={[
+                  { recurso: 'usuarios', accion: 'listar' },
+                  { recurso: 'usuarios', accion: 'crear' },
+                  { recurso: 'usuarios', accion: 'actualizar' },
+                ]}
+              >
                 <LazyWrapper Component={Usuarios} />
               </RutaProtegida>
             }
           />
-          <Route path="tienda" element={<LazyWrapper Component={Tienda} />} />
+          <Route
+            path="tienda"
+            element={
+              <RutaProtegida requiereTienda>
+                <LazyWrapper Component={Tienda} />
+              </RutaProtegida>
+            }
+          />
           <Route
             path="tiendas"
             element={
-              <RutaProtegida rolesPermitidos={[ROL_SUPERADMIN]}>
+              <RutaProtegida soloSuperAdmin>
                 <LazyWrapper Component={Tiendas} />
               </RutaProtegida>
             }
@@ -157,7 +193,7 @@ function App() {
           <Route
             path="tiendas/:id"
             element={
-              <RutaProtegida rolesPermitidos={[ROL_SUPERADMIN]}>
+              <RutaProtegida soloSuperAdmin>
                 <LazyWrapper Component={ResumenTienda} />
               </RutaProtegida>
             }
@@ -165,7 +201,7 @@ function App() {
           <Route
             path="catalogo"
             element={
-              <RutaProtegida rolesPermitidos={[ROL_SUPERADMIN]}>
+              <RutaProtegida soloSuperAdmin>
                 <LazyWrapper Component={CatalogoRBAC} />
               </RutaProtegida>
             }
@@ -173,7 +209,13 @@ function App() {
           <Route
             path="marcas"
             element={
-              <RutaProtegida rolesPermitidos={[ROL_SUPERADMIN]}>
+              <RutaProtegida
+                permisos={[
+                  { recurso: 'marcas', accion: 'crear' },
+                  { recurso: 'marcas', accion: 'actualizar' },
+                  { recurso: 'marcas', accion: 'eliminar' },
+                ]}
+              >
                 <LazyWrapper Component={Marcas} />
               </RutaProtegida>
             }
@@ -181,7 +223,13 @@ function App() {
           <Route
             path="tipos-producto"
             element={
-              <RutaProtegida rolesPermitidos={[ROL_SUPERADMIN]}>
+              <RutaProtegida
+                permisos={[
+                  { recurso: 'tipos', accion: 'crear' },
+                  { recurso: 'tipos', accion: 'actualizar' },
+                  { recurso: 'tipos', accion: 'eliminar' },
+                ]}
+              >
                 <LazyWrapper Component={TiposProducto} />
               </RutaProtegida>
             }
@@ -189,7 +237,13 @@ function App() {
           <Route
             path="permisos"
             element={
-              <RutaProtegida rolesPermitidos={[ROL_ADMIN, ROL_SUPERADMIN]}>
+              <RutaProtegida
+                permisos={[
+                  { recurso: 'roles', accion: 'listar' },
+                  { recurso: 'roles', accion: 'crear' },
+                  { recurso: 'roles', accion: 'actualizar' },
+                ]}
+              >
                 <LazyWrapper Component={Seguridad} />
               </RutaProtegida>
             }
@@ -197,7 +251,7 @@ function App() {
           <Route
             path="ajustes"
             element={
-              <RutaProtegida rolesPermitidos={[ROL_SUPERADMIN]}>
+              <RutaProtegida soloSuperAdmin>
                 <LazyWrapper Component={Ajustes} />
               </RutaProtegida>
             }
